@@ -28,7 +28,7 @@ class Main extends hxd.App {
 
 		MazeMesh.build(Maze.generate(), s3d);
 
-		player = new Player(1.3, 0.6, 0.4);
+		player = Player.spawnAt(1.3, 0.6, 0.4, MazeGeometry.RADIUS);
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
 	}
 

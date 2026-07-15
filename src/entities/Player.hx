@@ -3,26 +3,32 @@ package entities;
 import game.SphereMath;
 
 /**
-	The player's position, facing, and pitch on the maze sphere's interior
-	surface. Position is spherical (theta, phi) rather than Cartesian so
-	movement can update it directly with grid-relative deltas; facing is the
-	look direction's angle within the local tangent plane, measured from
-	thetaTangentAt (facing 0 looks toward increasing theta); pitch tilts the
-	view between that horizontal direction (pitch 0) and straight toward
-	the sphere's center (pitch +MAX_PITCH) — raising your head to see across
-	to the far side, the game's core mechanic. Movement always uses the
-	horizontal direction regardless of pitch, same as any FPS: looking up
-	and pressing forward doesn't launch you toward the center.
+	The player's position and facing direction on the maze sphere's interior
+	surface, plus a pitch for looking up toward the center. Both `pos` and
+	`forward` are plain 3D vectors — not spherical coordinates (theta, phi)
+	— updated by direct rotation as the player moves or turns, never
+	reconstructed from a (theta, phi) parameterization.
+
+	That's a deliberate fix, not a style choice: (theta, phi) is singular at
+	the poles — circles of latitude shrink to zero circumference there, so a
+	tiny physical step near a pole corresponds to a huge change in phi, even
+	though the actual 3D position barely moved. `facing` used to be a scalar
+	angle measured against a tangent basis derived fresh from phi every
+	frame (`thetaTangentAt(theta, phi)`), so that phi instability showed up
+	as the *view* spinning wildly near a pole — reported directly as
+	"pivoting at mach-speed like a spinner" while walking through one.
+	Storing `pos`/`forward` as vectors and rotating them directly has no
+	such singularity anywhere on the sphere, poles included.
 
 	Standalone rather than an `Entity` subclass for now — the Entity/Process
 	foundation (CLAUDE.md "Architecture") doesn't exist yet and shouldn't be
 	built ahead of a second use case that actually needs it (see
 	docs/GUIDELINES.md §1.3).
 
-	Movement doesn't parallel-transport `facing` as the local tangent basis
-	twists with position — it's kept as raw stored state instead. Fine for
-	small per-frame steps; revisit if turning drifts noticeably once this is
-	actually playable.
+	Doesn't re-orthogonalize `pos`/`forward` against accumulated floating-
+	point drift over many small rotations — each rotation preserves their
+	relationship exactly in theory, and this hasn't shown up as a problem in
+	practice. Revisit (e.g. a periodic Gram-Schmidt pass) if it ever does.
 **/
 class Player {
 	/**
@@ -45,28 +51,43 @@ class Player {
 	**/
 	public static inline final EYE_HEIGHT:Float = 6;
 
-	/** Polar angle from +Y, in radians (0 = north pole, pi = south pole). See SphereMath. **/
-	public var theta:Float;
+	/** Position on the sphere's interior surface. **/
+	public var pos:h3d.Vector;
 
-	/** Azimuth around Y, in radians. See SphereMath. **/
-	public var phi:Float;
-
-	/** Look direction's angle within the local tangent plane, measured from thetaTangentAt. **/
-	public var facing:Float;
+	/** Unit tangent vector at `pos`: the horizontal look/walk direction. **/
+	public var forward:h3d.Vector;
 
 	/** View tilt from horizontal (0) toward the sphere's center (+MAX_PITCH) or the floor (-MAX_PITCH). **/
 	public var pitch:Float;
 
-	public function new(theta:Float, phi:Float, facing:Float, pitch:Float = 0) {
-		this.theta = theta;
-		this.phi = phi;
-		this.facing = facing;
+	public function new(pos:h3d.Vector, forward:h3d.Vector, pitch:Float = 0) {
+		this.pos = pos;
+		this.forward = forward;
 		this.pitch = clampPitch(pitch);
 	}
 
 	/**
+		Builds a Player standing at a spherical (theta, phi) position,
+		facing `facing` radians around from thetaTangentAt (0 = toward
+		increasing theta). Only ever used once, at spawn — see the class
+		doc for why Player's own state afterward is plain 3D vectors,
+		never theta/phi again.
+		@param theta polar angle from +Y, in radians.
+		@param phi azimuth around Y, in radians.
+		@param facing initial look direction, in radians from thetaTangentAt.
+		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
+		@return a Player at that position and facing.
+	**/
+	public static function spawnAt(theta:Float, phi:Float, facing:Float, radius:Float):Player {
+		var spawnPos = SphereMath.sphericalToCartesian(radius, theta, phi);
+		var up = SphereMath.upVectorAt(spawnPos, new h3d.Vector(0, 0, 0));
+		var spawnForward = SphereMath.rotateAroundAxis(SphereMath.thetaTangentAt(theta, phi), up, facing);
+		return new Player(spawnPos, spawnForward);
+	}
+
+	/**
 		Positions and orients a camera at this player's location: standing on
-		the sphere's interior, looking along `facing` tilted by `pitch`
+		the sphere's interior, looking along `forward` tilted by `pitch`
 		toward the sphere's center. The camera's up vector tilts by the same
 		pitch (rotated around the same axis as the view direction) rather
 		than staying fixed at the sphere-relative "up" — keeping it fixed
@@ -79,11 +100,11 @@ class Player {
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
 	**/
 	public function applyToCamera(camera:h3d.Camera, radius:Float):Void {
-		var frame = tangentFrame(radius);
-		var eyePos = frame.pos.add(frame.up.scaled(EYE_HEIGHT));
-		var right = frame.forward.cross(frame.up).normalized();
-		var viewForward = SphereMath.rotateAroundAxis(frame.forward, right, pitch);
-		var viewUp = SphereMath.rotateAroundAxis(frame.up, right, pitch);
+		var up = SphereMath.upVectorAt(pos, new h3d.Vector(0, 0, 0));
+		var eyePos = pos.add(up.scaled(EYE_HEIGHT));
+		var right = forward.cross(up).normalized();
+		var viewForward = SphereMath.rotateAroundAxis(forward, right, pitch);
+		var viewUp = SphereMath.rotateAroundAxis(up, right, pitch);
 
 		camera.pos.load(eyePos);
 		camera.up.load(viewUp);
@@ -91,31 +112,34 @@ class Player {
 	}
 
 	/**
-		Walks forward (or backward, for a negative distance) along the
-		horizontal `facing` direction — pitch doesn't affect movement.
-		Rotates the current position toward that direction within the great
-		circle it defines, by the angle `distance / radius`. Exact for any
-		distance (not a small-step approximation), and always stays exactly
-		on the sphere by construction.
+		Walks forward (or backward, for a negative distance) along
+		`forward` — pitch doesn't affect movement. Rotates `pos` and
+		`forward` together, by the same angle around the same axis, within
+		the great circle they define: exact for any distance (not a
+		small-step approximation), and always stays exactly on the sphere
+		and tangent to it by construction — including straight through a
+		pole, since this never touches theta/phi.
 		@param distance arc length to walk; negative walks backward.
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
 	**/
 	public function moveForward(distance:Float, radius:Float):Void {
-		var frame = tangentFrame(radius);
+		var posDir = pos.normalized();
 		var angle = distance / radius;
-		var moved = frame.pos.scaled(Math.cos(angle)).add(frame.forward.scaled(radius * Math.sin(angle)));
+		var axis = posDir.cross(forward).normalized();
 
-		theta = Math.acos(moved.y / radius);
-		phi = Math.atan2(moved.z, moved.x);
+		var newPosDir = SphereMath.rotateAroundAxis(posDir, axis, angle);
+		forward = SphereMath.rotateAroundAxis(forward, axis, angle);
+		pos = newPosDir.scaled(radius);
 	}
 
 	/**
-		Rotates `facing` by `deltaAngle` radians (positive turns from
-		thetaTangentAt toward phiTangentAt).
+		Rotates `forward` by `deltaAngle` radians around the local "up" axis
+		(toward the sphere's center).
 		@param deltaAngle angle to turn by, in radians.
 	**/
 	public function turn(deltaAngle:Float):Void {
-		facing += deltaAngle;
+		var up = SphereMath.upVectorAt(pos, new h3d.Vector(0, 0, 0));
+		forward = SphereMath.rotateAroundAxis(forward, up, deltaAngle);
 	}
 
 	/**
@@ -129,13 +153,5 @@ class Player {
 
 	static function clampPitch(p:Float):Float {
 		return hxd.Math.clamp(p, -MAX_PITCH, MAX_PITCH);
-	}
-
-	function tangentFrame(radius:Float):{pos:h3d.Vector, up:h3d.Vector, forward:h3d.Vector} {
-		var center = new h3d.Vector(0, 0, 0);
-		var pos = SphereMath.sphericalToCartesian(radius, theta, phi);
-		var up = SphereMath.upVectorAt(pos, center);
-		var forward = SphereMath.rotateAroundAxis(SphereMath.thetaTangentAt(theta, phi), up, facing);
-		return {pos: pos, up: up, forward: forward};
 	}
 }

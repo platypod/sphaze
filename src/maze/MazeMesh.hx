@@ -23,7 +23,9 @@ import maze.Maze.MazeData;
 	own; a uniform `material.color` per mesh is the simple, working path.
 **/
 class MazeMesh {
-	static inline final WALL_HEIGHT:Float = 4;
+	// Cells are roughly RADIUS * (grid step) apart (~10 units at RADIUS=50) —
+	// walls taller than that read as an enclosing corridor rather than a curb.
+	static inline final WALL_HEIGHT:Float = 12;
 	static inline final FLOOR_COLOR:Int = 0xFF444444;
 	static inline final WALL_COLOR:Int = 0xFFAA8855;
 

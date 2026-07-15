@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.7
+
+      - name: Install haxelib dependencies
+        run: haxelib install heaps --always && haxelib install utest --always && haxelib install formatter --always && haxelib install checkstyle --always
+
+      - name: Formatting check
+        run: make fmt-check
+
+      - name: Compile check
+        run: make check
+
+      - name: Lint
+        run: make lint
+
+      - name: Test
+        run: make test

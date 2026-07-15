@@ -1,5 +1,7 @@
 import entities.Player;
+import maze.Maze;
 import maze.MazeGeometry;
+import maze.MazeMesh;
 
 /**
 	Entry point. Owns the fixed-timestep accumulator (CLAUDE.md "Architecture")
@@ -21,10 +23,7 @@ class Main extends hxd.App {
 		engine.backgroundColor = BACKGROUND_COLOR;
 		s3d.camera.fovY = CAMERA_FOV_Y;
 
-		// Debug-only: three great circles marking the maze sphere's shell,
-		// so the camera's position/orientation is visible before the real
-		// maze mesh (next up) replaces it.
-		new h3d.scene.Sphere(0xFF3388FF, MazeGeometry.RADIUS, true, s3d);
+		MazeMesh.build(Maze.generate(), s3d);
 
 		player = new Player(1.3, 0.6, 0.4);
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);

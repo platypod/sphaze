@@ -29,6 +29,7 @@ typedef MazeData = {
 	var openEdges:haxe.ds.StringMap<Bool>;
 }
 
+/** Grid queries and generation for the maze defined by MazeNode/MazeData above. **/
 class Maze {
 	/** Row count of the ring grid, poles excluded (poles are merged nodes, not rows). **/
 	public static inline final ROWS:Int = 16;

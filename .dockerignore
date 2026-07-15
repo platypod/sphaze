@@ -1,0 +1,7 @@
+old/
+test/
+docs/
+bin/
+.git
+.githooks
+.github

@@ -42,14 +42,24 @@ The game is a static web build (Heaps → JS/WebGL), deployed as a service in
 platypod's `stack` `games` module (alongside `pokeclicker`, `rommapp`),
 behind Authelia SSO like the rest of the homelab.
 
-### Release build (settled)
+### Release build (implemented)
 
-Pushing a git tag triggers a GitHub Actions workflow that builds a multi-arch
-image (`linux/amd64` + `linux/arm64`, via Docker Buildx) and pushes it to
-`ghcr.io/platypod/sphaze:<tag>`. The image itself is lightweight: Heaps' web
-output is static files (`index.html` + `game.js` + `res/`), served by a
-minimal static file server (nginx or Caddy) with no language runtime in the
-shipped image. No cluster credentials are involved in this step.
+Pushing a git tag triggers [`.github/workflows/build.yml`](.github/workflows/build.yml),
+which builds a multi-arch image (`linux/amd64` + `linux/arm64`, via Docker
+Buildx) and pushes it to `ghcr.io/platypod/sphaze:<tag>` (+ `:latest`).
+[`Dockerfile`](Dockerfile) is a two-stage build — `haxe:4.3.7-alpine` compiles
+`bin/` (matching `make build`'s output exactly), then `nginx:alpine` serves
+it with no language runtime in the shipped image. Same pattern as
+`mediarvester`/`prompt-meter`; no cluster credentials are involved in this
+step.
+
+**First tag only — make the GHCR package public.** GitHub creates new GHCR
+packages as **private**. After the first tag push, set it public once:
+`github.com/orgs/platypod/packages` → `sphaze` → *Package settings* →
+*Danger Zone* → *Change visibility* → **Public**. Persists across all future
+versions. There's no REST API for changing package visibility (a GitHub
+limitation), so it's a one-time manual step — same as every other platypod
+image.
 
 Traefik doesn't change here — it's a reverse proxy/router, not a web or file
 server, so it can't host the static files itself (that's a deliberate scope

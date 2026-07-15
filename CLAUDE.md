@@ -17,7 +17,7 @@ This file holds the non-negotiables. Full rationale and details live in `docs/GU
 
 ## Haxe code standards
 
-- `lowerCamelCase` for variables/methods, `UpperCamelCase` for types. `public static function`, not `static public function`. K&R braces.
+- `lowerCamelCase` for variables/methods, `UpperCamelCase` for types **and enum constructors** (`PoleNode`, not `poleNode`). `public static function`, not `static public function`. K&R braces.
 - Explicit type annotations on all public/exported function signatures. Local variables may rely on inference.
 - **Null safety: `Strict`, project-wide.** Every new class/module must be null-safety clean.
 - `-D analyzer-optimize` stays on.

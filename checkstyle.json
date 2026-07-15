@@ -40,10 +40,6 @@
 			"props": {}
 		},
 		{
-			"type": "AvoidTernaryOperator",
-			"props": {}
-		},
-		{
 			"type": "BlockBreakingConditional",
 			"props": {}
 		},
@@ -310,7 +306,7 @@
 			"type": "MemberName",
 			"props": {
 				"format": "^[a-z][a-zA-Z0-9]*$",
-				"tokens": [],
+				"tokens": ["PUBLIC", "PRIVATE", "CLASS", "ABSTRACT", "TYPEDEF"],
 				"ignoreExtern": true
 			}
 		},
@@ -419,7 +415,7 @@
 				"intervalOpPolicy": "none",
 				"arrowPolicy": "around",
 				"arrowFunctionPolicy": "around",
-				"oldFunctionTypePolicy": "around",
+				"oldFunctionTypePolicy": "none",
 				"newFunctionTypePolicy": "around"
 			}
 		},

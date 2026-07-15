@@ -1,0 +1,6 @@
+#!/bin/sh
+# Blocks the commit on fmt/lint/check/test failure. Wired via:
+#   git config core.hooksPath .githooks
+# Escape hatch for genuinely exceptional cases: git commit --no-verify
+set -e
+make fmt lint check test

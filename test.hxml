@@ -1,0 +1,8 @@
+-cp src
+-cp test
+-lib heaps
+-lib utest
+-main TestMain
+-js bin/test.js
+-D analyzer-optimize
+--macro nullSafety("src", Strict)

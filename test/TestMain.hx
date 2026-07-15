@@ -10,6 +10,7 @@ class TestMain {
 		var runner = new Runner();
 		runner.addCase(new SphereMathTest());
 		runner.addCase(new MazeTest());
+		runner.addCase(new PlayerTest());
 		Report.create(runner);
 		runner.run();
 	}

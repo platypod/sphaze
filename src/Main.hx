@@ -13,6 +13,7 @@ class Main extends hxd.App {
 	static inline final CAMERA_FOV_Y:Float = 70;
 	static inline final WALK_SPEED:Float = 15;
 	static inline final TURN_SPEED:Float = 2.5;
+	static inline final PITCH_SPEED:Float = 1.5;
 
 	var accumulator:Float = 0;
 	var player:Player;
@@ -55,6 +56,15 @@ class Main extends hxd.App {
 		}
 		if (hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S)) {
 			player.moveForward(-WALK_SPEED * dt, MazeGeometry.RADIUS);
+		}
+		// Raise/lower your view toward the sphere's center — the "see the
+		// far side" mechanic. PGUP/PGDOWN as a keyboard-only placeholder;
+		// mouse-look is a likely follow-up once there's a reason to add it.
+		if (hxd.Key.isDown(hxd.Key.PGUP)) {
+			player.lookUp(PITCH_SPEED * dt);
+		}
+		if (hxd.Key.isDown(hxd.Key.PGDOWN)) {
+			player.lookUp(-PITCH_SPEED * dt);
 		}
 
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);

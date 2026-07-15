@@ -11,6 +11,7 @@ class TestMain {
 		runner.addCase(new SphereMathTest());
 		runner.addCase(new MazeTest());
 		runner.addCase(new PlayerTest());
+		runner.addCase(new MazeMeshTest());
 		Report.create(runner);
 		runner.run();
 	}

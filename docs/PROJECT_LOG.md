@@ -1,0 +1,66 @@
+# Project log
+
+Chronological record of decisions and major events for this project — the "why" behind `CLAUDE.md` / `docs/GUIDELINES.md`, and a history to look back on. New entries get appended at the bottom, oldest first. Each entry: date, short title, what happened/was decided, and why (briefly — full detail lives in `docs/GUIDELINES.md`, `README.md`, or a linked doc where relevant).
+
+---
+
+## 2026-07-15 — Tech stack: Haxe + Heaps
+
+Project starts fresh with **Haxe + Heaps** as the language/engine for a small, browser-playable 3D game — compiles to WebGL for reliable desktop and mobile browser reach, with HashLink available for fast native dev/debugging.
+
+## 2026-07-15 — Research pass
+
+Researched general 3D game architecture (game loop patterns, ECS vs. OOP, scene graphs, state machines, event-driven design, data-driven content, object pooling) and Haxe/Heaps specifics (language conventions, null safety, `hxd.Res`, scene graph API, FBX/HMD pipeline, tooling, and prior art — notably Deepnight's `gameBase`, used for *Dead Cells*). Findings compiled into a discussion draft, with each point flagged as either a clear default or a genuine decision point.
+
+## 2026-07-15 — Architecture & standards decisions
+
+Went through the decision points one at a time. Final calls:
+
+1. **Timestep:** fixed timestep (accumulator around `hxd.App.update`), decoupled from rendering, with interpolation — chosen to leave room for deterministic simulation (multiplayer/replays) without a later rewrite.
+2. **Object model:** hybrid — `Entity` base class + composable data components (`Health`, `Movement`, `Inventory`...), no full ECS. Balances simplicity against giving AI-assisted edits a well-scoped place to land.
+3. **Content data:** data-driven from the start — gameplay data (stats, items, levels) lives in external data (JSON via `hxd.Res`), not hardcoded in classes.
+4. **Foundation:** roll a custom minimal `Process` tree + `Entity`/component pattern, rather than adopting Deepnight's `gameBase` — gameBase's pure-inheritance `Entity` doesn't fit the hybrid component model from decision 2.
+5. **Null safety:** `Strict`, project-wide, from day one.
+6. **Macros:** no new custom macros without explicit discussion; rely on Heaps' built-in macros otherwise.
+7. **Testing:** `utest` (over `munit`), scoped to game logic — state machines, gameplay/interaction math, save/load, data parsing. Rendering/scene code excluded (not practically unit-testable).
+8. **CI:** full — compile + headless `utest` run on every push, via a hand-written GitHub Actions workflow (no existing Haxe+Heaps template found).
+
+## 2026-07-15 — Guideline documents produced
+
+Turned the decisions above into two working documents:
+- **`CLAUDE.md`** (project root) — concise, imperative rules for day-to-day AI-assisted work: the non-negotiables, no rationale, meant to be short enough to actually be followed.
+- **`docs/GUIDELINES.md`** — full detail and rationale behind each rule in `CLAUDE.md`, organized by architecture / Haxe standards / Heaps specifics / tooling.
+
+This log (`docs/PROJECT_LOG.md`) started alongside them, to keep a reviewable history as the project continues.
+
+## 2026-07-15 — Git workflow rule: commit everything, platypod-style messages
+
+hooman asked for two things: every modification must be committed (for traceability/rollback), and commit messages should match the conventions actually used across the `platypod` GitHub org. Inspected `platypod/stack`, `platypod/mediarvester`, and `platypod/prompt-meter` commit history plus the org README, which explicitly calls for Conventional Commits.
+
+Confirmed pattern: `type(scope): lowercase description`, types in practice being `feat`/`fix`/`refactor`/`doc` (singular — a deliberate org-wide deviation from the spec's `docs`)/`release`, scope sometimes a comma-separated list, optional body explaining *why* for non-trivial changes. Notably, `platypod/prompt-meter` (itself an AI-usage-metrics tool) already uses a `Co-Authored-By: Claude <model> <noreply@anthropic.com>` trailer on Claude-authored commits — adopted here too, since it's directly relevant to a vibe-coded project.
+
+Added a "Git workflow" section to `CLAUDE.md` and a full "Git workflow & commit conventions" section to `docs/GUIDELINES.md`, with the actual commit examples pulled from the org as reference.
+
+## 2026-07-15 — Pre-commit hooks & web deployment
+
+Two more topics: local pre-commit enforcement, and how the game reaches players on prod.
+
+**Pre-commit:** confirmed no repo in the platypod org uses a pre-commit framework (`pre-commit`/`husky`/`lefthook`) — every repo drives quality gates through a self-documented `Makefile` (targets like `lint`, `test`, `build`, called identically by CI). Followed suit: a `Makefile` with `fmt`/`lint`/`check`/`test`/`build` targets, plus a versioned `.githooks/pre-commit` (wired via `git config core.hooksPath .githooks`, not the unversioned `.git/hooks/`) that runs `make fmt lint check test` and blocks the commit on failure. Documented in `docs/GUIDELINES.md` §5.
+
+**Deployment:** confirmed the plan is a browser-playable web build, reachable from both desktop and phone, deployed onto platypod's prod stack (Kubernetes/Helmfile, `platypod.ovh`). Findings and decisions:
+- Heaps compiles straight to JS/WebGL — no separate engine/wrapper needed for the web build. WebGL (not WebGPU) is the right call for mobile reach: WebGPU is still fragmented across mobile browsers, while WebGL2 is ubiquitous.
+- **Mobile controls: deferred.** 3D games assume mouse-look + WASD, which don't exist on a touchscreen; decided to build desktop/mouse-keyboard first and treat touch controls as a later, dedicated design pass rather than guessing at a control scheme before there's a game to control. Logged in `docs/GUIDELINES.md` §1.8.
+- **Access control: behind Authelia SSO**, matching every other service in platypod's `games` module (`pokeclicker`, `rommapp`) rather than a public exception.
+- **Container:** inspected `platypod/pokeclicker`'s deployment (Node.js wrapper) and the `games` Helm module's `Deployment`/`Service`/`IngressRoute` templates as reference. Our case is simpler — Heaps' web output is static files, so the shipped container is a static file server (nginx/Caddy) with no language runtime, built via a multi-stage Dockerfile.
+- **Release build:** matches `mediarvester`/`prompt-meter` — a git tag push triggers GitHub Actions to build a multi-arch image (buildx, `linux/amd64`+`linux/arm64`) and push it to `ghcr.io/platypod/sphaze`. No cluster credentials touch GitHub at this step.
+- **Deploying to prod on release: deliberately left open.** hooman doesn't want any cluster credential stored in GitHub. Three options were laid out — manual `make deploy MODULE=games ENV=prd` (matches the org today, zero new infra, zero GitHub-side credentials), adopting GitOps (Flux CD pulling new tags from GHCR from inside the cluster — genuinely credential-free on the GitHub side, but real infrastructure work spanning the `stack`/`infra` repos), or a small self-hosted webhook receiver (narrower secret than a kubeconfig, but custom code to maintain). Decision deferred — see `README.md` "Deployment" section for the write-up, to be resolved and logged here later.
+
+---
+
+<!-- Add new entries below this line, oldest first. Suggested format:
+
+## YYYY-MM-DD — Short title
+
+What happened / was decided, and why. Link to any other doc that has full detail.
+
+-->

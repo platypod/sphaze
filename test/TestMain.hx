@@ -9,6 +9,7 @@ class TestMain {
 	static function main():Void {
 		var runner = new Runner();
 		runner.addCase(new SphereMathTest());
+		runner.addCase(new MazeTest());
 		Report.create(runner);
 		runner.run();
 	}

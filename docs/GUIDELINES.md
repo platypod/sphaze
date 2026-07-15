@@ -162,7 +162,7 @@ The hook runs `make fmt lint check test` and blocks the commit on any failure �
 
 ### 5.3 Formatting & linting
 - **Formatting:** `haxe-formatter`, run on save / via `make fmt`.
-- **Linting:** `haxe-checkstyle`, ruleset tuned together as it comes up (not blind defaults).
+- **Linting:** `haxe-checkstyle`, ruleset tuned together as it comes up (not blind defaults). `checkstyle.json` starts from `haxelib run checkstyle --default-config`, with two deviations so far, both because the tool's default fights a rule already in `CLAUDE.md`: `Return.enforceReturnType: true` (default warns on explicit `Void` returns; we require explicit return types everywhere per §2.2), and `VarTypeHint` disabled entirely (its three policies all enforce one direction — hint or no hint — where `CLAUDE.md` deliberately leaves locals either way). Also `EmptyLines.requireEmptyLineAfter{Class,Interface,Abstract}: false`, since `haxe-formatter` strips that blank line by default — the two tools must agree or every `make fmt` breaks `make lint`.
 
 ### 5.4 Testing
 `utest`. Coverage target is game logic — state machines (1.5), inventory/interaction logic, save/load, data parsing (1.4) — not rendering/scene code, which isn't practically unit-testable.
@@ -188,6 +188,8 @@ Paired with an `index.html` containing a `<canvas id="webgl">`; Heaps' own refer
 **Target choice — WebGL, not WebGPU:** WebGPU is still fragmented on mobile (iOS only got it with iOS 26/macOS Tahoe 26, Android needs recent Qualcomm/ARM GPUs on Chrome 121+), while WebGL2 has been ubiquitous on phone browsers for years. Heaps' HTML5 target uses WebGL, which is precisely the reach this project needs.
 
 **Local dev:** the HashLink target remains useful for fast iteration/debugging even though the shipped build is JS — faster compiles, native debugging, no browser round-trip. Keep both `.hxml` files (`hl.hxml` for dev, `web.hxml` for the shipped build) rather than developing directly against the JS target.
+
+**Correction (2026-07-15): not wired up yet on Apple Silicon.** Homebrew's `hashlink` formula ships no `hl` (JIT VM) on ARM Macs — only HashLink/C native compilation is supported there ([hashlink#557](https://github.com/HaxeFoundation/hashlink/issues/557)), which is a slower compile-to-C-then-native loop, not the fast one described above. Until that's set up, there's a single `build.hxml` targeting JS, used for `make check`/`make build` alike (tests run the same JS output via `node`, see `test.hxml`) — no separate `hl.hxml`/`web.hxml` split yet. Revisit once HL/C wiring or a non-ARM dev box makes the fast loop worth adding; see `docs/PROJECT_LOG.md`.
 
 ### 6.2 Container & platypod stack integration
 platypod's `stack` repo already has a `games` module (`src/games/`, currently `pokeclicker` and `rommapp`) with a consistent Helm pattern we'll follow: a `Deployment` + `Service` + Traefik `IngressRoute`, gated by `.Values.<service>.enable`, image pulled from `ghcr.io/platypod/<name>`.

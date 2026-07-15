@@ -18,10 +18,23 @@ project continues.
 
 ## Dev
 
-Not implemented yet — the `Makefile` (`fmt`/`lint`/`check`/`test`/`build`
-targets) and `.githooks/pre-commit` hook described in
-[`docs/GUIDELINES.md` §5](docs/GUIDELINES.md#5-tooling--workflow) land with
-the first real code.
+```sh
+haxelib install heaps utest formatter checkstyle  # once per machine
+git config core.hooksPath .githooks                # once per clone
+
+make help    # list targets
+make check   # compile
+make test    # run utest suite
+make build   # production web build -> bin/ (self-contained static web root)
+```
+
+**HashLink caveat:** Homebrew's `hashlink` formula ships no `hl` (JIT VM) on
+Apple Silicon — only HashLink/C native compilation is supported on ARM
+([hashlink#557](https://github.com/HaxeFoundation/hashlink/issues/557)). The
+"fast HL dev loop" `docs/GUIDELINES.md` §6.1 describes isn't wired up yet as a
+result; `make check`/`make test`/`make build` all currently target JS (run via
+`node` for tests), which needs no extra toolchain. See
+`docs/PROJECT_LOG.md` for the full note.
 
 ## Deployment
 

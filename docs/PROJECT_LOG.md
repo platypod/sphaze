@@ -64,3 +64,17 @@ Two more topics: local pre-commit enforcement, and how the game reaches players 
 What happened / was decided, and why. Link to any other doc that has full detail.
 
 -->
+
+## 2026-07-15 — Project scaffold bootstrapped, HashLink/ARM caveat found
+
+First real code: `src/`, `test/`, `build.hxml`, `test.hxml`, `Makefile`, `.githooks/pre-commit` (wired via `git config core.hooksPath .githooks`), `checkstyle.json`, `.github/workflows/ci.yml`, and `index.html`. `make fmt`/`fmt-check`/`lint`/`check`/`test`/`build` all verified working; `Main.hx` boots a Heaps app (fixed-timestep accumulator per `CLAUDE.md`, no gameplay yet) and was confirmed rendering (WebGL context created, canvas fills the window, clears to the configured background color) in a browser.
+
+Also committed `old/` (the abandoned TS+Babylon prototype) to git — it had never actually been committed, just sitting on disk. Its maze-generation and sphere-math logic is genuinely reusable reference for the eventual Haxe port, so it's kept rather than deleted.
+
+Three findings that changed the plan from what `docs/GUIDELINES.md` originally described:
+
+1. **HashLink's JIT VM isn't available at all on Apple Silicon via Homebrew** — only HashLink/C (compile-to-C-then-native) is supported on ARM ([hashlink#557](https://github.com/HaxeFoundation/hashlink/issues/557)). The "fast `hl.hxml` dev loop" §6.1 describes doesn't work as written on this machine. For now there's a single `build.hxml` targeting JS, used for both the compile-check and the production build; `test.hxml` also targets JS and tests run via `node`. Revisit if HL/C wiring or a non-ARM dev box makes the split worth adding. Corrected in `docs/GUIDELINES.md` §6.1.
+2. **`checkstyle`'s default ruleset (generated via `--default-config`) contradicts `CLAUDE.md`'s own explicit-type-annotation rule** — it warns on explicit `Void` returns and pushes to omit type hints on locals. Tuned two checks to match (`Return.enforceReturnType: true`, `VarTypeHint` disabled), and turned off `EmptyLines`' require-blank-line-after-class rule since `haxe-formatter` strips that blank line by default and the two tools disagreeing would break `make fmt` → `make lint` every time. Logged in `docs/GUIDELINES.md` §5.3.
+3. **`index.html` needs to live next to `game.js`** — Heaps' HTML5 target loads a canvas by id (`#webgl`) and the built JS is a sibling `<script src="game.js">`, but `haxe build.hxml` only emits into `bin/`. `make build` now copies `index.html` into `bin/` after compiling, so `bin/` is a complete, self-contained static web root — matching what §6.2's container step expects to copy into `nginx`/`caddy`.
+
+No gameplay code yet — next slice is porting `old/`'s maze generation and sphere math to Haxe with `utest` coverage, per the "Scaffold + port maze/sphere math" discussion.

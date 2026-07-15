@@ -16,16 +16,24 @@ import maze.Maze.MazeData;
 	column-adjacency, and pole-adjacency all go through the same code path);
 	revisit if the approximation looks wrong once there's a playable build.
 
-	Unlit (no scene lights exist yet) and double-sided (so the sphere's
-	inward-facing geometry doesn't get backface-culled away) — floor and
-	walls are separate meshes rather than one with per-vertex colors, since
-	the default material's shader doesn't read a vertex color stream on its
-	own; a uniform `material.color` per mesh is the simple, working path.
+	Unlit and double-sided (so the sphere's inward-facing geometry doesn't get
+	backface-culled away). Flat color comes from an h3d.shader.FixedColor pass
+	rather than material.color + enableLights=false — the latter still let
+	the PBR technique's other lighting/falloff terms through (no scene light,
+	but every face's shading still depended on its normal, which the Polygon
+	primitive never had set, producing a smooth gradient and half-dark faces
+	instead of a flat color). FixedColor just overwrites the fragment output,
+	sidestepping the whole PBR pipeline — the same trick h3d.scene.Graphics
+	uses for the debug wireframe, which never had this problem.
 **/
 class MazeMesh {
-	// Cells are roughly RADIUS * (grid step) apart (~10 units at RADIUS=50) —
-	// walls taller than that read as an enclosing corridor rather than a curb.
-	static inline final WALL_HEIGHT:Float = 12;
+	// Cells are roughly RADIUS * (grid step) apart (~10 units at RADIUS=50),
+	// so a wall directly across a cell is only ~5 units away — at the 70deg
+	// vertical FOV (see Main.CAMERA_FOV_Y), a wall taller than ~7 units
+	// already subtends the entire frame from that distance (12 subtends
+	// ~100deg, overfilling it, which is what "walls are too big" was:
+	// reported directly after the previous height increase).
+	static inline final WALL_HEIGHT:Float = 5;
 	static inline final FLOOR_COLOR:Int = 0xFF444444;
 	static inline final WALL_COLOR:Int = 0xFFAA8855;
 
@@ -47,8 +55,7 @@ class MazeMesh {
 
 	static function asMesh(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, color:Int, parent:h3d.scene.Object):h3d.scene.Mesh {
 		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
-		mesh.material.color.setColor(color);
-		mesh.material.mainPass.enableLights = false;
+		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(color));
 		mesh.material.mainPass.culling = None;
 		return mesh;
 	}

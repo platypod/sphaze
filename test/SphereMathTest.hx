@@ -2,7 +2,10 @@ import utest.Test;
 import utest.Assert;
 import game.SphereMath;
 
-/** Mirrors old/src/scene/sphereMath.test.ts, for behavioral parity with the ported prototype. **/
+/**
+	Mirrors old/src/scene/sphereMath.test.ts case for case, for behavioral
+	parity with the ported prototype.
+**/
 class SphereMathTest extends Test {
 	function testUpVectorPointsFromSurfaceTowardCenter():Void {
 		var center = new h3d.Vector(0, 0, 0);

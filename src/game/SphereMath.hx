@@ -12,6 +12,9 @@ class SphereMath {
 	/**
 		Local "up" for a point standing on the sphere's interior surface: the
 		direction from that point back toward the sphere's center.
+		@param pointOnSphere the point on the sphere's surface.
+		@param sphereCenter the sphere's center.
+		@return unit vector pointing from `pointOnSphere` toward `sphereCenter`.
 	**/
 	public static function upVectorAt(pointOnSphere:h3d.Vector, sphereCenter:h3d.Vector):h3d.Vector {
 		return sphereCenter.sub(pointOnSphere).normalized();
@@ -20,6 +23,10 @@ class SphereMath {
 	/**
 		Rotates `vector` by `angle` radians around `axis` (Rodrigues' rotation
 		formula). `axis` must be a unit vector.
+		@param vector the vector to rotate.
+		@param axis unit vector to rotate around.
+		@param angle rotation angle, in radians.
+		@return `vector` rotated by `angle` around `axis`.
 	**/
 	public static function rotateAroundAxis(vector:h3d.Vector, axis:h3d.Vector, angle:Float):h3d.Vector {
 		var cos = Math.cos(angle);
@@ -34,17 +41,32 @@ class SphereMath {
 		north pole, pi at the south pole; phi: azimuth around Y — to a
 		Cartesian point on a sphere of the given radius centered at the world
 		origin. Lays the maze grid out on the sphere's surface.
+		@param radius sphere radius.
+		@param theta polar angle from +Y, in radians (0 = north pole, pi = south pole).
+		@param phi azimuth around Y, in radians.
+		@return the corresponding Cartesian point.
 	**/
 	public static function sphericalToCartesian(radius:Float, theta:Float, phi:Float):h3d.Vector {
 		return new h3d.Vector(radius * Math.sin(theta) * Math.cos(phi), radius * Math.cos(theta), radius * Math.sin(theta) * Math.sin(phi));
 	}
 
-	/** Unit tangent in the direction of increasing theta at a given spherical position. **/
+	/**
+		Unit tangent in the direction of increasing theta at a given spherical
+		position — independent of radius.
+		@param theta polar angle from +Y, in radians.
+		@param phi azimuth around Y, in radians.
+		@return unit tangent vector.
+	**/
 	public static function thetaTangentAt(theta:Float, phi:Float):h3d.Vector {
 		return new h3d.Vector(Math.cos(theta) * Math.cos(phi), -Math.sin(theta), Math.cos(theta) * Math.sin(phi));
 	}
 
-	/** Unit tangent in the direction of increasing phi (independent of theta). **/
+	/**
+		Unit tangent in the direction of increasing phi (independent of theta
+		and radius).
+		@param phi azimuth around Y, in radians.
+		@return unit tangent vector.
+	**/
 	public static function phiTangentAt(phi:Float):h3d.Vector {
 		return new h3d.Vector(-Math.sin(phi), 0, Math.cos(phi));
 	}

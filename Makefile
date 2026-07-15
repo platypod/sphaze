@@ -20,8 +20,12 @@ build:    ## Production web build: bin/ becomes a self-contained static web root
 	haxe build.hxml
 	cp index.html bin/index.html
 
+serve:    ## Build, then serve bin/ at http://localhost:8080 (Ctrl+C to stop)
+	$(MAKE) build
+	cd bin && python3 -m http.server 8080
+
 help:     ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: fmt fmt-check lint check test build help
+.PHONY: fmt fmt-check lint check test build serve help

@@ -17,8 +17,11 @@ typedef CellCorners = {
 	closed.
 
 	The floor uses each cell's outer corners (`cornersOf`) unchanged — full
-	size, same as before thickness existed. Walls are drawn *per cell, per
-	side* rather than once per shared edge: each cell also has its own inner
+	size, same as before thickness existed — except at a doubling boundary,
+	where it also picks up its neighbor's own split points along that edge
+	(see `addFloor`) so the two sides tessellate identically instead of
+	leaving a crack. Walls are drawn *per cell, per side* rather than once
+	per shared edge: each cell also has its own inner
 	corners (`innerCornersOf`, inset from the outer ones by WALL_THICKNESS),
 	and a closed side draws a piece spanning outer-to-inner on *that cell's
 	own* territory only. A closed edge between cells A and B is therefore two
@@ -45,13 +48,16 @@ typedef CellCorners = {
 	between cells, both sides' pieces stop exactly at the shared outer
 	boundary they're built from.
 
-	Each piece is 4 quads: the inner face (visible to a player standing in
-	the cell), the top cap (visible once pitching up puts a wall's top edge
-	in view — the "see across the sphere" mechanic), and two end caps
-	sealing the piece regardless of what, if anything, is next to it at
-	either end. No outer face: it would sit exactly where the neighboring
-	cell's own piece for the same edge begins, so it's never actually
-	visible from either side, only wasted overlapping geometry.
+	Each piece is up to 4 quads: the inner face (visible to a player standing
+	in the cell), the top cap (visible once pitching up puts a wall's top
+	edge in view — the "see across the sphere" mechanic), and up to two end
+	caps sealing the piece where it's a genuine free-standing end — skipped
+	wherever the wall meeting it there is also closed, so a plain corner
+	stays a plain rectangular corner rather than getting chamfered by two
+	overlapping diagonal cap faces (see `maybeAddPiece`'s own doc). No outer
+	face: it would sit exactly where the neighboring cell's own piece for
+	the same edge begins, so it's never actually visible from either side,
+	only wasted overlapping geometry.
 
 	Unlit and double-sided (so the sphere's inward-facing geometry doesn't get
 	backface-culled away). The floor stays a flat color via an
@@ -99,10 +105,48 @@ class MazeMesh {
 		wallMesh.material.mainPass.culling = None;
 	}
 
+	/**
+		Builds one cell's floor patch as a fan from `nw`, rather than always a
+		single quad: at a row boundary where the neighboring row has *more*
+		columns (a doubling boundary, moving away from a pole), this cell's
+		north or south edge is one straight chord while that neighbor renders
+		it as several — the two don't tessellate the same way, leaving a
+		sliver-shaped gap (or overlap) right at the seam, confirmed
+		in-browser as a crack in the floor at exactly those latitudes. Fixed
+		by inserting this cell's own vertex at each interior split point
+		(`Maze.rowBoundaryNeighbors`'s own boundaries, at this cell's own
+		theta) — the same point the finer neighbor already has on its side —
+		so both sides of the seam share identical vertices instead of a
+		coarse straight edge cutting across a finer bent one.
+	**/
 	static function addFloor(points:Array<h3d.Vector>, idx:hxd.IndexBuffer):Void {
 		eachCell((row, col) -> {
 			var corners = cornersOf(row, col);
-			addQuad(points, idx, corners.nw, corners.ne, corners.se, corners.sw);
+			var theta = Math.PI * row / (Maze.ROWS - 1);
+			var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
+
+			var perimeter = [corners.nw];
+			if (row > 1) {
+				var northEntries = Maze.rowBoundaryNeighbors(row, col, row - 1);
+				for (i in 0...northEntries.length - 1) {
+					perimeter.push(cornerAt(theta - halfTheta, northEntries[i].phiEnd));
+				}
+			}
+			perimeter.push(corners.ne);
+			perimeter.push(corners.se);
+			if (row < Maze.ROWS - 2) {
+				var southEntries = Maze.rowBoundaryNeighbors(row, col, row + 1);
+				var i = southEntries.length - 2;
+				while (i >= 0) {
+					perimeter.push(cornerAt(theta + halfTheta, southEntries[i].phiEnd));
+					i--;
+				}
+			}
+			perimeter.push(corners.sw);
+
+			for (i in 1...perimeter.length - 1) {
+				addTriangle(points, idx, perimeter[0], perimeter[i], perimeter[i + 1]);
+			}
 		});
 	}
 
@@ -213,6 +257,27 @@ class MazeMesh {
 		idx.push(start + 2);
 		idx.push(start + 3);
 	}
+
+	/**
+		Appends a triangle to `points`/`idx` — used for a floor cell's fan
+		triangulation (`addFloor`), which needs a variable vertex count per
+		cell rather than `addQuad`'s fixed four.
+		@param points vertex buffer to append to.
+		@param idx index buffer to append to.
+		@param a first corner.
+		@param b second corner.
+		@param c third corner.
+	**/
+	static function addTriangle(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, a:h3d.Vector, b:h3d.Vector, c:h3d.Vector):Void {
+		var start = points.length;
+		points.push(a);
+		points.push(b);
+		points.push(c);
+
+		idx.push(start);
+		idx.push(start + 1);
+		idx.push(start + 2);
+	}
 }
 
 /** Accumulates wall geometry across cells — one piece per cell per closed side (see class doc), no cross-cell deduplication needed. **/
@@ -239,25 +304,46 @@ private class WallBuilder {
 		single `maybeAddPiece` call, since a row boundary where column count
 		doubles moving away from a pole means more than one piece — see its
 		own doc comment.
+
+		Each piece's end caps are skipped wherever the *other* wall meeting
+		that corner is also closed (see `maybeAddPiece`'s doc) — otherwise
+		every closed corner grows a redundant diagonal cap face from each of
+		its two walls, chamfering what should be a plain rectangular corner
+		into a hexagon. `northWestClosed`/`northEastClosed`/etc. below are
+		this cell's own west/east walls checked against whichever of the
+		north/south side's (possibly split) pieces actually reaches that
+		corner — the *nearest* `rowBoundaryNeighbors` entry, not necessarily
+		the whole side.
 	**/
 	public function addWallsAround(row:Int, col:Int):Void {
 		var outer = MazeMesh.cornersOf(row, col);
 		var inner = MazeMesh.innerCornersOf(row, col);
 		var here = RingNode(row, col);
 		var cols = Maze.colsForRow(row);
+		var west = RingNode(row, (col - 1 + cols) % cols);
+		var east = RingNode(row, (col + 1) % cols);
+		var westClosed = !Maze.isOpen(maze, here, west);
+		var eastClosed = !Maze.isOpen(maze, here, east);
 
-		maybeAddPiece(here, RingNode(row, (col - 1 + cols) % cols), outer.nw, outer.sw, inner.nw, inner.sw);
-		maybeAddPiece(here, RingNode(row, (col + 1) % cols), outer.se, outer.ne, inner.se, inner.ne);
+		var northEntries = row == 1 ? null : Maze.rowBoundaryNeighbors(row, col, row - 1);
+		var southEntries = row == Maze.ROWS - 2 ? null : Maze.rowBoundaryNeighbors(row, col, row + 1);
+		var northWestClosed = !Maze.isOpen(maze, here, row == 1 ? PoleNode(North) : northEntries[0].node);
+		var northEastClosed = !Maze.isOpen(maze, here, row == 1 ? PoleNode(North) : northEntries[northEntries.length - 1].node);
+		var southWestClosed = !Maze.isOpen(maze, here, row == Maze.ROWS - 2 ? PoleNode(South) : southEntries[0].node);
+		var southEastClosed = !Maze.isOpen(maze, here, row == Maze.ROWS - 2 ? PoleNode(South) : southEntries[southEntries.length - 1].node);
+
+		maybeAddPiece(here, west, outer.nw, outer.sw, inner.nw, inner.sw, !northWestClosed, !southWestClosed);
+		maybeAddPiece(here, east, outer.se, outer.ne, inner.se, inner.ne, !southEastClosed, !northEastClosed);
 
 		if (row == 1) {
-			maybeAddPiece(here, PoleNode(North), outer.ne, outer.nw, inner.ne, inner.nw);
+			maybeAddPiece(here, PoleNode(North), outer.ne, outer.nw, inner.ne, inner.nw, !eastClosed, !westClosed);
 		} else {
-			addRowBoundaryPieces(here, row, col, row - 1, true);
+			addRowBoundaryPieces(here, row, col, row - 1, true, westClosed, eastClosed);
 		}
 		if (row == Maze.ROWS - 2) {
-			maybeAddPiece(here, PoleNode(South), outer.sw, outer.se, inner.sw, inner.se);
+			maybeAddPiece(here, PoleNode(South), outer.sw, outer.se, inner.sw, inner.se, !westClosed, !eastClosed);
 		} else {
-			addRowBoundaryPieces(here, row, col, row + 1, false);
+			addRowBoundaryPieces(here, row, col, row + 1, false, westClosed, eastClosed);
 		}
 	}
 
@@ -277,13 +363,22 @@ private class WallBuilder {
 		split piece still tapers the same way a whole one does — computed
 		by re-deriving each entry's fraction of the *outer* range and
 		applying it to the *inner* one.
+		Each entry's end caps are skipped wherever whatever's adjacent to it
+		there is also closed (see `maybeAddPiece`'s doc): its outermost
+		(westmost/eastmost) end against this cell's own west/east wall, and
+		— when this side is itself split into more than one entry — each
+		interior end against its neighboring entry, so two closed sub-pieces
+		of the *same* logical side connect plainly too, not just a whole
+		side against a perpendicular one.
 		@param here this cell's own node.
 		@param row this cell's row.
 		@param col this cell's column.
 		@param otherRow the row on the other side of this side — row - 1 or row + 1.
 		@param towardNorth whether this is the north (smaller theta) side or the south (larger theta) one.
+		@param westClosed whether this cell's own west side is closed.
+		@param eastClosed whether this cell's own east side is closed.
 	**/
-	function addRowBoundaryPieces(here:MazeNode, row:Int, col:Int, otherRow:Int, towardNorth:Bool):Void {
+	function addRowBoundaryPieces(here:MazeNode, row:Int, col:Int, otherRow:Int, towardNorth:Bool, westClosed:Bool, eastClosed:Bool):Void {
 		var theta = Math.PI * row / (Maze.ROWS - 1);
 		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
 		var cols = Maze.colsForRow(row);
@@ -298,7 +393,9 @@ private class WallBuilder {
 		var outerRangeStart = centerPhi - halfPhi;
 		var innerRangeStart = centerPhi - innerHalfPhi;
 
-		for (entry in Maze.rowBoundaryNeighbors(row, col, otherRow)) {
+		var entries = Maze.rowBoundaryNeighbors(row, col, otherRow);
+		for (i in 0...entries.length) {
+			var entry = entries[i];
 			var fractionStart = (entry.phiStart - outerRangeStart) / (2 * halfPhi);
 			var fractionEnd = (entry.phiEnd - outerRangeStart) / (2 * halfPhi);
 			var innerPhiStart = innerRangeStart + fractionStart * (2 * innerHalfPhi);
@@ -312,7 +409,12 @@ private class WallBuilder {
 			var innerA = MazeMesh.cornerAt(innerTheta, towardNorth ? innerPhiEnd : innerPhiStart);
 			var innerB = MazeMesh.cornerAt(innerTheta, towardNorth ? innerPhiStart : innerPhiEnd);
 
-			maybeAddPiece(here, entry.node, outerA, outerB, innerA, innerB);
+			var westEndOpen = i == 0 ? !westClosed : Maze.isOpen(maze, here, entries[i - 1].node);
+			var eastEndOpen = i == entries.length - 1 ? !eastClosed : Maze.isOpen(maze, here, entries[i + 1].node);
+			var capA = towardNorth ? eastEndOpen : westEndOpen;
+			var capB = towardNorth ? westEndOpen : eastEndOpen;
+
+			maybeAddPiece(here, entry.node, outerA, outerB, innerA, innerB, capA, capB);
 		}
 	}
 
@@ -321,8 +423,21 @@ private class WallBuilder {
 		is closed — a box spanning `outerA`/`outerB` (the true, shared
 		boundary) to `innerA`/`innerB` (this cell's own inset corners),
 		extruded up by WALL_HEIGHT.
+
+		`capA`/`capB` control whether the end cap at that end is built at
+		all: an end cap seals the piece's cut face where nothing continues
+		it, needed at a genuine free-standing end (the adjacent side there is
+		open). Where the adjacent side is instead *also* closed — a plain
+		corner, or a doubling boundary's own split pieces meeting each other
+		— that neighboring piece's own inner face already reaches the exact
+		same edge, so the cap becomes a redundant face buried inside the now-
+		solid corner, invisible from any angle a player can reach (same
+		reasoning as never building an outer face at all — see class doc).
+		Skipping it there is what keeps a corner a plain rectangular corner
+		instead of a hexagonal one, chamfered by two overlapping diagonal cap
+		faces.
 	**/
-	function maybeAddPiece(a:MazeNode, b:MazeNode, outerA:h3d.Vector, outerB:h3d.Vector, innerA:h3d.Vector, innerB:h3d.Vector):Void {
+	function maybeAddPiece(a:MazeNode, b:MazeNode, outerA:h3d.Vector, outerB:h3d.Vector, innerA:h3d.Vector, innerB:h3d.Vector, capA:Bool, capB:Bool):Void {
 		if (Maze.isOpen(maze, a, b)) {
 			return;
 		}
@@ -348,9 +463,13 @@ private class WallBuilder {
 		addTexturedQuad(innerA, innerB, topInnerB, topInnerA, uRepeat, vHeight);
 		// Top cap — visible once pitching up puts this wall's top edge in view.
 		addTexturedQuad(topOuterA, topOuterB, topInnerB, topInnerA, uRepeat, vThickness);
-		// End caps, sealing this piece regardless of what's next to it at either end.
-		addTexturedQuad(outerA, innerA, topInnerA, topOuterA, vThickness, vHeight);
-		addTexturedQuad(innerB, outerB, topOuterB, topInnerB, vThickness, vHeight);
+		// End caps — only where that end is actually free-standing (see doc above).
+		if (capA) {
+			addTexturedQuad(outerA, innerA, topInnerA, topOuterA, vThickness, vHeight);
+		}
+		if (capB) {
+			addTexturedQuad(innerB, outerB, topOuterB, topInnerB, vThickness, vHeight);
+		}
 	}
 
 	/** Appends a quad plus matching UVs — `a`/`d` at u=0, `b`/`c` at u=uRepeat, `a`/`b` at v=vSpan, `c`/`d` at v=0. **/

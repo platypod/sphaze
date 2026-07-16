@@ -64,6 +64,36 @@ class CollisionTest extends Test {
 		Assert.isFalse(moved);
 	}
 
+	function testTryMoveAlongAnArbitraryDirectionRespectsWallThickness():Void {
+		// Exercises tryMove's general form directly — moving along a
+		// direction that isn't player.forward at all, same shape as Main's
+		// Q/D strafing via Player.rightVector(). Same wall-zone setup as
+		// testMoveIntoWallThicknessIsBlockedShortOfTheOldNodeBoundary
+		// (placed just inside the zone, a small step rather than a large
+		// one — a large single step drifts off constant theta away from the
+		// equator, the same great-circle curvature testMoveAtAnAngle...
+		// relies on elsewhere), but forward deliberately points north-south
+		// here to prove the block doesn't depend on it.
+		var row = 5;
+		var col = 10;
+		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
+
+		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
+		var centerPhi = 2 * Math.PI * col / Maze.COLS;
+		var halfPhi = Math.PI / Maze.COLS;
+		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
+
+		var phi = centerPhi + (halfPhi - insetPhi / 2);
+		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, phi);
+		var forward = SphereMath.thetaTangentAt(centerTheta, phi); // not the strafe direction
+		var player = new Player(pos0, forward);
+		var strafeDirection = SphereMath.phiTangentAt(phi); // due east, straight at the wall
+
+		var moved = Collision.tryMove(player, strafeDirection, 0.1, RADIUS, maze);
+
+		Assert.isFalse(moved);
+	}
+
 	function testMoveAcrossAnOpenEdgeSucceedsAndLandsOnTheNeighbor():Void {
 		assertMoveAcrossEdge(true);
 	}

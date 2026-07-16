@@ -15,6 +15,17 @@ class PlayerTest extends Test {
 		Assert.floatEquals(0, player.pos.normalized().dot(player.forward), 1e-9);
 	}
 
+	function testRightVectorIsUnitAndPerpendicularToForwardAndUp():Void {
+		var radius = 50.0;
+		var player = Player.spawnAt(1.1, 2.2, 0.7, radius);
+
+		var right = player.rightVector();
+
+		Assert.floatEquals(1, right.length(), 1e-9);
+		Assert.floatEquals(0, right.dot(player.forward), 1e-9);
+		Assert.floatEquals(0, player.pos.normalized().dot(right), 1e-9);
+	}
+
 	function testMoveForwardAlongAMeridianMatchesArcLength():Void {
 		// facing 0 at any point looks toward increasing theta (see
 		// Player.spawnAt's doc comment), so from the equator this walks a

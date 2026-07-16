@@ -6,9 +6,9 @@ import maze.Maze.MazeData;
 import maze.Maze.MazeNode;
 
 /**
-	Blocks `Player.moveForward` from crossing a closed maze edge, sliding
-	along it instead of stopping dead when it's hit at an angle. Kept as a
-	thin wrapper around `Player` rather than teaching `Player` about `Maze` —
+	Blocks `Player` from crossing a closed maze edge, sliding along it
+	instead of stopping dead when it's hit at an angle. Kept as a thin
+	wrapper around `Player` rather than teaching `Player` about `Maze` —
 	`Player` is otherwise fully maze-agnostic (see its class doc), and the
 	only thing collision needs is the node the player was in versus whatever
 	blocks the step.
@@ -25,11 +25,8 @@ import maze.Maze.MazeNode;
 **/
 class Collision {
 	/**
-		Attempts to move `player` forward by `distance`. A step that would
-		cross into a wall's thickness is rolled back and re-tried as a slide
-		along that wall instead (see `slideAlong`) — approaching square-on
-		leaves ~nothing to slide with, approaching at a shallow angle keeps
-		most of it, same physics as any FPS wall-slide.
+		`tryMove` along `player.forward` specifically — walking forward or
+		backward. See `tryMove` for the general form (e.g. strafing).
 		@param player the player to move.
 		@param distance arc length to walk; negative walks backward.
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
@@ -37,11 +34,30 @@ class Collision {
 		@return true if any movement was applied (a full step or a slide), false if a wall stopped the player outright.
 	**/
 	public static function tryMoveForward(player:Player, distance:Float, radius:Float, maze:MazeData):Bool {
+		return tryMove(player, player.forward, distance, radius, maze);
+	}
+
+	/**
+		Attempts to move `player` by `distance` along `direction` — a unit
+		tangent at `player.pos`, not necessarily `player.forward` (e.g. the
+		player's right vector, for strafing). A step that would cross into a
+		wall's thickness is rolled back and re-tried as a slide along that
+		wall instead (see `slideAlong`) — approaching square-on leaves
+		~nothing to slide with, approaching at a shallow angle keeps most of
+		it, same physics as any FPS wall-slide.
+		@param player the player to move.
+		@param direction unit tangent at `player.pos` to move along.
+		@param distance arc length to move; negative moves the opposite way.
+		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
+		@param maze the maze whose closed edges block movement.
+		@return true if any movement was applied (a full step or a slide), false if a wall stopped the player outright.
+	**/
+	public static function tryMove(player:Player, direction:h3d.Vector, distance:Float, radius:Float, maze:MazeData):Bool {
 		var fromNode = Maze.nodeAt(SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos));
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 
-		player.moveForward(distance, radius);
+		player.moveAlong(direction, distance, radius);
 
 		var blocked = blockingNode(maze, fromNode, SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos), radius);
 		if (blocked == null) {
@@ -50,7 +66,7 @@ class Collision {
 
 		player.pos = oldPos;
 		player.forward = oldForward;
-		return slideAlong(player, fromNode, blocked, oldForward, distance, radius, maze);
+		return slideAlong(player, fromNode, blocked, direction, distance, radius, maze);
 	}
 
 	/**
@@ -81,12 +97,13 @@ class Collision {
 
 	/**
 		Redirects a blocked step into a slide along the wall that blocked it,
-		keeping the component of `forward` that runs along the wall and
-		dropping the component that runs into it — the same projection any
-		FPS wall-slide uses. `forward` still gets parallel-transported by
-		`Player.moveAlong` (not left untouched — see its doc comment for why),
-		so both `pos` and `forward` are snapshotted here and restored
-		together if the slide itself turns out to be blocked too.
+		keeping the component of `attemptedDirection` that runs along the
+		wall and dropping the component that runs into it — the same
+		projection any FPS wall-slide uses. `player.forward` still gets
+		parallel-transported by `Player.moveAlong` (not left untouched — see
+		its doc comment for why), so both `pos` and `forward` are
+		snapshotted here and restored together if the slide itself turns out
+		to be blocked too.
 
 		The wall's tangent direction is derived from `blockedNode`'s nominal
 		center as a plain 3D point (`oldPos`'s radial direction crossed with
@@ -97,13 +114,14 @@ class Collision {
 		@param player the player to move — `pos` must already be at the pre-blocked position.
 		@param fromNode the node `player` was in before the blocked step.
 		@param blockedNode the node whose wall blocked the step (see `blockingNode`).
-		@param forward the direction the blocked step was attempted along.
+		@param attemptedDirection the direction the blocked step was attempted along — not necessarily `player.forward` (e.g. strafing).
 		@param distance arc length of the original attempted step.
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
 		@param maze the maze whose closed edges block movement.
 		@return true if the slide moved the player at all.
 	**/
-	static function slideAlong(player:Player, fromNode:MazeNode, blockedNode:MazeNode, forward:h3d.Vector, distance:Float, radius:Float, maze:MazeData):Bool {
+	static function slideAlong(player:Player, fromNode:MazeNode, blockedNode:MazeNode, attemptedDirection:h3d.Vector, distance:Float, radius:Float,
+			maze:MazeData):Bool {
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 		var oldPosDir = oldPos.normalized();
@@ -111,13 +129,14 @@ class Collision {
 		var blockedDir = SphereMath.sphericalToCartesian(1, blockedCenter.theta, blockedCenter.phi);
 		var wallTangent = oldPosDir.cross(blockedDir).normalized();
 
-		var slideDistance = distance * forward.dot(wallTangent);
+		var slideDistance = distance * attemptedDirection.dot(wallTangent);
 		// A near-exactly-perpendicular hit projects to a slide distance
 		// that's only nonzero by floating-point noise (wallTangent and
-		// forward each come from their own chain of cross products, so
-		// their dot product isn't held to the same exact-zero guarantee
-		// pure trig identities would give) — squash that noise rather than
-		// let it jitter the player by a fraction of a unit on a square hit.
+		// attemptedDirection each come from their own chain of cross
+		// products, so their dot product isn't held to the same exact-zero
+		// guarantee pure trig identities would give) — squash that noise
+		// rather than let it jitter the player by a fraction of a unit on a
+		// square hit.
 		if (Math.abs(slideDistance) < 1e-9) {
 			return false;
 		}

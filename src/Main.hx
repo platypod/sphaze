@@ -73,15 +73,25 @@ class Main extends hxd.App {
 		// placeholder — fine for one input source and one entity, but a
 		// dedicated input/controller system is the right home for this once
 		// there's more than a single player to drive.
-		if (hxd.Key.isDown(hxd.Key.LEFT) || hxd.Key.isDown(hxd.Key.Q)) {
+		if (hxd.Key.isDown(hxd.Key.LEFT)) {
 			player.turn(-TURN_SPEED * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.RIGHT) || hxd.Key.isDown(hxd.Key.D)) {
+		if (hxd.Key.isDown(hxd.Key.RIGHT)) {
 			player.turn(TURN_SPEED * dt);
 		}
-		if (isMoveKeyDown()) {
-			var direction = (hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z)) ? 1 : -1;
-			Collision.tryMoveForward(player, direction * WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+		if (hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z)) {
+			Collision.tryMoveForward(player, WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+		}
+		if (hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S)) {
+			Collision.tryMoveForward(player, -WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+		}
+		// Q/D strafe sideways rather than turn — the player's body moves
+		// without them choosing to face that way, same as forward/backward.
+		if (hxd.Key.isDown(hxd.Key.Q)) {
+			Collision.tryMove(player, player.rightVector(), -WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+		}
+		if (hxd.Key.isDown(hxd.Key.D)) {
+			Collision.tryMove(player, player.rightVector(), WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
 		}
 
 		updateSpaceTilt(dt);
@@ -90,7 +100,8 @@ class Main extends hxd.App {
 	}
 
 	function isMoveKeyDown():Bool {
-		return hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z) || hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S);
+		return hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z) || hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S)
+			|| hxd.Key.isDown(hxd.Key.Q) || hxd.Key.isDown(hxd.Key.D);
 	}
 
 	/**

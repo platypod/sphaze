@@ -102,13 +102,25 @@ class Player {
 	public function applyToCamera(camera:h3d.Camera, radius:Float):Void {
 		var up = SphereMath.upVectorAt(pos, new h3d.Vector(0, 0, 0));
 		var eyePos = pos.add(up.scaled(EYE_HEIGHT));
-		var right = forward.cross(up).normalized();
+		var right = rightVector();
 		var viewForward = SphereMath.rotateAroundAxis(forward, right, pitch);
 		var viewUp = SphereMath.rotateAroundAxis(up, right, pitch);
 
 		camera.pos.load(eyePos);
 		camera.up.load(viewUp);
 		camera.target.load(eyePos.add(viewForward));
+	}
+
+	/**
+		Unit tangent to the right of `forward`, ignoring pitch — the same
+		computation `applyToCamera` already needs for its own pitch-rotation
+		axis, exposed here too for strafing (see `game.Collision`), which
+		moves sideways without turning to face that direction.
+		@return unit tangent at `pos`, perpendicular to `forward`, pointing right.
+	**/
+	public function rightVector():h3d.Vector {
+		var up = SphereMath.upVectorAt(pos, new h3d.Vector(0, 0, 0));
+		return forward.cross(up).normalized();
 	}
 
 	/**

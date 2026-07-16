@@ -12,6 +12,7 @@ class TestMain {
 		runner.addCase(new MazeTest());
 		runner.addCase(new PlayerTest());
 		runner.addCase(new MazeMeshTest());
+		runner.addCase(new CollisionTest());
 		Report.create(runner);
 		runner.run();
 	}

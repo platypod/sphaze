@@ -138,6 +138,40 @@ class Maze {
 	}
 
 	/**
+		Which node a physical position on the grid's sphere belongs to —
+		the inverse of the cell/pole layout `MazeMesh.cornersOf` and
+		`neighborsOf` assume. Takes plain spherical coordinates rather than a
+		3D point so this module stays engine-agnostic (see the class doc);
+		callers on a 3D point go through `SphereMath.thetaOf`/`phiOf` first.
+
+		Snaps to a `PoleNode` within `halfTheta` of a pole regardless of phi —
+		matching `neighborsOf`'s merged-pole topology, where every column
+		converges on the same single node there. Without this, a column
+		index computed right at a pole would be meaningless (circles of
+		latitude shrink to zero circumference there — the same instability
+		`entities.Player`'s class doc describes for orientation).
+		@param theta polar angle from +Y, in radians.
+		@param phi azimuth around Y, in radians, in [0, 2*pi).
+		@return the node the position falls within.
+	**/
+	public static function nodeAt(theta:Float, phi:Float):MazeNode {
+		var halfTheta = Math.PI / (ROWS - 1) / 2;
+		if (theta < halfTheta) {
+			return PoleNode(North);
+		}
+		if (theta > Math.PI - halfTheta) {
+			return PoleNode(South);
+		}
+
+		var row = Math.round(theta * (ROWS - 1) / Math.PI);
+		var col = Math.round(phi * COLS / (2 * Math.PI)) % COLS;
+		if (col < 0) {
+			col += COLS;
+		}
+		return RingNode(row, col);
+	}
+
+	/**
 		Whether the maze has an open passage between two (necessarily
 		adjacent) nodes.
 		@param maze the maze to query.

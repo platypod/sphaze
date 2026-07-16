@@ -90,4 +90,25 @@ class SphereMathTest extends Test {
 		Assert.floatEquals(0, thetaTangent.dot(radial), 1e-9);
 		Assert.floatEquals(0, phiTangent.dot(radial), 1e-9);
 	}
+
+	function testThetaOfAndPhiOfInvertSphericalToCartesian():Void {
+		var theta = 1.1;
+		var phi = 4.2;
+		var point = SphereMath.sphericalToCartesian(50, theta, phi);
+
+		Assert.floatEquals(theta, SphereMath.thetaOf(point), 1e-9);
+		Assert.floatEquals(phi, SphereMath.phiOf(point), 1e-9);
+	}
+
+	function testThetaOfIgnoresDistanceFromOrigin():Void {
+		var point = new h3d.Vector(3, 4, 0); // not on any particular sphere
+
+		Assert.floatEquals(Math.acos(4 / 5), SphereMath.thetaOf(point), 1e-9);
+	}
+
+	function testPhiOfNormalizesNegativeAtan2ToPositiveRange():Void {
+		var point = new h3d.Vector(0, 1, -10); // atan2(-10, 0) = -pi/2
+
+		Assert.floatEquals(1.5 * Math.PI, SphereMath.phiOf(point), 1e-9);
+	}
 }

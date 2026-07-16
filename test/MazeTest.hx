@@ -57,6 +57,37 @@ class MazeTest extends Test {
 		Assert.isTrue(Lambda.exists(ringNeighbors, node -> Type.enumEq(node, expected)));
 	}
 
+	function testNodeAtRingCellCenterReturnsThatCell():Void {
+		var row = 5;
+		var col = 12;
+		var theta = Math.PI * row / (Maze.ROWS - 1);
+		var phi = 2 * Math.PI * col / Maze.COLS;
+
+		var node = Maze.nodeAt(theta, phi);
+
+		Assert.isTrue(Type.enumEq(node, RingNode(row, col)));
+	}
+
+	function testNodeAtNearNorthPoleReturnsPoleNodeRegardlessOfPhi():Void {
+		Assert.isTrue(Type.enumEq(Maze.nodeAt(0.0001, 0), PoleNode(North)));
+		Assert.isTrue(Type.enumEq(Maze.nodeAt(0.0001, 5.5), PoleNode(North)));
+	}
+
+	function testNodeAtNearSouthPoleReturnsPoleNodeRegardlessOfPhi():Void {
+		Assert.isTrue(Type.enumEq(Maze.nodeAt(Math.PI - 0.0001, 0), PoleNode(South)));
+		Assert.isTrue(Type.enumEq(Maze.nodeAt(Math.PI - 0.0001, 5.5), PoleNode(South)));
+	}
+
+	function testNodeAtWrapsLastColumnBackToZero():Void {
+		var row = 5;
+		var theta = Math.PI * row / (Maze.ROWS - 1);
+		var phi = 2 * Math.PI - 0.0001; // just short of a full turn, closer to col 0 than col COLS-1
+
+		var node = Maze.nodeAt(theta, phi);
+
+		Assert.isTrue(Type.enumEq(node, RingNode(row, 0)));
+	}
+
 	function countOpenEdges(maze:MazeData):Int {
 		var count = 0;
 		for (_ in maze.openEdges.keys()) {

@@ -70,4 +70,28 @@ class SphereMath {
 	public static function phiTangentAt(phi:Float):h3d.Vector {
 		return new h3d.Vector(-Math.sin(phi), 0, Math.cos(phi));
 	}
+
+	/**
+		Inverse of `sphericalToCartesian`'s theta: the polar angle from +Y of
+		a point relative to the world origin, independent of the point's
+		distance from it (so it works for points not exactly on the maze's
+		sphere, e.g. a tentative position mid-collision-check).
+		@param point the point to find theta of.
+		@return polar angle from +Y, in radians (0 = north pole, pi = south pole).
+	**/
+	public static function thetaOf(point:h3d.Vector):Float {
+		return Math.acos(hxd.Math.clamp(point.y / point.length(), -1, 1));
+	}
+
+	/**
+		Inverse of `sphericalToCartesian`'s phi: the azimuth around Y of a
+		point relative to the world origin, normalized to [0, 2*pi) to match
+		the range `Maze.nodeAt` expects.
+		@param point the point to find phi of.
+		@return azimuth around Y, in radians, in [0, 2*pi).
+	**/
+	public static function phiOf(point:h3d.Vector):Float {
+		var phi = Math.atan2(point.z, point.x);
+		return phi < 0 ? phi + 2 * Math.PI : phi;
+	}
 }

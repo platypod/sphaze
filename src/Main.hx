@@ -1,5 +1,7 @@
 import entities.Player;
+import game.Collision;
 import maze.Maze;
+import maze.Maze.MazeData;
 import maze.MazeGeometry;
 import maze.MazeMesh;
 
@@ -17,6 +19,7 @@ class Main extends hxd.App {
 
 	var accumulator:Float = 0;
 	var player:Player;
+	var maze:MazeData;
 
 	static function main():Void {
 		new Main();
@@ -26,7 +29,8 @@ class Main extends hxd.App {
 		engine.backgroundColor = BACKGROUND_COLOR;
 		s3d.camera.fovY = CAMERA_FOV_Y;
 
-		MazeMesh.build(Maze.generate(), s3d);
+		maze = Maze.generate();
+		MazeMesh.build(maze, s3d);
 
 		player = Player.spawnAt(1.3, 0.6, 0.4, MazeGeometry.RADIUS);
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
@@ -52,10 +56,10 @@ class Main extends hxd.App {
 			player.turn(TURN_SPEED * dt);
 		}
 		if (hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.W)) {
-			player.moveForward(WALK_SPEED * dt, MazeGeometry.RADIUS);
+			Collision.tryMoveForward(player, WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
 		}
 		if (hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S)) {
-			player.moveForward(-WALK_SPEED * dt, MazeGeometry.RADIUS);
+			Collision.tryMoveForward(player, -WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
 		}
 		// Raise/lower your view toward the sphere's center — the "see the
 		// far side" mechanic. PGUP/PGDOWN as a keyboard-only placeholder;

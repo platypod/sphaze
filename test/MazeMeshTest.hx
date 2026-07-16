@@ -1,6 +1,7 @@
 import utest.Test;
 import utest.Assert;
 import maze.MazeMesh;
+import maze.Maze.MazeNode;
 
 /**
 	Covers exactly the property that broke: neighboring cells must compute
@@ -64,6 +65,51 @@ class MazeMeshTest extends Test {
 		var phiOuter = game.SphereMath.phiOf(outer.nw);
 		var phiInner = game.SphereMath.phiOf(inner.nw);
 		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (phiInner - phiOuter) * radius * Math.sin(centerTheta), 1e-6);
+	}
+
+	// The specific property MazeMesh's split boundary pieces need at a
+	// doubling boundary (see WallBuilder.addRowBoundaryPieces): each split
+	// piece's own outer corners must land exactly on the corresponding
+	// child cell's own corners, computed completely independently via
+	// cornersOf on the child's row — otherwise the coarser row's wall
+	// pieces don't actually line up with the floor/walls the finer row
+	// itself builds, a visible seam right at the boundary.
+	function testSplitBoundaryPiecesOuterCornersMatchEachChildsOwnCorners():Void {
+		var boundaries = [
+			{row: 1, otherRow: 2},
+			{row: 3, otherRow: 4},
+			{row: 10, otherRow: 9},
+			{row: 12, otherRow: 11}
+		];
+		for (boundary in boundaries) {
+			var myCols = maze.Maze.colsForRow(boundary.row);
+			var otherCols = maze.Maze.colsForRow(boundary.otherRow);
+			Assert.isTrue(otherCols > myCols, 'expected a doubling at row ${boundary.row} -> ${boundary.otherRow}');
+
+			// Whichever row is further south (larger theta) has its own
+			// north edge (nw/ne) on this boundary; the other has its south
+			// edge (sw/se) on it instead.
+			var childIsSouthOfParent = boundary.otherRow > boundary.row;
+			var parentOuterTheta = Math.PI * boundary.row / (maze.Maze.ROWS - 1) + (childIsSouthOfParent ? 1 : -1) * Math.PI / (maze.Maze.ROWS - 1) / 2;
+
+			for (col in 0...myCols) {
+				for (entry in maze.Maze.rowBoundaryNeighbors(boundary.row, col, boundary.otherRow)) {
+					var childCol = switch entry.node {
+						case RingNode(_, c): c;
+						case PoleNode(_): -1;
+					}
+					var childCorners = MazeMesh.cornersOf(boundary.otherRow, childCol);
+					var childWest = childIsSouthOfParent ? childCorners.nw : childCorners.sw;
+					var childEast = childIsSouthOfParent ? childCorners.ne : childCorners.se;
+
+					var splitWest = MazeMesh.cornerAt(parentOuterTheta, entry.phiStart);
+					var splitEast = MazeMesh.cornerAt(parentOuterTheta, entry.phiEnd);
+
+					assertSamePoint(splitWest, childWest);
+					assertSamePoint(splitEast, childEast);
+				}
+			}
+		}
 	}
 
 	function assertSamePoint(a:h3d.Vector, b:h3d.Vector):Void {

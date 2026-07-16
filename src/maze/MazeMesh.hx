@@ -106,7 +106,8 @@ class MazeMesh {
 		});
 	}
 
-	static function cornerAt(theta:Float, phi:Float):h3d.Vector {
+	/** A point on the maze's sphere at the given spherical coordinates. Public so `WallBuilder` can build split boundary pieces from it directly. **/
+	public static function cornerAt(theta:Float, phi:Float):h3d.Vector {
 		return game.SphereMath.sphericalToCartesian(MazeGeometry.RADIUS, theta, phi);
 	}
 
@@ -118,14 +119,15 @@ class MazeMesh {
 		— and each side's wall piece, built from these same points — connect
 		seamlessly to each other.
 		@param row the cell's row (1 to Maze.ROWS - 2).
-		@param col the cell's column (0 to Maze.COLS - 1).
+		@param col the cell's column (0 to Maze.colsForRow(row) - 1).
 		@return the cell's four outer corners.
 	**/
 	public static function cornersOf(row:Int, col:Int):CellCorners {
 		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
-		var halfPhi = Math.PI / Maze.COLS;
+		var cols = Maze.colsForRow(row);
+		var halfPhi = Math.PI / cols;
 		var theta = Math.PI * row / (Maze.ROWS - 1);
-		var phi = 2 * Math.PI * (col + 0.5) / Maze.COLS;
+		var phi = 2 * Math.PI * (col + 0.5) / cols;
 
 		return {
 			nw: cornerAt(theta - halfTheta, phi - halfPhi),
@@ -149,19 +151,21 @@ class MazeMesh {
 		distortion `cornersOf`'s fixed `halfPhi` already has) so it's a
 		consistent linear WALL_THICKNESS at any latitude, not a fixed angle.
 		Clamped to the cell's own half-width so a cell doesn't invert near a
-		pole, where a few columns can physically be narrower than
-		WALL_THICKNESS itself — the ring row nearest either pole is the
-		tightest fit by construction, a pre-existing distortion of the
-		lat/long grid this doesn't attempt to fix.
+		pole, where a column could otherwise be physically narrower than
+		WALL_THICKNESS itself — much less likely now that `Maze.colsForRow`
+		reduces column count near the poles specifically to keep cell width
+		from collapsing there, but still a real possibility for a small or
+		oddly-tuned `WALL_THICKNESS`, so the clamp stays.
 		@param row the cell's row (1 to Maze.ROWS - 2).
-		@param col the cell's column (0 to Maze.COLS - 1).
+		@param col the cell's column (0 to Maze.colsForRow(row) - 1).
 		@return the cell's four inner corners.
 	**/
 	public static function innerCornersOf(row:Int, col:Int):CellCorners {
 		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
-		var halfPhi = Math.PI / Maze.COLS;
+		var cols = Maze.colsForRow(row);
+		var halfPhi = Math.PI / cols;
 		var theta = Math.PI * row / (Maze.ROWS - 1);
-		var phi = 2 * Math.PI * (col + 0.5) / Maze.COLS;
+		var phi = 2 * Math.PI * (col + 0.5) / cols;
 
 		var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / MazeGeometry.RADIUS);
 		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(theta)));
@@ -179,7 +183,7 @@ class MazeMesh {
 	/** Walks every ring cell, calling `f` with its row/col. **/
 	static function eachCell(f:(row:Int, col:Int) -> Void):Void {
 		for (row in 1...(Maze.ROWS - 1)) {
-			for (col in 0...Maze.COLS) {
+			for (col in 0...Maze.colsForRow(row)) {
 				f(row, col);
 			}
 		}
@@ -228,16 +232,88 @@ private class WallBuilder {
 		this.maze = maze;
 	}
 
-	/** Adds this cell's own piece for each of its closed sides. **/
+	/**
+		Adds this cell's own piece for each of its closed sides. West/east
+		are always exactly one piece (column count never changes within a
+		row); north/south go through `addRowBoundaryPieces` instead of a
+		single `maybeAddPiece` call, since a row boundary where column count
+		doubles moving away from a pole means more than one piece — see its
+		own doc comment.
+	**/
 	public function addWallsAround(row:Int, col:Int):Void {
 		var outer = MazeMesh.cornersOf(row, col);
 		var inner = MazeMesh.innerCornersOf(row, col);
 		var here = RingNode(row, col);
+		var cols = Maze.colsForRow(row);
 
-		maybeAddPiece(here, RingNode(row, (col - 1 + Maze.COLS) % Maze.COLS), outer.nw, outer.sw, inner.nw, inner.sw);
-		maybeAddPiece(here, RingNode(row, (col + 1) % Maze.COLS), outer.se, outer.ne, inner.se, inner.ne);
-		maybeAddPiece(here, row == 1 ? PoleNode(North) : RingNode(row - 1, col), outer.ne, outer.nw, inner.ne, inner.nw);
-		maybeAddPiece(here, row == Maze.ROWS - 2 ? PoleNode(South) : RingNode(row + 1, col), outer.sw, outer.se, inner.sw, inner.se);
+		maybeAddPiece(here, RingNode(row, (col - 1 + cols) % cols), outer.nw, outer.sw, inner.nw, inner.sw);
+		maybeAddPiece(here, RingNode(row, (col + 1) % cols), outer.se, outer.ne, inner.se, inner.ne);
+
+		if (row == 1) {
+			maybeAddPiece(here, PoleNode(North), outer.ne, outer.nw, inner.ne, inner.nw);
+		} else {
+			addRowBoundaryPieces(here, row, col, row - 1, true);
+		}
+		if (row == Maze.ROWS - 2) {
+			maybeAddPiece(here, PoleNode(South), outer.sw, outer.se, inner.sw, inner.se);
+		} else {
+			addRowBoundaryPieces(here, row, col, row + 1, false);
+		}
+	}
+
+	/**
+		Adds this cell's piece(s) for its north (`towardNorth = true`) or
+		south side, toward `otherRow` — one piece per
+		`Maze.rowBoundaryNeighbors` entry, each spanning only that entry's
+		own fraction of this cell's phi width (matching whichever of
+		`otherRow`'s cells actually borders it there), rather than assuming
+		a single neighbor spans the whole side the way west/east always do.
+
+		An entry's `phiStart`/`phiEnd` are already this cell's true *outer*
+		boundary phi for that fraction (`Maze.rowBoundaryNeighbors` computes
+		them the same way `cornersOf` does) — used directly for the outer
+		corners. The matching *inner* corners need the same fraction
+		applied to this cell's own (narrower) inset phi range instead, so a
+		split piece still tapers the same way a whole one does — computed
+		by re-deriving each entry's fraction of the *outer* range and
+		applying it to the *inner* one.
+		@param here this cell's own node.
+		@param row this cell's row.
+		@param col this cell's column.
+		@param otherRow the row on the other side of this side — row - 1 or row + 1.
+		@param towardNorth whether this is the north (smaller theta) side or the south (larger theta) one.
+	**/
+	function addRowBoundaryPieces(here:MazeNode, row:Int, col:Int, otherRow:Int, towardNorth:Bool):Void {
+		var theta = Math.PI * row / (Maze.ROWS - 1);
+		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
+		var cols = Maze.colsForRow(row);
+		var centerPhi = 2 * Math.PI * (col + 0.5) / cols;
+		var halfPhi = Math.PI / cols;
+		var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / MazeGeometry.RADIUS);
+		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(theta)));
+		var innerHalfPhi = halfPhi - insetPhi;
+
+		var outerTheta = towardNorth ? theta - halfTheta : theta + halfTheta;
+		var innerTheta = towardNorth ? theta - (halfTheta - insetTheta) : theta + (halfTheta - insetTheta);
+		var outerRangeStart = centerPhi - halfPhi;
+		var innerRangeStart = centerPhi - innerHalfPhi;
+
+		for (entry in Maze.rowBoundaryNeighbors(row, col, otherRow)) {
+			var fractionStart = (entry.phiStart - outerRangeStart) / (2 * halfPhi);
+			var fractionEnd = (entry.phiEnd - outerRangeStart) / (2 * halfPhi);
+			var innerPhiStart = innerRangeStart + fractionStart * (2 * innerHalfPhi);
+			var innerPhiEnd = innerRangeStart + fractionEnd * (2 * innerHalfPhi);
+
+			// North orders its two corners (east, west); south orders them
+			// (west, east) — matches cornersOf/innerCornersOf's own nw/ne
+			// vs sw/se ordering for a whole (unsplit) piece.
+			var outerA = MazeMesh.cornerAt(outerTheta, towardNorth ? entry.phiEnd : entry.phiStart);
+			var outerB = MazeMesh.cornerAt(outerTheta, towardNorth ? entry.phiStart : entry.phiEnd);
+			var innerA = MazeMesh.cornerAt(innerTheta, towardNorth ? innerPhiEnd : innerPhiStart);
+			var innerB = MazeMesh.cornerAt(innerTheta, towardNorth ? innerPhiStart : innerPhiEnd);
+
+			maybeAddPiece(here, entry.node, outerA, outerB, innerA, innerB);
+		}
 	}
 
 	/**

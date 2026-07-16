@@ -52,7 +52,32 @@ class Main extends hxd.App {
 		// of a position — the standard FPS mouse-look. Per hxd.Window's own
 		// doc, this only engages on the player's first click on the canvas
 		// (a browser requirement for pointer lock); nothing else to wire up.
-		hxd.Window.getInstance().mouseMode = Relative(onMouseMove, true);
+		var window = hxd.Window.getInstance();
+		window.mouseMode = Relative(onMouseMove, true);
+		window.onMouseModeChange = keepWantingRelativeMouse;
+	}
+
+	/**
+		Pressing Escape (or switching tabs) exits the browser's pointer lock,
+		which `hxd.Window` reports by force-changing `mouseMode` to
+		`Absolute` — without this override, the game would just stay there,
+		since nothing else ever re-requests `Relative`, leaving mouse-look
+		permanently dead until a page reload. Forcing the change right back
+		to `Relative` here doesn't re-acquire the lock immediately (the
+		caller guards against that itself right after an Escape, per
+		`hxd.impl.MouseMode`'s own doc), it just keeps the *mode* — not the
+		lock — set to `Relative`, which is what makes the documented
+		"first click on the canvas re-captures the mouse" behavior kick in
+		again on the very next click.
+		@param from the mouse mode being changed away from.
+		@param to the mouse mode being forced to.
+		@return the mouse mode to actually use instead of `to`, or null to accept it as-is.
+	**/
+	function keepWantingRelativeMouse(from:hxd.impl.MouseMode, to:hxd.impl.MouseMode):Null<hxd.impl.MouseMode> {
+		return switch to {
+			case Absolute: Relative(onMouseMove, true);
+			case other: null;
+		}
 	}
 
 	function onMouseMove(e:hxd.Event):Void {

@@ -133,6 +133,23 @@ class Player {
 	}
 
 	/**
+		Translates `pos` by `distance` along `direction` — a unit tangent at
+		`pos`, not necessarily `forward` — without touching `forward` at all.
+		Same great-circle math as `moveForward`, minus the facing rotation:
+		for sliding along a wall (see `game.Collision`), where the player's
+		body gets redirected but their view shouldn't snap to match it.
+		@param direction unit tangent at `pos` to move along.
+		@param distance arc length to move; negative moves the opposite way.
+		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
+	**/
+	public function moveAlong(direction:h3d.Vector, distance:Float, radius:Float):Void {
+		var posDir = pos.normalized();
+		var angle = distance / radius;
+		var axis = posDir.cross(direction).normalized();
+		pos = SphereMath.rotateAroundAxis(posDir, axis, angle).scaled(radius);
+	}
+
+	/**
 		Rotates `forward` by `deltaAngle` radians around the local "up" axis
 		(toward the sphere's center).
 		@param deltaAngle angle to turn by, in radians.

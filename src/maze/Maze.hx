@@ -172,6 +172,23 @@ class Maze {
 	}
 
 	/**
+		A node's nominal position in spherical coordinates — the same
+		theta/phi `MazeMesh` derives a cell's corners around. For a pole this
+		is theta=0/pi at an arbitrary phi (meaningless there — the point
+		itself is what matters, see `entities.Player`'s class doc on the
+		phi singularity at the poles).
+		@param node the node to find the nominal center of.
+		@return the node's center in spherical coordinates.
+	**/
+	public static function centerOf(node:MazeNode):{theta:Float, phi:Float} {
+		return switch node {
+			case PoleNode(North): {theta: 0.0, phi: 0.0};
+			case PoleNode(South): {theta: Math.PI, phi: 0.0};
+			case RingNode(row, col): {theta: Math.PI * row / (ROWS - 1), phi: 2 * Math.PI * col / COLS};
+		}
+	}
+
+	/**
 		Whether the maze has an open passage between two (necessarily
 		adjacent) nodes.
 		@param maze the maze to query.

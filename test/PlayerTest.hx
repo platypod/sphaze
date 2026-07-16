@@ -52,6 +52,32 @@ class PlayerTest extends Test {
 		Assert.floatEquals(0, player.pos.normalized().dot(player.forward), 1e-9);
 	}
 
+	function testMoveAlongMatchesArcLength():Void {
+		var radius = 50.0;
+		var player = Player.spawnAt(1.1, 2.2, 0.7, radius);
+		var oldPosDir = player.pos.normalized();
+		var direction = game.SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
+
+		player.moveAlong(direction, 4, radius);
+
+		Assert.floatEquals(radius, player.pos.length(), 1e-9);
+		var angle = Math.acos(hxd.Math.clamp(oldPosDir.dot(player.pos.normalized()), -1, 1));
+		Assert.floatEquals(4 / radius, angle, 1e-9);
+	}
+
+	function testMoveAlongDoesNotRotateForward():Void {
+		var radius = 50.0;
+		var player = Player.spawnAt(1.1, 2.2, 0.7, radius);
+		var oldForward = player.forward;
+		var direction = game.SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
+
+		player.moveAlong(direction, 4, radius);
+
+		Assert.floatEquals(oldForward.x, player.forward.x, 1e-9);
+		Assert.floatEquals(oldForward.y, player.forward.y, 1e-9);
+		Assert.floatEquals(oldForward.z, player.forward.z, 1e-9);
+	}
+
 	function testMoveForwardIgnoresPitch():Void {
 		// WASD-style movement stays on the ground regardless of where the
 		// camera is looking — same as any FPS.

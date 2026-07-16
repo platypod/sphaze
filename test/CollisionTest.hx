@@ -40,6 +40,53 @@ class CollisionTest extends Test {
 		assertMoveAcrossEdge(false);
 	}
 
+	function testMoveAtAnAngleIntoAClosedEdgeSlidesAlongTheWallInstead():Void {
+		var maze = Maze.generate(new SeededRandom(3).next);
+		var pair = findPair(maze, false);
+		if (pair == null) {
+			Assert.fail("no closed edge found for this seed — pick another");
+			return;
+		}
+
+		var fromCenter = Maze.centerOf(pair.from);
+		var toCenter = Maze.centerOf(pair.to);
+		var fromDir = SphereMath.sphericalToCartesian(1, fromCenter.theta, fromCenter.phi);
+		var toDir = SphereMath.sphericalToCartesian(1, toCenter.theta, toCenter.phi);
+		var axis = fromDir.cross(toDir).normalized();
+		var fullAngle = Math.acos(hxd.Math.clamp(fromDir.dot(toDir), -1, 1));
+
+		// The wall sits exactly halfway between the two centers (a regular
+		// grid, both cells the same size) — placed just short of it, still
+		// clearly within `pair.from`, rather than at the middle of the cell.
+		var gap = 0.1;
+		var pos0Dir = SphereMath.rotateAroundAxis(fromDir, axis, fullAngle / 2 - gap / RADIUS);
+		var pos0 = pos0Dir.scaled(RADIUS);
+
+		// intoWall: continuing straight on toward the neighbor from here.
+		// wallTangent: perpendicular to that, in the tangent plane — exactly
+		// what Collision.slideAlong itself derives from the blocked node.
+		var intoWall = axis.cross(pos0Dir).normalized();
+		var wallTangent = pos0Dir.cross(toDir).normalized();
+		// Squarely between "straight at the wall" and "along the wall" —
+		// enough of an angle that a real wall should redirect it, not stop it.
+		var forward = intoWall.add(wallTangent).normalized();
+		var distance = 0.5; // comfortably covers the small remaining gap even split diagonally
+
+		var player = new Player(pos0, forward);
+		var moved = Collision.tryMoveForward(player, distance, RADIUS, maze);
+
+		Assert.isTrue(moved);
+		Assert.isTrue(player.pos.sub(pos0).length() > 0.01); // actually slid, not just stopped
+		Assert.floatEquals(RADIUS, player.pos.length(), 1e-6); // stayed on the sphere
+		// Sliding redirects movement, not where the player is looking.
+		Assert.floatEquals(forward.x, player.forward.x, 1e-9);
+		Assert.floatEquals(forward.y, player.forward.y, 1e-9);
+		Assert.floatEquals(forward.z, player.forward.z, 1e-9);
+
+		var landedNode = Maze.nodeAt(SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos));
+		Assert.isTrue(Maze.nodeKey(landedNode) == Maze.nodeKey(pair.from) || Maze.isOpen(maze, pair.from, landedNode));
+	}
+
 	function assertMoveAcrossEdge(wantOpen:Bool):Void {
 		var maze = Maze.generate(new SeededRandom(3).next);
 		var pair = findPair(maze, wantOpen);
@@ -48,8 +95,8 @@ class CollisionTest extends Test {
 			return;
 		}
 
-		var fromCenter = centerOf(pair.from);
-		var toCenter = centerOf(pair.to);
+		var fromCenter = Maze.centerOf(pair.from);
+		var toCenter = Maze.centerOf(pair.to);
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, fromCenter.theta, fromCenter.phi);
 		var posTarget = SphereMath.sphericalToCartesian(RADIUS, toCenter.theta, toCenter.phi);
 
@@ -80,14 +127,5 @@ class CollisionTest extends Test {
 			}
 		}
 		return null;
-	}
-
-	/** A node's center in spherical coordinates — mirrors MazeMesh.cornersOf's own theta/phi formula. **/
-	function centerOf(node:MazeNode):{theta:Float, phi:Float} {
-		return switch node {
-			case PoleNode(North): {theta: 0.0, phi: 0.0};
-			case PoleNode(South): {theta: Math.PI, phi: 0.0};
-			case RingNode(row, col): {theta: Math.PI * row / (Maze.ROWS - 1), phi: 2 * Math.PI * col / Maze.COLS};
-		}
 	}
 }

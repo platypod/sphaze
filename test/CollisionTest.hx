@@ -173,7 +173,6 @@ class CollisionTest extends Test {
 		// happened, ever again.
 		var row = 5;
 		var col = 10;
-		var here = RingNode(row, col);
 		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
 
 		var centerTheta = Math.PI * row / (Maze.ROWS - 1);

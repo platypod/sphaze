@@ -439,25 +439,35 @@ private class WallBuilder {
 		An entry's `phiStart`/`phiEnd` are already this cell's true *outer*
 		boundary phi for that fraction (`Maze.rowBoundaryNeighbors` computes
 		them the same way `cornersOf` does) — used directly for the outer
-		corners. The matching *inner* corners need the same fraction
-		applied to this cell's own (narrower) inset phi range instead, so a
-		split piece still tapers the same way a whole one does — computed
-		by re-deriving each entry's fraction of the *outer* range and
-		applying it to the *inner* one. That inset phi range uses this
-		side's own boundary theta (`outerTheta`) for the curvature
-		correction, not this cell's center theta — matching
-		`innerCornersOf`'s own fix for the same reason: this side's west/east
-		ends have to land on the exact same points `innerCornersOf` computes
-		for this cell's west/east pieces, or the two would meet at a corner
-		with mismatched inner edges again, just relocated from a row boundary
-		to a west/east one.
+		corners. The matching *inner* corners need the same fraction applied
+		to this cell's own inner phi range instead, so a split piece still
+		tapers the same way a whole one does — computed by re-deriving each
+		entry's fraction of the *outer* range and applying it to the *inner*
+		one. That inset phi range uses this side's own boundary theta
+		(`outerTheta`) for the curvature correction, not this cell's center
+		theta — matching `innerCornersOf`'s own fix for the same reason:
+		this side's west/east ends have to land on the exact same points
+		`innerCornersOf` computes for this cell's west/east pieces, or the
+		two would meet at a corner with mismatched inner edges again, just
+		relocated from a row boundary to a west/east one.
+
+		The inner range's own west and east ends independently retreat (or
+		not) the same way a west/east piece's north/south ends do (see
+		`continuesAcrossColumnBoundary`): retreat only where a real
+		perpendicular wall needs the room or the side is a genuine dead
+		end, and run the full outer width through where this same
+		north/south wall instead continues straight into the next column —
+		otherwise it pinches into a wedge at *every* column it crosses the
+		same way an unfixed west/east wall pinched at every row.
+
 		Each entry's end caps are skipped wherever whatever's adjacent to it
-		there is also closed (see `maybeAddPiece`'s doc): its outermost
-		(westmost/eastmost) end against this cell's own west/east wall, and
-		— when this side is itself split into more than one entry — each
-		interior end against its neighboring entry, so two closed sub-pieces
-		of the *same* logical side connect plainly too, not just a whole
-		side against a perpendicular one.
+		there is also closed or flush (see `maybeAddPiece`'s doc): its
+		outermost (westmost/eastmost) end against this cell's own west/east
+		wall (or its continuation), and — when this side is itself split
+		into more than one entry — each interior end against its
+		neighboring entry, so two closed sub-pieces of the *same* logical
+		side connect plainly too, not just a whole side against a
+		perpendicular one.
 		@param here this cell's own node.
 		@param row this cell's row.
 		@param col this cell's column.
@@ -477,17 +487,23 @@ private class WallBuilder {
 		var outerTheta = towardNorth ? theta - halfTheta : theta + halfTheta;
 		var innerTheta = towardNorth ? theta - (halfTheta - insetTheta) : theta + (halfTheta - insetTheta);
 		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(outerTheta)));
-		var innerHalfPhi = halfPhi - insetPhi;
 		var outerRangeStart = centerPhi - halfPhi;
-		var innerRangeStart = centerPhi - innerHalfPhi;
+		var outerRangeEnd = centerPhi + halfPhi;
+
+		var westNeighborCol = (col - 1 + cols) % cols;
+		var eastNeighborCol = (col + 1) % cols;
+		var westFlush = !westClosed && continuesAcrossColumnBoundary(row, westNeighborCol, otherRow, true);
+		var eastFlush = !eastClosed && continuesAcrossColumnBoundary(row, eastNeighborCol, otherRow, false);
+		var innerRangeStart = westFlush ? outerRangeStart : outerRangeStart + insetPhi;
+		var innerRangeEnd = eastFlush ? outerRangeEnd : outerRangeEnd - insetPhi;
 
 		var entries = Maze.rowBoundaryNeighbors(row, col, otherRow);
 		for (i in 0...entries.length) {
 			var entry = entries[i];
 			var fractionStart = (entry.phiStart - outerRangeStart) / (2 * halfPhi);
 			var fractionEnd = (entry.phiEnd - outerRangeStart) / (2 * halfPhi);
-			var innerPhiStart = innerRangeStart + fractionStart * (2 * innerHalfPhi);
-			var innerPhiEnd = innerRangeStart + fractionEnd * (2 * innerHalfPhi);
+			var innerPhiStart = innerRangeStart + fractionStart * (innerRangeEnd - innerRangeStart);
+			var innerPhiEnd = innerRangeStart + fractionEnd * (innerRangeEnd - innerRangeStart);
 
 			// North orders its two corners (east, west); south orders them
 			// (west, east) — matches cornersOf/innerCornersOf's own nw/ne
@@ -497,13 +513,37 @@ private class WallBuilder {
 			var innerA = MazeMesh.cornerAt(innerTheta, towardNorth ? innerPhiEnd : innerPhiStart);
 			var innerB = MazeMesh.cornerAt(innerTheta, towardNorth ? innerPhiStart : innerPhiEnd);
 
-			var westEndOpen = i == 0 ? !westClosed : Maze.isOpen(maze, here, entries[i - 1].node);
-			var eastEndOpen = i == entries.length - 1 ? !eastClosed : Maze.isOpen(maze, here, entries[i + 1].node);
-			var capA = towardNorth ? eastEndOpen : westEndOpen;
-			var capB = towardNorth ? westEndOpen : eastEndOpen;
+			var westEndCap = i == 0 ? (!westClosed && !westFlush) : Maze.isOpen(maze, here, entries[i - 1].node);
+			var eastEndCap = i == entries.length - 1 ? (!eastClosed && !eastFlush) : Maze.isOpen(maze, here, entries[i + 1].node);
+			var capA = towardNorth ? eastEndCap : westEndCap;
+			var capB = towardNorth ? westEndCap : eastEndCap;
 
 			maybeAddPiece(here, entry.node, outerA, outerB, innerA, innerB, capA, capB);
 		}
+	}
+
+	/**
+		Whether a north/south wall piece genuinely continues straight past a
+		west/east boundary, rather than meeting a perpendicular wall or
+		simply ending — true only when the neighbor there has its own
+		matching row-boundary entry (toward the same `otherRow`) also
+		closed, carrying the same wall into the next column. West/east
+		neighbors always share this row's own column count (only north/
+		south crosses a resolution change), so unlike
+		`continuesAcrossRowBoundary` there's no doubling to account for —
+		just whichever of the neighbor's own (possibly still split) entries
+		is physically adjacent to this cell.
+		@param row this row.
+		@param neighborCol the west or east neighbor's column.
+		@param otherRow the row this side's entries lead toward.
+		@param wantNeighborsEastmostEntry whether to check the neighbor's eastmost entry (true, for this cell's west end) or westmost (false, for this cell's east end).
+		@return whether the wall continues flush into that neighbor.
+	**/
+	function continuesAcrossColumnBoundary(row:Int, neighborCol:Int, otherRow:Int, wantNeighborsEastmostEntry:Bool):Bool {
+		var neighborHere = RingNode(row, neighborCol);
+		var neighborEntries = Maze.rowBoundaryNeighbors(row, neighborCol, otherRow);
+		var entry = wantNeighborsEastmostEntry ? neighborEntries[neighborEntries.length - 1] : neighborEntries[0];
+		return !Maze.isOpen(maze, neighborHere, entry.node);
 	}
 
 	/**

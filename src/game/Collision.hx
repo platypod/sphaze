@@ -4,6 +4,7 @@ import entities.Player;
 import maze.Maze;
 import maze.Maze.MazeData;
 import maze.Maze.MazeNode;
+import maze.Maze.RowBoundaryNeighbor;
 
 /**
 	Blocks `Player` from crossing a closed maze edge, sliding along it
@@ -204,6 +205,16 @@ class Collision {
 		segment's own (freshly computed) axis once they cross into the next
 		column.
 
+		The segment's own two corners come from `fromNode`'s specific
+		`Maze.rowBoundaryNeighbors` entry matching `blockedNode`, not
+		`fromNode`'s own full phi width — at a row boundary where column
+		count doubles moving away from a pole, the wall segment actually
+		blocking the step is only *half* that width (see that function's
+		own doc), and using the full width there would span a chord that
+		doesn't match the true wall segment at all, silently reintroducing
+		this same drift-to-a-halt bug at exactly the rows it doesn't apply
+		to elsewhere.
+
 		Either node being a `PoleNode` instead falls back to the plain
 		cross-product tangent against `blockedNode`'s nominal center: `pos`
 		is right at (or immediately next to) the pole in that case, where
@@ -229,21 +240,56 @@ class Collision {
 			return SphereMath.thetaTangentAt(SphereMath.thetaOf(pos), SphereMath.phiOf(pos));
 		}
 
-		var fromCenter = Maze.centerOf(fromNode);
-		var halfPhi = Math.PI / Maze.COLS;
+		var fromCol = ringCol(fromNode);
+		if (fromCol == null) {
+			// unreachable: fromRow != null already means fromNode is a RingNode.
+			return SphereMath.thetaTangentAt(SphereMath.thetaOf(pos), SphereMath.phiOf(pos));
+		}
+
 		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
 		var sign = blockedRow > fromRow ? 1 : -1;
-		var wallTheta = fromCenter.theta + sign * halfTheta;
-		var corner1 = SphereMath.sphericalToCartesian(1, wallTheta, fromCenter.phi - halfPhi);
-		var corner2 = SphereMath.sphericalToCartesian(1, wallTheta, fromCenter.phi + halfPhi);
+		var wallTheta = Math.PI * fromRow / (Maze.ROWS - 1) + sign * halfTheta;
+		var entry = matchingRowBoundaryEntry(fromRow, fromCol, blockedRow, blockedNode);
+		var corner1 = SphereMath.sphericalToCartesian(1, wallTheta, entry.phiStart);
+		var corner2 = SphereMath.sphericalToCartesian(1, wallTheta, entry.phiEnd);
 		var axis = corner1.cross(corner2).normalized();
 		return axis.cross(pos.normalized()).normalized();
+	}
+
+	/**
+		Whichever of `fromNode`'s `Maze.rowBoundaryNeighbors` entries toward
+		`otherRow` is actually `blockedNode` — the specific phi sub-range of
+		the wall segment that blocked the step, not `fromNode`'s own full
+		width (see `wallTangentAlong`'s doc comment for why that distinction
+		matters here specifically).
+		@param row `fromNode`'s row.
+		@param col `fromNode`'s column.
+		@param otherRow the row to find boundary neighbors toward — row - 1 or row + 1.
+		@param blockedNode the specific neighbor to find the matching entry for.
+		@return that entry.
+	**/
+	static function matchingRowBoundaryEntry(row:Int, col:Int, otherRow:Int, blockedNode:MazeNode):RowBoundaryNeighbor {
+		var blockedKey = Maze.nodeKey(blockedNode);
+		for (entry in Maze.rowBoundaryNeighbors(row, col, otherRow)) {
+			if (Maze.nodeKey(entry.node) == blockedKey) {
+				return entry;
+			}
+		}
+		throw 'unreachable: $blockedKey must be one of fromNode\'s own rowBoundaryNeighbors entries toward row $otherRow';
 	}
 
 	/** A `RingNode`'s row, or null for a `PoleNode` (which has no row). **/
 	static function ringRow(node:MazeNode):Null<Int> {
 		return switch node {
 			case RingNode(row, _): row;
+			case PoleNode(_): null;
+		}
+	}
+
+	/** A `RingNode`'s column, or null for a `PoleNode` (which has no column). **/
+	static function ringCol(node:MazeNode):Null<Int> {
+		return switch node {
+			case RingNode(_, col): col;
 			case PoleNode(_): null;
 		}
 	}

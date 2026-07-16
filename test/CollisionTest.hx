@@ -6,6 +6,7 @@ import game.SphereMath;
 import maze.Maze;
 import maze.Maze.MazeNode;
 import maze.Maze.MazeData;
+import maze.Maze.RowBoundaryNeighbor;
 import maze.MazeGeometry;
 import MazeTest.SeededRandom;
 
@@ -162,6 +163,100 @@ class CollisionTest extends Test {
 		// handful of ticks alone would land it; sliding freely covers most
 		// of the nominal distance across all of them.
 		Assert.isTrue(totalMoved > stepDistance * ticks * 0.9);
+	}
+
+	function testSlidingAlongANorthSouthWallAtADoublingBoundaryRowDoesNotStall():Void {
+		// Same shape as testSlidingAlongTheSameWallForManyTicksDoesNotStall,
+		// but sliding along a *north/south* wall (a theta-boundary, using
+		// wallTangentAlong's different-row branch) specifically at row 1 —
+		// row 1 -> row 2 is a doubling boundary, so this is what actually
+		// exercises using the matching rowBoundaryNeighbors entry's own
+		// (half-width) phi range for the chord instead of row 1's full
+		// width, which is the fix this task made.
+		//
+		// Starts centered within a single *sub-entry* (one of the two
+		// children a doubling boundary splits the parent cell's south wall
+		// into), not the parent cell's own center — at a doubling boundary
+		// those aren't the same point. The parent's center sits exactly on
+		// the seam between the two children's sub-segments, which is the
+		// worst possible spot for the chord-tangent approximation (see
+		// wallTangentAlong's doc): the true wall there is two flat quads
+		// meeting at a seam, each on its own slightly different great
+		// circle, and starting exactly at that seam immediately drifts
+		// toward whichever child's corner is nearest, tripping the wall
+		// zone on the very first slide step (confirmed by tracing it: an
+		// instant, not gradual, stall, unlike the reported bug this whole
+		// mechanism fixes). A cell's own natural center is *never* a sub-
+		// entry seam away from a doubling boundary, so this is the correct
+		// stand-in for how a normal, uniform-width slide gets positioned.
+		var row = 1;
+		var maze = Maze.generate(new SeededRandom(1).next);
+		var wall = findFreeStandingSouthWall(maze, row);
+		if (wall == null) {
+			Assert.fail('no free-standing south wall found in row $row for this seed — pick another');
+			return;
+		}
+
+		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
+		var centerPhi = (wall.entry.phiStart + wall.entry.phiEnd) / 2;
+		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
+		var insetTheta = Math.min(halfTheta, (MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE) / RADIUS);
+
+		var theta = centerTheta + (halfTheta - insetTheta) * 0.5;
+		var pos0 = SphereMath.sphericalToCartesian(RADIUS, theta, centerPhi);
+		var thetaTangent = SphereMath.thetaTangentAt(theta, centerPhi);
+		var phiTangent = SphereMath.phiTangentAt(centerPhi);
+		var angle = 15 * Math.PI / 180;
+		var forward = phiTangent.scaled(Math.cos(angle)).add(thetaTangent.scaled(Math.sin(angle))).normalized();
+		var player = new Player(pos0, forward);
+
+		// Fewer ticks/smaller step than the same-row analog: this sub-entry
+		// is half the width of a full boundary segment, so there's less
+		// room before running past its own far edge into the sibling
+		// sub-entry's territory — this test's job is the half-width chord
+		// itself, not the (separate, harder) sub-entry-to-sub-entry seam
+		// crossing.
+		var stepDistance = 0.05;
+		var ticks = 40;
+		var totalMoved = 0.0;
+		for (_ in 0...ticks) {
+			var before = player.pos;
+			Collision.tryMoveForward(player, stepDistance, RADIUS, maze);
+			totalMoved += player.pos.sub(before).length();
+		}
+
+		Assert.isTrue(totalMoved > stepDistance * ticks * 0.9);
+	}
+
+	/**
+		First parent column (in order) of `row` whose full south boundary is
+		closed (every `Maze.rowBoundaryNeighbors` entry toward `row + 1`)
+		while its own west/east stay open for a couple of columns — a free-
+		standing north/south wall with room to slide along.
+		@param maze the maze to search.
+		@param row the row to search within.
+		@return the cell's column and its first south-boundary sub-entry, or null if this seed has none.
+	**/
+	function findFreeStandingSouthWall(maze:MazeData, row:Int):Null<{col:Int, entry:RowBoundaryNeighbor}> {
+		var cols = Maze.colsForRow(row);
+		for (col in 0...cols) {
+			var here = RingNode(row, col);
+			var west = RingNode(row, (col - 1 + cols) % cols);
+			var east = RingNode(row, (col + 1) % cols);
+			var east2 = RingNode(row, (col + 2) % cols);
+			var entries = Maze.rowBoundaryNeighbors(row, col, row + 1);
+			var allClosed = true;
+			for (entry in entries) {
+				if (Maze.isOpen(maze, here, entry.node)) {
+					allClosed = false;
+					break;
+				}
+			}
+			if (allClosed && Maze.isOpen(maze, here, west) && Maze.isOpen(maze, here, east) && Maze.isOpen(maze, east, east2)) {
+				return {col: col, entry: entries[0]};
+			}
+		}
+		return null;
 	}
 
 	function testRetreatingFromASquareOnWallHitAlwaysMakesProgress():Void {

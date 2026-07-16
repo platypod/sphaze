@@ -87,11 +87,19 @@ class Main extends hxd.App {
 		}
 		// Q/D strafe sideways rather than turn — the player's body moves
 		// without them choosing to face that way, same as forward/backward.
+		// rightVector() (forward.cross(up)) is the standard right-handed
+		// "right", but Heaps' camera is left-handed (s3d.camera.rightHanded
+		// == false) — its actual on-screen right is the *opposite* of that,
+		// confirmed via camera.getRight(). So +rightVector() is screen
+		// *left* and -rightVector() is screen *right* here. rightVector()
+		// itself stays as-is since applyToCamera's pitch axis needs it
+		// (flipping it there would flip which way lookUp tilts); the
+		// correction lives here instead.
 		if (hxd.Key.isDown(hxd.Key.Q)) {
-			Collision.tryMove(player, player.rightVector(), -WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+			Collision.tryMove(player, player.rightVector(), WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
 		}
 		if (hxd.Key.isDown(hxd.Key.D)) {
-			Collision.tryMove(player, player.rightVector(), WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+			Collision.tryMove(player, player.rightVector(), -WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
 		}
 
 		updateSpaceTilt(dt);

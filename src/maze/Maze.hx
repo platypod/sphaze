@@ -199,4 +199,75 @@ class Maze {
 	public static function isOpen(maze:MazeData, a:MazeNode, b:MazeNode):Bool {
 		return maze.openEdges.exists(edgeKey(a, b));
 	}
+
+	/**
+		Which of `node`'s neighbors, if any, the position (theta, phi) has
+		crossed into the *wall-zone* of — the strip between this cell's own
+		inner boundary and its true outer boundary (see
+		`MazeMesh.innerCornersOf`) on whichever side has a closed edge. Lets
+		`game.Collision` block movement at the wall's actual visible face
+		instead of the old zero-thickness boundary line the wall no longer
+		sits on — without this, a player could walk into (and partway
+		through) a wall's rendered thickness before anything stopped them.
+
+		Returns null for `PoleNode` unconditionally: the merged pole cap
+		isn't subdivided by column, so it has no per-neighbor wall-zone
+		concept the way a ring cell does. A player approaching a wall right
+		at the pole boundary is still stopped by the ordinary node-transition
+		check in `Collision.tryMoveForward` (just at the old zero-thickness
+		line rather than the wall's actual face) — a known, small gap in an
+		already-distorted corner of the grid, not solved here.
+		@param maze the maze whose closed edges have thickness.
+		@param node the cell the position is nominally within.
+		@param theta the position's polar angle.
+		@param phi the position's azimuth.
+		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
+		@return the neighbor whose wall-zone was entered, or null if the position is still within node's own walkable area.
+	**/
+	public static function wallZoneNeighbor(maze:MazeData, node:MazeNode, theta:Float, phi:Float, radius:Float):Null<MazeNode> {
+		switch node {
+			case PoleNode(_):
+				return null;
+			case RingNode(row, col):
+				var center = centerOf(node);
+				var halfTheta = Math.PI / (ROWS - 1) / 2;
+				var halfPhi = Math.PI / COLS;
+				var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / radius);
+				var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (radius * Math.sin(center.theta)));
+
+				var dTheta = theta - center.theta;
+				var dPhi = wrapAngle(phi - center.phi);
+
+				var west = RingNode(row, (col - 1 + COLS) % COLS);
+				var east = RingNode(row, (col + 1) % COLS);
+				var north = row == 1 ? PoleNode(North) : RingNode(row - 1, col);
+				var south = row == ROWS - 2 ? PoleNode(South) : RingNode(row + 1, col);
+
+				if (dPhi < -(halfPhi - insetPhi) && !isOpen(maze, node, west)) {
+					return west;
+				}
+				if (dPhi > (halfPhi - insetPhi) && !isOpen(maze, node, east)) {
+					return east;
+				}
+				if (dTheta < -(halfTheta - insetTheta) && !isOpen(maze, node, north)) {
+					return north;
+				}
+				if (dTheta > (halfTheta - insetTheta) && !isOpen(maze, node, south)) {
+					return south;
+				}
+				return null;
+		}
+	}
+
+	/** Normalizes an angular difference to (-pi, pi] so a cell near phi=0/2*pi wraps correctly. **/
+	static function wrapAngle(delta:Float):Float {
+		var wrapped = delta;
+		while (wrapped > Math.PI) {
+			wrapped -= 2 * Math.PI;
+		}
+		while (wrapped < -Math.PI) {
+			wrapped += 2 * Math.PI;
+		}
+		return wrapped;
+	}
 }

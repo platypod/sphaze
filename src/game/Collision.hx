@@ -10,28 +10,26 @@ import maze.Maze.MazeNode;
 	along it instead of stopping dead when it's hit at an angle. Kept as a
 	thin wrapper around `Player` rather than teaching `Player` about `Maze` —
 	`Player` is otherwise fully maze-agnostic (see its class doc), and the
-	only thing collision needs is the node the player was in versus the node
-	it ends up in.
+	only thing collision needs is the node the player was in versus whatever
+	blocks the step.
 
 	Works per fixed-timestep step, not by sweeping the whole path against
-	wall geometry: a step that starts and ends in the same node never
-	touches a wall (walls only sit on node boundaries), and a step landing in
-	a different node is only allowed if that specific edge is open. A step
-	fast enough to jump clean over an intervening node in one tick would slip
-	through unnoticed, but at `Main.WALK_SPEED` versus the grid's cell size
-	that doesn't happen in practice.
+	wall geometry. A step is blocked one of two ways (see `blockingNode`):
+	entering the *wall-zone* of a closed side without necessarily leaving the
+	current node (the thickness a wall actually occupies, per
+	`Maze.wallZoneNeighbor` — this is the common case now that walls have
+	real thickness, not the zero-width planes they started as), or, as a
+	fallback for a step large enough to skip clean over that check, landing
+	directly in a different, non-open node. At `Main.WALK_SPEED` versus the
+	grid's cell size the fallback essentially never fires in practice.
 **/
 class Collision {
 	/**
 		Attempts to move `player` forward by `distance`. A step that would
-		cross a closed edge is rolled back and re-tried as a slide along that
-		wall instead (see `slideAlong`) — approaching square-on leaves ~nothing
-		to slide with, approaching at a shallow angle keeps most of it, same
-		physics as any FPS wall-slide. Moving within a single node (no edge
-		crossed) is always allowed, including diagonal steps that skip past a
-		grid corner without landing in a node adjacent to the start —
-		`Maze.isOpen` reports no edge between non-adjacent nodes, so those are
-		blocked too, same as an actual wall would.
+		cross into a wall's thickness is rolled back and re-tried as a slide
+		along that wall instead (see `slideAlong`) — approaching square-on
+		leaves ~nothing to slide with, approaching at a shallow angle keeps
+		most of it, same physics as any FPS wall-slide.
 		@param player the player to move.
 		@param distance arc length to walk; negative walks backward.
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
@@ -45,14 +43,40 @@ class Collision {
 
 		player.moveForward(distance, radius);
 
-		var toNode = Maze.nodeAt(SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos));
-		if (Maze.nodeKey(fromNode) == Maze.nodeKey(toNode) || Maze.isOpen(maze, fromNode, toNode)) {
+		var blocked = blockingNode(maze, fromNode, SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos), radius);
+		if (blocked == null) {
 			return true;
 		}
 
 		player.pos = oldPos;
 		player.forward = oldForward;
-		return slideAlong(player, fromNode, toNode, oldForward, distance, radius, maze);
+		return slideAlong(player, fromNode, blocked, oldForward, distance, radius, maze);
+	}
+
+	/**
+		Whichever node blocks a position nominally within `fromNode`: a
+		neighbor whose wall-zone (see `Maze.wallZoneNeighbor`) has been
+		entered, or — the fallback described in the class doc — a genuinely
+		different, non-open neighbor landed in directly, for a step large
+		enough to skip clean over the wall-zone check.
+		@param maze the maze whose closed edges block movement.
+		@param fromNode the node the step started in.
+		@param theta the candidate position's polar angle.
+		@param phi the candidate position's azimuth.
+		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
+		@return the node whose wall blocks this position, or null if it's unobstructed.
+	**/
+	static function blockingNode(maze:MazeData, fromNode:MazeNode, theta:Float, phi:Float, radius:Float):Null<MazeNode> {
+		var wallZone = Maze.wallZoneNeighbor(maze, fromNode, theta, phi, radius);
+		if (wallZone != null) {
+			return wallZone;
+		}
+
+		var atNode = Maze.nodeAt(theta, phi);
+		if (Maze.nodeKey(fromNode) != Maze.nodeKey(atNode) && !Maze.isOpen(maze, fromNode, atNode)) {
+			return atNode;
+		}
+		return null;
 	}
 
 	/**
@@ -72,7 +96,7 @@ class Collision {
 		orientation fix exists to avoid).
 		@param player the player to move — `pos` must already be at the pre-blocked position.
 		@param fromNode the node `player` was in before the blocked step.
-		@param blockedNode the node the blocked step would have landed in.
+		@param blockedNode the node whose wall blocked the step (see `blockingNode`).
 		@param forward the direction the blocked step was attempted along.
 		@param distance arc length of the original attempted step.
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
@@ -99,14 +123,14 @@ class Collision {
 		}
 		player.moveAlong(wallTangent, slideDistance, radius);
 
-		var slidNode = Maze.nodeAt(SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos));
-		if (Maze.nodeKey(fromNode) == Maze.nodeKey(slidNode) || Maze.isOpen(maze, fromNode, slidNode)) {
+		if (blockingNode(maze, fromNode, SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos), radius) == null) {
 			return slideDistance != 0;
 		}
 
-		// The slide direction crosses a closed edge too (e.g. right at a
-		// corner) — nowhere to go. moveAlong touched forward as well as pos
-		// (see its doc comment), so both need restoring here, not just pos.
+		// The slide direction crosses into a wall's thickness too (e.g.
+		// right at a corner) — nowhere to go. moveAlong touched forward as
+		// well as pos (see its doc comment), so both need restoring here,
+		// not just pos.
 		player.pos = oldPos;
 		player.forward = oldForward;
 		return false;

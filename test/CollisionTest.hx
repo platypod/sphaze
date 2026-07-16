@@ -6,6 +6,7 @@ import game.SphereMath;
 import maze.Maze;
 import maze.Maze.MazeNode;
 import maze.Maze.MazeData;
+import maze.MazeGeometry;
 import MazeTest.SeededRandom;
 
 /**
@@ -30,6 +31,37 @@ class CollisionTest extends Test {
 		var moved = Collision.tryMoveForward(player, 0.01, RADIUS, maze); // far short of a cell boundary
 
 		Assert.isTrue(moved);
+	}
+
+	function testMoveIntoWallThicknessIsBlockedShortOfTheOldNodeBoundary():Void {
+		// A hand-picked same-row pair rather than a generated maze's first
+		// match, so the wall-zone boundary is a plain single-axis (phi)
+		// computation to reconstruct independently.
+		var row = 5;
+		var col = 10;
+		var here = RingNode(row, col);
+		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
+
+		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
+		var centerPhi = 2 * Math.PI * col / Maze.COLS;
+		var halfPhi = Math.PI / Maze.COLS;
+		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
+
+		// Just inside the wall-zone: past (halfPhi - insetPhi), short of
+		// halfPhi. Maze.nodeAt still classifies this as `here` (confirmed
+		// below) — the pre-thickness model would have allowed walking
+		// further still, right up to halfPhi, since it had no concept of the
+		// wall occupying part of the cell.
+		var phi = centerPhi + (halfPhi - insetPhi / 2);
+		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, phi);
+		var forward = SphereMath.phiTangentAt(phi); // due east, straight at the wall
+
+		Assert.isTrue(Maze.nodeKey(Maze.nodeAt(centerTheta, phi)) == Maze.nodeKey(here));
+
+		var player = new Player(pos0, forward);
+		var moved = Collision.tryMoveForward(player, 0.1, RADIUS, maze); // tiny step, nowhere near nodeAt's own boundary
+
+		Assert.isFalse(moved);
 	}
 
 	function testMoveAcrossAnOpenEdgeSucceedsAndLandsOnTheNeighbor():Void {

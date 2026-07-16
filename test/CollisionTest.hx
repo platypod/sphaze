@@ -156,6 +156,45 @@ class CollisionTest extends Test {
 		Assert.isTrue(totalMoved > stepDistance * ticks * 0.9);
 	}
 
+	function testRetreatingFromASquareOnWallHitAlwaysMakesProgress():Void {
+		// The exact reported bug: walking straight (square-on, not at an
+		// angle) into a wall until pressed right up against its face, then
+		// trying to back away, left the player permanently frozen — not
+		// just slowed, completely stuck, every direction, forever. Root
+		// cause was Maze.wallZoneNeighbor treating "candidate position is
+		// still nominally within the wall's thickness zone" as blocked,
+		// full stop — with no notion of whether the candidate was deeper
+		// into the zone than where the step started. The zone is thicker
+		// than one tick's step distance, so a player already pressed
+		// against the wall can't fully retreat out of it in a single tick;
+		// every subsequent tick saw "still inside the zone", rolled all the
+		// way back to the exact starting position, and a square hit has
+		// nothing to slide with either (see slideAlong) — so nothing ever
+		// happened, ever again.
+		var row = 5;
+		var col = 10;
+		var here = RingNode(row, col);
+		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
+
+		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
+		var centerPhi = 2 * Math.PI * col / Maze.COLS;
+		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, centerPhi);
+		var forward = SphereMath.phiTangentAt(centerPhi); // due east, straight at the wall, square-on
+		var player = new Player(pos0, forward);
+
+		var step = 15.0 / 60; // Main.WALK_SPEED * FIXED_DT, the real per-tick distance
+		for (_ in 0...20) {
+			Collision.tryMoveForward(player, step, RADIUS, maze); // walk into the wall until pressed against it
+		}
+
+		for (_ in 0...20) {
+			var before = player.pos;
+			Collision.tryMoveForward(player, -step, RADIUS, maze); // retreat
+			var moved = player.pos.sub(before).length();
+			Assert.isTrue(moved > step * 0.99);
+		}
+	}
+
 	/**
 		First `RingNode` (in row-major order) whose east edge is closed while
 		its own north/south and the next two rows south stay open — a

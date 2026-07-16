@@ -53,13 +53,15 @@ class Collision {
 		@return true if any movement was applied (a full step or a slide), false if a wall stopped the player outright.
 	**/
 	public static function tryMove(player:Player, direction:h3d.Vector, distance:Float, radius:Float, maze:MazeData):Bool {
-		var fromNode = Maze.nodeAt(SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos));
+		var fromTheta = SphereMath.thetaOf(player.pos);
+		var fromPhi = SphereMath.phiOf(player.pos);
+		var fromNode = Maze.nodeAt(fromTheta, fromPhi);
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 
 		player.moveAlong(direction, distance, radius);
 
-		var blocked = blockingNode(maze, fromNode, SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos), radius);
+		var blocked = blockingNode(maze, fromNode, fromTheta, fromPhi, SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos), radius);
 		if (blocked == null) {
 			return true;
 		}
@@ -72,18 +74,21 @@ class Collision {
 	/**
 		Whichever node blocks a position nominally within `fromNode`: a
 		neighbor whose wall-zone (see `Maze.wallZoneNeighbor`) has been
-		entered, or — the fallback described in the class doc — a genuinely
-		different, non-open neighbor landed in directly, for a step large
-		enough to skip clean over the wall-zone check.
+		entered *more deeply than at* `fromTheta`/`fromPhi`, or — the
+		fallback described in the class doc — a genuinely different,
+		non-open neighbor landed in directly, for a step large enough to
+		skip clean over the wall-zone check.
 		@param maze the maze whose closed edges block movement.
 		@param fromNode the node the step started in.
+		@param fromTheta this tick's starting polar angle, before the attempted move.
+		@param fromPhi this tick's starting azimuth, before the attempted move.
 		@param theta the candidate position's polar angle.
 		@param phi the candidate position's azimuth.
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
 		@return the node whose wall blocks this position, or null if it's unobstructed.
 	**/
-	static function blockingNode(maze:MazeData, fromNode:MazeNode, theta:Float, phi:Float, radius:Float):Null<MazeNode> {
-		var wallZone = Maze.wallZoneNeighbor(maze, fromNode, theta, phi, radius);
+	static function blockingNode(maze:MazeData, fromNode:MazeNode, fromTheta:Float, fromPhi:Float, theta:Float, phi:Float, radius:Float):Null<MazeNode> {
+		var wallZone = Maze.wallZoneNeighbor(maze, fromNode, fromTheta, fromPhi, theta, phi, radius);
 		if (wallZone != null) {
 			return wallZone;
 		}
@@ -107,22 +112,16 @@ class Collision {
 
 		The wall's tangent direction is derived from the grid axis the wall
 		itself is fixed on — `thetaTangentAt` (north-south) for an east/west
-		wall between same-row neighbors, `phiTangentAt` (east-west) for a
-		north/south wall between different rows (or a pole) — evaluated at
-		`player.pos`'s own current theta/phi. Earlier this instead crossed
-		`oldPos`'s direction with `blockedNode`'s fixed nominal center; that
-		matched the true wall direction only near that center, so a long
-		slide (the player's theta drifting away from the blocked node's own
-		row as they travel along the wall) rotated the derived tangent away
-		from the wall until the projected slide distance decayed to zero —
-		the player would gradually grind to a permanent halt mid-slide. Using
-		the player's own position instead stays exact arbitrarily far along
-		the wall. Evaluating theta/phi at `player.pos` is safe here (unlike
-		the singularity `entities.Player`'s own orientation fix avoids)
-		because `blockingNode` never reaches this path for a `PoleNode`
-		(`Maze.wallZoneNeighbor` excludes it, and the fallback fires only
-		once a step has *landed* in a different node, never exactly at the
-		pole point itself).
+		wall between same-row neighbors, evaluated at `player.pos`'s own
+		current theta/phi; a chord between the wall segment's own two
+		corners (north-south wall between different rows, or a pole) for
+		everything else. See `wallTangentAlong`'s doc comment for why these
+		two cases need different treatment — in short, a meridian is a
+		geodesic so it can be recomputed fresh anywhere along it, but a
+		parallel of latitude away from the equator isn't, and evaluating a
+		"tangent to the parallel" fresh every tick sends the player drifting
+		along a slightly different great circle each time, curving deeper
+		into the wall until the slide grinds to a halt.
 		@param player the player to move — `pos` must already be at the pre-blocked position.
 		@param fromNode the node `player` was in before the blocked step.
 		@param blockedNode the node whose wall blocked the step (see `blockingNode`).
@@ -137,6 +136,8 @@ class Collision {
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 		var oldPosDir = oldPos.normalized();
+		var fromTheta = SphereMath.thetaOf(oldPos);
+		var fromPhi = SphereMath.phiOf(oldPos);
 		var wallTangent = wallTangentAlong(fromNode, blockedNode, oldPosDir);
 
 		var slideDistance = distance * attemptedDirection.dot(wallTangent);
@@ -152,7 +153,7 @@ class Collision {
 		}
 		player.moveAlong(wallTangent, slideDistance, radius);
 
-		if (blockingNode(maze, fromNode, SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos), radius) == null) {
+		if (blockingNode(maze, fromNode, fromTheta, fromPhi, SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos), radius) == null) {
 			return slideDistance != 0;
 		}
 
@@ -168,19 +169,48 @@ class Collision {
 	/**
 		Unit tangent along the wall between `fromNode` and `blockedNode`, at
 		`pos`. Same-row `RingNode`s (an east/west neighbor pair) share a
-		latitude, so the wall between them is a meridian — its tangent is
-		`thetaTangentAt`. A different-row pair is a wall along a latitude
-		circle — its tangent is `phiTangentAt`, which doesn't depend on
-		theta at all.
+		latitude, so the wall between them is a meridian — a full great
+		circle — and its tangent, `thetaTangentAt` evaluated fresh at
+		`pos`'s own current theta/phi, stays exact no matter how far along
+		it the player has traveled.
+
+		A different-row pair's wall instead runs along a parallel of
+		latitude, which away from the equator *isn't* a great circle (only
+		the poles' own meridians and the equator itself are geodesics) —
+		`phiTangentAt(phi)` is tangent to that parallel only at the exact
+		instant it's evaluated. Recomputing it fresh every tick (as the
+		same-row case correctly does) sends each tick's step along a
+		slightly different great circle, each one curving away from the
+		parallel toward the equator — i.e. deeper into the wall for a cell
+		north of it, since theta increases toward the equator there — until
+		the slide asymptotically grinds to a halt (confirmed by tracing
+		theta tick-by-tick: it climbs smoothly toward the wall-zone boundary
+		and plateaus just short of crossing it, not a sudden jump).
+
+		Fixed by using the great circle that actually passes through the
+		wall segment's two corners — its plane's normal (`corner1.cross(
+		corner2)`) is a fixed axis, computed once from `fromNode`'s own
+		center, then re-crossed with the player's *current* position fresh
+		every tick to get the tangent there. That stays exact for the whole
+		segment: unlike a "direction" snapshot (which drifts once the
+		player isn't sitting exactly where it was taken), an axis doesn't
+		drift — re-deriving the tangent from a fixed axis against a moving
+		position traces that one great circle exactly, however far along it
+		the player has moved. (An earlier version of this fix used the
+		corners' plain vector difference as the "direction" instead, which
+		looks similar but isn't the actual great-circle tangent except
+		exactly at one corner — it reproduced the same drift-to-a-halt
+		bug it was meant to fix.) The player naturally moves onto the next
+		segment's own (freshly computed) axis once they cross into the next
+		column.
 
 		Either node being a `PoleNode` instead falls back to the plain
 		cross-product tangent against `blockedNode`'s nominal center: `pos`
 		is right at (or immediately next to) the pole in that case, where
-		phi is undefined, so `phiTangentAt`/`thetaTangentAt` would return a
-		meaningless direction. The cross-product is exact for this one
-		endpoint regardless — it's only the same formula's use of a *fixed*
-		center that caused drift over a long same-row slide (see the class
-		doc above), and a pole never has a same-row slide to drift along.
+		phi is undefined, so a chord built from `Maze.centerOf`'s
+		placeholder phi at the pole would be meaningless. The cross-product
+		is exact for this one endpoint regardless, and a pole never has a
+		same-row *or* cross-row slide long enough to drift along.
 		@param fromNode the node the blocked step started in.
 		@param blockedNode the node whose wall blocked the step.
 		@param pos the position to evaluate the tangent at — typically the player's own current position.
@@ -195,8 +225,19 @@ class Collision {
 			return pos.normalized().cross(blockedDir).normalized();
 		}
 
-		var phi = SphereMath.phiOf(pos);
-		return fromRow == blockedRow ? SphereMath.thetaTangentAt(SphereMath.thetaOf(pos), phi) : SphereMath.phiTangentAt(phi);
+		if (fromRow == blockedRow) {
+			return SphereMath.thetaTangentAt(SphereMath.thetaOf(pos), SphereMath.phiOf(pos));
+		}
+
+		var fromCenter = Maze.centerOf(fromNode);
+		var halfPhi = Math.PI / Maze.COLS;
+		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
+		var sign = blockedRow > fromRow ? 1 : -1;
+		var wallTheta = fromCenter.theta + sign * halfTheta;
+		var corner1 = SphereMath.sphericalToCartesian(1, wallTheta, fromCenter.phi - halfPhi);
+		var corner2 = SphereMath.sphericalToCartesian(1, wallTheta, fromCenter.phi + halfPhi);
+		var axis = corner1.cross(corner2).normalized();
+		return axis.cross(pos.normalized()).normalized();
 	}
 
 	/** A `RingNode`'s row, or null for a `PoleNode` (which has no row). **/

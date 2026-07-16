@@ -217,14 +217,30 @@ class Maze {
 		check in `Collision.tryMoveForward` (just at the old zero-thickness
 		line rather than the wall's actual face) — a known, small gap in an
 		already-distorted corner of the grid, not solved here.
+
+		Only flags a side whose zone the position is *more* embedded in than
+		`fromTheta`/`fromPhi` (this tick's starting position) — not simply
+		"still nominally inside" it. The zone is thicker than one tick's
+		step distance, so a player already pressed against a wall (which
+		can legitimately happen — walking right up to its face is allowed)
+		can't fully retreat out of it in a single step; without this
+		comparison, every subsequent tick would see "still inside the zone"
+		and reject the *entire* step back to the exact starting position,
+		forever — a genuine, permanent lockup approaching square-on, where
+		`Collision.slideAlong`'s own square-hit fallback also has nothing to
+		slide with. Comparing against the tick's own starting depth instead
+		allows any move that's a net retreat (or sideways, not changing this
+		axis at all) while still blocking one that digs in further.
 		@param maze the maze whose closed edges have thickness.
 		@param node the cell the position is nominally within.
-		@param theta the position's polar angle.
-		@param phi the position's azimuth.
+		@param fromTheta this tick's starting polar angle, before the attempted move.
+		@param fromPhi this tick's starting azimuth, before the attempted move.
+		@param theta the candidate position's polar angle.
+		@param phi the candidate position's azimuth.
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
-		@return the neighbor whose wall-zone was entered, or null if the position is still within node's own walkable area.
+		@return the neighbor whose wall-zone was entered *more deeply than at the start of this tick*, or null.
 	**/
-	public static function wallZoneNeighbor(maze:MazeData, node:MazeNode, theta:Float, phi:Float, radius:Float):Null<MazeNode> {
+	public static function wallZoneNeighbor(maze:MazeData, node:MazeNode, fromTheta:Float, fromPhi:Float, theta:Float, phi:Float, radius:Float):Null<MazeNode> {
 		switch node {
 			case PoleNode(_):
 				return null;
@@ -237,22 +253,24 @@ class Maze {
 
 				var dTheta = theta - center.theta;
 				var dPhi = wrapAngle(phi - center.phi);
+				var fromDTheta = fromTheta - center.theta;
+				var fromDPhi = wrapAngle(fromPhi - center.phi);
 
 				var west = RingNode(row, (col - 1 + COLS) % COLS);
 				var east = RingNode(row, (col + 1) % COLS);
 				var north = row == 1 ? PoleNode(North) : RingNode(row - 1, col);
 				var south = row == ROWS - 2 ? PoleNode(South) : RingNode(row + 1, col);
 
-				if (dPhi < -(halfPhi - insetPhi) && !isOpen(maze, node, west)) {
+				if (dPhi < -(halfPhi - insetPhi) && dPhi < fromDPhi && !isOpen(maze, node, west)) {
 					return west;
 				}
-				if (dPhi > (halfPhi - insetPhi) && !isOpen(maze, node, east)) {
+				if (dPhi > (halfPhi - insetPhi) && dPhi > fromDPhi && !isOpen(maze, node, east)) {
 					return east;
 				}
-				if (dTheta < -(halfTheta - insetTheta) && !isOpen(maze, node, north)) {
+				if (dTheta < -(halfTheta - insetTheta) && dTheta < fromDTheta && !isOpen(maze, node, north)) {
 					return north;
 				}
-				if (dTheta > (halfTheta - insetTheta) && !isOpen(maze, node, south)) {
+				if (dTheta > (halfTheta - insetTheta) && dTheta > fromDTheta && !isOpen(maze, node, south)) {
 					return south;
 				}
 				return null;

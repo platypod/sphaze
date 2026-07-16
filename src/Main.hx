@@ -14,6 +14,7 @@ class Main extends hxd.App {
 	static inline final BACKGROUND_COLOR:Int = 0x202020;
 	static inline final CAMERA_FOV_Y:Float = 70;
 	static inline final WALK_SPEED:Float = 15;
+	static inline final SPRINT_MULTIPLIER:Float = 1.8;
 	static inline final TURN_SPEED:Float = 2.5;
 	static inline final PITCH_SPEED:Float = 1.5;
 	static inline final MOUSE_SENSITIVITY:Float = 0.0025;
@@ -104,11 +105,12 @@ class Main extends hxd.App {
 		if (hxd.Key.isDown(hxd.Key.RIGHT)) {
 			player.turn(TURN_SPEED * dt);
 		}
+		var speed = hxd.Key.isDown(hxd.Key.SHIFT) ? WALK_SPEED * SPRINT_MULTIPLIER : WALK_SPEED;
 		if (hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z)) {
-			Collision.tryMoveForward(player, WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+			Collision.tryMoveForward(player, speed * dt, MazeGeometry.RADIUS, maze);
 		}
 		if (hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S)) {
-			Collision.tryMoveForward(player, -WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+			Collision.tryMoveForward(player, -speed * dt, MazeGeometry.RADIUS, maze);
 		}
 		// Q/D strafe sideways rather than turn — the player's body moves
 		// without them choosing to face that way, same as forward/backward.
@@ -121,10 +123,10 @@ class Main extends hxd.App {
 		// (flipping it there would flip which way lookUp tilts); the
 		// correction lives here instead.
 		if (hxd.Key.isDown(hxd.Key.Q)) {
-			Collision.tryMove(player, player.rightVector(), WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+			Collision.tryMove(player, player.rightVector(), speed * dt, MazeGeometry.RADIUS, maze);
 		}
 		if (hxd.Key.isDown(hxd.Key.D)) {
-			Collision.tryMove(player, player.rightVector(), -WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
+			Collision.tryMove(player, player.rightVector(), -speed * dt, MazeGeometry.RADIUS, maze);
 		}
 
 		updateSpaceTilt(dt);

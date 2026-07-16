@@ -383,8 +383,9 @@ class Maze {
 				return null;
 			case RingNode(row, col):
 				var center = centerOf(node);
+				var cols = colsForRow(row);
 				var halfTheta = Math.PI / (ROWS - 1) / 2;
-				var halfPhi = Math.PI / COLS;
+				var halfPhi = Math.PI / cols;
 				var blockAt = MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE;
 				var insetTheta = Math.min(halfTheta, blockAt / radius);
 				var insetPhi = Math.min(halfPhi, blockAt / (radius * Math.sin(center.theta)));
@@ -394,10 +395,8 @@ class Maze {
 				var fromDTheta = fromTheta - center.theta;
 				var fromDPhi = wrapAngle(fromPhi - center.phi);
 
-				var west = RingNode(row, (col - 1 + COLS) % COLS);
-				var east = RingNode(row, (col + 1) % COLS);
-				var north = row == 1 ? PoleNode(North) : RingNode(row - 1, col);
-				var south = row == ROWS - 2 ? PoleNode(South) : RingNode(row + 1, col);
+				var west = RingNode(row, (col - 1 + cols) % cols);
+				var east = RingNode(row, (col + 1) % cols);
 
 				if (dPhi < -(halfPhi - insetPhi) && dPhi < fromDPhi && !isOpen(maze, node, west)) {
 					return west;
@@ -405,14 +404,58 @@ class Maze {
 				if (dPhi > (halfPhi - insetPhi) && dPhi > fromDPhi && !isOpen(maze, node, east)) {
 					return east;
 				}
-				if (dTheta < -(halfTheta - insetTheta) && dTheta < fromDTheta && !isOpen(maze, node, north)) {
-					return north;
+				// North/south can be more than one node (a row boundary where
+				// column count doubles moving away from a pole) — pick
+				// whichever one the candidate's own phi actually sits above,
+				// matching whatever MazeMesh renders there.
+				if (dTheta < -(halfTheta - insetTheta) && dTheta < fromDTheta) {
+					var north = row == 1 ? PoleNode(North) : neighborAcrossRowBoundaryAt(row, col, row - 1, phi);
+					if (!isOpen(maze, node, north)) {
+						return north;
+					}
 				}
-				if (dTheta > (halfTheta - insetTheta) && dTheta > fromDTheta && !isOpen(maze, node, south)) {
-					return south;
+				if (dTheta > (halfTheta - insetTheta) && dTheta > fromDTheta) {
+					var south = row == ROWS - 2 ? PoleNode(South) : neighborAcrossRowBoundaryAt(row, col, row + 1, phi);
+					if (!isOpen(maze, node, south)) {
+						return south;
+					}
 				}
 				return null;
 		}
+	}
+
+	/**
+		Whichever of `row`/`col`'s neighbors across the boundary toward
+		`otherRow` actually sits under `phi` — the single entry from
+		`rowBoundaryNeighbors` whose own `[phiStart, phiEnd)` contains it,
+		or (defensively, for floating-point noise landing a hair outside
+		every entry's range) whichever entry's range `phi` is numerically
+		closest to. `rowBoundaryNeighbors` always returns at least one
+		entry, so this always finds something.
+		@param row the cell's own row.
+		@param col the cell's own column.
+		@param otherRow the row to find the boundary neighbor toward — row - 1 or row + 1, never a pole row.
+		@param phi the azimuth to find the matching neighbor for.
+		@return the specific neighbor whose phi range `phi` falls into (or nearest to).
+	**/
+	static function neighborAcrossRowBoundaryAt(row:Int, col:Int, otherRow:Int, phi:Float):MazeNode {
+		var entries = rowBoundaryNeighbors(row, col, otherRow);
+		var closest:Null<RowBoundaryNeighbor> = null;
+		var closestDistance = Math.POSITIVE_INFINITY;
+		for (entry in entries) {
+			if (phi >= entry.phiStart && phi < entry.phiEnd) {
+				return entry.node;
+			}
+			var distance = Math.min(Math.abs(phi - entry.phiStart), Math.abs(phi - entry.phiEnd));
+			if (closest == null || distance < closestDistance) {
+				closestDistance = distance;
+				closest = entry;
+			}
+		}
+		if (closest == null) {
+			throw "unreachable: rowBoundaryNeighbors always returns at least one entry";
+		}
+		return closest.node;
 	}
 
 	/** Normalizes an angular difference to (-pi, pi] so a cell near phi=0/2*pi wraps correctly. **/

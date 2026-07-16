@@ -222,6 +222,97 @@ class CollisionTest extends Test {
 		Assert.isTrue(finalOffset < pressedOffset * 0.1);
 	}
 
+	function testRetreatingFromASquareOnWallHitWorksAtEveryReducedColumnRow():Void {
+		// The same square-on-retreat check as the test above, repeated at
+		// each row whose column count differs from the equatorial band
+		// (rows 1, 3, 10, 12 — see Maze.colsForRow) — this is what actually
+		// exercises wallZoneNeighbor's colsForRow-based halfPhi/west/east,
+		// rather than the flat Maze.COLS it used before.
+		for (row in [1, 3, 10, 12]) {
+			var col = 0;
+			var cols = Maze.colsForRow(row);
+			var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
+
+			var centerTheta = Math.PI * row / (Maze.ROWS - 1);
+			var centerPhi = 2 * Math.PI * (col + 0.5) / cols;
+			var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, centerPhi);
+			var forward = SphereMath.phiTangentAt(centerPhi); // due east, straight at the wall, square-on
+			var player = new Player(pos0, forward);
+
+			var step = 15.0 / 60;
+			for (_ in 0...20) {
+				Collision.tryMoveForward(player, step, RADIUS, maze);
+			}
+			var pressedPhi = SphereMath.phiOf(player.pos);
+
+			for (_ in 0...20) {
+				Collision.tryMoveForward(player, -step, RADIUS, maze);
+			}
+
+			var finalPhi = SphereMath.phiOf(player.pos);
+			var pressedOffset = pressedPhi - centerPhi;
+			var finalOffset = finalPhi - centerPhi;
+			Assert.isTrue(finalOffset < pressedOffset * 0.1, 'row $row');
+		}
+	}
+
+	function testWallZonePicksTheCorrectSubNeighborAtADoublingBoundary():Void {
+		// The specific case rowBoundaryNeighbors/neighborAcrossRowBoundaryAt
+		// exist for: at a doubling boundary (row 1's south side, splitting
+		// into two of row 2's cells), one sub-neighbor closed and the other
+		// open must be treated independently — approaching square-on into
+		// the closed one's own phi range blocks, approaching into the open
+		// one's doesn't, even though both are "row 1 col 0's south side".
+		var maze:MazeData = {openEdges: new haxe.ds.StringMap()};
+		var row = 1;
+		var col = 0;
+		var otherRow = 2;
+		var entries = Maze.rowBoundaryNeighbors(row, col, otherRow);
+		Assert.equals(2, entries.length); // row 1 -> row 2 is a doubling boundary
+
+		var closedChild = entries[0];
+		var openChild = entries[1];
+		if (closedChild == null || openChild == null) {
+			Assert.fail("rowBoundaryNeighbors returned fewer than 2 entries");
+			return;
+		}
+		maze.openEdges.set(nodeKeyPairForTest(RingNode(row, col), openChild.node), true);
+
+		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
+		var step = 15.0 / 60;
+
+		// Toward the closed child's own phi range: should press against it
+		// and then retreat fully, same as any other square-on wall hit.
+		var closedPhi = (closedChild.phiStart + closedChild.phiEnd) / 2;
+		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, closedPhi);
+		var player = new Player(pos0, SphereMath.thetaTangentAt(centerTheta, closedPhi));
+		for (_ in 0...20) {
+			Collision.tryMoveForward(player, step, RADIUS, maze);
+		}
+		Assert.isTrue(SphereMath.thetaOf(player.pos) < centerTheta + Math.PI / (Maze.ROWS - 1) / 2, "blocked short of the row boundary");
+
+		// Toward the open child's own phi range: nothing should stop it at
+		// all — it should cross cleanly into row 2.
+		var openPhi = (openChild.phiStart + openChild.phiEnd) / 2;
+		var pos1 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, openPhi);
+		var player2 = new Player(pos1, SphereMath.thetaTangentAt(centerTheta, openPhi));
+		for (_ in 0...40) {
+			Collision.tryMoveForward(player2, step, RADIUS, maze);
+		}
+		var landedRow = switch Maze.nodeAt(SphereMath.thetaOf(player2.pos), SphereMath.phiOf(player2.pos)) {
+			case RingNode(r, _): r;
+			case PoleNode(_): -1;
+		}
+		Assert.equals(otherRow, landedRow);
+	}
+
+	/** Test-only stand-in for Maze's private edgeKey — same sort-then-join format. **/
+	function nodeKeyPairForTest(a:MazeNode, b:MazeNode):String {
+		var keyA = Maze.nodeKey(a);
+		var keyB = Maze.nodeKey(b);
+		return keyA < keyB ? '$keyA|$keyB' : '$keyB|$keyA';
+	}
+
 	/**
 		First `RingNode` (in row-major order) whose east edge is closed while
 		its own north/south and the next two rows south stay open — a

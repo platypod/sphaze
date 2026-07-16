@@ -5,4 +5,5 @@
 -main TestMain
 -js bin/test.js
 -D analyzer-optimize
+-D resourcesPath=res
 --macro nullSafety("src", Strict)

@@ -30,14 +30,15 @@ typedef CellCorners = {
 	a sphere").
 
 	Unlit and double-sided (so the sphere's inward-facing geometry doesn't get
-	backface-culled away). Flat color comes from an h3d.shader.FixedColor pass
-	rather than material.color + enableLights=false — the latter still let
-	the PBR technique's other lighting/falloff terms through (no scene light,
-	but every face's shading still depended on its normal, which the Polygon
-	primitive never had set, producing a smooth gradient and half-dark faces
-	instead of a flat color). FixedColor just overwrites the fragment output,
-	sidestepping the whole PBR pipeline — the same trick h3d.scene.Graphics
-	uses for the debug wireframe, which never had this problem.
+	backface-culled away). The floor stays a flat color via an
+	h3d.shader.FixedColor pass rather than material.color + enableLights=false
+	— the latter still let the PBR technique's other lighting/falloff terms
+	through (no scene light, but every face's shading still depended on its
+	normal, which the Polygon primitive never had set, producing a smooth
+	gradient and half-dark faces instead of a flat color). Walls use the same
+	unlit trick but sample a stone texture instead of one flat color — see
+	game.shader.UnlitTexture — while staying just as immune to that PBR
+	pitfall, since it never touches the lighting pipeline either.
 **/
 class MazeMesh {
 	// Cells are roughly RADIUS * (grid step) apart (~10 units at RADIUS=50),
@@ -47,8 +48,11 @@ class MazeMesh {
 	// ~100deg, overfilling it, which is what "walls are too big" was:
 	// reported directly after the previous height increase).
 	public static inline final WALL_HEIGHT:Float = 5;
+
+	/** World units per repeat of the wall texture — matches WALL_HEIGHT so a tile reads roughly square rather than stretched. **/
+	public static inline final WALL_TEXTURE_TILE_SIZE:Float = 5;
+
 	static inline final FLOOR_COLOR:Int = 0xFF444444;
-	static inline final WALL_COLOR:Int = 0xFFAA8855;
 
 	/**
 		@param maze the generated maze to build meshes for.
@@ -58,18 +62,19 @@ class MazeMesh {
 		var floorPoints:Array<h3d.Vector> = [];
 		var floorIdx = new hxd.IndexBuffer();
 		addFloor(floorPoints, floorIdx);
-		asMesh(floorPoints, floorIdx, FLOOR_COLOR, parent);
+		var floorMesh = new h3d.scene.Mesh(new h3d.prim.Polygon(floorPoints, floorIdx), parent);
+		floorMesh.material.mainPass.addShader(new h3d.shader.FixedColor(FLOOR_COLOR));
+		floorMesh.material.mainPass.culling = None;
 
 		var wallBuilder = new WallBuilder(maze);
 		eachCell((row, col, corners) -> wallBuilder.addWallsAround(row, col, corners));
-		asMesh(wallBuilder.points, wallBuilder.idx, WALL_COLOR, parent);
-	}
-
-	static function asMesh(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, color:Int, parent:h3d.scene.Object):h3d.scene.Mesh {
-		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
-		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(color));
-		mesh.material.mainPass.culling = None;
-		return mesh;
+		var wallPrim = new h3d.prim.Polygon(wallBuilder.points, wallBuilder.idx);
+		wallPrim.uvs = wallBuilder.uvs;
+		var wallTexture = hxd.Res.textures.wall_stone.toTexture();
+		wallTexture.wrap = Repeat;
+		var wallMesh = new h3d.scene.Mesh(wallPrim, parent);
+		wallMesh.material.mainPass.addShader(new game.shader.UnlitTexture(wallTexture));
+		wallMesh.material.mainPass.culling = None;
 	}
 
 	static function addFloor(points:Array<h3d.Vector>, idx:hxd.IndexBuffer):Void {
@@ -146,6 +151,9 @@ private class WallBuilder {
 	/** Wall index buffer, appended to as cells are visited. **/
 	public final idx:hxd.IndexBuffer = new hxd.IndexBuffer();
 
+	/** Wall UV buffer, parallel to `points` — one entry per vertex, in the same push order. **/
+	public final uvs:Array<h3d.prim.UV> = [];
+
 	final maze:MazeData;
 	final seen:haxe.ds.StringMap<Bool> = new haxe.ds.StringMap();
 
@@ -177,6 +185,17 @@ private class WallBuilder {
 		var top1 = corner1.add(game.SphereMath.upVectorAt(corner1, center).scaled(MazeMesh.WALL_HEIGHT));
 		var top2 = corner2.add(game.SphereMath.upVectorAt(corner2, center).scaled(MazeMesh.WALL_HEIGHT));
 		MazeMesh.addQuad(points, idx, corner1, corner2, top2, top1);
+
+		// Chord length as a stand-in for arc length (cells are small relative
+		// to the sphere, so the two are close enough for texture tiling) —
+		// repeats the texture across the wall's width rather than stretching
+		// one tile to fit, so differently-sized walls read at a consistent
+		// texel density.
+		var uRepeat = corner1.sub(corner2).length() / MazeMesh.WALL_TEXTURE_TILE_SIZE;
+		uvs.push(new h3d.prim.UV(0, 1));
+		uvs.push(new h3d.prim.UV(uRepeat, 1));
+		uvs.push(new h3d.prim.UV(uRepeat, 0));
+		uvs.push(new h3d.prim.UV(0, 0));
 	}
 
 	function undirectedKey(a:MazeNode, b:MazeNode):String {

@@ -26,6 +26,7 @@ class Main extends hxd.App {
 	}
 
 	override function init():Void {
+		hxd.Res.initEmbed();
 		engine.backgroundColor = BACKGROUND_COLOR;
 		s3d.camera.fovY = CAMERA_FOV_Y;
 

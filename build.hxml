@@ -3,4 +3,5 @@
 -main Main
 -js bin/game.js
 -D analyzer-optimize
+-D resourcesPath=res
 --macro nullSafety("src", Strict)

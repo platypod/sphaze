@@ -3,6 +3,7 @@ FROM haxe:4.3.7-alpine AS builder
 WORKDIR /app
 RUN haxelib install heaps --always
 COPY src/ ./src/
+COPY res/ ./res/
 COPY build.hxml index.html ./
 RUN haxe build.hxml && cp index.html bin/index.html
 

@@ -150,6 +150,12 @@ class Maze {
 		index computed right at a pole would be meaningless (circles of
 		latitude shrink to zero circumference there — the same instability
 		`entities.Player`'s class doc describes for orientation).
+
+		Column classification is boundary-anchored, not center-anchored:
+		column `col` owns `[2*pi*col/COLS, 2*pi*(col+1)/COLS)`, so a position
+		floors cleanly into its column with no rounding/wraparound ambiguity
+		at the top of the range (see `centerOf`'s doc for why this convention
+		was chosen over rounding to the nearest center).
 		@param theta polar angle from +Y, in radians.
 		@param phi azimuth around Y, in radians, in [0, 2*pi).
 		@return the node the position falls within.
@@ -164,7 +170,7 @@ class Maze {
 		}
 
 		var row = Math.round(theta * (ROWS - 1) / Math.PI);
-		var col = Math.round(phi * COLS / (2 * Math.PI)) % COLS;
+		var col = Math.floor(phi * COLS / (2 * Math.PI)) % COLS;
 		if (col < 0) {
 			col += COLS;
 		}
@@ -177,6 +183,21 @@ class Maze {
 		is theta=0/pi at an arbitrary phi (meaningless there — the point
 		itself is what matters, see `entities.Player`'s class doc on the
 		phi singularity at the poles).
+
+		Column `col`'s phi is boundary-anchored: `col` spans
+		`[2*pi*col/COLS, 2*pi*(col+1)/COLS)`, center at
+		`2*pi*(col+0.5)/COLS`. This (rather than treating `2*pi*col/COLS`
+		itself as the center, which was this function's original form)
+		matters once column counts vary by row (see the reduced-grid work
+		this feeds into) — under a center-anchored convention, a coarser
+		row's cell boundaries never land exactly on a finer row's cell
+		boundaries even at a clean integer resolution ratio, which breaks
+		wall/floor adjacency at every such boundary. Boundary-anchored
+		columns nest exactly at any integer ratio: a parent's own boundary
+		is always also one of its children's boundaries. Invisible for a
+		uniform column count (just a fixed relabeling of which point is
+		"col 0"), which is why this iself lands as its own change before
+		anything actually varies column count by row.
 		@param node the node to find the nominal center of.
 		@return the node's center in spherical coordinates.
 	**/
@@ -184,7 +205,7 @@ class Maze {
 		return switch node {
 			case PoleNode(North): {theta: 0.0, phi: 0.0};
 			case PoleNode(South): {theta: Math.PI, phi: 0.0};
-			case RingNode(row, col): {theta: Math.PI * row / (ROWS - 1), phi: 2 * Math.PI * col / COLS};
+			case RingNode(row, col): {theta: Math.PI * row / (ROWS - 1), phi: 2 * Math.PI * (col + 0.5) / COLS};
 		}
 	}
 

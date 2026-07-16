@@ -25,7 +25,7 @@ class CollisionTest extends Test {
 		// between row 7 and row 8, which made this flaky (a tiny step could
 		// round to either side).
 		var theta = Math.PI * 5 / (Maze.ROWS - 1);
-		var phi = 2 * Math.PI * 10 / Maze.COLS;
+		var phi = 2 * Math.PI * 10.5 / Maze.COLS; // column phi is boundary-anchored — the center is at col+0.5
 		var player = Player.spawnAt(theta, phi, 0, RADIUS);
 
 		var moved = Collision.tryMoveForward(player, 0.01, RADIUS, maze); // far short of a cell boundary
@@ -43,7 +43,7 @@ class CollisionTest extends Test {
 		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
 
 		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
-		var centerPhi = 2 * Math.PI * col / Maze.COLS;
+		var centerPhi = 2 * Math.PI * (col + 0.5) / Maze.COLS; // column phi is boundary-anchored
 		var halfPhi = Math.PI / Maze.COLS;
 		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
 
@@ -79,7 +79,7 @@ class CollisionTest extends Test {
 		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
 
 		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
-		var centerPhi = 2 * Math.PI * col / Maze.COLS;
+		var centerPhi = 2 * Math.PI * (col + 0.5) / Maze.COLS; // column phi is boundary-anchored
 		var halfPhi = Math.PI / Maze.COLS;
 		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
 
@@ -119,7 +119,7 @@ class CollisionTest extends Test {
 		}
 
 		var centerTheta = Math.PI * wall.row / (Maze.ROWS - 1);
-		var centerPhi = 2 * Math.PI * wall.col / Maze.COLS;
+		var centerPhi = 2 * Math.PI * (wall.col + 0.5) / Maze.COLS; // column phi is boundary-anchored
 		var halfPhi = Math.PI / Maze.COLS;
 		// Matches Maze.wallZoneNeighbor's own blocking distance exactly —
 		// COLLISION_CLEARANCE on top of WALL_THICKNESS, not the rendered
@@ -190,7 +190,7 @@ class CollisionTest extends Test {
 		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
 
 		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
-		var centerPhi = 2 * Math.PI * col / Maze.COLS;
+		var centerPhi = 2 * Math.PI * (col + 0.5) / Maze.COLS; // column phi is boundary-anchored
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, centerPhi);
 		var forward = SphereMath.phiTangentAt(centerPhi); // due east, straight at the wall, square-on
 		var player = new Player(pos0, forward);

@@ -125,7 +125,7 @@ class MazeMesh {
 		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
 		var halfPhi = Math.PI / Maze.COLS;
 		var theta = Math.PI * row / (Maze.ROWS - 1);
-		var phi = 2 * Math.PI * col / Maze.COLS;
+		var phi = 2 * Math.PI * (col + 0.5) / Maze.COLS;
 
 		return {
 			nw: cornerAt(theta - halfTheta, phi - halfPhi),
@@ -161,7 +161,7 @@ class MazeMesh {
 		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
 		var halfPhi = Math.PI / Maze.COLS;
 		var theta = Math.PI * row / (Maze.ROWS - 1);
-		var phi = 2 * Math.PI * col / Maze.COLS;
+		var phi = 2 * Math.PI * (col + 0.5) / Maze.COLS;
 
 		var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / MazeGeometry.RADIUS);
 		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(theta)));

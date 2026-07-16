@@ -61,7 +61,9 @@ class MazeTest extends Test {
 		var row = 5;
 		var col = 12;
 		var theta = Math.PI * row / (Maze.ROWS - 1);
-		var phi = 2 * Math.PI * col / Maze.COLS;
+		// Column phi is boundary-anchored (see Maze.centerOf's doc) — the
+		// cell's actual center is at col+0.5, not col itself.
+		var phi = 2 * Math.PI * (col + 0.5) / Maze.COLS;
 
 		var node = Maze.nodeAt(theta, phi);
 
@@ -78,10 +80,29 @@ class MazeTest extends Test {
 		Assert.isTrue(Type.enumEq(Maze.nodeAt(Math.PI - 0.0001, 5.5), PoleNode(South)));
 	}
 
-	function testNodeAtWrapsLastColumnBackToZero():Void {
+	function testNodeAtNearFullTurnReturnsLastColumn():Void {
+		// Boundary-anchored columns (see Maze.centerOf's doc) floor cleanly:
+		// just short of a full turn belongs to the *last* column's own
+		// range, not the nearest center — unlike the old round-to-nearest-
+		// center convention, there's no rounding-driven wraparound to the
+		// first column here at all.
 		var row = 5;
 		var theta = Math.PI * row / (Maze.ROWS - 1);
-		var phi = 2 * Math.PI - 0.0001; // just short of a full turn, closer to col 0 than col COLS-1
+		var phi = 2 * Math.PI - 0.0001;
+
+		var node = Maze.nodeAt(theta, phi);
+
+		Assert.isTrue(Type.enumEq(node, RingNode(row, Maze.COLS - 1)));
+	}
+
+	function testNodeAtPastAFullTurnWrapsToFirstColumn():Void {
+		// A genuine wraparound case instead: phi at (not past) a full turn
+		// floors to col == COLS, which needs the explicit modulo to land
+		// back on column 0 — defensive against a caller passing an
+		// unnormalized phi (SphereMath.phiOf itself never produces one).
+		var row = 5;
+		var theta = Math.PI * row / (Maze.ROWS - 1);
+		var phi = 2 * Math.PI;
 
 		var node = Maze.nodeAt(theta, phi);
 

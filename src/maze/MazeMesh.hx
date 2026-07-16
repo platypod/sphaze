@@ -193,18 +193,53 @@ class MazeMesh {
 		The phi inset accounts for the sphere's curvature (a cell's
 		circumference shrinks toward the poles at fixed angular width, same
 		distortion `cornersOf`'s fixed `halfPhi` already has) so it's a
-		consistent linear WALL_THICKNESS at any latitude, not a fixed angle.
+		consistent linear WALL_THICKNESS at any latitude, not a fixed angle —
+		computed separately for the north pair and the south pair, each at
+		*that edge's own* theta (`theta -/+ halfTheta`), not this cell's
+		center theta. Using center theta for all four corners was the
+		original approach, and is wrong: a west/east wall's own north and
+		south ends sit at the row's actual boundaries, not its center, so the
+		curvature correction there needs the boundary's own sine, not the
+		center's. Using the center's sine instead made a west/east piece's
+		north-end inner corner land at a different phi than the next row's
+		own south-end inner corner for that exact same boundary — each row
+		computing the correction from its own center rather than the shared
+		latitude — so adjacent rows' walls shared their outer edge exactly
+		but diverged on the inner edge, a visible seam (in cross-section, two
+		wedges joined only along the outer line) at every row boundary.
+		Computing each pair from its own true theta makes both sides of a
+		boundary agree, since `row`'s own south theta (`theta + halfTheta`)
+		is bit-identical to `row + 1`'s own north theta (`theta - halfTheta`
+		there) — same latitude, same formula, same result.
+
 		Clamped to the cell's own half-width so a cell doesn't invert near a
 		pole, where a column could otherwise be physically narrower than
 		WALL_THICKNESS itself — much less likely now that `Maze.colsForRow`
 		reduces column count near the poles specifically to keep cell width
 		from collapsing there, but still a real possibility for a small or
 		oddly-tuned `WALL_THICKNESS`, so the clamp stays.
+
+		`retreatNorth`/`retreatSouth` control whether the *theta* axis
+		retreats from that end at all — a west/east wall only needs room
+		there when something is actually using it: a real corner (the
+		perpendicular side is closed) or a genuine dead end. When the same
+		west/east wall instead runs straight through into the next row
+		(nothing perpendicular there, and the next row's own matching side
+		is also closed), retreating anyway pinches the piece into a wedge
+		that only touches its neighbor along the outer edge — see
+		`WallBuilder.continuesAcrossRowBoundary`. Passing `false` there
+		keeps that end at the *full* outer theta instead, flush with
+		whatever continues it. The phi inset is unaffected either way —
+		it's the wall's thickness, not conditional on what's next door.
 		@param row the cell's row (1 to Maze.ROWS - 2).
 		@param col the cell's column (0 to Maze.colsForRow(row) - 1).
+		@param retreatNorth whether the north end retreats along theta (default true).
+		@param retreatSouth whether the south end retreats along theta (default true).
 		@return the cell's four inner corners.
 	**/
-	public static function innerCornersOf(row:Int, col:Int):CellCorners {
+	public static function innerCornersOf(row:Int, col:Int, ?retreatNorth:Bool, ?retreatSouth:Bool):CellCorners {
+		var doRetreatNorth = retreatNorth == null ? true : retreatNorth;
+		var doRetreatSouth = retreatSouth == null ? true : retreatSouth;
 		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
 		var cols = Maze.colsForRow(row);
 		var halfPhi = Math.PI / cols;
@@ -212,15 +247,21 @@ class MazeMesh {
 		var phi = 2 * Math.PI * (col + 0.5) / cols;
 
 		var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / MazeGeometry.RADIUS);
-		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(theta)));
-		var innerHalfTheta = halfTheta - insetTheta;
-		var innerHalfPhi = halfPhi - insetPhi;
+		var innerHalfThetaNorth = doRetreatNorth ? halfTheta - insetTheta : halfTheta;
+		var innerHalfThetaSouth = doRetreatSouth ? halfTheta - insetTheta : halfTheta;
+
+		var northTheta = theta - halfTheta;
+		var southTheta = theta + halfTheta;
+		var insetPhiNorth = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(northTheta)));
+		var insetPhiSouth = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(southTheta)));
+		var innerHalfPhiNorth = halfPhi - insetPhiNorth;
+		var innerHalfPhiSouth = halfPhi - insetPhiSouth;
 
 		return {
-			nw: cornerAt(theta - innerHalfTheta, phi - innerHalfPhi),
-			ne: cornerAt(theta - innerHalfTheta, phi + innerHalfPhi),
-			se: cornerAt(theta + innerHalfTheta, phi + innerHalfPhi),
-			sw: cornerAt(theta + innerHalfTheta, phi - innerHalfPhi)
+			nw: cornerAt(theta - innerHalfThetaNorth, phi - innerHalfPhiNorth),
+			ne: cornerAt(theta - innerHalfThetaNorth, phi + innerHalfPhiNorth),
+			se: cornerAt(theta + innerHalfThetaSouth, phi + innerHalfPhiSouth),
+			sw: cornerAt(theta + innerHalfThetaSouth, phi - innerHalfPhiSouth)
 		};
 	}
 
@@ -305,19 +346,21 @@ private class WallBuilder {
 		doubles moving away from a pole means more than one piece — see its
 		own doc comment.
 
-		Each piece's end caps are skipped wherever the *other* wall meeting
-		that corner is also closed (see `maybeAddPiece`'s doc) — otherwise
-		every closed corner grows a redundant diagonal cap face from each of
-		its two walls, chamfering what should be a plain rectangular corner
-		into a hexagon. `northWestClosed`/`northEastClosed`/etc. below are
-		this cell's own west/east walls checked against whichever of the
-		north/south side's (possibly split) pieces actually reaches that
-		corner — the *nearest* `rowBoundaryNeighbors` entry, not necessarily
-		the whole side.
+		A west/east piece's north/south end is *flush* — no theta retreat,
+		no cap — when this cell's own corner there is open (no perpendicular
+		wall) *and* the wall genuinely continues into the next row (that
+		row's own matching west/east side is also closed): see
+		`continuesAcrossRowBoundary`. Otherwise the end either retreats to
+		make room for a real perpendicular wall (a corner, cap skipped since
+		that wall's own inner face covers it — see `maybeAddPiece`'s doc) or
+		retreats and gets its own cap (a genuine dead end, nothing to
+		connect to). Without distinguishing "continues" from "corner", every
+		west/east wall pinches at *every* row boundary it crosses, even
+		where it's just running straight through several rows — a wedge
+		shape in cross-section rather than a plain rectangular wall.
 	**/
 	public function addWallsAround(row:Int, col:Int):Void {
 		var outer = MazeMesh.cornersOf(row, col);
-		var inner = MazeMesh.innerCornersOf(row, col);
 		var here = RingNode(row, col);
 		var cols = Maze.colsForRow(row);
 		var west = RingNode(row, (col - 1 + cols) % cols);
@@ -327,23 +370,61 @@ private class WallBuilder {
 
 		var northEntries = row == 1 ? null : Maze.rowBoundaryNeighbors(row, col, row - 1);
 		var southEntries = row == Maze.ROWS - 2 ? null : Maze.rowBoundaryNeighbors(row, col, row + 1);
-		var northWestClosed = !Maze.isOpen(maze, here, row == 1 ? PoleNode(North) : northEntries[0].node);
-		var northEastClosed = !Maze.isOpen(maze, here, row == 1 ? PoleNode(North) : northEntries[northEntries.length - 1].node);
-		var southWestClosed = !Maze.isOpen(maze, here, row == Maze.ROWS - 2 ? PoleNode(South) : southEntries[0].node);
-		var southEastClosed = !Maze.isOpen(maze, here, row == Maze.ROWS - 2 ? PoleNode(South) : southEntries[southEntries.length - 1].node);
+		var northWestNode = row == 1 ? PoleNode(North) : northEntries[0].node;
+		var northEastNode = row == 1 ? PoleNode(North) : northEntries[northEntries.length - 1].node;
+		var southWestNode = row == Maze.ROWS - 2 ? PoleNode(South) : southEntries[0].node;
+		var southEastNode = row == Maze.ROWS - 2 ? PoleNode(South) : southEntries[southEntries.length - 1].node;
+		var northWestClosed = !Maze.isOpen(maze, here, northWestNode);
+		var northEastClosed = !Maze.isOpen(maze, here, northEastNode);
+		var southWestClosed = !Maze.isOpen(maze, here, southWestNode);
+		var southEastClosed = !Maze.isOpen(maze, here, southEastNode);
 
-		maybeAddPiece(here, west, outer.nw, outer.sw, inner.nw, inner.sw, !northWestClosed, !southWestClosed);
-		maybeAddPiece(here, east, outer.se, outer.ne, inner.se, inner.ne, !southEastClosed, !northEastClosed);
+		var northWestFlush = !northWestClosed && continuesAcrossRowBoundary(northWestNode, true);
+		var northEastFlush = !northEastClosed && continuesAcrossRowBoundary(northEastNode, false);
+		var southWestFlush = !southWestClosed && continuesAcrossRowBoundary(southWestNode, true);
+		var southEastFlush = !southEastClosed && continuesAcrossRowBoundary(southEastNode, false);
+
+		var westInner = MazeMesh.innerCornersOf(row, col, !northWestFlush, !southWestFlush);
+		var eastInner = MazeMesh.innerCornersOf(row, col, !northEastFlush, !southEastFlush);
+
+		maybeAddPiece(here, west, outer.nw, outer.sw, westInner.nw, westInner.sw, !northWestClosed && !northWestFlush, !southWestClosed && !southWestFlush);
+		maybeAddPiece(here, east, outer.se, outer.ne, eastInner.se, eastInner.ne, !southEastClosed && !southEastFlush, !northEastClosed && !northEastFlush);
 
 		if (row == 1) {
-			maybeAddPiece(here, PoleNode(North), outer.ne, outer.nw, inner.ne, inner.nw, !eastClosed, !westClosed);
+			var poleInner = MazeMesh.innerCornersOf(row, col);
+			maybeAddPiece(here, PoleNode(North), outer.ne, outer.nw, poleInner.ne, poleInner.nw, !eastClosed, !westClosed);
 		} else {
 			addRowBoundaryPieces(here, row, col, row - 1, true, westClosed, eastClosed);
 		}
 		if (row == Maze.ROWS - 2) {
-			maybeAddPiece(here, PoleNode(South), outer.sw, outer.se, inner.sw, inner.se, !westClosed, !eastClosed);
+			var poleInner = MazeMesh.innerCornersOf(row, col);
+			maybeAddPiece(here, PoleNode(South), outer.sw, outer.se, poleInner.sw, poleInner.se, !westClosed, !eastClosed);
 		} else {
 			addRowBoundaryPieces(here, row, col, row + 1, false, westClosed, eastClosed);
+		}
+	}
+
+	/**
+		Whether a west/east wall genuinely continues straight past a row
+		boundary, rather than meeting a perpendicular wall or simply ending
+		— true only when the neighbor across that boundary has its own
+		matching (west or east) side closed, carrying the same wall into the
+		next row. Callers only check this when this cell's own corner there
+		is already open (see `addWallsAround`); a `PoleNode` neighbor is
+		never a straight continuation (a pole isn't parameterized by west/
+		east at all, and every ring cell meets it independently as its own
+		wedge).
+		@param neighborNode the node across the row boundary at this corner.
+		@param wantWest whether to check that neighbor's own west side (true) or east side (false).
+		@return whether the wall continues flush into that neighbor.
+	**/
+	function continuesAcrossRowBoundary(neighborNode:MazeNode, wantWest:Bool):Bool {
+		return switch neighborNode {
+			case PoleNode(_): false;
+			case RingNode(nRow, nCol):
+				var nCols = Maze.colsForRow(nRow);
+				var neighborSide = RingNode(nRow, wantWest ? (nCol - 1 + nCols) % nCols : (nCol + 1) % nCols);
+				!Maze.isOpen(maze, neighborNode, neighborSide);
 		}
 	}
 
@@ -362,7 +443,14 @@ private class WallBuilder {
 		applied to this cell's own (narrower) inset phi range instead, so a
 		split piece still tapers the same way a whole one does — computed
 		by re-deriving each entry's fraction of the *outer* range and
-		applying it to the *inner* one.
+		applying it to the *inner* one. That inset phi range uses this
+		side's own boundary theta (`outerTheta`) for the curvature
+		correction, not this cell's center theta — matching
+		`innerCornersOf`'s own fix for the same reason: this side's west/east
+		ends have to land on the exact same points `innerCornersOf` computes
+		for this cell's west/east pieces, or the two would meet at a corner
+		with mismatched inner edges again, just relocated from a row boundary
+		to a west/east one.
 		Each entry's end caps are skipped wherever whatever's adjacent to it
 		there is also closed (see `maybeAddPiece`'s doc): its outermost
 		(westmost/eastmost) end against this cell's own west/east wall, and
@@ -385,11 +473,11 @@ private class WallBuilder {
 		var centerPhi = 2 * Math.PI * (col + 0.5) / cols;
 		var halfPhi = Math.PI / cols;
 		var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / MazeGeometry.RADIUS);
-		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(theta)));
-		var innerHalfPhi = halfPhi - insetPhi;
 
 		var outerTheta = towardNorth ? theta - halfTheta : theta + halfTheta;
 		var innerTheta = towardNorth ? theta - (halfTheta - insetTheta) : theta + (halfTheta - insetTheta);
+		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(outerTheta)));
+		var innerHalfPhi = halfPhi - insetPhi;
 		var outerRangeStart = centerPhi - halfPhi;
 		var innerRangeStart = centerPhi - innerHalfPhi;
 

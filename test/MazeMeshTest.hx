@@ -45,26 +45,103 @@ class MazeMeshTest extends Test {
 		// WALL_THICKNESS along theta and phi independently — checked here as
 		// actual linear (not angular) distance, since the phi axis needs a
 		// sin(theta) correction for the sphere's curvature to stay a
-		// consistent linear thickness at any latitude. Uses the *cell
-		// center's* theta for that correction (matching innerCornersOf's own
-		// approximation, documented on its class doc) rather than each
-		// corner's own theta — the two differ slightly since a corner's own
-		// theta is offset from center by half the cell's height, which is
-		// exactly why this is an approximation and not exact at every corner.
+		// consistent linear thickness at any latitude. Uses *that corner's
+		// own* theta for the correction (the north pair's own north-edge
+		// theta, the south pair's own south-edge theta) — not the cell
+		// center's — which is exactly what testInnerCornersMatchAcrossRowBoundary
+		// depends on to make adjacent rows agree; checked on both a north
+		// corner (nw) and a south corner (se) here since they now use
+		// different thetas for that correction.
 		var row = 5;
 		var col = 10;
 		var radius = maze.MazeGeometry.RADIUS;
+		var halfTheta = Math.PI / (maze.Maze.ROWS - 1) / 2;
 		var centerTheta = Math.PI * row / (maze.Maze.ROWS - 1);
 		var outer = MazeMesh.cornersOf(row, col);
 		var inner = MazeMesh.innerCornersOf(row, col);
 
-		var thetaOuter = game.SphereMath.thetaOf(outer.nw);
-		var thetaInner = game.SphereMath.thetaOf(inner.nw);
-		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (thetaInner - thetaOuter) * radius, 1e-6);
+		var thetaOuterNw = game.SphereMath.thetaOf(outer.nw);
+		var thetaInnerNw = game.SphereMath.thetaOf(inner.nw);
+		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (thetaInnerNw - thetaOuterNw) * radius, 1e-6);
 
-		var phiOuter = game.SphereMath.phiOf(outer.nw);
-		var phiInner = game.SphereMath.phiOf(inner.nw);
-		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (phiInner - phiOuter) * radius * Math.sin(centerTheta), 1e-6);
+		var phiOuterNw = game.SphereMath.phiOf(outer.nw);
+		var phiInnerNw = game.SphereMath.phiOf(inner.nw);
+		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (phiInnerNw - phiOuterNw) * radius * Math.sin(centerTheta - halfTheta), 1e-6);
+
+		var thetaOuterSe = game.SphereMath.thetaOf(outer.se);
+		var thetaInnerSe = game.SphereMath.thetaOf(inner.se);
+		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (thetaOuterSe - thetaInnerSe) * radius, 1e-6);
+
+		var phiOuterSe = game.SphereMath.phiOf(outer.se);
+		var phiInnerSe = game.SphereMath.phiOf(inner.se);
+		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (phiOuterSe - phiInnerSe) * radius * Math.sin(centerTheta + halfTheta), 1e-6);
+	}
+
+	// The bug this session's fix targets: a west/east wall's inner corner
+	// used the *cell's own center* theta for its curvature correction, but
+	// that wall's north/south ends actually sit at the row's boundary theta
+	// — so row R's own south-end inner corner and row R+1's own north-end
+	// inner corner, despite being the same physical latitude, each computed
+	// the correction from a different center and landed at different phi.
+	//
+	// Their theta still legitimately differs by design — each corner insets
+	// *toward its own cell*, i.e. row R's south-inner corner sits just
+	// north of the boundary and row R+1's north-inner corner sits just
+	// south of it, on opposite sides of the shared outer edge, same as
+	// every other pair of facing inner corners on this grid (that's what
+	// gives a wall its thickness). What must match is the *phi* the
+	// curvature correction lands on: with both sides now correcting from
+	// the same true boundary theta (row R's own south theta is bit-
+	// identical to row R+1's own north theta — same latitude, same
+	// formula), a west/east wall no longer zigzags sideways in phi as it
+	// crosses from one row into the next.
+	function testInnerCornersMatchAcrossRowBoundary():Void {
+		// Same column count on both sides (no doubling in between) — the
+		// common case, most of the grid.
+		var row = 5;
+		var col = 10;
+		var here = MazeMesh.innerCornersOf(row, col);
+		var south = MazeMesh.innerCornersOf(row + 1, col);
+		Assert.floatEquals(game.SphereMath.phiOf(here.sw), game.SphereMath.phiOf(south.nw), 1e-9);
+		Assert.floatEquals(game.SphereMath.phiOf(here.se), game.SphereMath.phiOf(south.ne), 1e-9);
+
+		// Across a doubling boundary too: row 1's own south-west/south-east
+		// inner corners' phi must match row 2's leftmost/rightmost child's
+		// own north-west/north-east inner corners' phi (ratio 2, so child
+		// columns 0 and 1 for parent column 0).
+		var parentCol = 0;
+		var parent = MazeMesh.innerCornersOf(1, parentCol);
+		var childWest = MazeMesh.innerCornersOf(2, parentCol * 2);
+		var childEast = MazeMesh.innerCornersOf(2, parentCol * 2 + 1);
+		Assert.floatEquals(game.SphereMath.phiOf(parent.sw), game.SphereMath.phiOf(childWest.nw), 1e-9);
+		Assert.floatEquals(game.SphereMath.phiOf(parent.se), game.SphereMath.phiOf(childEast.ne), 1e-9);
+	}
+
+	// The pinch bug this session's second fix targets: a west/east wall
+	// running straight through several rows (nothing perpendicular at any
+	// boundary it crosses) used to retreat by WALL_THICKNESS at *every* row
+	// boundary regardless of whether anything needed that room — pinching
+	// into a wedge that only touched its neighbor along the outer edge, no
+	// matter how well the previous fix aligned that seam's phi.
+	// WallBuilder.continuesAcrossRowBoundary (private, so exercised here
+	// only through innerCornersOf's own retreat flags) is what decides a
+	// west/east wall's end shouldn't retreat at all when the same wall
+	// continues flush into the next row. This test checks the underlying
+	// primitive that decision relies on: passing retreatNorth/retreatSouth
+	// = false must land the inner corner exactly on the outer boundary
+	// theta, and doing that on both sides of a row boundary must produce
+	// the exact same point — a flush rectangular connection, not a wedge.
+	function testNotRetreatingLandsExactlyOnTheOuterBoundaryAndMatchesTheNextRow():Void {
+		var row = 5;
+		var col = 10;
+		var outer = MazeMesh.cornersOf(row, col);
+		var southNotRetreated = MazeMesh.innerCornersOf(row, col, true, false);
+		var northNotRetreatedNextRow = MazeMesh.innerCornersOf(row + 1, col, false, true);
+
+		Assert.floatEquals(game.SphereMath.thetaOf(outer.sw), game.SphereMath.thetaOf(southNotRetreated.sw), 1e-9);
+		Assert.floatEquals(game.SphereMath.thetaOf(outer.se), game.SphereMath.thetaOf(southNotRetreated.se), 1e-9);
+		assertSamePoint(southNotRetreated.sw, northNotRetreatedNextRow.nw);
+		assertSamePoint(southNotRetreated.se, northNotRetreatedNextRow.ne);
 	}
 
 	// The specific property MazeMesh's split boundary pieces need at a

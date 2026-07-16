@@ -8,14 +8,20 @@ package maze;
 	connect seamlessly, not independent per-node centers.
 **/
 class MazeGeometry {
-	// Corridor width scales directly with this (fixed Maze.ROWS/COLS angular
-	// resolution), so bumping it is what widens corridors without touching
-	// maze complexity/topology at all — bumped from 50 to leave more
-	// breathing room once walls gained real thickness (see MazeMesh) rather
-	// than being paper-thin planes right at the cell boundary.
+	// Corridor width scales directly with this at a *fixed* Maze.ROWS/COLS —
+	// bumping RADIUS alone widens corridors by roughly the same factor as
+	// the sphere itself grows, no more. Bumped 58->87 (1.5x) for a bigger
+	// sphere; Maze.ROWS/COLS were *also* dropped 16/32->14/28 in the same
+	// change specifically to widen corridors further on top of that, to
+	// about 2x their old width — reducing the grid resolution independently
+	// of RADIUS is the only way to decouple "how big is the sphere" from
+	// "how much space is between its walls", since a wall is nothing more
+	// than a cell boundary at this resolution. That's also why it's a
+	// visibly sparser maze now (~25% fewer cells) rather than just a scaled
+	// up copy of the old one.
 
 	/** Radius of the physical sphere the maze grid is mapped onto. **/
-	public static inline final RADIUS:Float = 58;
+	public static inline final RADIUS:Float = 87;
 
 	/**
 		How far a wall's inner face sits from the true cell boundary (see

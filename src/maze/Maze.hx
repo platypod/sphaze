@@ -32,10 +32,10 @@ typedef MazeData = {
 /** Grid queries and generation for the maze defined by MazeNode/MazeData above. **/
 class Maze {
 	/** Row count of the ring grid, poles excluded (poles are merged nodes, not rows). **/
-	public static inline final ROWS:Int = 16;
+	public static inline final ROWS:Int = 14;
 
 	/** Column count of the ring grid — the longitude resolution. **/
-	public static inline final COLS:Int = 32;
+	public static inline final COLS:Int = 28;
 
 	/**
 		Stable string key for a node, used to store/look up nodes and edges in

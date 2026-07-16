@@ -111,16 +111,20 @@ class CollisionTest extends Test {
 		// east edge is closed but whose own north/south (the direction the
 		// slide travels) stay open for a few rows, same as searching for a
 		// reproduction case directly in the running game.
-		var maze = Maze.generate(new SeededRandom(3).next);
+		// Seed 3 (used by the other tests in this file) has no match once
+		// findFreeStandingEastWall is restricted to rows 4-6 (see its own
+		// doc for why) — seed 1 does.
+		var maze = Maze.generate(new SeededRandom(1).next);
 		var wall = findFreeStandingEastWall(maze);
 		if (wall == null) {
 			Assert.fail("no free-standing east wall found for this seed — pick another");
 			return;
 		}
 
+		var wallCols = Maze.colsForRow(wall.row);
 		var centerTheta = Math.PI * wall.row / (Maze.ROWS - 1);
-		var centerPhi = 2 * Math.PI * (wall.col + 0.5) / Maze.COLS; // column phi is boundary-anchored
-		var halfPhi = Math.PI / Maze.COLS;
+		var centerPhi = 2 * Math.PI * (wall.col + 0.5) / wallCols; // column phi is boundary-anchored
+		var halfPhi = Math.PI / wallCols;
 		// Matches Maze.wallZoneNeighbor's own blocking distance exactly —
 		// COLLISION_CLEARANCE on top of WALL_THICKNESS, not the rendered
 		// wall's thickness alone — so this offset is actually outside the
@@ -223,14 +227,24 @@ class CollisionTest extends Test {
 		its own north/south and the next two rows south stay open — a
 		free-standing wall with room to slide along, not a corner where
 		another closed edge would legitimately stop the player short.
+
+		Restricted to rows 4-6 (not the full 2-9 range this used before
+		column count varied by row): north/south/south2/south3 all reusing
+		the *same* column index only means the same node when every row
+		involved shares the same column count — true for any 4 consecutive
+		rows fully inside the equatorial band (4-9), false the moment a
+		doubling/halving boundary is crossed. Finding a boundary-adjacent
+		free-standing wall specifically is a different, dedicated test
+		elsewhere, not this one.
 		@param maze the maze to search.
 		@return the cell's row/col, or null if this seed has none.
 	**/
 	function findFreeStandingEastWall(maze:MazeData):Null<{row:Int, col:Int}> {
-		for (row in 2...(Maze.ROWS - 4)) {
-			for (col in 0...Maze.COLS) {
+		for (row in 4...7) {
+			var cols = Maze.colsForRow(row);
+			for (col in 0...cols) {
 				var here = RingNode(row, col);
-				var east = RingNode(row, (col + 1) % Maze.COLS);
+				var east = RingNode(row, (col + 1) % cols);
 				var north = RingNode(row - 1, col);
 				var south = RingNode(row + 1, col);
 				var south2 = RingNode(row + 2, col);

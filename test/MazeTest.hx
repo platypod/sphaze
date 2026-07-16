@@ -49,7 +49,7 @@ class MazeTest extends Test {
 
 	function testColumnsWrapAround():Void {
 		var ringNeighbors = Maze.neighborsOf(RingNode(3, 0));
-		var expected = RingNode(3, Maze.COLS - 1);
+		var expected = RingNode(3, Maze.colsForRow(3) - 1);
 
 		// Array.contains/indexOf use `==`, which is reference equality for
 		// enum constructors with arguments — Type.enumEq does the intended
@@ -131,7 +131,12 @@ class MazeTest extends Test {
 	function testRowBoundaryNeighborsDoublingEntriesPartitionParentRangeExactly():Void {
 		// Every doubling boundary in the grid: (row, otherRow) pairs where
 		// otherRow has more columns than row.
-		var boundaries = [{row: 1, otherRow: 2}, {row: 3, otherRow: 4}, {row: 10, otherRow: 9}, {row: 12, otherRow: 11}];
+		var boundaries = [
+			{row: 1, otherRow: 2},
+			{row: 3, otherRow: 4},
+			{row: 10, otherRow: 9},
+			{row: 12, otherRow: 11}
+		];
 		for (boundary in boundaries) {
 			var myCols = Maze.colsForRow(boundary.row);
 			var otherCols = Maze.colsForRow(boundary.otherRow);
@@ -166,7 +171,12 @@ class MazeTest extends Test {
 	}
 
 	function testRowBoundaryNeighborsAtColumnExtremesStayInRange():Void {
-		var boundaries = [{row: 1, otherRow: 2}, {row: 3, otherRow: 4}, {row: 10, otherRow: 9}, {row: 12, otherRow: 11}];
+		var boundaries = [
+			{row: 1, otherRow: 2},
+			{row: 3, otherRow: 4},
+			{row: 10, otherRow: 9},
+			{row: 12, otherRow: 11}
+		];
 		for (boundary in boundaries) {
 			var myCols = Maze.colsForRow(boundary.row);
 

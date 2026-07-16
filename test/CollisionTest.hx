@@ -94,6 +94,94 @@ class CollisionTest extends Test {
 		Assert.isFalse(moved);
 	}
 
+	function testSlidingAlongTheSameWallForManyTicksDoesNotStall():Void {
+		// The exact reported bug: sliding at a shallow angle against a single
+		// wall for long enough (many fixed-timestep ticks in a row, not just
+		// one) used to grind to a permanent halt. Root cause was slideAlong
+		// deriving the wall's tangent from the blocked node's fixed nominal
+		// center — accurate only near that center, so it rotated away from
+		// the true wall direction as the player's position kept advancing
+		// along it, until the projected slide distance decayed to zero. Off
+		// the equator specifically, since that drift doesn't happen along a
+		// meridian (see wallTangentAlong's doc comment).
+		// A hand-built maze with nothing open at all would make this a
+		// sealed corner (its south side closed too) rather than a
+		// free-standing wall — sliding into a genuine corner is *supposed*
+		// to stop, so this needs a real generated maze and a cell whose
+		// east edge is closed but whose own north/south (the direction the
+		// slide travels) stay open for a few rows, same as searching for a
+		// reproduction case directly in the running game.
+		var maze = Maze.generate(new SeededRandom(3).next);
+		var wall = findFreeStandingEastWall(maze);
+		if (wall == null) {
+			Assert.fail("no free-standing east wall found for this seed — pick another");
+			return;
+		}
+
+		var centerTheta = Math.PI * wall.row / (Maze.ROWS - 1);
+		var centerPhi = 2 * Math.PI * wall.col / Maze.COLS;
+		var halfPhi = Math.PI / Maze.COLS;
+		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
+
+		// Starts short of the wall zone (unlike the other tests here, which
+		// place pos0 right at its edge) — this needs room to slide toward
+		// the wall and then travel *along* it for many ticks, not just poke
+		// at the boundary once. Half the zone's own threshold rather than a
+		// fixed fraction of the cell width — the threshold shrinks toward
+		// the poles (see wallZoneNeighbor's insetPhi), so a fixed offset
+		// safe at one row can already be inside the zone at another.
+		var phi = centerPhi + (halfPhi - insetPhi) * 0.5;
+		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, phi);
+		// Mostly along the wall (theta-tangent), tilted slightly toward it
+		// (phi-tangent) — a shallow-angle hit, the case that should slide
+		// smoothly rather than stop dead.
+		var thetaTangent = SphereMath.thetaTangentAt(centerTheta, phi);
+		var phiTangent = SphereMath.phiTangentAt(phi);
+		var angle = 15 * Math.PI / 180;
+		var forward = thetaTangent.scaled(Math.cos(angle)).add(phiTangent.scaled(Math.sin(angle))).normalized();
+		var player = new Player(pos0, forward);
+
+		var stepDistance = 0.1;
+		var ticks = 80;
+		var totalMoved = 0.0;
+		for (_ in 0...ticks) {
+			var before = player.pos;
+			Collision.tryMoveForward(player, stepDistance, RADIUS, maze);
+			totalMoved += player.pos.sub(before).length();
+		}
+
+		// A permanent stall would leave the player barely past where a
+		// handful of ticks alone would land it; sliding freely covers most
+		// of the nominal distance across all of them.
+		Assert.isTrue(totalMoved > stepDistance * ticks * 0.9);
+	}
+
+	/**
+		First `RingNode` (in row-major order) whose east edge is closed while
+		its own north/south and the next two rows south stay open — a
+		free-standing wall with room to slide along, not a corner where
+		another closed edge would legitimately stop the player short.
+		@param maze the maze to search.
+		@return the cell's row/col, or null if this seed has none.
+	**/
+	function findFreeStandingEastWall(maze:MazeData):Null<{row:Int, col:Int}> {
+		for (row in 2...(Maze.ROWS - 4)) {
+			for (col in 0...Maze.COLS) {
+				var here = RingNode(row, col);
+				var east = RingNode(row, (col + 1) % Maze.COLS);
+				var north = RingNode(row - 1, col);
+				var south = RingNode(row + 1, col);
+				var south2 = RingNode(row + 2, col);
+				var south3 = RingNode(row + 3, col);
+				if (!Maze.isOpen(maze, here, east) && Maze.isOpen(maze, here, north) && Maze.isOpen(maze, here, south) && Maze.isOpen(maze, south, south2)
+					&& Maze.isOpen(maze, south2, south3)) {
+					return {row: row, col: col};
+				}
+			}
+		}
+		return null;
+	}
+
 	function testMoveAcrossAnOpenEdgeSucceedsAndLandsOnTheNeighbor():Void {
 		assertMoveAcrossEdge(true);
 	}

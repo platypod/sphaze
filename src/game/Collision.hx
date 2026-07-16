@@ -105,12 +105,24 @@ class Collision {
 		snapshotted here and restored together if the slide itself turns out
 		to be blocked too.
 
-		The wall's tangent direction is derived from `blockedNode`'s nominal
-		center as a plain 3D point (`oldPos`'s radial direction crossed with
-		the direction toward that center), never from theta/phi evaluated at
-		`player.pos` itself — that position can be right at a pole, where phi
-		is meaningless (the same singularity `entities.Player`'s own
-		orientation fix exists to avoid).
+		The wall's tangent direction is derived from the grid axis the wall
+		itself is fixed on — `thetaTangentAt` (north-south) for an east/west
+		wall between same-row neighbors, `phiTangentAt` (east-west) for a
+		north/south wall between different rows (or a pole) — evaluated at
+		`player.pos`'s own current theta/phi. Earlier this instead crossed
+		`oldPos`'s direction with `blockedNode`'s fixed nominal center; that
+		matched the true wall direction only near that center, so a long
+		slide (the player's theta drifting away from the blocked node's own
+		row as they travel along the wall) rotated the derived tangent away
+		from the wall until the projected slide distance decayed to zero —
+		the player would gradually grind to a permanent halt mid-slide. Using
+		the player's own position instead stays exact arbitrarily far along
+		the wall. Evaluating theta/phi at `player.pos` is safe here (unlike
+		the singularity `entities.Player`'s own orientation fix avoids)
+		because `blockingNode` never reaches this path for a `PoleNode`
+		(`Maze.wallZoneNeighbor` excludes it, and the fallback fires only
+		once a step has *landed* in a different node, never exactly at the
+		pole point itself).
 		@param player the player to move — `pos` must already be at the pre-blocked position.
 		@param fromNode the node `player` was in before the blocked step.
 		@param blockedNode the node whose wall blocked the step (see `blockingNode`).
@@ -125,9 +137,7 @@ class Collision {
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 		var oldPosDir = oldPos.normalized();
-		var blockedCenter = Maze.centerOf(blockedNode);
-		var blockedDir = SphereMath.sphericalToCartesian(1, blockedCenter.theta, blockedCenter.phi);
-		var wallTangent = oldPosDir.cross(blockedDir).normalized();
+		var wallTangent = wallTangentAlong(fromNode, blockedNode, oldPosDir);
 
 		var slideDistance = distance * attemptedDirection.dot(wallTangent);
 		// A near-exactly-perpendicular hit projects to a slide distance
@@ -153,5 +163,47 @@ class Collision {
 		player.pos = oldPos;
 		player.forward = oldForward;
 		return false;
+	}
+
+	/**
+		Unit tangent along the wall between `fromNode` and `blockedNode`, at
+		`pos`. Same-row `RingNode`s (an east/west neighbor pair) share a
+		latitude, so the wall between them is a meridian — its tangent is
+		`thetaTangentAt`. A different-row pair is a wall along a latitude
+		circle — its tangent is `phiTangentAt`, which doesn't depend on
+		theta at all.
+
+		Either node being a `PoleNode` instead falls back to the plain
+		cross-product tangent against `blockedNode`'s nominal center: `pos`
+		is right at (or immediately next to) the pole in that case, where
+		phi is undefined, so `phiTangentAt`/`thetaTangentAt` would return a
+		meaningless direction. The cross-product is exact for this one
+		endpoint regardless — it's only the same formula's use of a *fixed*
+		center that caused drift over a long same-row slide (see the class
+		doc above), and a pole never has a same-row slide to drift along.
+		@param fromNode the node the blocked step started in.
+		@param blockedNode the node whose wall blocked the step.
+		@param pos the position to evaluate the tangent at — typically the player's own current position.
+		@return unit tangent along the wall at `pos`.
+	**/
+	static function wallTangentAlong(fromNode:MazeNode, blockedNode:MazeNode, pos:h3d.Vector):h3d.Vector {
+		var fromRow = ringRow(fromNode);
+		var blockedRow = ringRow(blockedNode);
+		if (fromRow == null || blockedRow == null) {
+			var blockedCenter = Maze.centerOf(blockedNode);
+			var blockedDir = SphereMath.sphericalToCartesian(1, blockedCenter.theta, blockedCenter.phi);
+			return pos.normalized().cross(blockedDir).normalized();
+		}
+
+		var phi = SphereMath.phiOf(pos);
+		return fromRow == blockedRow ? SphereMath.thetaTangentAt(SphereMath.thetaOf(pos), phi) : SphereMath.phiTangentAt(phi);
+	}
+
+	/** A `RingNode`'s row, or null for a `PoleNode` (which has no row). **/
+	static function ringRow(node:MazeNode):Null<Int> {
+		return switch node {
+			case RingNode(row, _): row;
+			case PoleNode(_): null;
+		}
 	}
 }

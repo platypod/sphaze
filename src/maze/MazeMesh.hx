@@ -16,40 +16,42 @@ typedef CellCorners = {
 	cell, and a wall wherever an edge between two grid-adjacent nodes is
 	closed.
 
-	Walls are built from the same corner points as the floor cells they sit
-	between (each cell's corners come from the same `cornerAt` calls
-	`addFloor` uses), extruded upward along each corner's own local "up" —
-	not a single shared frame per wall. That's what makes them connect
-	seamlessly: adjacent walls sharing a base corner extrude that corner
-	through the exact same function, so their top corners coincide too, and
-	a wall's base always matches the floor boundary it's replacing. An
-	earlier version built each wall from the straight-line distance between
-	two cell *centers* instead, independent of neighboring walls or the
-	floor's actual corners — visibly disconnected/seamed on the sphere's
-	curvature, reported directly ("not seamlessly connecting... not fit for
-	a sphere").
+	The floor uses each cell's outer corners (`cornersOf`) unchanged — full
+	size, same as before thickness existed. Walls are drawn *per cell, per
+	side* rather than once per shared edge: each cell also has its own inner
+	corners (`innerCornersOf`, inset from the outer ones by WALL_THICKNESS),
+	and a closed side draws a piece spanning outer-to-inner on *that cell's
+	own* territory only. A closed edge between cells A and B is therefore two
+	pieces, one from each side, meeting exactly at the shared outer boundary
+	— never overlapping, since neither extends past it, and the floor
+	underneath simply goes unseen in the strip a wall covers (no need to
+	inset the floor to match).
 
-	Each wall segment is its own front/back/top box straddling that
-	boundary line (see WallBuilder.maybeAdd), not a zero-thickness plane —
-	real thickness reads better with a stone texture than an infinitely
-	thin sheet, especially once pitching up (the "see across the sphere"
-	mechanic) can put a wall's top edge in view.
+	This replaced an earlier version that built one box per closed *edge*,
+	offset outward from the boundary along that edge's own length direction.
+	Independent per-edge offsets meant two edges meeting at a shared corner
+	(a plain corner, or worse, three-plus edges at a pole-adjacent junction)
+	computed *different* offset points for what was nominally the same
+	corner — visible overlap between the resulting boxes, confirmed
+	in-browser as a shaky/flickering seam wherever two textured, overlapping
+	faces fought over the same depth. A follow-up patch tried patching this
+	with a corner post at every wall endpoint (sized to the wall thickness,
+	filling whatever gap or overlap was there) — better, but the post itself
+	still overlapped every wall piece meeting it, same shakiness at smaller
+	scale. Building per-cell from each cell's own two consistent corner sets
+	(used by all four of that cell's potential sides) removes the overlap at
+	the source instead of patching over it: within one cell, adjacent sides
+	share the exact same inner/outer corner, so they meet edge-to-edge, and
+	between cells, both sides' pieces stop exactly at the shared outer
+	boundary they're built from.
 
-	Each segment's box is offset independently along *its own* length
-	direction, so its short ends are open — fine where another wall's box
-	happens to cover that same point, but visibly hollow wherever nothing
-	else does (a dead-end stub with open space beyond it) or where two
-	segments meet at enough of an angle that their independently-offset
-	boxes don't fully cover each other (confirmed in-browser: gaps showed
-	up at exactly those two cases). Rather than mitering every junction
-	(computing each shared vertex from the intersection of both segments'
-	offset planes — real work for a purely cosmetic gain), WallBuilder
-	instead drops a small square corner post at *every* point where a wall
-	segment ends (`ensurePost`, deduplicated so shared corners only get one),
-	sized to the same thickness as the walls themselves. A post fully seals
-	whatever it's sitting on regardless of how many segments meet there or
-	at what angle, which a per-junction special case wouldn't generalize as
-	easily.
+	Each piece is 4 quads: the inner face (visible to a player standing in
+	the cell), the top cap (visible once pitching up puts a wall's top edge
+	in view — the "see across the sphere" mechanic), and two end caps
+	sealing the piece regardless of what, if anything, is next to it at
+	either end. No outer face: it would sit exactly where the neighboring
+	cell's own piece for the same edge begins, so it's never actually
+	visible from either side, only wasted overlapping geometry.
 
 	Unlit and double-sided (so the sphere's inward-facing geometry doesn't get
 	backface-culled away). The floor stays a flat color via an
@@ -71,9 +73,6 @@ class MazeMesh {
 	// already-tuned "present but not dominant" balance alone).
 	public static inline final WALL_HEIGHT:Float = 6;
 
-	/** How far a wall extends to each side of the floor-cell boundary it sits on (see class doc) — total thickness is twice this. **/
-	public static inline final WALL_THICKNESS:Float = 1.5;
-
 	/** World units per repeat of the wall texture — matches WALL_HEIGHT so a tile reads roughly square rather than stretched. **/
 	public static inline final WALL_TEXTURE_TILE_SIZE:Float = 6;
 
@@ -92,7 +91,7 @@ class MazeMesh {
 		floorMesh.material.mainPass.culling = None;
 
 		var wallBuilder = new WallBuilder(maze);
-		eachCell((row, col, corners) -> wallBuilder.addWallsAround(row, col, corners));
+		eachCell((row, col) -> wallBuilder.addWallsAround(row, col));
 		var wallPrim = new h3d.prim.Polygon(wallBuilder.points, wallBuilder.idx);
 		wallPrim.uvs = wallBuilder.uvs;
 		var wallTexture = hxd.Res.textures.wall_stone.toTexture();
@@ -103,7 +102,10 @@ class MazeMesh {
 	}
 
 	static function addFloor(points:Array<h3d.Vector>, idx:hxd.IndexBuffer):Void {
-		eachCell((row, col, corners) -> addQuad(points, idx, corners.nw, corners.ne, corners.se, corners.sw));
+		eachCell((row, col) -> {
+			var corners = cornersOf(row, col);
+			addQuad(points, idx, corners.nw, corners.ne, corners.se, corners.sw);
+		});
 	}
 
 	static function cornerAt(theta:Float, phi:Float):h3d.Vector {
@@ -111,13 +113,15 @@ class MazeMesh {
 	}
 
 	/**
-		A ring cell's four corners. Public so adjacency can be checked
+		A ring cell's four outer corners — the true grid boundary, shared
+		exactly with its neighbors. Public so adjacency can be checked
 		directly (see test/MazeMeshTest.hx): neighboring cells must compute
-		matching points for their shared edge, which is what makes walls
-		connect seamlessly to each other and to the floor.
+		matching points for their shared edge, which is what makes the floor
+		— and each side's wall piece, built from these same points — connect
+		seamlessly to each other.
 		@param row the cell's row (1 to Maze.ROWS - 2).
 		@param col the cell's column (0 to Maze.COLS - 1).
-		@return the cell's four corners.
+		@return the cell's four outer corners.
 	**/
 	public static function cornersOf(row:Int, col:Int):CellCorners {
 		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
@@ -133,11 +137,52 @@ class MazeMesh {
 		};
 	}
 
-	/** Walks every ring cell, calling `f` with its row/col and its corners (see `cornersOf`). **/
-	static function eachCell(f:(row:Int, col:Int, corners:CellCorners) -> Void):Void {
+	/**
+		A ring cell's four *inner* corners — each outer corner (`cornersOf`)
+		moved toward this cell's own center by WALL_THICKNESS, along both the
+		theta and phi axes independently. Unlike outer corners, these belong
+		to this cell alone: the neighboring cell across any given side has
+		its own, different inner corners, inset from the *same* outer
+		boundary in the opposite direction — that's what a wall's thickness
+		actually is, split between the two cells it separates.
+
+		The phi inset accounts for the sphere's curvature (a cell's
+		circumference shrinks toward the poles at fixed angular width, same
+		distortion `cornersOf`'s fixed `halfPhi` already has) so it's a
+		consistent linear WALL_THICKNESS at any latitude, not a fixed angle.
+		Clamped to the cell's own half-width so a cell doesn't invert near a
+		pole, where a few columns can physically be narrower than
+		WALL_THICKNESS itself — the ring row nearest either pole is the
+		tightest fit by construction, a pre-existing distortion of the
+		lat/long grid this doesn't attempt to fix.
+		@param row the cell's row (1 to Maze.ROWS - 2).
+		@param col the cell's column (0 to Maze.COLS - 1).
+		@return the cell's four inner corners.
+	**/
+	public static function innerCornersOf(row:Int, col:Int):CellCorners {
+		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
+		var halfPhi = Math.PI / Maze.COLS;
+		var theta = Math.PI * row / (Maze.ROWS - 1);
+		var phi = 2 * Math.PI * col / Maze.COLS;
+
+		var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / MazeGeometry.RADIUS);
+		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(theta)));
+		var innerHalfTheta = halfTheta - insetTheta;
+		var innerHalfPhi = halfPhi - insetPhi;
+
+		return {
+			nw: cornerAt(theta - innerHalfTheta, phi - innerHalfPhi),
+			ne: cornerAt(theta - innerHalfTheta, phi + innerHalfPhi),
+			se: cornerAt(theta + innerHalfTheta, phi + innerHalfPhi),
+			sw: cornerAt(theta + innerHalfTheta, phi - innerHalfPhi)
+		};
+	}
+
+	/** Walks every ring cell, calling `f` with its row/col. **/
+	static function eachCell(f:(row:Int, col:Int) -> Void):Void {
 		for (row in 1...(Maze.ROWS - 1)) {
 			for (col in 0...Maze.COLS) {
-				f(row, col, cornersOf(row, col));
+				f(row, col);
 			}
 		}
 	}
@@ -168,7 +213,7 @@ class MazeMesh {
 	}
 }
 
-/** Accumulates wall geometry across cells, de-duplicating each shared edge (visited once from each side) as it goes. **/
+/** Accumulates wall geometry across cells — one piece per cell per closed side (see class doc), no cross-cell deduplication needed. **/
 private class WallBuilder {
 	/** Wall vertex buffer, appended to as cells are visited. **/
 	public final points:Array<h3d.Vector> = [];
@@ -180,111 +225,58 @@ private class WallBuilder {
 	public final uvs:Array<h3d.prim.UV> = [];
 
 	final maze:MazeData;
-	final seen:haxe.ds.StringMap<Bool> = new haxe.ds.StringMap();
-	final postsSeen:haxe.ds.StringMap<Bool> = new haxe.ds.StringMap();
 
 	public function new(maze:MazeData) {
 		this.maze = maze;
 	}
 
-	/** Adds a wall for each closed edge around the cell at (row, col), skipping edges already added from the neighboring side. **/
-	public function addWallsAround(row:Int, col:Int, corners:CellCorners):Void {
+	/** Adds this cell's own piece for each of its closed sides. **/
+	public function addWallsAround(row:Int, col:Int):Void {
+		var outer = MazeMesh.cornersOf(row, col);
+		var inner = MazeMesh.innerCornersOf(row, col);
 		var here = RingNode(row, col);
-		maybeAdd(here, RingNode(row, (col - 1 + Maze.COLS) % Maze.COLS), corners.nw, corners.sw);
-		maybeAdd(here, RingNode(row, (col + 1) % Maze.COLS), corners.se, corners.ne);
-		maybeAdd(here, row == 1 ? PoleNode(North) : RingNode(row - 1, col), corners.ne, corners.nw);
-		maybeAdd(here, row == Maze.ROWS - 2 ? PoleNode(South) : RingNode(row + 1, col), corners.sw, corners.se);
+
+		maybeAddPiece(here, RingNode(row, (col - 1 + Maze.COLS) % Maze.COLS), outer.nw, outer.sw, inner.nw, inner.sw);
+		maybeAddPiece(here, RingNode(row, (col + 1) % Maze.COLS), outer.se, outer.ne, inner.se, inner.ne);
+		maybeAddPiece(here, row == 1 ? PoleNode(North) : RingNode(row - 1, col), outer.ne, outer.nw, inner.ne, inner.nw);
+		maybeAddPiece(here, row == Maze.ROWS - 2 ? PoleNode(South) : RingNode(row + 1, col), outer.sw, outer.se, inner.sw, inner.se);
 	}
 
-	function maybeAdd(a:MazeNode, b:MazeNode, corner1:h3d.Vector, corner2:h3d.Vector):Void {
+	/**
+		Builds this cell's own wall piece for one side, if that side's edge
+		is closed — a box spanning `outerA`/`outerB` (the true, shared
+		boundary) to `innerA`/`innerB` (this cell's own inset corners),
+		extruded up by WALL_HEIGHT.
+	**/
+	function maybeAddPiece(a:MazeNode, b:MazeNode, outerA:h3d.Vector, outerB:h3d.Vector, innerA:h3d.Vector, innerB:h3d.Vector):Void {
 		if (Maze.isOpen(maze, a, b)) {
 			return;
 		}
 
-		var key = undirectedKey(a, b);
-		if (seen.exists(key)) {
-			return;
-		}
-		seen.set(key, true);
-
 		var center = new h3d.Vector(0, 0, 0);
-		var up1 = game.SphereMath.upVectorAt(corner1, center);
-		var up2 = game.SphereMath.upVectorAt(corner2, center);
-		// Perpendicular to both the wall's length and its (per-corner) local
-		// up — the axis the wall's thickness straddles the boundary line
-		// along. Computed per-corner, same as up1/up2, for the same reason
-		// the rest of this file does: it's what let the zero-thickness
-		// version connect seamlessly in the first place.
-		var lengthDir = corner2.sub(corner1).normalized();
-		var depth1 = lengthDir.cross(up1).normalized().scaled(MazeMesh.WALL_THICKNESS);
-		var depth2 = lengthDir.cross(up2).normalized().scaled(MazeMesh.WALL_THICKNESS);
-
-		var frontBase1 = corner1.add(depth1);
-		var frontBase2 = corner2.add(depth2);
-		var backBase1 = corner1.sub(depth1);
-		var backBase2 = corner2.sub(depth2);
-		var frontTop1 = frontBase1.add(up1.scaled(MazeMesh.WALL_HEIGHT));
-		var frontTop2 = frontBase2.add(up2.scaled(MazeMesh.WALL_HEIGHT));
-		var backTop1 = backBase1.add(up1.scaled(MazeMesh.WALL_HEIGHT));
-		var backTop2 = backBase2.add(up2.scaled(MazeMesh.WALL_HEIGHT));
+		var upA = game.SphereMath.upVectorAt(outerA, center);
+		var upB = game.SphereMath.upVectorAt(outerB, center);
+		var topOuterA = outerA.add(upA.scaled(MazeMesh.WALL_HEIGHT));
+		var topOuterB = outerB.add(upB.scaled(MazeMesh.WALL_HEIGHT));
+		var topInnerA = innerA.add(upA.scaled(MazeMesh.WALL_HEIGHT));
+		var topInnerB = innerB.add(upB.scaled(MazeMesh.WALL_HEIGHT));
 
 		// Chord length as a stand-in for arc length (cells are small relative
 		// to the sphere, so the two are close enough for texture tiling) —
 		// repeats the texture across the wall's length rather than stretching
 		// one tile to fit, so differently-sized walls read at a consistent
 		// texel density.
-		var uRepeat = corner1.sub(corner2).length() / MazeMesh.WALL_TEXTURE_TILE_SIZE;
+		var uRepeat = outerA.sub(outerB).length() / MazeMesh.WALL_TEXTURE_TILE_SIZE;
 		var vHeight = MazeMesh.WALL_HEIGHT / MazeMesh.WALL_TEXTURE_TILE_SIZE;
-		var vThickness = 2 * MazeMesh.WALL_THICKNESS / MazeMesh.WALL_TEXTURE_TILE_SIZE;
+		var vThickness = MazeGeometry.WALL_THICKNESS / MazeMesh.WALL_TEXTURE_TILE_SIZE;
 
-		addTexturedQuad(frontBase1, frontBase2, frontTop2, frontTop1, uRepeat, vHeight);
-		addTexturedQuad(backBase1, backBase2, backTop2, backTop1, uRepeat, vHeight);
-		addTexturedQuad(frontTop1, frontTop2, backTop2, backTop1, uRepeat, vThickness);
-
-		ensurePost(corner1);
-		ensurePost(corner2);
-	}
-
-	/**
-		Drops a small square post at `corner` — same height as a wall, footprint
-		sized to the wall thickness — the first time this exact point is seen.
-		Fully seals whatever wall segments end there (see class doc), regardless
-		of how many or at what angle, without needing per-junction logic.
-	**/
-	function ensurePost(corner:h3d.Vector):Void {
-		// Points shared between cells are always bit-for-bit identical (same
-		// cornerAt call, same inputs — verified by test/MazeMeshTest.hx), so a
-		// plain coordinate key needs no rounding/tolerance to dedupe correctly.
-		var key = '${corner.x},${corner.y},${corner.z}';
-		if (postsSeen.exists(key)) {
-			return;
-		}
-		postsSeen.set(key, true);
-
-		var theta = game.SphereMath.thetaOf(corner);
-		var phi = game.SphereMath.phiOf(corner);
-		var axisA = game.SphereMath.thetaTangentAt(theta, phi).scaled(MazeMesh.WALL_THICKNESS);
-		var axisB = game.SphereMath.phiTangentAt(phi).scaled(MazeMesh.WALL_THICKNESS);
-		var up = game.SphereMath.upVectorAt(corner, new h3d.Vector(0, 0, 0));
-		var top = up.scaled(MazeMesh.WALL_HEIGHT);
-
-		var base00 = corner.sub(axisA).sub(axisB);
-		var base10 = corner.add(axisA).sub(axisB);
-		var base11 = corner.add(axisA).add(axisB);
-		var base01 = corner.sub(axisA).add(axisB);
-		var top00 = base00.add(top);
-		var top10 = base10.add(top);
-		var top11 = base11.add(top);
-		var top01 = base01.add(top);
-
-		var vHeight = MazeMesh.WALL_HEIGHT / MazeMesh.WALL_TEXTURE_TILE_SIZE;
-		var side = 2 * MazeMesh.WALL_THICKNESS / MazeMesh.WALL_TEXTURE_TILE_SIZE;
-
-		addTexturedQuad(base00, base10, top10, top00, side, vHeight);
-		addTexturedQuad(base10, base11, top11, top10, side, vHeight);
-		addTexturedQuad(base11, base01, top01, top11, side, vHeight);
-		addTexturedQuad(base01, base00, top00, top01, side, vHeight);
-		addTexturedQuad(top00, top10, top11, top01, side, side);
+		// Inner face — visible to a player standing in this cell.
+		addTexturedQuad(innerA, innerB, topInnerB, topInnerA, uRepeat, vHeight);
+		// Top cap — visible once pitching up puts this wall's top edge in view.
+		addTexturedQuad(topOuterA, topOuterB, topInnerB, topInnerA, uRepeat, vThickness);
+		// End caps, sealing this piece regardless of what's next to it at either end.
+		addTexturedQuad(outerA, innerA, topInnerA, topOuterA, vThickness, vHeight);
+		addTexturedQuad(innerB, outerB, topOuterB, topInnerB, vThickness, vHeight);
 	}
 
 	/** Appends a quad plus matching UVs — `a`/`d` at u=0, `b`/`c` at u=uRepeat, `a`/`b` at v=vSpan, `c`/`d` at v=0. **/
@@ -294,11 +286,5 @@ private class WallBuilder {
 		uvs.push(new h3d.prim.UV(uRepeat, vSpan));
 		uvs.push(new h3d.prim.UV(uRepeat, 0));
 		uvs.push(new h3d.prim.UV(0, 0));
-	}
-
-	function undirectedKey(a:MazeNode, b:MazeNode):String {
-		var keyA = Maze.nodeKey(a);
-		var keyB = Maze.nodeKey(b);
-		return keyA < keyB ? '$keyA|$keyB' : '$keyB|$keyA';
 	}
 }

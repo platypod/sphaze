@@ -16,4 +16,14 @@ class MazeGeometry {
 
 	/** Radius of the physical sphere the maze grid is mapped onto. **/
 	public static inline final RADIUS:Float = 58;
+
+	/**
+		How far a wall's inner face sits from the true cell boundary (see
+		`MazeMesh.innerCornersOf`) — each cell's own contribution to a shared
+		wall's total thickness. Lives here rather than in `MazeMesh` because
+		`game.Collision` needs the exact same value to block movement at the
+		wall's actual visible face (`Maze.wallZoneNeighbor`) instead of the
+		old zero-thickness boundary line the wall no longer sits on.
+	**/
+	public static inline final WALL_THICKNESS:Float = 1.5;
 }

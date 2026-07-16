@@ -121,7 +121,11 @@ class CollisionTest extends Test {
 		var centerTheta = Math.PI * wall.row / (Maze.ROWS - 1);
 		var centerPhi = 2 * Math.PI * wall.col / Maze.COLS;
 		var halfPhi = Math.PI / Maze.COLS;
-		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
+		// Matches Maze.wallZoneNeighbor's own blocking distance exactly —
+		// COLLISION_CLEARANCE on top of WALL_THICKNESS, not the rendered
+		// wall's thickness alone — so this offset is actually outside the
+		// zone the real code blocks at, not just outside the render.
+		var insetPhi = Math.min(halfPhi, (MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE) / (RADIUS * Math.sin(centerTheta)));
 
 		// Starts short of the wall zone (unlike the other tests here, which
 		// place pos0 right at its edge) — this needs room to slide toward
@@ -171,6 +175,16 @@ class CollisionTest extends Test {
 		// way back to the exact starting position, and a square hit has
 		// nothing to slide with either (see slideAlong) — so nothing ever
 		// happened, ever again.
+		//
+		// Checks that retreating actually gets back near the starting
+		// point, rather than asserting a fixed minimum on every single
+		// tick: row 5 isn't exactly on the equator (no row center is,
+		// ROWS-1 being odd — see MazeMeshTest's own note on this), so "due
+		// east" isn't quite a geodesic there, and `forward` drifts a little
+		// off being exactly wall-perpendicular over the approach — a real
+		// but harmless side effect of the sphere's curvature (unrelated to
+		// this bug), which throttles a handful of ticks on both legs
+		// symmetrically rather than at a fixed per-tick rate.
 		var row = 5;
 		var col = 10;
 		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
@@ -185,13 +199,23 @@ class CollisionTest extends Test {
 		for (_ in 0...20) {
 			Collision.tryMoveForward(player, step, RADIUS, maze); // walk into the wall until pressed against it
 		}
+		var pressedPhi = SphereMath.phiOf(player.pos);
 
 		for (_ in 0...20) {
-			var before = player.pos;
 			Collision.tryMoveForward(player, -step, RADIUS, maze); // retreat
-			var moved = player.pos.sub(before).length();
-			Assert.isTrue(moved > step * 0.99);
 		}
+
+		// A permanent lockup would leave phi exactly where it was pressed
+		// against the wall; real retreat moves it substantially back west,
+		// toward (or past) centerPhi — checked as a signed westward change
+		// rather than distance from the start, since retreating far enough
+		// to overshoot past centerPhi would otherwise read as "no closer".
+		// No angle-wrapping needed: both offsets stay well within a
+		// fraction of a radian here, nowhere near wrapping past +-pi.
+		var finalPhi = SphereMath.phiOf(player.pos);
+		var pressedOffset = pressedPhi - centerPhi;
+		var finalOffset = finalPhi - centerPhi;
+		Assert.isTrue(finalOffset < pressedOffset * 0.1);
 	}
 
 	/**

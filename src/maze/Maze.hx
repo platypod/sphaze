@@ -204,11 +204,15 @@ class Maze {
 		Which of `node`'s neighbors, if any, the position (theta, phi) has
 		crossed into the *wall-zone* of — the strip between this cell's own
 		inner boundary and its true outer boundary (see
-		`MazeMesh.innerCornersOf`) on whichever side has a closed edge. Lets
-		`game.Collision` block movement at the wall's actual visible face
-		instead of the old zero-thickness boundary line the wall no longer
-		sits on — without this, a player could walk into (and partway
-		through) a wall's rendered thickness before anything stopped them.
+		`MazeMesh.innerCornersOf`), *plus* `MazeGeometry.COLLISION_CLEARANCE`,
+		on whichever side has a closed edge. Lets `game.Collision` block
+		movement a bit short of the wall's actual visible face instead of
+		the old zero-thickness boundary line the wall no longer sits on —
+		without the base thickness, a player could walk into (and partway
+		through) a wall's rendered thickness before anything stopped them;
+		without the extra clearance on top, they'd stop exactly flush
+		against that thickness, close enough for the camera to catch
+		glimpses past the wall's geometry.
 
 		Returns null for `PoleNode` unconditionally: the merged pole cap
 		isn't subdivided by column, so it has no per-neighbor wall-zone
@@ -248,8 +252,9 @@ class Maze {
 				var center = centerOf(node);
 				var halfTheta = Math.PI / (ROWS - 1) / 2;
 				var halfPhi = Math.PI / COLS;
-				var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / radius);
-				var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (radius * Math.sin(center.theta)));
+				var blockAt = MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE;
+				var insetTheta = Math.min(halfTheta, blockAt / radius);
+				var insetPhi = Math.min(halfPhi, blockAt / (radius * Math.sin(center.theta)));
 
 				var dTheta = theta - center.theta;
 				var dPhi = wrapAngle(phi - center.phi);

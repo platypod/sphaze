@@ -26,4 +26,16 @@ class MazeGeometry {
 		old zero-thickness boundary line the wall no longer sits on.
 	**/
 	public static inline final WALL_THICKNESS:Float = 1.5;
+
+	/**
+		Extra buffer `Maze.wallZoneNeighbor` adds on top of `WALL_THICKNESS`
+		when blocking movement — purely a collision-side margin, not a
+		render one. `MazeMesh` still builds the wall's visible face exactly
+		`WALL_THICKNESS` in from the cell boundary; this keeps the *player*
+		(and so the camera, which sits close to `pos`) stopped a bit short
+		of that face instead of flush against it, since standing exactly at
+		a thin wall's surface let the camera's corners catch glimpses past
+		it — most noticeably while pitched up toward it.
+	**/
+	public static inline final COLLISION_CLEARANCE:Float = 1;
 }

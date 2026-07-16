@@ -65,17 +65,41 @@ class PlayerTest extends Test {
 		Assert.floatEquals(4 / radius, angle, 1e-9);
 	}
 
-	function testMoveAlongDoesNotRotateForward():Void {
+	function testMoveAlongKeepsForwardTangent():Void {
+		// forward isn't left untouched — it's parallel-transported by the
+		// same rotation as pos, same as moveForward does for its own
+		// direction. That's what keeps it a valid tangent after the move
+		// (skipping this let forward drift out of the tangent plane over
+		// repeated slides, breaking movement after a few ticks — see
+		// Player.moveAlong's doc comment).
 		var radius = 50.0;
 		var player = Player.spawnAt(1.1, 2.2, 0.7, radius);
-		var oldForward = player.forward;
 		var direction = game.SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
 
 		player.moveAlong(direction, 4, radius);
 
-		Assert.floatEquals(oldForward.x, player.forward.x, 1e-9);
-		Assert.floatEquals(oldForward.y, player.forward.y, 1e-9);
-		Assert.floatEquals(oldForward.z, player.forward.z, 1e-9);
+		Assert.floatEquals(1, player.forward.length(), 1e-9);
+		Assert.floatEquals(0, player.pos.normalized().dot(player.forward), 1e-9);
+	}
+
+	function testMoveAlongStaysTangentAfterManyConsecutiveSlides():Void {
+		// The exact reported bug: repeated sliding (many fixed-timestep
+		// ticks in a row, same shape as Collision calling moveAlong every
+		// frame while a player holds into a wall at an angle) used to drift
+		// forward out of the tangent plane, since nothing ever re-aligned it
+		// as the tangent plane itself rotated out from under a frozen
+		// forward. 50 consecutive slides is well past where that drift
+		// became visible in practice.
+		var radius = 50.0;
+		var player = Player.spawnAt(1.1, 2.2, 0.7, radius);
+
+		for (_ in 0...50) {
+			var direction = game.SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
+			player.moveAlong(direction, 2, radius);
+		}
+
+		Assert.floatEquals(1, player.forward.length(), 1e-6);
+		Assert.floatEquals(0, player.pos.normalized().dot(player.forward), 1e-6);
 	}
 
 	function testMoveForwardIgnoresPitch():Void {

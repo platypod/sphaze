@@ -78,10 +78,11 @@ class CollisionTest extends Test {
 		Assert.isTrue(moved);
 		Assert.isTrue(player.pos.sub(pos0).length() > 0.01); // actually slid, not just stopped
 		Assert.floatEquals(RADIUS, player.pos.length(), 1e-6); // stayed on the sphere
-		// Sliding redirects movement, not where the player is looking.
-		Assert.floatEquals(forward.x, player.forward.x, 1e-9);
-		Assert.floatEquals(forward.y, player.forward.y, 1e-9);
-		Assert.floatEquals(forward.z, player.forward.z, 1e-9);
+		// forward is parallel-transported along with pos during a slide (see
+		// Player.moveAlong) rather than left untouched, so it stays a valid
+		// tangent at the new position instead of drifting — not "unchanged".
+		Assert.floatEquals(1, player.forward.length(), 1e-6);
+		Assert.floatEquals(0, player.pos.normalized().dot(player.forward), 1e-6);
 
 		var landedNode = Maze.nodeAt(SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos));
 		Assert.isTrue(Maze.nodeKey(landedNode) == Maze.nodeKey(pair.from) || Maze.isOpen(maze, pair.from, landedNode));

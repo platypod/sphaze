@@ -134,10 +134,25 @@ class Player {
 
 	/**
 		Translates `pos` by `distance` along `direction` — a unit tangent at
-		`pos`, not necessarily `forward` — without touching `forward` at all.
-		Same great-circle math as `moveForward`, minus the facing rotation:
-		for sliding along a wall (see `game.Collision`), where the player's
-		body gets redirected but their view shouldn't snap to match it.
+		`pos`, not necessarily `forward`. For sliding along a wall (see
+		`game.Collision`), where the player's body gets redirected without
+		them actively choosing to turn.
+
+		`forward` is parallel-transported by the same rotation as `pos`
+		(exactly like `moveForward` does for its own direction), *not* left
+		untouched: `forward` staying a valid unit tangent at `pos` is a hard
+		invariant every other method here relies on (`moveForward`'s own
+		`axis = posDir.cross(forward)`, `applyToCamera`'s `right =
+		forward.cross(up)`, ...). An earlier version skipped this to keep the
+		view from "snapping" during a slide — reasonable-sounding, but it let
+		`forward` drift out of the tangent plane over repeated slides, since
+		nothing ever re-aligned it to the position's own tangent plane as
+		that plane rotated out from under it; a few ticks of sliding was
+		enough to visibly break movement (reported directly as gliding that
+		"stops working after a really short time"). Transporting it this way
+		keeps the angle between `forward` and the slide direction fixed,
+		which is the correct minimal adjustment on a curved surface — not a
+		re-orientation toward the wall, just what staying tangent costs.
 		@param direction unit tangent at `pos` to move along.
 		@param distance arc length to move; negative moves the opposite way.
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
@@ -146,6 +161,7 @@ class Player {
 		var posDir = pos.normalized();
 		var angle = distance / radius;
 		var axis = posDir.cross(direction).normalized();
+		forward = SphereMath.rotateAroundAxis(forward, axis, angle);
 		pos = SphereMath.rotateAroundAxis(posDir, axis, angle).scaled(radius);
 	}
 

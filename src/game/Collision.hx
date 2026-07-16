@@ -59,8 +59,10 @@ class Collision {
 		Redirects a blocked step into a slide along the wall that blocked it,
 		keeping the component of `forward` that runs along the wall and
 		dropping the component that runs into it — the same projection any
-		FPS wall-slide uses. Doesn't rotate `forward`: the slide moves the
-		player's position, not where they're looking.
+		FPS wall-slide uses. `forward` still gets parallel-transported by
+		`Player.moveAlong` (not left untouched — see its doc comment for why),
+		so both `pos` and `forward` are snapshotted here and restored
+		together if the slide itself turns out to be blocked too.
 
 		The wall's tangent direction is derived from `blockedNode`'s nominal
 		center as a plain 3D point (`oldPos`'s radial direction crossed with
@@ -79,6 +81,7 @@ class Collision {
 	**/
 	static function slideAlong(player:Player, fromNode:MazeNode, blockedNode:MazeNode, forward:h3d.Vector, distance:Float, radius:Float, maze:MazeData):Bool {
 		var oldPos = player.pos;
+		var oldForward = player.forward;
 		var oldPosDir = oldPos.normalized();
 		var blockedCenter = Maze.centerOf(blockedNode);
 		var blockedDir = SphereMath.sphericalToCartesian(1, blockedCenter.theta, blockedCenter.phi);
@@ -102,8 +105,10 @@ class Collision {
 		}
 
 		// The slide direction crosses a closed edge too (e.g. right at a
-		// corner) — nowhere to go.
+		// corner) — nowhere to go. moveAlong touched forward as well as pos
+		// (see its doc comment), so both need restoring here, not just pos.
 		player.pos = oldPos;
+		player.forward = oldForward;
 		return false;
 	}
 }

@@ -16,10 +16,22 @@ class Main extends hxd.App {
 	static inline final WALK_SPEED:Float = 15;
 	static inline final TURN_SPEED:Float = 2.5;
 	static inline final PITCH_SPEED:Float = 1.5;
+	static inline final MOUSE_SENSITIVITY:Float = 0.0025;
+
+	/**
+		How long holding SPACE tilts the camera up before it's released back
+		to level — but only if the player is also moving (see
+		`updateSpaceTilt`); held while standing still, it isn't forced back,
+		so a stationary player can linger on the far side view as long as
+		they like.
+	**/
+	static inline final SPACE_TILT_RELEASE_AFTER:Float = 1;
 
 	var accumulator:Float = 0;
 	var player:Player;
 	var maze:MazeData;
+	var spaceHoldTime:Float = 0;
+	var spaceTiltReleased:Bool = false;
 
 	static function main():Void {
 		new Main();
@@ -35,6 +47,17 @@ class Main extends hxd.App {
 
 		player = Player.spawnAt(1.3, 0.6, 0.4, MazeGeometry.RADIUS);
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+
+		// Relative mode hides the cursor and reports movement deltas instead
+		// of a position — the standard FPS mouse-look. Per hxd.Window's own
+		// doc, this only engages on the player's first click on the canvas
+		// (a browser requirement for pointer lock); nothing else to wire up.
+		hxd.Window.getInstance().mouseMode = Relative(onMouseMove, true);
+	}
+
+	function onMouseMove(e:hxd.Event):Void {
+		player.turn(e.relX * MOUSE_SENSITIVITY);
+		player.lookUp(-e.relY * MOUSE_SENSITIVITY);
 	}
 
 	override function update(dt:Float):Void {
@@ -50,28 +73,50 @@ class Main extends hxd.App {
 		// placeholder — fine for one input source and one entity, but a
 		// dedicated input/controller system is the right home for this once
 		// there's more than a single player to drive.
-		if (hxd.Key.isDown(hxd.Key.LEFT) || hxd.Key.isDown(hxd.Key.A)) {
+		if (hxd.Key.isDown(hxd.Key.LEFT) || hxd.Key.isDown(hxd.Key.Q)) {
 			player.turn(-TURN_SPEED * dt);
 		}
 		if (hxd.Key.isDown(hxd.Key.RIGHT) || hxd.Key.isDown(hxd.Key.D)) {
 			player.turn(TURN_SPEED * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.W)) {
-			Collision.tryMoveForward(player, WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
-		}
-		if (hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S)) {
-			Collision.tryMoveForward(player, -WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
-		}
-		// Raise/lower your view toward the sphere's center — the "see the
-		// far side" mechanic. PGUP/PGDOWN as a keyboard-only placeholder;
-		// mouse-look is a likely follow-up once there's a reason to add it.
-		if (hxd.Key.isDown(hxd.Key.PGUP)) {
-			player.lookUp(PITCH_SPEED * dt);
-		}
-		if (hxd.Key.isDown(hxd.Key.PGDOWN)) {
-			player.lookUp(-PITCH_SPEED * dt);
+		if (isMoveKeyDown()) {
+			var direction = (hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z)) ? 1 : -1;
+			Collision.tryMoveForward(player, direction * WALK_SPEED * dt, MazeGeometry.RADIUS, maze);
 		}
 
+		updateSpaceTilt(dt);
+
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+	}
+
+	function isMoveKeyDown():Bool {
+		return hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z) || hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S);
+	}
+
+	/**
+		Raise your view toward the sphere's center — the "see the far side"
+		mechanic. Holding SPACE tilts up continuously, same as the old
+		PGUP; the twist is the auto-release once held a full second while
+		still moving, snapping back to level so walking blind doesn't
+		linger — checked once, at the moment the hold crosses that mark,
+		not re-armed until SPACE is released and pressed again.
+	**/
+	function updateSpaceTilt(dt:Float):Void {
+		if (!hxd.Key.isDown(hxd.Key.SPACE)) {
+			spaceHoldTime = 0;
+			spaceTiltReleased = false;
+			return;
+		}
+
+		spaceHoldTime += dt;
+		if (spaceTiltReleased) {
+			return;
+		}
+
+		player.lookUp(PITCH_SPEED * dt);
+		if (spaceHoldTime >= SPACE_TILT_RELEASE_AFTER && isMoveKeyDown()) {
+			player.pitch = 0;
+			spaceTiltReleased = true;
+		}
 	}
 }

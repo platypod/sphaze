@@ -65,16 +65,14 @@ typedef CellCorners = {
 	pitfall, since it never touches the lighting pipeline either.
 **/
 class MazeMesh {
-	// Cells are roughly RADIUS * (grid step) apart (~12 units at RADIUS=58),
-	// so a wall directly across a cell is only ~6 units away — at the 70deg
-	// vertical FOV (see Main.CAMERA_FOV_Y), that keeps a wall's angular size
-	// at ~53deg from one cell away, same ratio as the previous RADIUS=50/
-	// WALL_HEIGHT=5 tuning (both scaled up together on purpose, to leave that
-	// already-tuned "present but not dominant" balance alone).
-	public static inline final WALL_HEIGHT:Float = 6;
+	// Doubled from 6 on request, for taller, more prominent walls — a
+	// deliberate departure from the earlier "present but not dominant" FOV-
+	// subtense tuning noted in prior sessions (see docs/PROJECT_LOG.md),
+	// not an oversight to reconcile back to that ratio later.
+	public static inline final WALL_HEIGHT:Float = 12;
 
 	/** World units per repeat of the wall texture — matches WALL_HEIGHT so a tile reads roughly square rather than stretched. **/
-	public static inline final WALL_TEXTURE_TILE_SIZE:Float = 6;
+	public static inline final WALL_TEXTURE_TILE_SIZE:Float = 12;
 
 	static inline final FLOOR_COLOR:Int = 0xFF444444;
 

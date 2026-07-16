@@ -109,6 +109,75 @@ class MazeTest extends Test {
 		Assert.isTrue(Type.enumEq(node, RingNode(row, 0)));
 	}
 
+	function testColsForRowMatchesExpectedBandsForEveryRow():Void {
+		// The band scheme: d<=1 (rows touching a pole) -> COLS/4, d<=3 ->
+		// COLS/2, else the full COLS — see colsForRow's own doc for why.
+		var expected = [7, 14, 14, 28, 28, 28, 28, 28, 28, 14, 14, 7];
+		for (row in 1...(Maze.ROWS - 1)) {
+			Assert.equals(expected[row - 1], Maze.colsForRow(row), 'row $row');
+		}
+	}
+
+	// The specific regression case for the bug a Plan-agent review caught in
+	// the original design: under a center-anchored phi convention, a
+	// doubling boundary's children don't nest evenly inside the parent's own
+	// range at all (each parent col overlaps three children, not two).
+	// Checked two ways: the entries must exactly partition the parent's own
+	// range (no gap, no overlap, no drift) *and* each entry's phi range must
+	// equal the child column's own boundary-anchored range computed fresh
+	// from otherCols (not by re-invoking rowBoundaryNeighbors on the child).
+	// (MazeMesh.cornersOf isn't row-aware yet at this point in the reduced-
+	// grid work — that comparison belongs in MazeMeshTest once it is.)
+	function testRowBoundaryNeighborsDoublingEntriesPartitionParentRangeExactly():Void {
+		// Every doubling boundary in the grid: (row, otherRow) pairs where
+		// otherRow has more columns than row.
+		var boundaries = [{row: 1, otherRow: 2}, {row: 3, otherRow: 4}, {row: 10, otherRow: 9}, {row: 12, otherRow: 11}];
+		for (boundary in boundaries) {
+			var myCols = Maze.colsForRow(boundary.row);
+			var otherCols = Maze.colsForRow(boundary.otherRow);
+			var ratio = Std.int(otherCols / myCols);
+			Assert.isTrue(ratio > 1, 'expected a doubling at row ${boundary.row} -> ${boundary.otherRow}');
+
+			// Exercise every column of the coarser row, not just column 0 —
+			// the bug this guards against was a *systematic* misalignment,
+			// not a one-off at the seam.
+			for (col in 0...myCols) {
+				var parentPhiStart = 2 * Math.PI * col / myCols;
+				var parentPhiEnd = 2 * Math.PI * (col + 1) / myCols;
+				var entries = Maze.rowBoundaryNeighbors(boundary.row, col, boundary.otherRow);
+				Assert.equals(ratio, entries.length, 'row ${boundary.row} col $col -> ${boundary.otherRow}');
+
+				Assert.floatEquals(parentPhiStart, entries[0].phiStart, 1e-9);
+				Assert.floatEquals(parentPhiEnd, entries[entries.length - 1].phiEnd, 1e-9);
+				for (i in 0...entries.length) {
+					var childCol = switch entries[i].node {
+						case RingNode(_, c): c;
+						case PoleNode(_): -1;
+					}
+					Assert.equals(col * ratio + i, childCol, 'row ${boundary.row} col $col entry $i');
+					Assert.floatEquals(2 * Math.PI * childCol / otherCols, entries[i].phiStart, 1e-9);
+					Assert.floatEquals(2 * Math.PI * (childCol + 1) / otherCols, entries[i].phiEnd, 1e-9);
+					if (i > 0) {
+						Assert.floatEquals(entries[i - 1].phiEnd, entries[i].phiStart, 1e-9); // no gap, no overlap
+					}
+				}
+			}
+		}
+	}
+
+	function testRowBoundaryNeighborsAtColumnExtremesStayInRange():Void {
+		var boundaries = [{row: 1, otherRow: 2}, {row: 3, otherRow: 4}, {row: 10, otherRow: 9}, {row: 12, otherRow: 11}];
+		for (boundary in boundaries) {
+			var myCols = Maze.colsForRow(boundary.row);
+
+			var first = Maze.rowBoundaryNeighbors(boundary.row, 0, boundary.otherRow);
+			Assert.floatEquals(0, first[0].phiStart, 1e-9);
+
+			var last = Maze.rowBoundaryNeighbors(boundary.row, myCols - 1, boundary.otherRow);
+			Assert.floatEquals(2 * Math.PI, last[last.length - 1].phiEnd, 1e-9);
+		}
+	}
+
 	function countOpenEdges(maze:MazeData):Int {
 		var count = 0;
 		for (_ in maze.openEdges.keys()) {

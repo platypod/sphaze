@@ -29,13 +29,103 @@ typedef MazeData = {
 	var openEdges:haxe.ds.StringMap<Bool>;
 }
 
+/**
+	One row-boundary neighbor a `RingNode` has toward an adjacent row, paired
+	with its own share of that cell's phi range on that side — see
+	`Maze.rowBoundaryNeighbors`.
+**/
+typedef RowBoundaryNeighbor = {node:MazeNode, phiStart:Float, phiEnd:Float}
+
 /** Grid queries and generation for the maze defined by MazeNode/MazeData above. **/
 class Maze {
 	/** Row count of the ring grid, poles excluded (poles are merged nodes, not rows). **/
 	public static inline final ROWS:Int = 14;
 
-	/** Column count of the ring grid — the longitude resolution. **/
+	/**
+		Column count at the equatorial band — the grid's *maximum* longitude
+		resolution, not a uniform one. See `colsForRow` for how it varies by
+		row.
+	**/
 	public static inline final COLS:Int = 28;
+
+	/**
+		Column count for a given ring row — fewer nearer the poles, full
+		`COLS` resolution at the equator, so a cell's physical east-west
+		width stays roughly consistent everywhere instead of shrinking
+		toward the poles (a column's physical width is proportional to
+		`sin(theta)`, which shrinks toward the poles, while a fixed column
+		count doesn't compensate — see docs/PROJECT_LOG.md for the actual
+		numbers this band scheme was tuned against).
+
+		Banded by `d`, the row's distance in rows from the nearer pole:
+		`d<=1` (the rows immediately adjacent to a pole) gets `COLS/4`,
+		`d<=3` gets `COLS/2`, everything else gets the full `COLS`. Every
+		boundary here is an exact halving/doubling — `rowBoundaryNeighbors`
+		depends on that to nest cleanly. (Assumes `COLS` divides evenly by
+		4; true today at `COLS=28`, would need revisiting if `COLS` ever
+		changed to something that doesn't.)
+		@param row the ring row (1 to ROWS - 2).
+		@return that row's column count.
+	**/
+	public static function colsForRow(row:Int):Int {
+		var distFromPole = row < ROWS - 1 - row ? row : ROWS - 1 - row;
+		if (distFromPole <= 1) {
+			return Std.int(COLS / 4);
+		}
+		if (distFromPole <= 3) {
+			return Std.int(COLS / 2);
+		}
+		return COLS;
+	}
+
+	/**
+		Every neighbor `RingNode(row, col)` has directly across the row
+		boundary toward `otherRow` (row-1 or row+1; must itself be a ring
+		row, not a pole — poles stay `neighborsOf`'s own special case,
+		never routed through here), each paired with its own share of this
+		cell's phi range on that side.
+
+		A single entry (this cell's own full phi range) when the two rows
+		share the same column count. When `otherRow` has *fewer* columns
+		(moving toward a pole), also a single entry — several of this row's
+		cells share one neighbor there, so this cell's own full range maps
+		onto its one parent, at whichever fraction of it that parent
+		actually is. When `otherRow` has *more* columns (moving away from a
+		pole), one entry per child, each covering an even fraction of this
+		cell's own phi range — the reverse of the same halving.
+
+		Column phi is boundary-anchored (see `centerOf`'s doc) specifically
+		so this nests exactly: a coarser row's own boundary is always also
+		one of a finer row's boundaries at any of these integer ratios, so
+		there's never a sub-boundary that splits unevenly or leaves a gap.
+		@param row the cell's own row.
+		@param col the cell's own column.
+		@param otherRow the row to find boundary neighbors toward — row - 1 or row + 1, never a pole row.
+		@return this cell's neighbor(s) across that boundary, each with its own phi sub-range.
+	**/
+	public static function rowBoundaryNeighbors(row:Int, col:Int, otherRow:Int):Array<RowBoundaryNeighbor> {
+		var myCols = colsForRow(row);
+		var otherCols = colsForRow(otherRow);
+		var phiStart = 2 * Math.PI * col / myCols;
+		var phiEnd = 2 * Math.PI * (col + 1) / myCols;
+
+		if (otherCols == myCols) {
+			return [{node: RingNode(otherRow, col), phiStart: phiStart, phiEnd: phiEnd}];
+		}
+		if (otherCols < myCols) {
+			var ratio = Std.int(myCols / otherCols);
+			return [{node: RingNode(otherRow, Std.int(col / ratio)), phiStart: phiStart, phiEnd: phiEnd}];
+		}
+		var ratio = Std.int(otherCols / myCols);
+		return [
+			for (i in 0...ratio)
+				{
+					node: RingNode(otherRow, col * ratio + i),
+					phiStart: phiStart + (phiEnd - phiStart) * i / ratio,
+					phiEnd: phiStart + (phiEnd - phiStart) * (i + 1) / ratio
+				}
+		];
+	}
 
 	/**
 		Stable string key for a node, used to store/look up nodes and edges in

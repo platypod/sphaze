@@ -36,8 +36,18 @@ class Painting {
 	/** Fraction of the wall's own length a painting's width spans. **/
 	static inline final WIDTH_FRACTION:Float = 0.5;
 
-	/** How far off the wall's surface a painting's quad sits, so it doesn't z-fight with the wall texture behind it. **/
-	static inline final SURFACE_INSET:Float = 0.1;
+	/**
+		How far off the wall's surface a painting's quad sits, so it doesn't
+		z-fight with the wall texture behind it. `0.1` wasn't enough — even
+		with a mathematically-correct perpendicular offset direction, that
+		thin a gap still lost the depth-buffer fight at ordinary viewing
+		distance (confirmed: the hub's own column-face painting never had
+		the direction bug — `along.cross(upDir)` and the old
+		`roomCenter.sub(mid)` approximation agree exactly for a flat vertical
+		column face — yet showed the identical jagged edge, meaning
+		magnitude, not direction, was the actual remaining cause).
+	**/
+	static inline final SURFACE_INSET:Float = 0.4;
 
 	public final position:h3d.Vector;
 	public final destination:PaintingDestination;

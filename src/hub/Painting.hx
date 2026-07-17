@@ -100,12 +100,26 @@ class Painting {
 		quad (no frame/art yet — matches the project's existing "flat-
 		shaded placeholder" aesthetic, same reasoning `wall_stone.png` was
 		procedurally generated for) centered on the wall segment's midpoint,
-		inset slightly toward `roomCenter` so it doesn't z-fight with the
-		wall texture directly behind it.
+		inset slightly off the wall's own face so it doesn't z-fight with
+		the wall texture directly behind it.
+
+		The inset direction is `along.cross(upDir)` — perpendicular to both
+		the wall's own length and height axes by construction, i.e. the
+		wall's *true* face normal — not `roomCenter.sub(mid)` (an earlier
+		version's approximation). That approximation is only actually
+		perpendicular to the face for walls where "toward the room's
+		center" happens to line up with the face normal; for a west/east
+		biome wall it's nearly *parallel* to the face instead (a sideways
+		phi-direction shift, since the cell center sits at the same radius
+		and theta as the wall, just a different phi), barely lifting the
+		inset off the wall at all — visible as the painting reading as
+		flush with, and z-fighting against, the wall behind it. `roomCenter`
+		still matters here, just for one bit: which of the normal's two
+		possible directions actually points into the room.
 		@param parent the scene object to attach the mesh under.
 		@param wallA one end of the wall segment this painting is mounted on.
 		@param wallB the other end.
-		@param roomCenter the room's own center — only used to find "into the room," not for exact positioning.
+		@param roomCenter a point on the room's own side of the wall — only used to pick which way the face normal points, not for exact positioning.
 		@param color the placeholder's flat fill color.
 		@param up which way "up the wall" is — defaults to radially inward (`SphereMath.upVectorAt`), correct for a wall on a sphere's surface; pass an explicit direction (e.g. `(0,1,0)`) for a wall whose own "up" isn't radial, like a straight column's side face.
 	**/
@@ -113,10 +127,14 @@ class Painting {
 		var mid = midpointOf(wallA, wallB);
 		var upDir = up != null ? up : game.SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
 		var along = wallB.sub(wallA).normalized();
-		var inward = roomCenter.sub(mid).normalized();
+
+		var faceNormal = along.cross(upDir).normalized();
+		if (faceNormal.dot(roomCenter.sub(mid)) < 0) {
+			faceNormal = faceNormal.scaled(-1);
+		}
 
 		var halfWidth = wallA.sub(wallB).length() * WIDTH_FRACTION / 2;
-		var inset = inward.scaled(SURFACE_INSET);
+		var inset = faceNormal.scaled(SURFACE_INSET);
 
 		var bottomA = mid.sub(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(inset);
 		var bottomB = mid.add(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(inset);

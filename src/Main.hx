@@ -33,6 +33,8 @@ class Main extends hxd.App {
 	var maze:MazeData;
 	var spaceHoldTime:Float = 0;
 	var spaceTiltReleased:Bool = false;
+	var debugOverlay:h2d.Text;
+	var debugOverlayVisible:Bool = false;
 
 	static function main():Void {
 		new Main();
@@ -48,6 +50,14 @@ class Main extends hxd.App {
 
 		player = Player.spawnAt(1.3, 0.6, 0.4, MazeGeometry.RADIUS);
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+
+		// F3 debug overlay (Minecraft-style): player position, camera angle,
+		// perf stats. Hidden by default; toggled in fixedUpdate.
+		debugOverlay = new h2d.Text(hxd.res.DefaultFont.get(), s2d);
+		debugOverlay.x = 10;
+		debugOverlay.y = 10;
+		debugOverlay.textColor = 0xFFFF00;
+		debugOverlay.visible = debugOverlayVisible;
 
 		// Relative mode hides the cursor and reports movement deltas instead
 		// of a position — the standard FPS mouse-look. Per hxd.Window's own
@@ -132,6 +142,61 @@ class Main extends hxd.App {
 		updateSpaceTilt(dt);
 
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+
+		if (hxd.Key.isPressed(hxd.Key.F3)) {
+			debugOverlayVisible = !debugOverlayVisible;
+			debugOverlay.visible = debugOverlayVisible;
+		}
+		if (debugOverlayVisible) {
+			updateDebugOverlay();
+		}
+	}
+
+	/**
+		Refreshes the F3 overlay's text — only called while it's visible, so
+		the string-building cost disappears entirely once it's toggled off.
+		Block 1: maze position (node, theta, phi) — the readout used to track
+		down wall-mesh bug reports. Block 2: camera angle (facing around the
+		local "up" axis, relative to `thetaTangentAt`'s own zero, same
+		convention `Player.spawnAt`'s `facing` parameter uses; pitch as
+		stored). Block 3: whatever perf info this target can actually offer
+		— `hxd.Timer.fps()` always; heap size only where the browser exposes
+		the non-standard `performance.memory` (kept out of the layout
+		entirely, not shown as "n/a", when it isn't available).
+	**/
+	function updateDebugOverlay():Void {
+		var theta = game.SphereMath.thetaOf(player.pos);
+		var phi = game.SphereMath.phiOf(player.pos);
+		var node = Maze.nodeAt(theta, phi);
+
+		var thetaTangent = game.SphereMath.thetaTangentAt(theta, phi);
+		var phiTangent = game.SphereMath.phiTangentAt(phi);
+		var facing = Math.atan2(player.forward.dot(phiTangent), player.forward.dot(thetaTangent));
+
+		var lines = [
+			Std.string(node),
+			'theta=' + hxd.Math.fmt(theta),
+			'phi=' + hxd.Math.fmt(phi),
+			'',
+			'facing=' + hxd.Math.fmt(radToDeg(facing)) + ' deg',
+			'pitch=' + hxd.Math.fmt(radToDeg(player.pitch)) + ' deg',
+			'',
+			'fps=' + hxd.Math.fmt(hxd.Timer.fps()),
+		];
+
+		// performance.memory is a non-standard, Chromium-only API — absent
+		// (Firefox/Safari, or newer Chrome with the feature restricted)
+		// this reads as null, and the line is simply omitted.
+		var heapBytes:Null<Float> = js.Syntax.code("(typeof performance !== 'undefined' && performance.memory) ? performance.memory.usedJSHeapSize : null");
+		if (heapBytes != null) {
+			lines.push('heap=' + hxd.Math.fmt(heapBytes / 1024 / 1024) + ' MB');
+		}
+
+		debugOverlay.text = lines.join('\n');
+	}
+
+	static inline function radToDeg(radians:Float):Float {
+		return radians * 180 / Math.PI;
 	}
 
 	function isMoveKeyDown():Bool {

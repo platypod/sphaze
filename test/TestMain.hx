@@ -13,6 +13,8 @@ class TestMain {
 		runner.addCase(new PlayerTest());
 		runner.addCase(new MazeMeshTest());
 		runner.addCase(new CollisionTest());
+		runner.addCase(new PaintingTest());
+		runner.addCase(new BiomePaintingTest());
 		Report.create(runner);
 		runner.run();
 	}

@@ -1,0 +1,113 @@
+package hub;
+
+/** Which way walking into a painting sends the player. **/
+enum PaintingDestination {
+	ToHub;
+	ToBiome;
+}
+
+/**
+	A painting mounted on a wall — the diegetic warp mechanism: walking
+	close enough triggers the transition, no interact-key confirmation, on
+	purpose (see `docs/PROJECT_LOG.md`'s 2026-07-17 entry — finding one
+	should still take some searching rather than being telegraphed by a
+	prompt; flagged there as revisitable later).
+
+	Pure data plus the trigger check — actually building a painting's
+	visible quad is scene/rendering code (see `buildQuad`), kept separate so
+	the trigger math itself stays unit-testable without needing a scene
+	graph (`docs/GUIDELINES.md` §1.4/§5.4).
+**/
+class Painting {
+	/** How close the player needs to walk for this painting to trigger. **/
+	public static inline final TRIGGER_DISTANCE:Float = 4;
+
+	/** Shared placeholder colors so every painting leading to the hub — or back to the biome — reads consistently regardless of which one the player finds first. **/
+	public static inline final TO_HUB_COLOR:Int = 0xFF4488CC;
+
+	public static inline final TO_BIOME_COLOR:Int = 0xFFCC8844;
+
+	/** How far up from the floor a painting's bottom edge sits. **/
+	static inline final BASE_HEIGHT:Float = 3;
+
+	/** A painting's height, floor-clearance to top edge. **/
+	static inline final HEIGHT:Float = 6;
+
+	/** Fraction of the wall's own length a painting's width spans. **/
+	static inline final WIDTH_FRACTION:Float = 0.5;
+
+	/** How far off the wall's surface a painting's quad sits, so it doesn't z-fight with the wall texture behind it. **/
+	static inline final SURFACE_INSET:Float = 0.1;
+
+	public final position:h3d.Vector;
+	public final destination:PaintingDestination;
+
+	public function new(position:h3d.Vector, destination:PaintingDestination) {
+		this.position = position;
+		this.destination = destination;
+	}
+
+	/**
+		Whether `pos` is close enough to this painting to trigger its warp.
+		@param pos the position to check — typically the player's own current position.
+		@return true if `pos` is within `TRIGGER_DISTANCE` of this painting.
+	**/
+	public function triggeredBy(pos:h3d.Vector):Bool {
+		return pos.sub(position).length() <= TRIGGER_DISTANCE;
+	}
+
+	/**
+		Where a painting mounted on the wall segment `wallA`-`wallB` sits —
+		its own trigger position, and the point `buildQuad`'s visual is
+		centered on. Just the segment's midpoint; pulled out on its own so
+		it's testable independent of any scene graph.
+		@param wallA one end of the wall segment.
+		@param wallB the other end.
+		@return the painting's position.
+	**/
+	public static function midpointOf(wallA:h3d.Vector, wallB:h3d.Vector):h3d.Vector {
+		return wallA.add(wallB).scaled(0.5);
+	}
+
+	/**
+		Builds a painting's placeholder visual: a single flat, solid-colored
+		quad (no frame/art yet — matches the project's existing "flat-
+		shaded placeholder" aesthetic, same reasoning `wall_stone.png` was
+		procedurally generated for) centered on the wall segment's midpoint,
+		inset slightly toward `roomCenter` so it doesn't z-fight with the
+		wall texture directly behind it.
+		@param parent the scene object to attach the mesh under.
+		@param wallA one end of the wall segment this painting is mounted on.
+		@param wallB the other end.
+		@param roomCenter the room's own center — only used to find "into the room," not for exact positioning.
+		@param color the placeholder's flat fill color.
+	**/
+	public static function buildQuad(parent:h3d.scene.Object, wallA:h3d.Vector, wallB:h3d.Vector, roomCenter:h3d.Vector, color:Int):Void {
+		var mid = midpointOf(wallA, wallB);
+		var origin = new h3d.Vector(0, 0, 0);
+		var up = game.SphereMath.upVectorAt(mid, origin);
+		var along = wallB.sub(wallA).normalized();
+		var inward = roomCenter.sub(mid).normalized();
+
+		var halfWidth = wallA.sub(wallB).length() * WIDTH_FRACTION / 2;
+		var inset = inward.scaled(SURFACE_INSET);
+
+		var bottomA = mid.sub(along.scaled(halfWidth)).add(up.scaled(BASE_HEIGHT)).add(inset);
+		var bottomB = mid.add(along.scaled(halfWidth)).add(up.scaled(BASE_HEIGHT)).add(inset);
+		var topA = bottomA.add(up.scaled(HEIGHT));
+		var topB = bottomB.add(up.scaled(HEIGHT));
+
+		var points = [bottomA, bottomB, topB, topA];
+		var idx = new hxd.IndexBuffer();
+		idx.push(0);
+		idx.push(1);
+		idx.push(2);
+		idx.push(0);
+		idx.push(2);
+		idx.push(3);
+
+		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
+		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(color));
+		mesh.material.mainPass.culling = None;
+	}
+}

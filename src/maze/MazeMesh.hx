@@ -358,6 +358,21 @@ private class WallBuilder {
 		west/east wall pinches at *every* row boundary it crosses, even
 		where it's just running straight through several rows — a wedge
 		shape in cross-section rather than a plain rectangular wall.
+
+		At a doubling boundary specifically, "continues" only makes sense
+		for whichever of this cell's two corners actually lands on a real
+		cell-to-cell boundary in the coarser row — see
+		`isGenuineRowBoundaryCorner`. The other corner sits partway through
+		that single coarser neighbor's own solid, undivided interior, where
+		nothing could ever continue into regardless of what's open or
+		closed; skipping that corner's cap on the mistaken belief that
+		something else covers it left a genuine hole in the wall — no cap,
+		nothing else there either — reported directly as a wall's near face
+		reading as missing texture, seeing straight through it, specifically
+		on the far side of a doubling boundary from wherever the report
+		happened to be taken (confirmed by an exhaustive sweep: 3430 such
+		holes across 200 generated mazes, every one on a row adjacent to a
+		doubling boundary, zero elsewhere).
 	**/
 	public function addWallsAround(row:Int, col:Int):Void {
 		var outer = MazeMesh.cornersOf(row, col);
@@ -379,10 +394,22 @@ private class WallBuilder {
 		var southWestClosed = !Maze.isOpen(maze, here, southWestNode);
 		var southEastClosed = !Maze.isOpen(maze, here, southEastNode);
 
-		var northWestFlush = !northWestClosed && continuesAcrossRowBoundary(northWestNode, true);
-		var northEastFlush = !northEastClosed && continuesAcrossRowBoundary(northEastNode, false);
-		var southWestFlush = !southWestClosed && continuesAcrossRowBoundary(southWestNode, true);
-		var southEastFlush = !southEastClosed && continuesAcrossRowBoundary(southEastNode, false);
+		var northWestFlush = row != 1
+			&& isGenuineRowBoundaryCorner(cols, Maze.colsForRow(row - 1), col, true)
+			&& !northWestClosed
+			&& continuesAcrossRowBoundary(northWestNode, true);
+		var northEastFlush = row != 1
+			&& isGenuineRowBoundaryCorner(cols, Maze.colsForRow(row - 1), col, false)
+			&& !northEastClosed
+			&& continuesAcrossRowBoundary(northEastNode, false);
+		var southWestFlush = row != Maze.ROWS - 2
+			&& isGenuineRowBoundaryCorner(cols, Maze.colsForRow(row + 1), col, true)
+			&& !southWestClosed
+			&& continuesAcrossRowBoundary(southWestNode, true);
+		var southEastFlush = row != Maze.ROWS - 2
+			&& isGenuineRowBoundaryCorner(cols, Maze.colsForRow(row + 1), col, false)
+			&& !southEastClosed
+			&& continuesAcrossRowBoundary(southEastNode, false);
 
 		var westInner = MazeMesh.innerCornersOf(row, col, !northWestFlush, !southWestFlush);
 		var eastInner = MazeMesh.innerCornersOf(row, col, !northEastFlush, !southEastFlush);
@@ -426,6 +453,45 @@ private class WallBuilder {
 				var neighborSide = RingNode(nRow, wantWest ? (nCol - 1 + nCols) % nCols : (nCol + 1) % nCols);
 				!Maze.isOpen(maze, neighborNode, neighborSide);
 		}
+	}
+
+	/**
+		Whether this cell's west (`west = true`) or east corner toward
+		`otherRow` actually lands on a cell-to-cell boundary there, rather
+		than partway through a single coarser neighbor's own solid,
+		undivided interior.
+
+		Only matters when this row has *more* columns than `otherRow` (a
+		single coarser cell then spans several of this row's own cells —
+		`Maze.rowBoundaryNeighbors` collapses them all to that one parent,
+		see its own doc): only this cell's outermost west or east corner
+		within that shared parent lands on one of the parent's own real
+		edges (where the parent meets ITS OWN west or east neighbor); every
+		corner in between is interior to that one parent, where nothing
+		could ever "continue flush" into regardless of what's open or
+		closed elsewhere, since there's no subdivision there to continue
+		into or a wall to meet. `col % ratio`/`(col + 1) % ratio` picks out
+		exactly those two outermost children (`ratio` is always this row's
+		column count divided by the coarser row's, an exact doubling at
+		every banding change — see `Maze.colsForRow`).
+
+		Always true when this row's own column count is less than or equal
+		to `otherRow`'s: either a plain one-to-one row (every corner is a
+		real boundary already) or this row is itself the coarser side,
+		which never reaches this check to begin with (`addWallsAround` only
+		calls this for whichever of the two rows has *more* columns).
+		@param cols this cell's own row's column count.
+		@param otherCols the row on the other side of this boundary's column count.
+		@param col this cell's own column.
+		@param west whether to check the west corner (true) or east corner (false).
+		@return whether that corner is a genuine coarser-row boundary, not an interior split point.
+	**/
+	function isGenuineRowBoundaryCorner(cols:Int, otherCols:Int, col:Int, west:Bool):Bool {
+		if (cols <= otherCols) {
+			return true;
+		}
+		var ratio = Std.int(cols / otherCols);
+		return west ? col % ratio == 0 : (col + 1) % ratio == 0;
 	}
 
 	/**

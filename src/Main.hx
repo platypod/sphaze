@@ -28,13 +28,21 @@ class Main extends hxd.App {
 	**/
 	static inline final SPACE_TILT_RELEASE_AFTER:Float = 1;
 
+	/** Fixed spawn spherical coordinates — valid in any maze, since only which edges are open varies, never the grid's own shape. **/
+	static inline final SPAWN_THETA:Float = 1.3;
+
+	static inline final SPAWN_PHI:Float = 0.6;
+	static inline final SPAWN_FACING:Float = 0.4;
+
 	var accumulator:Float = 0;
 	var player:Player;
 	var maze:MazeData;
+	var mazeGroup:h3d.scene.Object;
 	var spaceHoldTime:Float = 0;
 	var spaceTiltReleased:Bool = false;
 	var debugOverlay:h2d.Text;
 	var debugOverlayVisible:Bool = false;
+	var mazeFileInput:js.html.InputElement;
 
 	static function main():Void {
 		new Main();
@@ -45,11 +53,8 @@ class Main extends hxd.App {
 		engine.backgroundColor = BACKGROUND_COLOR;
 		s3d.camera.fovY = CAMERA_FOV_Y;
 
-		maze = Maze.generate();
-		MazeMesh.build(maze, s3d);
-
-		player = Player.spawnAt(1.3, 0.6, 0.4, MazeGeometry.RADIUS);
-		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+		mazeGroup = new h3d.scene.Object(s3d);
+		loadMaze(Maze.generate());
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,
 		// perf stats. Hidden by default; toggled in fixedUpdate.
@@ -59,6 +64,16 @@ class Main extends hxd.App {
 		debugOverlay.textColor = 0xFFFF00;
 		debugOverlay.visible = debugOverlayVisible;
 
+		// Hidden file input backing L's "load a maze" — browsers won't let a
+		// page read an arbitrary local file without the user driving a
+		// picker, so this has to exist even though nothing ever shows it.
+		mazeFileInput = cast js.Browser.document.createElement("input");
+		mazeFileInput.type = "file";
+		mazeFileInput.accept = ".json";
+		mazeFileInput.style.display = "none";
+		mazeFileInput.onchange = onMazeFileChosen;
+		js.Browser.document.body.appendChild(mazeFileInput);
+
 		// Relative mode hides the cursor and reports movement deltas instead
 		// of a position — the standard FPS mouse-look. Per hxd.Window's own
 		// doc, this only engages on the player's first click on the canvas
@@ -66,6 +81,59 @@ class Main extends hxd.App {
 		var window = hxd.Window.getInstance();
 		window.mouseMode = Relative(onMouseMove, true);
 		window.onMouseModeChange = keepWantingRelativeMouse;
+	}
+
+	/**
+		(Re)builds the maze's floor/wall meshes under `mazeGroup` and
+		respawns the player, for `data` — used both at startup (a fresh
+		random maze) and when importing a previously exported one (see
+		`exportMaze`/`onMazeFileChosen`). Always respawns at the same fixed
+		spherical coordinates: the grid's own shape never changes between
+		mazes, only which edges are open, so that spawn point is valid
+		regardless of which maze this is.
+		@param data the maze to load.
+	**/
+	function loadMaze(data:MazeData):Void {
+		maze = data;
+		mazeGroup.removeChildren();
+		MazeMesh.build(maze, mazeGroup);
+		player = Player.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, MazeGeometry.RADIUS);
+		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+	}
+
+	/**
+		Downloads the current maze as a JSON file (E) — pairs with L
+		(`promptImportMaze`) to make a maze a specific bug showed up in
+		something that can actually be saved and handed back, instead of
+		lost the moment the page reloads (see `Maze.serialize`'s own doc).
+	**/
+	function exportMaze():Void {
+		var json = Maze.serialize(maze);
+		var blob = new js.html.Blob([json], {type: "application/json"});
+		var url:String = js.Syntax.code("URL.createObjectURL({0})", blob);
+		var anchor:js.html.AnchorElement = cast js.Browser.document.createElement("a");
+		anchor.href = url;
+		anchor.download = "sphaze-maze.json";
+		anchor.click();
+		js.Syntax.code("URL.revokeObjectURL({0})", url);
+	}
+
+	/** Opens the browser's file picker (L) for `onMazeFileChosen` to load from. **/
+	function promptImportMaze():Void {
+		mazeFileInput.value = "";
+		mazeFileInput.click();
+	}
+
+	/** `mazeFileInput`'s change handler: reads the chosen file and loads it as a maze. **/
+	function onMazeFileChosen(e:js.html.Event):Void {
+		var file = mazeFileInput.files[0];
+		if (file == null) {
+			return;
+		}
+
+		var reader = new js.html.FileReader();
+		reader.onload = (_) -> loadMaze(Maze.deserialize(reader.result));
+		reader.readAsText(file);
 	}
 
 	/**
@@ -149,6 +217,13 @@ class Main extends hxd.App {
 		}
 		if (debugOverlayVisible) {
 			updateDebugOverlay();
+		}
+
+		if (hxd.Key.isPressed(hxd.Key.E)) {
+			exportMaze();
+		}
+		if (hxd.Key.isPressed(hxd.Key.L)) {
+			promptImportMaze();
 		}
 	}
 

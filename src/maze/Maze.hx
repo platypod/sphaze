@@ -248,6 +248,41 @@ class Maze {
 	}
 
 	/**
+		Serializes a generated maze to a JSON string, so a specific maze can
+		be saved to a file and reloaded later — instead of only ever having
+		whatever fresh random one the last page load produced, which made a
+		maze that a bug showed up in impossible to hand off or come back to.
+
+		Encodes the open edges only (as `nodeKey`-pair strings, same as
+		`openEdges`'s own keys) rather than the RNG seed that produced them:
+		this ties a saved maze to the *grid* (`ROWS`/`colsForRow`), which
+		only changes with a deliberate design change, not to `generate`'s
+		own algorithm, which could evolve — and it's what every other query
+		in this module already reads the maze through, so a deserialized
+		maze is exactly as valid as a freshly generated one, not a special case.
+		@param maze the maze to serialize.
+		@return a JSON string.
+	**/
+	public static function serialize(maze:MazeData):String {
+		var edges = [for (key in maze.openEdges.keys()) key];
+		return haxe.Json.stringify({openEdges: edges});
+	}
+
+	/**
+		Inverse of `serialize`.
+		@param json a JSON string produced by `serialize`.
+		@return the maze it encodes.
+	**/
+	public static function deserialize(json:String):MazeData {
+		var parsed:{openEdges:Array<String>} = haxe.Json.parse(json);
+		var openEdges = new haxe.ds.StringMap<Bool>();
+		for (key in parsed.openEdges) {
+			openEdges.set(key, true);
+		}
+		return {openEdges: openEdges};
+	}
+
+	/**
 		Which node a physical position on the grid's sphere belongs to —
 		the inverse of the cell/pole layout `MazeMesh.cornersOf` and
 		`neighborsOf` assume. Takes plain spherical coordinates rather than a

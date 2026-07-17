@@ -22,31 +22,33 @@ import maze.MazeMesh;
 	walkable, touchable wall.
 
 	`COLUMN_RADIUS`/`COLUMN_HALF_HEIGHT` are chosen so the column's flat end
-	caps sit exactly flush against the sphere's own inner wall (a 3-4-5
-	ratio: `42`, `56`, `70`) — no gap, no poking through — rather than
-	tapering to the literal pole points, which would need a hand-profiled
-	bicone/capsule mesh generator for a purely architectural centerpiece.
-	The column still dominates the room (spans roughly 59% of the sphere's
-	full height) and the same single `isInside` check blocks the player from
-	ever reaching either sealed-off polar cap beyond it, without needing a
-	separate latitude check.
+	caps sit exactly flush against the sphere's own inner wall — no gap, no
+	poking through — rather than tapering to the literal pole points, which
+	would need a hand-profiled bicone/capsule mesh generator for a purely
+	architectural centerpiece. The same single `isInside` check blocks the
+	player from ever reaching either sealed-off polar cap beyond it, without
+	needing a separate latitude check.
 **/
 class Hub {
 	/**
 		This sphere's own radius — no longer `maze.MazeGeometry.RADIUS`; the
 		hub isn't biome-scale. Doubled from an initial `35` after hooman
-		found that scale disorienting; `COLUMN_RADIUS`/`COLUMN_HALF_HEIGHT`/
-		`PAINTING_HEIGHT` scale with it (same 3-4-5 ratio, same relative
-		mounting height), so the room's proportions and every reachability
-		guarantee below are unchanged, just bigger.
+		found that scale disorienting.
 	**/
 	public static inline final RADIUS:Float = 70;
 
-	/** The column's fixed distance from its own pole-to-pole axis. **/
-	public static inline final COLUMN_RADIUS:Float = 42;
+	/**
+		The column's fixed distance from its own pole-to-pole axis. Halved
+		from an initial `42` (a 3-4-5-ratio fit against `RADIUS`) after
+		hooman found the column too large relative to the room — no longer
+		lands on a clean integer ratio, but "flush against the sphere, no
+		gap" (see `COLUMN_HALF_HEIGHT`) doesn't require one, just the right
+		formula.
+	**/
+	public static inline final COLUMN_RADIUS:Float = 21;
 
-	/** Half the column's length along its axis — chosen (with RADIUS/COLUMN_RADIUS) so its end caps sit exactly flush against the sphere's inner wall: `sqrt(RADIUS^2 - COLUMN_RADIUS^2) == 56`. **/
-	static inline final COLUMN_HALF_HEIGHT:Float = 56;
+	/** Half the column's length along its axis — chosen (with RADIUS/COLUMN_RADIUS) so its end caps sit exactly flush against the sphere's inner wall: `sqrt(RADIUS^2 - COLUMN_RADIUS^2)`. **/
+	static inline final COLUMN_HALF_HEIGHT:Float = 66.7757;
 
 	static inline final COLUMN_SIDES = 8;
 
@@ -83,34 +85,33 @@ class Hub {
 		would sit a full corridor-width (14 units) away from anywhere the
 		player can actually stand.
 
-		`47` is *not* simply the original `19` doubled: `Painting`'s own
+		Every time `RADIUS`/`COLUMN_RADIUS` changes, this is re-derived from
+		scratch, not scaled from whatever it was before: `Painting`'s own
 		`BASE_HEIGHT`/`HEIGHT` are fixed absolute constants (a painting is a
 		physical object with its own natural size, not something that
-		should balloon just because the room around it did), so only
-		`PAINTING_HEIGHT` itself scales with the room — the fixed
-		`BASE_HEIGHT + HEIGHT/2` (6) offset on top of it doesn't, and
-		doubling both the anchor *and* an offset that shouldn't have
-		doubled overshot badly (re-derived from scratch instead, same
-		technique as the original `19`: `47+9=56` puts the quad's own top
-		edge exactly flush with `COLUMN_HALF_HEIGHT`, the highest this
-		anchor can go, putting its visual center (`47+6=53`) as close as
-		that allows to the collision boundary's own height
-		(`RADIUS*cos(asin((COLUMN_RADIUS+COLLISION_CLEARANCE)/RADIUS))`
-		~= 55.2) — confirmed numerically, not assumed from the old value).
+		should balloon just because the room around it did), so naively
+		scaling `PAINTING_HEIGHT` alone while that fixed offset stays put
+		has overshot the reachable zone before. `57` puts the quad's own top
+		edge (`57+9=66`) just under `COLUMN_HALF_HEIGHT` (`66.7757`), the
+		highest this anchor can go, putting its visual center (`57+6=63`)
+		as close as that allows to the collision boundary's own height
+		(`RADIUS*cos(asin((COLUMN_RADIUS+COLLISION_CLEARANCE)/RADIUS))`) —
+		confirmed numerically (a scratch script computing the true closest
+		distance from the nearest reachable player position to this exact
+		point), not assumed.
 		`PAINTING_TRIGGER_DISTANCE` is sized against that same measurement
 		rather than reusing `Painting.TRIGGER_DISTANCE`, since how close the
 		player can physically get to a mounting point scales with the room,
 		not with a fixed constant tuned for biome-scale walls.
 	**/
-	static inline final PAINTING_HEIGHT:Float = 47;
+	static inline final PAINTING_HEIGHT:Float = 57;
 
 	/**
 		How close the player needs to walk to trigger the to-biome painting
 		— `Painting.TRIGGER_DISTANCE` (4) doesn't clear the gap at this
-		bigger scale (confirmed numerically: the closest the player's own
-		walkable band ever brings them to `PAINTING_HEIGHT`'s mounting
-		point is ~4.76 units), so the hub's own painting gets its own,
-		slightly larger value instead of that shared constant.
+		scale (confirmed numerically — see `PAINTING_HEIGHT`'s own doc), so
+		the hub's own painting gets its own value instead of that shared
+		constant.
 	**/
 	static inline final PAINTING_TRIGGER_DISTANCE:Float = 6;
 

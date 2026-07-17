@@ -2,7 +2,7 @@
 
 A 3D maze wrapped onto the inside of a sphere: the player walks the interior surface, and can raise their head to see clear across to the far side — but not what's in their immediate vicinity. Built in Haxe + Heaps, primarily vibe-coded (Claude does most of the writing, hooman directs and reviews).
 
-This file holds the non-negotiables. Full rationale and details live in `docs/GUIDELINES.md`; project history and past decisions live in `docs/PROJECT_LOG.md`. Read those when you need the "why" or the history — this file is just the "what."
+This file holds the non-negotiables. Full rationale and details live in `docs/GUIDELINES.md`; project history and past decisions live in `docs/PROJECT_LOG.md`; design philosophy and the feature/idea backlog live in `docs/game-design.md`; known bugs live in `docs/bug-tracker.md`; fixed bugs live in `docs/CHANGELOG.md`. Read those when you need the "why," the history, or the design intent — this file is just the "what."
 
 ## Architecture
 
@@ -39,6 +39,16 @@ This file holds the non-negotiables. Full rationale and details live in `docs/GU
   Types actually in use across the org: `feat`, `fix`, `refactor`, `doc` (singular, not `docs`), `chore`, `release`. Scope is whatever's most useful — a module/system name, or a comma-separated list if several are touched (`feat(homepage, dashy): ...`).
 - For anything non-obvious, add a body explaining *why*, wrapped like prose, `backticks` for code/flags/paths.
 - **When Claude authors or materially contributes to a commit, do not add a trailer:** `Co-Authored-By: Claude <model> <noreply@anthropic.com>`.
+
+## Design & bug tracking
+
+- New feature/mechanic ideas that aren't being implemented right now go in
+  `docs/game-design.md`'s backlog — check them against that file's
+  Philosophy section first; an idea that cuts against a pillar is a reason
+  to raise it explicitly rather than add it silently.
+- A bug found but not fixed immediately goes in `docs/bug-tracker.md`.
+- When a bug gets fixed: remove its entry from `docs/bug-tracker.md` and add
+  one to `docs/CHANGELOG.md` (date, one-line description, fixing commit).
 
 ## Workflow / verification loop
 

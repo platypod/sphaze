@@ -106,20 +106,10 @@ that with "deploy on release":
 invest in 2 or 3.** Revisit this section and log the decision in
 `docs/PROJECT_LOG.md` when that happens.
 
-## Backlog / ideas
+## Design, backlog & bug tracking
 
-Not implemented yet — parked here until we get to them.
-
-- A `docs/philosophy.md` capturing the game's design philosophy/intent, so
-  future decisions (mine or Claude's) can be checked against it.
-- **"Mark now, see later" mechanic**: let the player leave marks on the
-  ground (e.g. an arrow at a path junction pointing back the way they came).
-  A mark isn't legible up close — it only becomes readable once the player
-  is far enough away to see it and its surroundings from across the sphere,
-  letting them retrace their route (or deduce a better one) from the
-  opposite side. Unproven idea — worth prototyping before committing to it.
-- **Scouting mechanic**: send something off in a direction — a rolling ball,
-  a burst of colored gas, whatever reads well — to reveal a bit of the path
-  ahead before the player commits to walking it themselves.
-- **Mobile controls** (see `docs/GUIDELINES.md` §1.8): deliberately
-  undesigned until there's a playable desktop version to adapt from.
+- [`docs/game-design.md`](docs/game-design.md) — design philosophy (what
+  this game is trying to be, checked against before adding anything new)
+  and the backlog of not-yet-implemented ideas.
+- [`docs/bug-tracker.md`](docs/bug-tracker.md) — known bugs not yet fixed.
+- [`docs/CHANGELOG.md`](docs/CHANGELOG.md) — bugs that have been fixed.

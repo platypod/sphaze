@@ -168,10 +168,13 @@ class Main extends hxd.App {
 
 	/**
 		(Re)builds the hub's room + its one painting under `mazeGroup` and
-		spawns the player at its center — the diegetic menu space (see
+		spawns the player at its equator — the diegetic menu space (see
 		`hub.Hub`'s own class doc and `docs/PROJECT_LOG.md`'s 2026-07-17
-		entry). Reached by walking into a biome's return-to-hub painting;
-		see `checkPaintingTrigger`.
+		entry, and its later entry for the bigger sphere-plus-column
+		redesign). Reached by walking into a biome's return-to-hub painting;
+		see `checkPaintingTrigger`. Its own sphere is a different size than
+		a biome's, so every call touching it uses `hub.Hub.RADIUS`, not
+		`MazeGeometry.RADIUS`.
 	**/
 	function enterHub():Void {
 		sceneKind = Hub;
@@ -179,8 +182,8 @@ class Main extends hxd.App {
 		hub.Hub.build(mazeGroup);
 		activePainting = hub.Hub.toBiomePainting();
 
-		player = Player.spawnAt(hub.Hub.CENTER_THETA, hub.Hub.CENTER_PHI, 0, MazeGeometry.RADIUS);
-		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+		player = Player.spawnAt(hub.Hub.SPAWN_THETA, hub.Hub.SPAWN_PHI, 0, hub.Hub.RADIUS);
+		player.applyToCamera(s3d.camera, hub.Hub.RADIUS);
 	}
 
 	/**

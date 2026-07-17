@@ -70,6 +70,24 @@ class Painting {
 	}
 
 	/**
+		The actual center of the quad `buildQuad` renders for this wall
+		segment — unlike `midpointOf` alone, this accounts for
+		`BASE_HEIGHT`/`HEIGHT`, so a painting's trigger position (which
+		should use this, not `midpointOf`) actually lines up with where the
+		painting visually is instead of the wall's own floor-level
+		reference point, well below it.
+		@param wallA one end of the wall segment.
+		@param wallB the other end.
+		@param up which way "up the wall" is (see `buildQuad`'s own doc) — defaults to radially inward.
+		@return the quad's true center point.
+	**/
+	public static function centerOf(wallA:h3d.Vector, wallB:h3d.Vector, ?up:h3d.Vector):h3d.Vector {
+		var mid = midpointOf(wallA, wallB);
+		var upDir = up != null ? up : game.SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
+		return mid.add(upDir.scaled(BASE_HEIGHT + HEIGHT / 2));
+	}
+
+	/**
 		Builds a painting's placeholder visual: a single flat, solid-colored
 		quad (no frame/art yet — matches the project's existing "flat-
 		shaded placeholder" aesthetic, same reasoning `wall_stone.png` was
@@ -81,21 +99,21 @@ class Painting {
 		@param wallB the other end.
 		@param roomCenter the room's own center — only used to find "into the room," not for exact positioning.
 		@param color the placeholder's flat fill color.
+		@param up which way "up the wall" is — defaults to radially inward (`SphereMath.upVectorAt`), correct for a wall on a sphere's surface; pass an explicit direction (e.g. `(0,1,0)`) for a wall whose own "up" isn't radial, like a straight column's side face.
 	**/
-	public static function buildQuad(parent:h3d.scene.Object, wallA:h3d.Vector, wallB:h3d.Vector, roomCenter:h3d.Vector, color:Int):Void {
+	public static function buildQuad(parent:h3d.scene.Object, wallA:h3d.Vector, wallB:h3d.Vector, roomCenter:h3d.Vector, color:Int, ?up:h3d.Vector):Void {
 		var mid = midpointOf(wallA, wallB);
-		var origin = new h3d.Vector(0, 0, 0);
-		var up = game.SphereMath.upVectorAt(mid, origin);
+		var upDir = up != null ? up : game.SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
 		var along = wallB.sub(wallA).normalized();
 		var inward = roomCenter.sub(mid).normalized();
 
 		var halfWidth = wallA.sub(wallB).length() * WIDTH_FRACTION / 2;
 		var inset = inward.scaled(SURFACE_INSET);
 
-		var bottomA = mid.sub(along.scaled(halfWidth)).add(up.scaled(BASE_HEIGHT)).add(inset);
-		var bottomB = mid.add(along.scaled(halfWidth)).add(up.scaled(BASE_HEIGHT)).add(inset);
-		var topA = bottomA.add(up.scaled(HEIGHT));
-		var topB = bottomB.add(up.scaled(HEIGHT));
+		var bottomA = mid.sub(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(inset);
+		var bottomB = mid.add(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(inset);
+		var topA = bottomA.add(upDir.scaled(HEIGHT));
+		var topB = bottomB.add(upDir.scaled(HEIGHT));
 
 		var points = [bottomA, bottomB, topB, topA];
 		var idx = new hxd.IndexBuffer();

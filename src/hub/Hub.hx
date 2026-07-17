@@ -1,171 +1,214 @@
 package hub;
 
-import maze.MazeGeometry;
 import maze.MazeMesh;
 
 /**
-	The hub: a small, hand-authored hexagonal room on the same physical
-	sphere biomes use (`MazeGeometry.RADIUS`) — the diegetic menu space
-	reached by walking into a painting instead of a UI overlay (see
-	`docs/PROJECT_LOG.md`'s 2026-07-17 entry for the decision and its
-	rejected alternative).
+	The hub: a large sphere with a freestanding octagonal column through its
+	middle — the diegetic menu space reached by walking into a painting
+	instead of a UI overlay (see `docs/PROJECT_LOG.md`'s 2026-07-17 entry for
+	the decision and its rejected alternative, and its later entry for this
+	bigger redesign).
 
-	Bespoke geometry rather than a tiny `Maze`/`MazeMesh` grid: `Maze.ROWS`/
-	`COLS` are baked-in constants throughout that pipeline, not parameters,
-	so a differently-sized grid would mean parameterizing the most heavily-
-	debugged code in the project for no real benefit here — and
-	`MazeMesh.addFloor` renders every one of the grid's ~168 cells
-	unconditionally regardless of which edges are open, so even a hand-
-	authored small cluster would still render a full-sphere floor and wall
-	every other untouched cell on all sides, not the contained room this
-	needs. A hexagon is simple enough not to need any of that.
+	The player is always confined to this sphere's own surface (same
+	`Player`/`SphereMath` convention biomes use), which rules out a column
+	shaped like a smaller *concentric* sphere: the true nearest-point
+	distance from any point on the outer sphere to a sphere concentric with
+	it is the constant `RADIUS - innerRadius` everywhere, so walking around
+	never gets any closer to one. A column with a *constant* cross-section
+	radius (a straight prism, not scaled by `sin(theta)` the way the outer
+	sphere's own cross-section is) doesn't have that problem: the player's
+	own distance from the column's axis shrinks as they walk toward a pole,
+	so it eventually meets the prism's fixed radius somewhere — a real,
+	walkable, touchable wall.
+
+	`COLUMN_RADIUS`/`COLUMN_HALF_HEIGHT` are chosen so the column's flat end
+	caps sit exactly flush against the sphere's own inner wall (a 3-4-5
+	ratio: `21`, `28`, `35`) — no gap, no poking through — rather than
+	tapering to the literal pole points, which would need a hand-profiled
+	bicone/capsule mesh generator for a purely architectural centerpiece.
+	The column still dominates the room (spans roughly 59% of the sphere's
+	full height) and the same single `isInside` check blocks the player from
+	ever reaching either sealed-off polar cap beyond it, without needing a
+	separate latitude check.
 **/
 class Hub {
-	/** Where the hexagon sits on the shared sphere — arbitrary, just needs to not overlap anything else. **/
-	public static final CENTER_THETA:Float = Math.PI / 2;
+	/** This sphere's own radius — no longer `maze.MazeGeometry.RADIUS`; the hub isn't biome-scale. **/
+	public static inline final RADIUS:Float = 35;
 
-	public static inline final CENTER_PHI:Float = 0;
+	/** The column's fixed distance from its own pole-to-pole axis. **/
+	public static inline final COLUMN_RADIUS:Float = 21;
 
-	/**
-		Angular radius (radians) from the center to each of the hexagon's 6
-		corners. Physical footprint is roughly `RADIUS * this` across —
-		tuned to feel about as roomy as one biome cell (~9-13 unit half-
-		width at the current grid, per `docs/PROJECT_LOG.md`'s reduced-grid
-		entry).
-	**/
-	static inline final ANGULAR_RADIUS:Float = 0.15;
+	/** Half the column's length along its axis — chosen (with RADIUS/COLUMN_RADIUS) so its end caps sit exactly flush against the sphere's inner wall: `sqrt(RADIUS^2 - COLUMN_RADIUS^2) == 28`. **/
+	static inline final COLUMN_HALF_HEIGHT:Float = 28;
 
-	static inline final WALL_COUNT = 6;
+	static inline final COLUMN_SIDES = 8;
+
+	/** Segment counts for the outer shell's `h3d.prim.Sphere` — smooth enough to not read as faceted, unlike the deliberately 8-sided column. **/
+	static inline final SHELL_SEGS_W = 32;
+
+	static inline final SHELL_SEGS_H = 24;
 
 	static inline final FLOOR_COLOR:Int = 0xFF3A3A44;
 
-	/** Which of the hexagon's 6 walls holds the painting back to the one existing biome — arbitrary, just needs to be a real wall index. **/
-	static inline final TO_BIOME_WALL_INDEX = 0;
+	/** Which of the column's 8 faces holds the painting back to the one existing biome — arbitrary, just needs to be a real face index. **/
+	static inline final TO_BIOME_FACE_INDEX = 0;
 
-	/**
-		Extra margin `isInside` blocks at, short of a wall's actual rendered
-		face — same role as `MazeGeometry.COLLISION_CLEARANCE` plays for
-		biomes.
-	**/
+	/** Extra margin `isInside` blocks at, short of the column's actual rendered face — same role as `MazeGeometry.COLLISION_CLEARANCE` plays for biomes. **/
 	static inline final COLLISION_CLEARANCE:Float = 1;
 
-	/** The room's center, at floor level — also where the player spawns on entering the hub. **/
-	public static function center():h3d.Vector {
-		return MazeMesh.cornerAt(CENTER_THETA, CENTER_PHI);
-	}
+	/**
+		Height (along the column's own axis) a face painting mounts at —
+		deliberately *not* 0 (equatorial, the column's widest cross-section
+		and so the room's most spacious walking band): the player's own
+		distance from the column's axis and their height are the same
+		function of `theta` (`RADIUS*sin(theta)` and `RADIUS*cos(theta)`
+		respectively), so the closest they can ever get to the column at all
+		is right at the collision boundary itself — near the *top* of the
+		walkable band, not the middle. A painting mounted at the equator
+		would sit a full corridor-width (14 units) away from anywhere the
+		player can actually stand.
 
-	/** The hexagon's 6 rendered corner points, in order, on the sphere's surface. **/
-	public static function corners():Array<h3d.Vector> {
-		return cornersAtAngularRadius(ANGULAR_RADIUS);
-	}
+		`19` puts the *rendered quad's own visual center* (`PAINTING_HEIGHT`
+		plus `Painting`'s `BASE_HEIGHT + HEIGHT/2`, i.e. `19+6=25`) as close
+		to that boundary height (~27.2, since `RADIUS*cos(asin((COLUMN_RADIUS
+		+COLLISION_CLEARANCE)/RADIUS))` ~= 27.22) as the quad's own top edge
+		(`19+9=28`) allows while staying flush with, not poking through,
+		`COLUMN_HALF_HEIGHT` — confirmed numerically (a scratch script
+		computing the true closest distance from the nearest reachable
+		player position to this exact point) to land inside
+		`Painting.TRIGGER_DISTANCE`, not just plausibly close.
+	**/
+	static inline final PAINTING_HEIGHT:Float = 19;
 
-	/** The hub's one painting back to the existing biome, mounted on `TO_BIOME_WALL_INDEX`. **/
+	/** Where the player spawns entering the hub: the equator — the room's widest, most open point, not particularly close to the column (see `PAINTING_HEIGHT`'s own doc for why that's the *least* reachable latitude, not the most). **/
+	public static final SPAWN_THETA:Float = Math.PI / 2;
+
+	public static final SPAWN_PHI:Float = Math.PI / COLUMN_SIDES;
+
+	/** The hub's one painting back to the existing biome, mounted on `TO_BIOME_FACE_INDEX` at `PAINTING_HEIGHT` — matches exactly where `buildColumn` renders it. **/
 	public static function toBiomePainting():Painting {
-		var pts = corners();
-		var wallA = pts[TO_BIOME_WALL_INDEX];
-		var wallB = pts[(TO_BIOME_WALL_INDEX + 1) % WALL_COUNT];
-		return new Painting(Painting.midpointOf(wallA, wallB), ToBiome);
+		var left = toBiomeFaceEdge(true);
+		var right = toBiomeFaceEdge(false);
+		return new Painting(Painting.centerOf(left, right, new h3d.Vector(0, 1, 0)), ToBiome);
+	}
+
+	/** `TO_BIOME_FACE_INDEX`'s left or right edge, at `PAINTING_HEIGHT` — the shared reference both `toBiomePainting` and `buildColumn` mount the painting from, so the trigger position always matches where it's actually rendered. **/
+	static function toBiomeFaceEdge(left:Bool):h3d.Vector {
+		var edge = columnEdge(TO_BIOME_FACE_INDEX + (left ? 0 : 1));
+		return new h3d.Vector(edge.top.x, PAINTING_HEIGHT, edge.top.z);
 	}
 
 	/**
-		Whether `pos` is still within the hexagon, a `COLLISION_CLEARANCE`
-		margin short of each wall's actual rendered face — checked per wall
-		via the great-circle plane through that wall's two corners and the
-		sphere's center (both corners and the center are equidistant from
-		the origin, so that plane's normal, `a.cross(b)`, cleanly separates
-		"still inside" from "past this wall" for any point on the sphere,
-		not just points near the wall itself).
+		Whether `pos` is still on the walkable side of the column, a
+		`COLLISION_CLEARANCE` margin short of its actual rendered face —
+		checked via distance from the column's own axis (the Y axis), which
+		for any point *on this sphere* is exactly `RADIUS * sin(theta)`. The
+		same check blocks the player well before either polar cap too: as
+		`theta` approaches 0 or PI, this distance shrinks below the
+		column's radius long before reaching the pole itself.
 		@param pos the position to check.
-		@return true if `pos` hasn't crossed any of the hexagon's 6 walls.
+		@return true if `pos` hasn't crossed into the column.
 	**/
 	public static function isInside(pos:h3d.Vector):Bool {
-		var pts = cornersAtAngularRadius(ANGULAR_RADIUS - COLLISION_CLEARANCE / MazeGeometry.RADIUS);
-		var centerPos = center();
-		for (i in 0...WALL_COUNT) {
-			var a = pts[i];
-			var b = pts[(i + 1) % WALL_COUNT];
-			var normal = a.cross(b);
-			if (centerPos.dot(normal) * pos.dot(normal) < 0) {
-				return false;
-			}
-		}
-		return true;
+		var theta = game.SphereMath.thetaOf(pos);
+		var distanceFromAxis = RADIUS * Math.sin(theta);
+		return distanceFromAxis > COLUMN_RADIUS + COLLISION_CLEARANCE;
 	}
 
 	/**
-		Builds the hub's floor (a triangle fan from the center) and its 6
-		walls (a single quad each — no inner/outer split like `MazeMesh`'s
-		biome walls need, since a hub wall is only ever built once, not once
-		per side of a shared edge the way a biome cell's wall is).
+		Builds the hub's outer shell (a plain `h3d.prim.Sphere`, flat-shaded
+		like a biome floor) and its central 8-sided column (side panels
+		textured like biome walls, one face swapped for the to-biome
+		painting).
 		@param parent the scene object to attach the meshes under.
 	**/
 	public static function build(parent:h3d.scene.Object):Void {
-		var pts = corners();
-		var centerPos = center();
+		// h3d.prim.Sphere's own poles sit on the Z axis (built from
+		// cos/sin(t) into x/y, cos(t) into z) — rotated here to match this
+		// project's Y-axis pole convention (SphereMath.sphericalToCartesian)
+		// instead. Purely cosmetic (a flat-colored shell has no visible
+		// seam either way), but kept correct so a future textured shell
+		// doesn't inherit a silent axis mismatch.
+		var shellMesh = new h3d.scene.Mesh(new h3d.prim.Sphere(RADIUS, SHELL_SEGS_W, SHELL_SEGS_H), parent);
+		shellMesh.setRotation(-Math.PI / 2, 0, 0);
+		shellMesh.material.mainPass.addShader(new h3d.shader.FixedColor(FLOOR_COLOR));
+		shellMesh.material.mainPass.culling = None;
 
-		var floorPoints:Array<h3d.Vector> = [];
-		var floorIdx = new hxd.IndexBuffer();
-		for (i in 0...WALL_COUNT) {
-			addTriangle(floorPoints, floorIdx, centerPos, pts[i], pts[(i + 1) % WALL_COUNT]);
-		}
-		var floorMesh = new h3d.scene.Mesh(new h3d.prim.Polygon(floorPoints, floorIdx), parent);
-		floorMesh.material.mainPass.addShader(new h3d.shader.FixedColor(FLOOR_COLOR));
-		floorMesh.material.mainPass.culling = None;
+		buildColumn(parent);
+	}
 
-		var wallPoints:Array<h3d.Vector> = [];
-		var wallIdx = new hxd.IndexBuffer();
+	static function buildColumn(parent:h3d.scene.Object):Void {
+		var points:Array<h3d.Vector> = [];
+		var idx = new hxd.IndexBuffer();
 		var uvs:Array<h3d.prim.UV> = [];
-		for (i in 0...WALL_COUNT) {
-			var a = pts[i];
-			var b = pts[(i + 1) % WALL_COUNT];
-			var upA = game.SphereMath.upVectorAt(a, new h3d.Vector(0, 0, 0));
-			var upB = game.SphereMath.upVectorAt(b, new h3d.Vector(0, 0, 0));
-			var topA = a.add(upA.scaled(MazeMesh.WALL_HEIGHT));
-			var topB = b.add(upB.scaled(MazeMesh.WALL_HEIGHT));
 
-			var uRepeat = a.sub(b).length() / MazeMesh.WALL_TEXTURE_TILE_SIZE;
-			var vHeight = MazeMesh.WALL_HEIGHT / MazeMesh.WALL_TEXTURE_TILE_SIZE;
-			MazeMesh.addQuad(wallPoints, wallIdx, a, b, topB, topA);
+		for (i in 0...COLUMN_SIDES) {
+			var a = columnEdge(i);
+			var b = columnEdge(i + 1);
+
+			if (i == TO_BIOME_FACE_INDEX) {
+				var left = toBiomeFaceEdge(true);
+				var right = toBiomeFaceEdge(false);
+				var mid = Painting.midpointOf(left, right);
+				var outward = new h3d.Vector(mid.x, 0, mid.z).normalized();
+				var outwardRef = mid.add(outward.scaled(COLUMN_RADIUS));
+				Painting.buildQuad(parent, left, right, outwardRef, Painting.TO_BIOME_COLOR, new h3d.Vector(0, 1, 0));
+				continue;
+			}
+
+			var uRepeat = a.top.sub(b.top).length() / MazeMesh.WALL_TEXTURE_TILE_SIZE;
+			var vHeight = 2 * COLUMN_HALF_HEIGHT / MazeMesh.WALL_TEXTURE_TILE_SIZE;
+			MazeMesh.addQuad(points, idx, a.top, b.top, b.bottom, a.bottom);
 			uvs.push(new h3d.prim.UV(0, vHeight));
 			uvs.push(new h3d.prim.UV(uRepeat, vHeight));
 			uvs.push(new h3d.prim.UV(uRepeat, 0));
 			uvs.push(new h3d.prim.UV(0, 0));
 		}
-		var wallPrim = new h3d.prim.Polygon(wallPoints, wallIdx);
-		wallPrim.uvs = uvs;
-		var wallTexture = hxd.Res.textures.wall_stone.toTexture();
-		wallTexture.wrap = Repeat;
-		var wallMesh = new h3d.scene.Mesh(wallPrim, parent);
-		wallMesh.material.mainPass.addShader(new game.shader.UnlitTexture(wallTexture));
-		wallMesh.material.mainPass.culling = None;
 
-		Painting.buildQuad(parent, pts[TO_BIOME_WALL_INDEX], pts[(TO_BIOME_WALL_INDEX + 1) % WALL_COUNT], centerPos, Painting.TO_BIOME_COLOR);
+		addCap(points, idx, uvs, true);
+		addCap(points, idx, uvs, false);
+
+		var prim = new h3d.prim.Polygon(points, idx);
+		prim.uvs = uvs;
+		var texture = hxd.Res.textures.wall_stone.toTexture();
+		texture.wrap = Repeat;
+		var mesh = new h3d.scene.Mesh(prim, parent);
+		mesh.material.mainPass.addShader(new game.shader.UnlitTexture(texture));
+		mesh.material.mainPass.culling = None;
 	}
 
-	static function cornersAtAngularRadius(angularRadius:Float):Array<h3d.Vector> {
-		var centerPos = center();
-		var centerDir = centerPos.normalized();
-		var refDir = game.SphereMath.thetaTangentAt(CENTER_THETA, CENTER_PHI);
-		var up = game.SphereMath.upVectorAt(centerPos, new h3d.Vector(0, 0, 0));
-
-		var result = [];
-		for (i in 0...WALL_COUNT) {
-			var angle = i * (2 * Math.PI / WALL_COUNT);
-			var dir = game.SphereMath.rotateAroundAxis(refDir, up, angle);
-			var axis = centerDir.cross(dir).normalized();
-			var cornerDir = game.SphereMath.rotateAroundAxis(centerDir, axis, angularRadius);
-			result.push(cornerDir.scaled(MazeGeometry.RADIUS));
+	/** A triangle fan closing off the column's top (`top = true`) or bottom end. **/
+	static function addCap(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, top:Bool):Void {
+		var apex = new h3d.Vector(0, top ? COLUMN_HALF_HEIGHT : -COLUMN_HALF_HEIGHT, 0);
+		for (i in 0...COLUMN_SIDES) {
+			var a = columnEdge(i);
+			var b = columnEdge(i + 1);
+			var rimA = top ? a.top : a.bottom;
+			var rimB = top ? b.top : b.bottom;
+			var start = points.length;
+			if (top) {
+				points.push(apex);
+				points.push(rimA);
+				points.push(rimB);
+			} else {
+				points.push(apex);
+				points.push(rimB);
+				points.push(rimA);
+			}
+			idx.push(start);
+			idx.push(start + 1);
+			idx.push(start + 2);
+			uvs.push(new h3d.prim.UV(0.5, 0.5));
+			uvs.push(new h3d.prim.UV(0, 0));
+			uvs.push(new h3d.prim.UV(1, 0));
 		}
-		return result;
 	}
 
-	static function addTriangle(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, a:h3d.Vector, b:h3d.Vector, c:h3d.Vector):Void {
-		var start = points.length;
-		points.push(a);
-		points.push(b);
-		points.push(c);
-		idx.push(start);
-		idx.push(start + 1);
-		idx.push(start + 2);
+	/** The column's `i`th vertical edge (wrapping every `COLUMN_SIDES`): top and bottom points at that angle around the axis. **/
+	static function columnEdge(i:Int):{top:h3d.Vector, bottom:h3d.Vector} {
+		var angle = (i % COLUMN_SIDES) * (2 * Math.PI / COLUMN_SIDES);
+		var x = COLUMN_RADIUS * Math.cos(angle);
+		var z = COLUMN_RADIUS * Math.sin(angle);
+		return {top: new h3d.Vector(x, COLUMN_HALF_HEIGHT, z), bottom: new h3d.Vector(x, -COLUMN_HALF_HEIGHT, z)};
 	}
 }

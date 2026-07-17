@@ -42,18 +42,26 @@ class Painting {
 	public final position:h3d.Vector;
 	public final destination:PaintingDestination;
 
-	public function new(position:h3d.Vector, destination:PaintingDestination) {
+	final triggerDistance:Float;
+
+	/**
+		@param position where this painting sits.
+		@param destination where walking into it leads.
+		@param triggerDistance how close the player needs to walk for it to trigger — defaults to `TRIGGER_DISTANCE`; a larger scene (e.g. a bigger hub) may need its own, since how close a player can physically get to a given mounting point scales with the room, not with this constant.
+	**/
+	public function new(position:h3d.Vector, destination:PaintingDestination, ?triggerDistance:Float) {
 		this.position = position;
 		this.destination = destination;
+		this.triggerDistance = triggerDistance != null ? triggerDistance : TRIGGER_DISTANCE;
 	}
 
 	/**
 		Whether `pos` is close enough to this painting to trigger its warp.
 		@param pos the position to check — typically the player's own current position.
-		@return true if `pos` is within `TRIGGER_DISTANCE` of this painting.
+		@return true if `pos` is within this painting's own trigger distance.
 	**/
 	public function triggeredBy(pos:h3d.Vector):Bool {
-		return pos.sub(position).length() <= TRIGGER_DISTANCE;
+		return pos.sub(position).length() <= triggerDistance;
 	}
 
 	/**

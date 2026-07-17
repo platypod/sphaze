@@ -23,7 +23,7 @@ import maze.MazeMesh;
 
 	`COLUMN_RADIUS`/`COLUMN_HALF_HEIGHT` are chosen so the column's flat end
 	caps sit exactly flush against the sphere's own inner wall (a 3-4-5
-	ratio: `21`, `28`, `35`) — no gap, no poking through — rather than
+	ratio: `42`, `56`, `70`) — no gap, no poking through — rather than
 	tapering to the literal pole points, which would need a hand-profiled
 	bicone/capsule mesh generator for a purely architectural centerpiece.
 	The column still dominates the room (spans roughly 59% of the sphere's
@@ -32,14 +32,21 @@ import maze.MazeMesh;
 	separate latitude check.
 **/
 class Hub {
-	/** This sphere's own radius — no longer `maze.MazeGeometry.RADIUS`; the hub isn't biome-scale. **/
-	public static inline final RADIUS:Float = 35;
+	/**
+		This sphere's own radius — no longer `maze.MazeGeometry.RADIUS`; the
+		hub isn't biome-scale. Doubled from an initial `35` after hooman
+		found that scale disorienting; `COLUMN_RADIUS`/`COLUMN_HALF_HEIGHT`/
+		`PAINTING_HEIGHT` scale with it (same 3-4-5 ratio, same relative
+		mounting height), so the room's proportions and every reachability
+		guarantee below are unchanged, just bigger.
+	**/
+	public static inline final RADIUS:Float = 70;
 
 	/** The column's fixed distance from its own pole-to-pole axis. **/
-	public static inline final COLUMN_RADIUS:Float = 21;
+	public static inline final COLUMN_RADIUS:Float = 42;
 
-	/** Half the column's length along its axis — chosen (with RADIUS/COLUMN_RADIUS) so its end caps sit exactly flush against the sphere's inner wall: `sqrt(RADIUS^2 - COLUMN_RADIUS^2) == 28`. **/
-	static inline final COLUMN_HALF_HEIGHT:Float = 28;
+	/** Half the column's length along its axis — chosen (with RADIUS/COLUMN_RADIUS) so its end caps sit exactly flush against the sphere's inner wall: `sqrt(RADIUS^2 - COLUMN_RADIUS^2) == 56`. **/
+	static inline final COLUMN_HALF_HEIGHT:Float = 56;
 
 	static inline final COLUMN_SIDES = 8;
 
@@ -48,7 +55,15 @@ class Hub {
 
 	static inline final SHELL_SEGS_H = 24;
 
-	static inline final FLOOR_COLOR:Int = 0xFF3A3A44;
+	/** Checkerboard colors for the outer shell — a solid flat fill gave the room's curvature and the player's own distance from anything no visual cues at all; alternating cells fix that without needing a texture asset. **/
+	static inline final FLOOR_COLOR_A:Int = 0xFF3A3A44;
+
+	static inline final FLOOR_COLOR_B:Int = 0xFF4A4A58;
+
+	/** Checkerboard density: cells around the equator, and pole to pole — chosen so cells read roughly square (the equator's circumference is about twice the pole-to-pole distance). **/
+	static inline final FLOOR_CHECKER_U = 40;
+
+	static inline final FLOOR_CHECKER_V = 20;
 
 	/** Which of the column's 8 faces holds the painting back to the one existing biome — arbitrary, just needs to be a real face index. **/
 	static inline final TO_BIOME_FACE_INDEX = 0;
@@ -68,17 +83,36 @@ class Hub {
 		would sit a full corridor-width (14 units) away from anywhere the
 		player can actually stand.
 
-		`19` puts the *rendered quad's own visual center* (`PAINTING_HEIGHT`
-		plus `Painting`'s `BASE_HEIGHT + HEIGHT/2`, i.e. `19+6=25`) as close
-		to that boundary height (~27.2, since `RADIUS*cos(asin((COLUMN_RADIUS
-		+COLLISION_CLEARANCE)/RADIUS))` ~= 27.22) as the quad's own top edge
-		(`19+9=28`) allows while staying flush with, not poking through,
-		`COLUMN_HALF_HEIGHT` — confirmed numerically (a scratch script
-		computing the true closest distance from the nearest reachable
-		player position to this exact point) to land inside
-		`Painting.TRIGGER_DISTANCE`, not just plausibly close.
+		`47` is *not* simply the original `19` doubled: `Painting`'s own
+		`BASE_HEIGHT`/`HEIGHT` are fixed absolute constants (a painting is a
+		physical object with its own natural size, not something that
+		should balloon just because the room around it did), so only
+		`PAINTING_HEIGHT` itself scales with the room — the fixed
+		`BASE_HEIGHT + HEIGHT/2` (6) offset on top of it doesn't, and
+		doubling both the anchor *and* an offset that shouldn't have
+		doubled overshot badly (re-derived from scratch instead, same
+		technique as the original `19`: `47+9=56` puts the quad's own top
+		edge exactly flush with `COLUMN_HALF_HEIGHT`, the highest this
+		anchor can go, putting its visual center (`47+6=53`) as close as
+		that allows to the collision boundary's own height
+		(`RADIUS*cos(asin((COLUMN_RADIUS+COLLISION_CLEARANCE)/RADIUS))`
+		~= 55.2) — confirmed numerically, not assumed from the old value).
+		`PAINTING_TRIGGER_DISTANCE` is sized against that same measurement
+		rather than reusing `Painting.TRIGGER_DISTANCE`, since how close the
+		player can physically get to a mounting point scales with the room,
+		not with a fixed constant tuned for biome-scale walls.
 	**/
-	static inline final PAINTING_HEIGHT:Float = 19;
+	static inline final PAINTING_HEIGHT:Float = 47;
+
+	/**
+		How close the player needs to walk to trigger the to-biome painting
+		— `Painting.TRIGGER_DISTANCE` (4) doesn't clear the gap at this
+		bigger scale (confirmed numerically: the closest the player's own
+		walkable band ever brings them to `PAINTING_HEIGHT`'s mounting
+		point is ~4.76 units), so the hub's own painting gets its own,
+		slightly larger value instead of that shared constant.
+	**/
+	static inline final PAINTING_TRIGGER_DISTANCE:Float = 6;
 
 	/** Where the player spawns entering the hub: the equator — the room's widest, most open point, not particularly close to the column (see `PAINTING_HEIGHT`'s own doc for why that's the *least* reachable latitude, not the most). **/
 	public static final SPAWN_THETA:Float = Math.PI / 2;
@@ -89,7 +123,7 @@ class Hub {
 	public static function toBiomePainting():Painting {
 		var left = toBiomeFaceEdge(true);
 		var right = toBiomeFaceEdge(false);
-		return new Painting(Painting.centerOf(left, right, new h3d.Vector(0, 1, 0)), ToBiome);
+		return new Painting(Painting.centerOf(left, right, new h3d.Vector(0, 1, 0)), ToBiome, PAINTING_TRIGGER_DISTANCE);
 	}
 
 	/** `TO_BIOME_FACE_INDEX`'s left or right edge, at `PAINTING_HEIGHT` — the shared reference both `toBiomePainting` and `buildColumn` mount the painting from, so the trigger position always matches where it's actually rendered. **/
@@ -116,22 +150,24 @@ class Hub {
 	}
 
 	/**
-		Builds the hub's outer shell (a plain `h3d.prim.Sphere`, flat-shaded
-		like a biome floor) and its central 8-sided column (side panels
-		textured like biome walls, one face swapped for the to-biome
-		painting).
+		Builds the hub's outer shell (an `h3d.prim.Sphere`, checkerboarded —
+		see `UnlitChecker`'s own doc for why a flat fill wasn't enough here)
+		and its central 8-sided column (side panels textured like biome
+		walls, one face swapped for the to-biome painting).
 		@param parent the scene object to attach the meshes under.
 	**/
 	public static function build(parent:h3d.scene.Object):Void {
 		// h3d.prim.Sphere's own poles sit on the Z axis (built from
 		// cos/sin(t) into x/y, cos(t) into z) — rotated here to match this
 		// project's Y-axis pole convention (SphereMath.sphericalToCartesian)
-		// instead. Purely cosmetic (a flat-colored shell has no visible
-		// seam either way), but kept correct so a future textured shell
-		// doesn't inherit a silent axis mismatch.
-		var shellMesh = new h3d.scene.Mesh(new h3d.prim.Sphere(RADIUS, SHELL_SEGS_W, SHELL_SEGS_H), parent);
+		// instead. Now that the shell is checkerboarded rather than a flat
+		// fill, this also keeps its cells aligned with the column's own
+		// pole-to-pole axis instead of running crosswise to it.
+		var shellPrim = new h3d.prim.Sphere(RADIUS, SHELL_SEGS_W, SHELL_SEGS_H);
+		shellPrim.addUVs();
+		var shellMesh = new h3d.scene.Mesh(shellPrim, parent);
 		shellMesh.setRotation(-Math.PI / 2, 0, 0);
-		shellMesh.material.mainPass.addShader(new h3d.shader.FixedColor(FLOOR_COLOR));
+		shellMesh.material.mainPass.addShader(new game.shader.UnlitChecker(FLOOR_COLOR_A, FLOOR_COLOR_B, FLOOR_CHECKER_U, FLOOR_CHECKER_V));
 		shellMesh.material.mainPass.culling = None;
 
 		buildColumn(parent);

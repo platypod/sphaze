@@ -154,7 +154,7 @@ class Hub {
 		Builds the hub's outer shell (an `h3d.prim.Sphere`, checkerboarded —
 		see `UnlitChecker`'s own doc for why a flat fill wasn't enough here)
 		and its central 8-sided column (side panels textured like biome
-		walls, one face swapped for the to-biome painting).
+		walls, the to-biome painting mounted as an inset overlay on one of them).
 		@param parent the scene object to attach the meshes under.
 	**/
 	public static function build(parent:h3d.scene.Object):Void {
@@ -183,16 +183,6 @@ class Hub {
 			var a = columnEdge(i);
 			var b = columnEdge(i + 1);
 
-			if (i == TO_BIOME_FACE_INDEX) {
-				var left = toBiomeFaceEdge(true);
-				var right = toBiomeFaceEdge(false);
-				var mid = Painting.midpointOf(left, right);
-				var outward = new h3d.Vector(mid.x, 0, mid.z).normalized();
-				var outwardRef = mid.add(outward.scaled(COLUMN_RADIUS));
-				Painting.buildQuad(parent, left, right, outwardRef, Painting.TO_BIOME_COLOR, new h3d.Vector(0, 1, 0));
-				continue;
-			}
-
 			var uRepeat = a.top.sub(b.top).length() / MazeMesh.WALL_TEXTURE_TILE_SIZE;
 			var vHeight = 2 * COLUMN_HALF_HEIGHT / MazeMesh.WALL_TEXTURE_TILE_SIZE;
 			MazeMesh.addQuad(points, idx, a.top, b.top, b.bottom, a.bottom);
@@ -212,6 +202,18 @@ class Hub {
 		var mesh = new h3d.scene.Mesh(prim, parent);
 		mesh.material.mainPass.addShader(new game.shader.UnlitTexture(texture));
 		mesh.material.mainPass.culling = None;
+
+		// The painting mounts as an inset overlay on top of its face's own
+		// wall texture, same as a biome return painting sits in front of
+		// MazeMesh's already-built wall — not a replacement for it (an
+		// earlier version skipped the whole face's own panel here, leaving
+		// everything except the small painting quad itself unrendered).
+		var left = toBiomeFaceEdge(true);
+		var right = toBiomeFaceEdge(false);
+		var mid = Painting.midpointOf(left, right);
+		var outward = new h3d.Vector(mid.x, 0, mid.z).normalized();
+		var outwardRef = mid.add(outward.scaled(COLUMN_RADIUS));
+		Painting.buildQuad(parent, left, right, outwardRef, Painting.TO_BIOME_COLOR, new h3d.Vector(0, 1, 0));
 	}
 
 	/** A triangle fan closing off the column's top (`top = true`) or bottom end. **/

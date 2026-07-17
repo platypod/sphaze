@@ -96,17 +96,37 @@ class Main extends hxd.App {
 	}
 
 	/**
-		(Re)builds `data`'s floor/wall meshes under `mazeGroup`, places its
-		return-to-hub painting (see `hub.BiomePainting`), and respawns the
-		player — used both at startup (a fresh random maze) and whenever the
-		player walks back out of the hub, as well as importing a previously
-		exported maze (see `exportMaze`/`onMazeFileChosen`). Always respawns
-		at the same fixed spherical coordinates: the grid's own shape never
-		changes between mazes, only which edges are open, so that spawn
-		point is valid regardless of which maze this is.
-		@param data the maze to enter.
+		How far in front of the return-to-hub painting the player reappears
+		when coming back out of the hub — must clear `Painting.TRIGGER_DISTANCE`
+		(4), or they'd step right back into the painting's trigger radius and
+		immediately bounce back into the hub. Well short of any cell's own
+		half-width (the reduced grid's narrowest is ~8 units, per
+		`docs/PROJECT_LOG.md`'s reduced-grid entry), so this never overshoots
+		into the cell's far wall.
 	**/
-	function enterBiome(data:MazeData):Void {
+	static inline final RETURN_SPAWN_OFFSET:Float = 6;
+
+	/**
+		(Re)builds `data`'s floor/wall meshes under `mazeGroup` and places
+		its return-to-hub painting (see `hub.BiomePainting`) — used at
+		startup (a fresh random maze), when importing a previously exported
+		one (see `exportMaze`/`onMazeFileChosen`), and when coming back out
+		of the hub into the *same* biome the player just left.
+
+		`resumeAtReturnWall` picks how the player spawns: at the fixed
+		`SPAWN_THETA`/`SPAWN_PHI`/`SPAWN_FACING` (a fresh maze, or an
+		imported one — there's no meaningful "where they left off" for
+		either), or a few units in front of the return-to-hub painting,
+		facing into the room, coming back out of the hub into the maze they
+		were already in. `data` is `maze` itself in that second case — the
+		hub visit never touches `maze`, so it's still exactly the biome the
+		player left — not a fresh `Maze.generate()`, which is what silently
+		sent them back to the maze's fixed start point instead of where
+		they'd actually been standing.
+		@param data the maze to enter.
+		@param resumeAtReturnWall spawn in front of the return-to-hub painting instead of the fixed start point.
+	**/
+	function enterBiome(data:MazeData, resumeAtReturnWall:Bool = false):Void {
 		sceneKind = Biome;
 		maze = data;
 		mazeGroup.removeChildren();
@@ -116,8 +136,34 @@ class Main extends hxd.App {
 		Painting.buildQuad(mazeGroup, wall.a, wall.b, wall.cellCenter, Painting.TO_HUB_COLOR);
 		activePainting = new Painting(Painting.midpointOf(wall.a, wall.b), ToHub);
 
-		player = Player.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, MazeGeometry.RADIUS);
+		if (resumeAtReturnWall) {
+			player = playerInFrontOfWall(wall);
+		} else {
+			player = Player.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, MazeGeometry.RADIUS);
+		}
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+	}
+
+	/**
+		A `Player` standing `RETURN_SPAWN_OFFSET` units in front of `wall`'s
+		midpoint, facing into the room — where the player reappears coming
+		back out of the hub. `wall.cellCenter.sub(mid)` isn't exactly tangent
+		to the sphere at `mid` (two points on a curved surface never are,
+		strictly), so `forward` gets re-projected onto the tangent plane at
+		the final spawn position — the same approximation `Painting`'s own
+		wall-mounting math already relies on, just also re-tangented here
+		since `Player` depends on `forward` actually being one.
+		@param wall the return-to-hub wall to spawn in front of.
+		@return the spawned player.
+	**/
+	function playerInFrontOfWall(wall:hub.BiomePainting.FoundWall):Player {
+		var mid = Painting.midpointOf(wall.a, wall.b);
+		var intoRoom = wall.cellCenter.sub(mid).normalized();
+		var pos = mid.add(intoRoom.scaled(RETURN_SPAWN_OFFSET)).normalized().scaled(MazeGeometry.RADIUS);
+
+		var posDir = pos.normalized();
+		var forward = intoRoom.sub(posDir.scaled(intoRoom.dot(posDir))).normalized();
+		return new Player(pos, forward);
 	}
 
 	/**
@@ -158,10 +204,12 @@ class Main extends hxd.App {
 		Walking into `activePainting` warps to wherever it leads — no
 		interact-key confirmation, on purpose (see `hub.Painting`'s own
 		class doc). A biome's painting always leads to the hub; the hub's
-		always leads into a *fresh* random biome maze, not back to whichever
-		one the player just left — this pass doesn't track "discovered
-		biomes" at all yet (see `docs/PROJECT_LOG.md`'s 2026-07-17 entry),
-		so there's nothing else to send it back to.
+		always leads back into the *same* biome the player left (the hub
+		visit never touches `maze`), resuming in front of its own
+		return-to-hub painting rather than the maze's fixed start point —
+		this pass still doesn't track "discovered biomes" (see
+		`docs/PROJECT_LOG.md`'s 2026-07-17 entry), so there's only ever the
+		one biome to send it back to.
 	**/
 	function checkPaintingTrigger():Void {
 		if (!activePainting.triggeredBy(player.pos)) {
@@ -172,7 +220,7 @@ class Main extends hxd.App {
 			case ToHub:
 				enterHub();
 			case ToBiome:
-				enterBiome(Maze.generate());
+				enterBiome(maze, true);
 		}
 	}
 

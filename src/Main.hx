@@ -1,9 +1,16 @@
 import entities.Player;
 import game.Collision;
+import hub.Painting;
 import maze.Maze;
 import maze.Maze.MazeData;
 import maze.MazeGeometry;
 import maze.MazeMesh;
+
+/** Which space the player is currently walking around in — a biome maze, or the diegetic hub (see docs/PROJECT_LOG.md's 2026-07-17 entry). **/
+enum SceneKind {
+	Biome;
+	Hub;
+}
 
 /**
 	Entry point. Owns the fixed-timestep accumulator (CLAUDE.md "Architecture")
@@ -38,6 +45,11 @@ class Main extends hxd.App {
 	var player:Player;
 	var maze:MazeData;
 	var mazeGroup:h3d.scene.Object;
+	var sceneKind:SceneKind = Biome;
+
+	/** Whichever painting this scene has — the biome's to the hub, or the hub's to the biome — checked each tick against `player.pos`. **/
+	var activePainting:Painting;
+
 	var spaceHoldTime:Float = 0;
 	var spaceTiltReleased:Bool = false;
 	var debugOverlay:h2d.Text;
@@ -54,7 +66,7 @@ class Main extends hxd.App {
 		s3d.camera.fovY = CAMERA_FOV_Y;
 
 		mazeGroup = new h3d.scene.Object(s3d);
-		loadMaze(Maze.generate());
+		enterBiome(Maze.generate());
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,
 		// perf stats. Hidden by default; toggled in fixedUpdate.
@@ -84,21 +96,84 @@ class Main extends hxd.App {
 	}
 
 	/**
-		(Re)builds the maze's floor/wall meshes under `mazeGroup` and
-		respawns the player, for `data` — used both at startup (a fresh
-		random maze) and when importing a previously exported one (see
-		`exportMaze`/`onMazeFileChosen`). Always respawns at the same fixed
-		spherical coordinates: the grid's own shape never changes between
-		mazes, only which edges are open, so that spawn point is valid
-		regardless of which maze this is.
-		@param data the maze to load.
+		(Re)builds `data`'s floor/wall meshes under `mazeGroup`, places its
+		return-to-hub painting (see `hub.BiomePainting`), and respawns the
+		player — used both at startup (a fresh random maze) and whenever the
+		player walks back out of the hub, as well as importing a previously
+		exported maze (see `exportMaze`/`onMazeFileChosen`). Always respawns
+		at the same fixed spherical coordinates: the grid's own shape never
+		changes between mazes, only which edges are open, so that spawn
+		point is valid regardless of which maze this is.
+		@param data the maze to enter.
 	**/
-	function loadMaze(data:MazeData):Void {
+	function enterBiome(data:MazeData):Void {
+		sceneKind = Biome;
 		maze = data;
 		mazeGroup.removeChildren();
 		MazeMesh.build(maze, mazeGroup);
+
+		var wall = hub.BiomePainting.findReturnWall(maze);
+		Painting.buildQuad(mazeGroup, wall.a, wall.b, wall.cellCenter, Painting.TO_HUB_COLOR);
+		activePainting = new Painting(Painting.midpointOf(wall.a, wall.b), ToHub);
+
 		player = Player.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, MazeGeometry.RADIUS);
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+	}
+
+	/**
+		(Re)builds the hub's room + its one painting under `mazeGroup` and
+		spawns the player at its center — the diegetic menu space (see
+		`hub.Hub`'s own class doc and `docs/PROJECT_LOG.md`'s 2026-07-17
+		entry). Reached by walking into a biome's return-to-hub painting;
+		see `checkPaintingTrigger`.
+	**/
+	function enterHub():Void {
+		sceneKind = Hub;
+		mazeGroup.removeChildren();
+		hub.Hub.build(mazeGroup);
+		activePainting = hub.Hub.toBiomePainting();
+
+		player = Player.spawnAt(hub.Hub.CENTER_THETA, hub.Hub.CENTER_PHI, 0, MazeGeometry.RADIUS);
+		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+	}
+
+	/**
+		Attempts to move `player` by `distance` along `direction`, through
+		whichever scene's own collision currently applies — `game.Collision`
+		against the maze graph in a biome, `hub.HubCollision`'s simpler
+		convex-hexagon check in the hub.
+		@param direction unit tangent at `player.pos` to move along.
+		@param distance arc length to move; negative moves the opposite way.
+	**/
+	function tryMove(direction:h3d.Vector, distance:Float):Void {
+		switch sceneKind {
+			case Biome:
+				Collision.tryMove(player, direction, distance, MazeGeometry.RADIUS, maze);
+			case Hub:
+				hub.HubCollision.tryMove(player, direction, distance);
+		}
+	}
+
+	/**
+		Walking into `activePainting` warps to wherever it leads — no
+		interact-key confirmation, on purpose (see `hub.Painting`'s own
+		class doc). A biome's painting always leads to the hub; the hub's
+		always leads into a *fresh* random biome maze, not back to whichever
+		one the player just left — this pass doesn't track "discovered
+		biomes" at all yet (see `docs/PROJECT_LOG.md`'s 2026-07-17 entry),
+		so there's nothing else to send it back to.
+	**/
+	function checkPaintingTrigger():Void {
+		if (!activePainting.triggeredBy(player.pos)) {
+			return;
+		}
+
+		switch activePainting.destination {
+			case ToHub:
+				enterHub();
+			case ToBiome:
+				enterBiome(Maze.generate());
+		}
 	}
 
 	/**
@@ -132,7 +207,7 @@ class Main extends hxd.App {
 		}
 
 		var reader = new js.html.FileReader();
-		reader.onload = (_) -> loadMaze(Maze.deserialize(reader.result));
+		reader.onload = (_) -> enterBiome(Maze.deserialize(reader.result));
 		reader.readAsText(file);
 	}
 
@@ -185,10 +260,10 @@ class Main extends hxd.App {
 		}
 		var speed = hxd.Key.isDown(hxd.Key.SHIFT) ? WALK_SPEED * SPRINT_MULTIPLIER : WALK_SPEED;
 		if (hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z)) {
-			Collision.tryMoveForward(player, speed * dt, MazeGeometry.RADIUS, maze);
+			tryMove(player.forward, speed * dt);
 		}
 		if (hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S)) {
-			Collision.tryMoveForward(player, -speed * dt, MazeGeometry.RADIUS, maze);
+			tryMove(player.forward, -speed * dt);
 		}
 		// Q/D strafe sideways rather than turn — the player's body moves
 		// without them choosing to face that way, same as forward/backward.
@@ -201,12 +276,13 @@ class Main extends hxd.App {
 		// (flipping it there would flip which way lookUp tilts); the
 		// correction lives here instead.
 		if (hxd.Key.isDown(hxd.Key.Q)) {
-			Collision.tryMove(player, player.rightVector(), speed * dt, MazeGeometry.RADIUS, maze);
+			tryMove(player.rightVector(), speed * dt);
 		}
 		if (hxd.Key.isDown(hxd.Key.D)) {
-			Collision.tryMove(player, player.rightVector(), -speed * dt, MazeGeometry.RADIUS, maze);
+			tryMove(player.rightVector(), -speed * dt);
 		}
 
+		checkPaintingTrigger();
 		updateSpaceTilt(dt);
 
 		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
@@ -219,11 +295,15 @@ class Main extends hxd.App {
 			updateDebugOverlay();
 		}
 
-		if (hxd.Key.isPressed(hxd.Key.E)) {
-			exportMaze();
-		}
-		if (hxd.Key.isPressed(hxd.Key.L)) {
-			promptImportMaze();
+		// Export/import only make sense against a biome maze — the hub
+		// isn't a Maze/MazeData at all (see hub.Hub's own class doc).
+		if (sceneKind == Biome) {
+			if (hxd.Key.isPressed(hxd.Key.E)) {
+				exportMaze();
+			}
+			if (hxd.Key.isPressed(hxd.Key.L)) {
+				promptImportMaze();
+			}
 		}
 	}
 

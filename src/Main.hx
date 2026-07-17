@@ -35,8 +35,31 @@ class Main extends hxd.App {
 	**/
 	static inline final SPACE_TILT_RELEASE_AFTER:Float = 1;
 
-	/** Fixed spawn spherical coordinates — valid in any maze, since only which edges are open varies, never the grid's own shape. **/
-	static inline final SPAWN_THETA:Float = 1.3;
+	/**
+		Fixed spawn spherical coordinates — chosen to sit well clear of
+		row 5's own boundaries (its cell's center theta), not just
+		"somewhere in the maze": the old `SPAWN_THETA` (1.3) landed only
+		~2.53 units from the row 5/6 boundary, just barely outside the
+		`MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE`
+		(2.5) zone `Maze.wallZoneNeighbor` otherwise guarantees a player can
+		never get closer than — a margin of about 0.03 units, i.e. nothing.
+		Whenever a generated maze happened to close that specific edge
+		(about half the time, since it's an ordinary edge with no special
+		bias), the player spawned with the camera almost flush against —
+		sometimes clipped just past — that wall's actual face, reading as
+		"missing texture, see through it" (reported directly, with
+		screenshots, since normal movement never lets the collision-enforced
+		clearance get this thin). This only ever bit spawning specifically:
+		`Player.spawnAt` places the player directly, without going through
+		`Collision`'s own clearance check the way every other move does.
+		Centering on row 5 instead gives every direction a comfortable
+		margin (smallest is ~5.95 units, still well over double what's
+		required) rather than relying on which edges a maze happens to open.
+		`Math.PI * 5 / (Maze.ROWS - 1)` — row 5's own center theta — spelled
+		out as a literal since a `static inline final` can't initialize from
+		another class's constant.
+	**/
+	static inline final SPAWN_THETA:Float = 1.2083048667653051;
 
 	static inline final SPAWN_PHI:Float = 0.6;
 	static inline final SPAWN_FACING:Float = 0.4;

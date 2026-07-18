@@ -11,17 +11,25 @@ class Keybinds {
 	public static inline final TURN_RIGHT:Int = hxd.Key.RIGHT;
 	public static inline final SPRINT:Int = hxd.Key.SHIFT;
 
-	/** Forward/backward each have two physical keys (arrows + ZS) — `GameLoop` checks both for each. **/
+	/** Forward/backward each have two physical keys (arrows + WASD-position) — `GameLoop` checks both for each. **/
 	public static inline final MOVE_FORWARD:Int = hxd.Key.UP;
 
-	public static inline final MOVE_FORWARD_ALT:Int = hxd.Key.Z;
+	/**
+		Bound by physical key position (`PhysicalKeys`, `KeyboardEvent.code`)
+		rather than `hxd.Key`'s layout-labeled codes — the key in the
+		WASD/ZQSD "forward" position always reports `"KeyW"` regardless of
+		what's printed on the keycap, so this fits AZERTY and QWERTY alike
+		with no layout detection needed.
+	**/
+	public static inline final MOVE_FORWARD_ALT:String = "KeyW";
+
 	public static inline final MOVE_BACKWARD:Int = hxd.Key.DOWN;
-	public static inline final MOVE_BACKWARD_ALT:Int = hxd.Key.S;
+	public static inline final MOVE_BACKWARD_ALT:String = "KeyS";
 
-	/** Named for their on-screen direction, not the physical key — see `GameLoop.fixedUpdate`'s own comment on why Q/D map this way under Heaps' left-handed camera. **/
-	public static inline final STRAFE_LEFT:Int = hxd.Key.Q;
+	/** Named for their on-screen direction, not the physical key — see `GameLoop.fixedUpdate`'s own comment on why the left/right keys map this way under Heaps' left-handed camera. **/
+	public static inline final STRAFE_LEFT:String = "KeyA";
 
-	public static inline final STRAFE_RIGHT:Int = hxd.Key.D;
+	public static inline final STRAFE_RIGHT:String = "KeyD";
 
 	public static inline final JUMP:Int = hxd.Key.SPACE;
 

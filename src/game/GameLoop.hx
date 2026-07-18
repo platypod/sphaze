@@ -237,10 +237,10 @@ class GameLoop {
 			player.turn(TURN_SPEED * dt);
 		}
 		var speed = hxd.Key.isDown(Keybinds.SPRINT) ? WALK_SPEED * SPRINT_MULTIPLIER : WALK_SPEED;
-		if (hxd.Key.isDown(Keybinds.MOVE_FORWARD) || hxd.Key.isDown(Keybinds.MOVE_FORWARD_ALT)) {
+		if (hxd.Key.isDown(Keybinds.MOVE_FORWARD) || PhysicalKeys.isDown(Keybinds.MOVE_FORWARD_ALT)) {
 			tryMove(player.forward, speed * dt);
 		}
-		if (hxd.Key.isDown(Keybinds.MOVE_BACKWARD) || hxd.Key.isDown(Keybinds.MOVE_BACKWARD_ALT)) {
+		if (hxd.Key.isDown(Keybinds.MOVE_BACKWARD) || PhysicalKeys.isDown(Keybinds.MOVE_BACKWARD_ALT)) {
 			tryMove(player.forward, -speed * dt);
 		}
 		// Q/D strafe sideways rather than turn — the player's body moves
@@ -253,10 +253,10 @@ class GameLoop {
 		// itself stays as-is since applyToCamera's pitch axis needs it
 		// (flipping it there would flip which way lookUp tilts); the
 		// correction lives here instead.
-		if (hxd.Key.isDown(Keybinds.STRAFE_LEFT)) {
+		if (PhysicalKeys.isDown(Keybinds.STRAFE_LEFT)) {
 			tryMove(player.rightVector(), speed * dt);
 		}
-		if (hxd.Key.isDown(Keybinds.STRAFE_RIGHT)) {
+		if (PhysicalKeys.isDown(Keybinds.STRAFE_RIGHT)) {
 			tryMove(player.rightVector(), -speed * dt);
 		}
 		if (hxd.Key.isPressed(Keybinds.JUMP)) {

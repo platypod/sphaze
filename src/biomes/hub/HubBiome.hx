@@ -3,6 +3,7 @@ package biomes.hub;
 import biomes.common.Biome;
 import biomes.common.Gravity;
 import biomes.maze.MazeBiome;
+import biomes.tower.TowerBiome;
 import entities.player.PlayerModel;
 import entities.painting.PaintingModel;
 
@@ -35,7 +36,7 @@ class HubBiome implements Biome {
 		index or a list of them, staying biome-agnostic (see their own
 		class docs). Face indices are arbitrary, just distinct.
 	**/
-	static final DESTINATIONS:Array<{faceIndex:Int, biomeId:String}> = [{faceIndex: 0, biomeId: MazeBiome.ID}];
+	static final DESTINATIONS:Array<{faceIndex:Int, biomeId:String}> = [{faceIndex: 0, biomeId: MazeBiome.ID}, {faceIndex: 2, biomeId: TowerBiome.ID}];
 
 	public function new() {}
 

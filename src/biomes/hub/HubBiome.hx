@@ -20,19 +20,19 @@ class HubBiome implements Biome {
 	}
 
 	public function radius():Float {
-		return Hub.RADIUS;
+		return HubModel.RADIUS;
 	}
 
 	public function build(parent:h3d.scene.Object):Void {
-		Hub.build(parent);
+		HubMesh.build(parent);
 	}
 
 	public function spawnPlayer(returning:Bool):Player {
-		return Player.spawnAt(Hub.SPAWN_THETA, Hub.SPAWN_PHI, 0, Hub.RADIUS);
+		return Player.spawnAt(HubModel.SPAWN_THETA, HubModel.SPAWN_PHI, 0, HubModel.RADIUS);
 	}
 
 	public function exitPainting():Painting {
-		return Hub.toBiomePainting(MazeBiome.ID);
+		return HubModel.toBiomePainting(MazeBiome.ID);
 	}
 
 	public function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {

@@ -4,7 +4,7 @@ import entities.Player;
 
 /**
 	Movement/collision for the hub room. Doesn't reuse `biomes.common.grid.GridCollision`/
-	`biomes.common.grid.GridModel`'s grid-based approach — see `Hub`'s own class doc for why the
+	`biomes.common.grid.GridModel`'s grid-based approach — see `HubModel`'s own class doc for why the
 	hub isn't built on that pipeline at all; a sphere with one fixed central
 	obstacle needs nothing more than "did this step cross into the column",
 	not wall-thickness zones, sliding, or per-edge open/closed state.
@@ -23,8 +23,8 @@ class HubCollision {
 	public static function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {
 		var oldPos = player.pos;
 		var oldForward = player.forward;
-		player.moveAlong(direction, distance, Hub.RADIUS);
-		if (!Hub.isInside(player.pos)) {
+		player.moveAlong(direction, distance, HubModel.RADIUS);
+		if (!HubModel.isInside(player.pos)) {
 			player.pos = oldPos;
 			player.forward = oldForward;
 		}

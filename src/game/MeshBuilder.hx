@@ -3,7 +3,7 @@ package game;
 /**
 	Generic mesh-assembly helpers with no grid/biome knowledge — extracted
 	from what used to be `maze.MazeMesh` specifically because
-	`biomes.hub.Hub` already depended on two of them (`addQuad`,
+	`biomes.hub.HubMesh` already depended on two of them (`addQuad`,
 	`WALL_TEXTURE_TILE_SIZE`) despite the hub not being grid-based at all:
 	exactly the "reused from a specific biome's own package" pattern this
 	restructuring moved away from everywhere else.

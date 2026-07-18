@@ -1,12 +1,15 @@
 package biomes.hub;
 
 import biomes.common.space.sphere.SphereMath;
-import game.MeshBuilder;
 import world.Painting;
 
 /**
-	The hub: a large sphere with a freestanding octagonal column through its
-	middle — the diegetic menu space reached by walking into a painting
+	The hub's own state and pure geometry queries — no scene graph here (see
+	`HubMesh` for the actual mesh building), same `Model`/`Mesh` split
+	`biomes.common.grid.GridModel`/`GridMesh` already use.
+
+	Conceptually: a large sphere with a freestanding octagonal column through
+	its middle — the diegetic menu space reached by walking into a painting
 	instead of a UI overlay (see `docs/PROJECT_LOG.md`'s 2026-07-17 entry for
 	the decision and its rejected alternative, and its later entry for this
 	bigger redesign).
@@ -31,7 +34,7 @@ import world.Painting;
 	player from ever reaching either sealed-off polar cap beyond it, without
 	needing a separate latitude check.
 **/
-class Hub {
+class HubModel {
 	/**
 		This sphere's own radius — no longer `biomes.common.grid.GridGeometry.RADIUS`; the
 		hub isn't biome-scale. Doubled from an initial `35` after hooman
@@ -50,24 +53,9 @@ class Hub {
 	public static inline final COLUMN_RADIUS:Float = 21;
 
 	/** Half the column's length along its axis — chosen (with RADIUS/COLUMN_RADIUS) so its end caps sit exactly flush against the sphere's inner wall: `sqrt(RADIUS^2 - COLUMN_RADIUS^2)`. **/
-	static inline final COLUMN_HALF_HEIGHT:Float = 66.7757;
+	public static inline final COLUMN_HALF_HEIGHT:Float = 66.7757;
 
-	static inline final COLUMN_SIDES = 8;
-
-	/** Segment counts for the outer shell's `h3d.prim.Sphere` — smooth enough to not read as faceted, unlike the deliberately 8-sided column. **/
-	static inline final SHELL_SEGS_W = 32;
-
-	static inline final SHELL_SEGS_H = 24;
-
-	/** Checkerboard colors for the outer shell — a solid flat fill gave the room's curvature and the player's own distance from anything no visual cues at all; alternating cells fix that without needing a texture asset. **/
-	static inline final FLOOR_COLOR_A:Int = 0xFF3A3A44;
-
-	static inline final FLOOR_COLOR_B:Int = 0xFF4A4A58;
-
-	/** Checkerboard density: cells around the equator, and pole to pole — chosen so cells read roughly square (the equator's circumference is about twice the pole-to-pole distance). **/
-	static inline final FLOOR_CHECKER_U = 40;
-
-	static inline final FLOOR_CHECKER_V = 20;
+	public static inline final COLUMN_SIDES = 8;
 
 	/** Which of the column's 8 faces holds the painting back to the one existing biome — arbitrary, just needs to be a real face index. **/
 	static inline final TO_BIOME_FACE_INDEX = 0;
@@ -124,9 +112,9 @@ class Hub {
 
 	/**
 		The hub's one painting back to a biome, mounted on `TO_BIOME_FACE_INDEX`
-		at `PAINTING_HEIGHT` — matches exactly where `buildColumn` renders it.
-		Takes the destination biome's id rather than hardcoding one so `Hub`
-		itself stays biome-agnostic — see `biomes.HubBiome`, which is what
+		at `PAINTING_HEIGHT` — matches exactly where `HubMesh.buildColumn` renders it.
+		Takes the destination biome's id rather than hardcoding one so `HubModel`
+		itself stays biome-agnostic — see `biomes.hub.HubBiome`, which is what
 		actually knows which biome that is.
 		@param destinationBiomeId the `biomes.common.Biome.id()` this painting leads to.
 		@return the hub's exit painting.
@@ -137,8 +125,13 @@ class Hub {
 		return new Painting(Painting.centerOf(left, right, new h3d.Vector(0, 1, 0)), destinationBiomeId, PAINTING_TRIGGER_DISTANCE);
 	}
 
-	/** `TO_BIOME_FACE_INDEX`'s left or right edge, at `PAINTING_HEIGHT` — the shared reference both `toBiomePainting` and `buildColumn` mount the painting from, so the trigger position always matches where it's actually rendered. **/
-	static function toBiomeFaceEdge(left:Bool):h3d.Vector {
+	/**
+		`TO_BIOME_FACE_INDEX`'s left or right edge, at `PAINTING_HEIGHT` — the
+		shared reference both `toBiomePainting` and `HubMesh.buildColumn`
+		mount the painting from, so the trigger position always matches
+		where it's actually rendered. Public so `HubMesh` can share it.
+	**/
+	public static function toBiomeFaceEdge(left:Bool):h3d.Vector {
 		var edge = columnEdge(TO_BIOME_FACE_INDEX + (left ? 0 : 1));
 		return new h3d.Vector(edge.top.x, PAINTING_HEIGHT, edge.top.z);
 	}
@@ -161,100 +154,12 @@ class Hub {
 	}
 
 	/**
-		Builds the hub's outer shell (an `h3d.prim.Sphere`, checkerboarded —
-		see `UnlitChecker`'s own doc for why a flat fill wasn't enough here)
-		and its central 8-sided column (side panels textured like biome
-		walls, the to-biome painting mounted as an inset overlay on one of them).
-		@param parent the scene object to attach the meshes under.
+		The column's `i`th vertical edge (wrapping every `COLUMN_SIDES`): top
+		and bottom points at that angle around the axis. Public so `HubMesh`
+		can build the column's geometry from the exact same points this
+		class's own queries (`toBiomeFaceEdge`) use.
 	**/
-	public static function build(parent:h3d.scene.Object):Void {
-		// h3d.prim.Sphere's own poles sit on the Z axis (built from
-		// cos/sin(t) into x/y, cos(t) into z) — rotated here to match this
-		// project's Y-axis pole convention (SphereMath.sphericalToCartesian)
-		// instead. Now that the shell is checkerboarded rather than a flat
-		// fill, this also keeps its cells aligned with the column's own
-		// pole-to-pole axis instead of running crosswise to it.
-		var shellPrim = new h3d.prim.Sphere(RADIUS, SHELL_SEGS_W, SHELL_SEGS_H);
-		shellPrim.addUVs();
-		var shellMesh = new h3d.scene.Mesh(shellPrim, parent);
-		shellMesh.setRotation(-Math.PI / 2, 0, 0);
-		shellMesh.material.mainPass.addShader(new game.shader.UnlitChecker(FLOOR_COLOR_A, FLOOR_COLOR_B, FLOOR_CHECKER_U, FLOOR_CHECKER_V));
-		shellMesh.material.mainPass.culling = None;
-
-		buildColumn(parent);
-	}
-
-	static function buildColumn(parent:h3d.scene.Object):Void {
-		var points:Array<h3d.Vector> = [];
-		var idx = new hxd.IndexBuffer();
-		var uvs:Array<h3d.prim.UV> = [];
-
-		for (i in 0...COLUMN_SIDES) {
-			var a = columnEdge(i);
-			var b = columnEdge(i + 1);
-
-			var uRepeat = a.top.sub(b.top).length() / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
-			var vHeight = 2 * COLUMN_HALF_HEIGHT / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
-			MeshBuilder.addQuad(points, idx, a.top, b.top, b.bottom, a.bottom);
-			uvs.push(new h3d.prim.UV(0, vHeight));
-			uvs.push(new h3d.prim.UV(uRepeat, vHeight));
-			uvs.push(new h3d.prim.UV(uRepeat, 0));
-			uvs.push(new h3d.prim.UV(0, 0));
-		}
-
-		addCap(points, idx, uvs, true);
-		addCap(points, idx, uvs, false);
-
-		var prim = new h3d.prim.Polygon(points, idx);
-		prim.uvs = uvs;
-		var texture = hxd.Res.textures.wall_stone.toTexture();
-		texture.wrap = Repeat;
-		var mesh = new h3d.scene.Mesh(prim, parent);
-		mesh.material.mainPass.addShader(new game.shader.UnlitTexture(texture));
-		mesh.material.mainPass.culling = None;
-
-		// The painting mounts as an inset overlay on top of its face's own
-		// wall texture, same as a biome return painting sits in front of
-		// GridMesh's already-built wall — not a replacement for it (an
-		// earlier version skipped the whole face's own panel here, leaving
-		// everything except the small painting quad itself unrendered).
-		var left = toBiomeFaceEdge(true);
-		var right = toBiomeFaceEdge(false);
-		var mid = Painting.midpointOf(left, right);
-		var outward = new h3d.Vector(mid.x, 0, mid.z).normalized();
-		var outwardRef = mid.add(outward.scaled(COLUMN_RADIUS));
-		Painting.buildQuad(parent, left, right, outwardRef, Painting.TO_BIOME_COLOR, new h3d.Vector(0, 1, 0));
-	}
-
-	/** A triangle fan closing off the column's top (`top = true`) or bottom end. **/
-	static function addCap(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, top:Bool):Void {
-		var apex = new h3d.Vector(0, top ? COLUMN_HALF_HEIGHT : -COLUMN_HALF_HEIGHT, 0);
-		for (i in 0...COLUMN_SIDES) {
-			var a = columnEdge(i);
-			var b = columnEdge(i + 1);
-			var rimA = top ? a.top : a.bottom;
-			var rimB = top ? b.top : b.bottom;
-			var start = points.length;
-			if (top) {
-				points.push(apex);
-				points.push(rimA);
-				points.push(rimB);
-			} else {
-				points.push(apex);
-				points.push(rimB);
-				points.push(rimA);
-			}
-			idx.push(start);
-			idx.push(start + 1);
-			idx.push(start + 2);
-			uvs.push(new h3d.prim.UV(0.5, 0.5));
-			uvs.push(new h3d.prim.UV(0, 0));
-			uvs.push(new h3d.prim.UV(1, 0));
-		}
-	}
-
-	/** The column's `i`th vertical edge (wrapping every `COLUMN_SIDES`): top and bottom points at that angle around the axis. **/
-	static function columnEdge(i:Int):{top:h3d.Vector, bottom:h3d.Vector} {
+	public static function columnEdge(i:Int):{top:h3d.Vector, bottom:h3d.Vector} {
 		var angle = (i % COLUMN_SIDES) * (2 * Math.PI / COLUMN_SIDES);
 		var x = COLUMN_RADIUS * Math.cos(angle);
 		var z = COLUMN_RADIUS * Math.sin(angle);

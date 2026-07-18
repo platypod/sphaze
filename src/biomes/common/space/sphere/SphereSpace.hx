@@ -11,8 +11,8 @@ import biomes.common.space.common.Space;
 	Stateless (no per-instance radius: `moveAlong` takes it as a call
 	parameter, same as `Player`'s own methods already did before this
 	extraction), so one shared `instance` covers every sphere-based biome
-	regardless of its own radius — `MazeGeometry.RADIUS` and `Hub.RADIUS`
-	both use it as-is.
+	regardless of its own radius — `biomes.common.grid.GridGeometry.RADIUS`
+	and `biomes.hub.HubModel.RADIUS` both use it as-is.
 **/
 class SphereSpace implements Space {
 	/** The single shared instance — see class doc for why one instance covers every sphere-based biome. **/

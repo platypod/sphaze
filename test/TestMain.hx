@@ -17,6 +17,7 @@ class TestMain {
 		runner.addCase(new MazeExitWallTest());
 		runner.addCase(new BiomeRegistryTest());
 		runner.addCase(new ProcessTest());
+		runner.addCase(new CreatureSpawnTableTest());
 		Report.create(runner);
 		runner.run();
 	}

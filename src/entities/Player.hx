@@ -1,6 +1,8 @@
 package entities;
 
+import game.Space;
 import game.SphereMath;
+import game.SphereSpace;
 
 /**
 	The player's position and facing direction on the maze sphere's interior
@@ -24,6 +26,13 @@ import game.SphereMath;
 	foundation (CLAUDE.md "Architecture") doesn't exist yet and shouldn't be
 	built ahead of a second use case that actually needs it (see
 	docs/GUIDELINES.md §1.3).
+
+	Rotation math (local "up", moving `pos`/`forward` along a tangent) is
+	delegated through `space:Space` rather than hardcoded here — every method
+	below still reads as sphere math today because `SphereSpace` is the only
+	implementation, but a future biome with a different topology would spawn
+	its `Player` with its own `Space` instead of this class needing to know
+	about it.
 
 	Doesn't re-orthogonalize `pos`/`forward` against accumulated floating-
 	point drift over many small rotations — each rotation preserves their
@@ -60,10 +69,20 @@ class Player {
 	/** View tilt from horizontal (0) toward the sphere's center (+MAX_PITCH) or the floor (-MAX_PITCH). **/
 	public var pitch:Float;
 
-	public function new(pos:h3d.Vector, forward:h3d.Vector, pitch:Float = 0) {
+	/**
+		Which biome's topology `pos`/`forward` live in — defaults to
+		`SphereSpace`, the only implementation that exists today, so every
+		existing call site (spawning, tests) is unaffected by this field's
+		presence. A future non-spherical biome would spawn its own `Player`
+		with its own `Space` instead.
+	**/
+	public final space:Space;
+
+	public function new(pos:h3d.Vector, forward:h3d.Vector, pitch:Float = 0, ?space:Space) {
 		this.pos = pos;
 		this.forward = forward;
 		this.pitch = clampPitch(pitch);
+		this.space = space != null ? space : SphereSpace.INSTANCE;
 	}
 
 	/**
@@ -100,7 +119,7 @@ class Player {
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
 	**/
 	public function applyToCamera(camera:h3d.Camera, radius:Float):Void {
-		var up = SphereMath.upVectorAt(pos, new h3d.Vector(0, 0, 0));
+		var up = space.upAt(pos);
 		var eyePos = pos.add(up.scaled(EYE_HEIGHT));
 		var right = rightVector();
 		var viewForward = SphereMath.rotateAroundAxis(forward, right, pitch);
@@ -119,7 +138,7 @@ class Player {
 		@return unit tangent at `pos`, perpendicular to `forward`, pointing right.
 	**/
 	public function rightVector():h3d.Vector {
-		var up = SphereMath.upVectorAt(pos, new h3d.Vector(0, 0, 0));
+		var up = space.upAt(pos);
 		return forward.cross(up).normalized();
 	}
 
@@ -135,13 +154,9 @@ class Player {
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
 	**/
 	public function moveForward(distance:Float, radius:Float):Void {
-		var posDir = pos.normalized();
-		var angle = distance / radius;
-		var axis = posDir.cross(forward).normalized();
-
-		var newPosDir = SphereMath.rotateAroundAxis(posDir, axis, angle);
-		forward = SphereMath.rotateAroundAxis(forward, axis, angle);
-		pos = newPosDir.scaled(radius);
+		var result = space.moveAlong(pos, forward, forward, distance, radius);
+		pos = result.pos;
+		forward = result.forward;
 	}
 
 	/**
@@ -153,8 +168,8 @@ class Player {
 		`forward` is parallel-transported by the same rotation as `pos`
 		(exactly like `moveForward` does for its own direction), *not* left
 		untouched: `forward` staying a valid unit tangent at `pos` is a hard
-		invariant every other method here relies on (`moveForward`'s own
-		`axis = posDir.cross(forward)`, `applyToCamera`'s `right =
+		invariant every other method here relies on (`SphereSpace.moveAlong`'s
+		own `axis = posDir.cross(direction)`, `applyToCamera`'s `right =
 		forward.cross(up)`, ...). An earlier version skipped this to keep the
 		view from "snapping" during a slide — reasonable-sounding, but it let
 		`forward` drift out of the tangent plane over repeated slides, since
@@ -170,11 +185,9 @@ class Player {
 		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
 	**/
 	public function moveAlong(direction:h3d.Vector, distance:Float, radius:Float):Void {
-		var posDir = pos.normalized();
-		var angle = distance / radius;
-		var axis = posDir.cross(direction).normalized();
-		forward = SphereMath.rotateAroundAxis(forward, axis, angle);
-		pos = SphereMath.rotateAroundAxis(posDir, axis, angle).scaled(radius);
+		var result = space.moveAlong(pos, forward, direction, distance, radius);
+		pos = result.pos;
+		forward = result.forward;
 	}
 
 	/**
@@ -183,7 +196,7 @@ class Player {
 		@param deltaAngle angle to turn by, in radians.
 	**/
 	public function turn(deltaAngle:Float):Void {
-		var up = SphereMath.upVectorAt(pos, new h3d.Vector(0, 0, 0));
+		var up = space.upAt(pos);
 		forward = SphereMath.rotateAroundAxis(forward, up, deltaAngle);
 	}
 

@@ -72,26 +72,33 @@ class HubModel {
 		would sit a full corridor-width (14 units) away from anywhere the
 		player can actually stand.
 
-		Every time `RADIUS`/`COLUMN_RADIUS` changes, this is re-derived from
-		scratch, not scaled from whatever it was before: `PaintingModel`'s own
-		`BASE_HEIGHT`/`HEIGHT` are fixed absolute constants (a painting is a
-		physical object with its own natural size, not something that
-		should balloon just because the room around it did), so naively
-		scaling `PAINTING_HEIGHT` alone while that fixed offset stays put
-		has overshot the reachable zone before. `57` puts the quad's own top
-		edge (`57+9=66`) just under `COLUMN_HALF_HEIGHT` (`66.7757`), the
-		highest this anchor can go, putting its visual center (`57+6=63`)
-		as close as that allows to the collision boundary's own height
-		(`RADIUS*cos(asin((COLUMN_RADIUS+COLLISION_CLEARANCE)/RADIUS))`) —
-		confirmed numerically (a scratch script computing the true closest
-		distance from the nearest reachable player position to this exact
-		point), not assumed.
-		`PAINTING_TRIGGER_DISTANCE` is sized against that same measurement
-		rather than reusing `PaintingModel.TRIGGER_DISTANCE`, since how close the
-		player can physically get to a mounting point scales with the room,
-		not with a fixed constant tuned for biome-scale walls.
+		Every time `RADIUS`/`COLUMN_RADIUS` changes, this needs re-checking
+		in-browser, not just re-derived on paper: the naive version of this
+		derivation (aim the quad's own top edge just under
+		`COLUMN_HALF_HEIGHT`, i.e. as high on the column as it can go) reads
+		fine as a pure height comparison, but ignores that the *floor*
+		right around the column is itself close to that same height — the
+		sphere's own surface at radius `COLUMN_RADIUS` from the axis is, by
+		construction (see this class' own doc), exactly `COLUMN_HALF_HEIGHT`
+		up, and stays within a few units of that for a good distance out
+		from the column too (the surface is steep here — this is right next
+		to where the column meets the sphere, deep in "near the pole"
+		territory). A painting mounted right at the top of the column, at
+		this same latitude the player is forced to view it from, reads as
+		buried floor-first in the grass rather than mounted on a wall
+		(reported directly, screenshot showing the painting's own lower
+		half swallowed by the floor) — confirmed empirically in-browser (a
+		temporary debug spawn placed the camera at the exact return-spawn
+		position, screenshotted at a spread of `PAINTING_HEIGHT` values;
+		analytical height-vs-`COLUMN_HALF_HEIGHT` comparisons alone
+		predicted the wrong direction more than once). `61` is the value
+		that actually reads as mounted on the wall rather than sunk into
+		the floor at that vantage point, not the highest value that avoids
+		overshooting `COLUMN_HALF_HEIGHT` on paper — those two turned out
+		not to be the same thing, and only one of them is the thing anyone
+		can actually see.
 	**/
-	static inline final PAINTING_HEIGHT:Float = 57;
+	static inline final PAINTING_HEIGHT:Float = 61;
 
 	/**
 		How close the player needs to walk to trigger the to-biome painting

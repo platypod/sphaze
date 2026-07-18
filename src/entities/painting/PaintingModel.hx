@@ -394,6 +394,207 @@ class PaintingModel extends Entity {
 	}
 
 	/**
+		Like `buildQuad`, but for a painting mounted on a section of a
+		circular wall (see `biomes.hub.TowerReplica`) rather than a flat
+		one: `segments` flat facets swept around the arc instead of a
+		single flat chord, so the artwork's own surface follows the wall's
+		real curvature — the flat-quad version has to sit inset off a
+		*chord*, which bulges away from the actual curved wall behind it
+		by the arc's own sagitta, `radius * (1 - cos(halfAngle))`; wide
+		enough (relative to `radius`) and that gap either shows through
+		the wall (if it undershoots `SURFACE_INSET`) or lets the wall
+		visibly poke past the painting (if it overshoots it) — the exact
+		bug `biomes.hub.TowerReplica`'s own `PAINTING_HALF_ANGLE` doc walks
+		through fighting via ever-smaller angles. Sweeping the artwork
+		around the same curve the wall itself follows removes the
+		chord-vs-arc mismatch outright instead of just keeping it small.
+
+		Same UV mapping as `buildQuad` (continuous top-to-bottom, and
+		`0` to `1` across the whole arc rather than repeating per facet)
+		so the artwork reads at the same size/resolution as a flat mount
+		would, just bent to fit — not stretched, shrunk, or tiled
+		differently. No `roomCenter`/`imageUpMatchesUp` parameters (unlike
+		`buildQuad`): the wall this mounts on is always the *outside* of a
+		solid, convex cylinder, so "which way is outward" and "does `up`
+		match a nearby player's own up" are never ambiguous the way an
+		arbitrary flat wall's can be.
+		@param parent the scene object to attach the mesh under.
+		@param center the circle's own center, at ground level.
+		@param uAxis/vAxis the plane the circle lies in — orthonormal unit vectors.
+		@param up the wall's own height axis.
+		@param radius the wall's own radius.
+		@param angleFrom/angleTo the arc this painting's own wall segment spans, in radians.
+		@param segments how many flat facets approximate the arc — more for a wider arc/bigger radius, same tradeoff `biomes.hub.TowerReplica.WALL_SEGMENTS` already makes for the wall itself.
+		@param texture the destination biome's own artwork.
+		@param baseHeight how far up from `center`'s own ground level the painting's bottom edge sits — see `fillWall`.
+		@param height the painting's own height, floor-clearance to top edge — see `fillWall`.
+	**/
+	public static function buildArcQuad(parent:h3d.scene.Object, center:h3d.Vector, uAxis:h3d.Vector, vAxis:h3d.Vector, up:h3d.Vector, radius:Float,
+			angleFrom:Float, angleTo:Float, segments:Int, texture:h3d.mat.Texture, baseHeight:Float, height:Float):Void {
+		var midAngle = (angleFrom + angleTo) / 2;
+		var halfSpan = (angleTo - angleFrom) / 2 * WIDTH_FRACTION;
+		var paintFrom = midAngle - halfSpan;
+		var paintTo = midAngle + halfSpan;
+
+		var points:Array<h3d.Vector> = [];
+		var idx = new hxd.IndexBuffer();
+		var uvs:Array<h3d.prim.UV> = [];
+		for (i in 0...segments) {
+			var t0 = i / segments;
+			var t1 = (i + 1) / segments;
+			var a0 = paintFrom + t0 * (paintTo - paintFrom);
+			var a1 = paintFrom + t1 * (paintTo - paintFrom);
+
+			var bottomA = arcPoint(center, uAxis, vAxis, up, radius, a0, baseHeight, SURFACE_INSET);
+			var bottomB = arcPoint(center, uAxis, vAxis, up, radius, a1, baseHeight, SURFACE_INSET);
+			var topA = bottomA.add(up.scaled(height));
+			var topB = bottomB.add(up.scaled(height));
+
+			MeshBuilder.addQuad(points, idx, bottomA, bottomB, topB, topA);
+			uvs.push(new h3d.prim.UV(t0, 1));
+			uvs.push(new h3d.prim.UV(t1, 1));
+			uvs.push(new h3d.prim.UV(t1, 0));
+			uvs.push(new h3d.prim.UV(t0, 0));
+		}
+
+		var prim = new h3d.prim.Polygon(points, idx);
+		prim.uvs = uvs;
+		var mesh = new h3d.scene.Mesh(prim, parent);
+		mesh.material.mainPass.addShader(new UnlitTexture(texture));
+		mesh.material.mainPass.culling = None;
+
+		buildArcFrame(parent, center, uAxis, vAxis, up, radius, paintFrom, paintTo, baseHeight, height, segments);
+	}
+
+	/**
+		The arc version of `buildFrame` — same bevel-from-wall-to-flush-with-
+		painting shape, same border/outline fractions, just swept around
+		the arc (`addArcBand`) rather than built once along a straight
+		`along` axis. `angularBorder`/`verticalBorder` play the exact role
+		`buildFrame`'s own `horizontalBorder`/`verticalBorder` do — a
+		fraction of the painting's own span in each axis — except angular
+		and vertical are genuinely different units here (an angle and a
+		world distance), so unlike the flat version's shared `innerBorder`/
+		`outerBorder` scalars, an arc-based frame keeps them as two
+		separately-scaled quantities throughout rather than forcing one
+		shared linear distance to stand in for both.
+		@param parent the scene object to attach the mesh under.
+		@param center/uAxis/vAxis/up/radius the circle this painting mounts on — see `buildArcQuad`.
+		@param paintFrom/paintTo the painting's own (already `WIDTH_FRACTION`-shrunk) angular span.
+		@param baseHeight/height the painting's own vertical span — see `buildArcQuad`.
+		@param segments how many facets approximate the arc.
+	**/
+	static function buildArcFrame(parent:h3d.scene.Object, center:h3d.Vector, uAxis:h3d.Vector, vAxis:h3d.Vector, up:h3d.Vector, radius:Float,
+			paintFrom:Float, paintTo:Float, baseHeight:Float, height:Float, segments:Int):Void {
+		var angularBorder = (paintTo - paintFrom) * FRAME_BORDER_FRACTION;
+		var verticalBorder = height * FRAME_BORDER_FRACTION;
+		var outerFrom = paintFrom - angularBorder;
+		var outerTo = paintTo + angularBorder;
+		var outerBottom = baseHeight - verticalBorder;
+		var outerTop = baseHeight + height + verticalBorder;
+		var wallInsetDepth = SURFACE_INSET - FRAME_DEPTH;
+		var peakInsetDepth = SURFACE_INSET;
+
+		var innerFrom = paintFrom - angularBorder * OUTLINE_WIDTH_FRACTION;
+		var innerTo = paintTo + angularBorder * OUTLINE_WIDTH_FRACTION;
+		var innerBottom = baseHeight - verticalBorder * OUTLINE_WIDTH_FRACTION;
+		var innerTop = baseHeight + height + verticalBorder * OUTLINE_WIDTH_FRACTION;
+		var mainOuterFrom = outerFrom + angularBorder * OUTLINE_WIDTH_FRACTION;
+		var mainOuterTo = outerTo - angularBorder * OUTLINE_WIDTH_FRACTION;
+		var mainOuterBottom = outerBottom + verticalBorder * OUTLINE_WIDTH_FRACTION;
+		var mainOuterTop = outerTop - verticalBorder * OUTLINE_WIDTH_FRACTION;
+
+		var points:Array<h3d.Vector> = [];
+		var idx = new hxd.IndexBuffer();
+		addArcBand(points, idx, center, uAxis, vAxis, up, radius, innerFrom, innerTo, innerBottom, innerTop, peakInsetDepth, mainOuterFrom, mainOuterTo,
+			mainOuterBottom, mainOuterTop, wallInsetDepth, segments);
+		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
+		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(Colours.PAINTING_FRAME));
+		mesh.material.mainPass.culling = None;
+
+		buildArcOutline(parent, center, uAxis, vAxis, up, radius, paintFrom, paintTo, baseHeight, height, innerFrom, innerTo, innerBottom, innerTop,
+			mainOuterFrom, mainOuterTo, mainOuterBottom, mainOuterTop, outerFrom, outerTo, outerBottom, outerTop, wallInsetDepth, peakInsetDepth, segments);
+	}
+
+	/** The arc version of `buildOutline` — same two flat outline bands, one flush with the painting's own edge and one flush with the wall, just swept around the arc. **/
+	static function buildArcOutline(parent:h3d.scene.Object, center:h3d.Vector, uAxis:h3d.Vector, vAxis:h3d.Vector, up:h3d.Vector, radius:Float,
+			paintFrom:Float, paintTo:Float, baseHeight:Float, height:Float, innerFrom:Float, innerTo:Float, innerBottom:Float, innerTop:Float,
+			mainOuterFrom:Float, mainOuterTo:Float, mainOuterBottom:Float, mainOuterTop:Float, outerFrom:Float, outerTo:Float, outerBottom:Float,
+			outerTop:Float, wallInsetDepth:Float, peakInsetDepth:Float, segments:Int):Void {
+		var points:Array<h3d.Vector> = [];
+		var idx = new hxd.IndexBuffer();
+		addArcBand(points, idx, center, uAxis, vAxis, up, radius, paintFrom, paintTo, baseHeight, baseHeight + height, peakInsetDepth, innerFrom, innerTo,
+			innerBottom, innerTop, peakInsetDepth, segments);
+		addArcBand(points, idx, center, uAxis, vAxis, up, radius, mainOuterFrom, mainOuterTo, mainOuterBottom, mainOuterTop, wallInsetDepth, outerFrom,
+			outerTo, outerBottom, outerTop, wallInsetDepth, segments);
+
+		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
+		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(Colours.PAINTING_FRAME_OUTLINE));
+		mesh.material.mainPass.culling = None;
+	}
+
+	/**
+		The arc version of `addRingBand` — `segments` quads forming a
+		curved ring band around the circle instead of four quads forming a
+		flat rectangular one, each edge's own depth given as a plain
+		scalar (`innerInsetDepth`/`outerInsetDepth`) rather than a
+		precomputed inset vector: unlike a flat wall's single shared face
+		normal, the "outward" direction here genuinely differs at every
+		angle around the arc (see `arcPoint`), so the inset has to be
+		recomputed per vertex instead of once for the whole band.
+		@param points/idx appended to — the mesh's own vertex/index buffers.
+		@param center/uAxis/vAxis/up/radius the circle this band wraps around.
+		@param innerFrom/innerTo the band's own inner edge, angular span.
+		@param innerBottom/innerTop the band's own inner edge, vertical span.
+		@param innerInsetDepth the band's own inner edge, depth off the wall.
+		@param outerFrom/outerTo the band's own outer edge, angular span.
+		@param outerBottom/outerTop the band's own outer edge, vertical span.
+		@param outerInsetDepth the band's own outer edge, depth off the wall.
+		@param segments how many facets approximate the arc.
+	**/
+	static function addArcBand(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, center:h3d.Vector, uAxis:h3d.Vector, vAxis:h3d.Vector, up:h3d.Vector,
+			radius:Float, innerFrom:Float, innerTo:Float, innerBottom:Float, innerTop:Float, innerInsetDepth:Float, outerFrom:Float, outerTo:Float,
+			outerBottom:Float, outerTop:Float, outerInsetDepth:Float, segments:Int):Void {
+		for (i in 0...segments) {
+			var t0 = i / segments;
+			var t1 = (i + 1) / segments;
+
+			var innerA0 = innerFrom + t0 * (innerTo - innerFrom);
+			var innerA1 = innerFrom + t1 * (innerTo - innerFrom);
+			var outerA0 = outerFrom + t0 * (outerTo - outerFrom);
+			var outerA1 = outerFrom + t1 * (outerTo - outerFrom);
+
+			var innerBottomA = arcPoint(center, uAxis, vAxis, up, radius, innerA0, innerBottom, innerInsetDepth);
+			var innerBottomB = arcPoint(center, uAxis, vAxis, up, radius, innerA1, innerBottom, innerInsetDepth);
+			var innerTopA = arcPoint(center, uAxis, vAxis, up, radius, innerA0, innerTop, innerInsetDepth);
+			var innerTopB = arcPoint(center, uAxis, vAxis, up, radius, innerA1, innerTop, innerInsetDepth);
+
+			var outerBottomA = arcPoint(center, uAxis, vAxis, up, radius, outerA0, outerBottom, outerInsetDepth);
+			var outerBottomB = arcPoint(center, uAxis, vAxis, up, radius, outerA1, outerBottom, outerInsetDepth);
+			var outerTopA = arcPoint(center, uAxis, vAxis, up, radius, outerA0, outerTop, outerInsetDepth);
+			var outerTopB = arcPoint(center, uAxis, vAxis, up, radius, outerA1, outerTop, outerInsetDepth);
+
+			MeshBuilder.addQuad(points, idx, outerBottomA, outerBottomB, innerBottomB, innerBottomA);
+			MeshBuilder.addQuad(points, idx, outerBottomB, outerTopB, innerTopB, innerBottomB);
+			MeshBuilder.addQuad(points, idx, outerTopB, outerTopA, innerTopA, innerTopB);
+			MeshBuilder.addQuad(points, idx, outerTopA, outerBottomA, innerBottomA, innerTopA);
+		}
+	}
+
+	/**
+		A point at `angle`/`height` on the circle `center`/`uAxis`/`vAxis`/`radius`
+		describes, pushed `insetDepth` further out along that same angle's
+		own outward (radially-away-from-`center`) direction — always
+		unambiguous here (see `buildArcQuad`'s own doc on why this never
+		needs a `roomCenter`-style sidedness check the way `buildQuad` does).
+	**/
+	static function arcPoint(center:h3d.Vector, uAxis:h3d.Vector, vAxis:h3d.Vector, up:h3d.Vector, radius:Float, angle:Float, height:Float,
+			insetDepth:Float):h3d.Vector {
+		var outward = uAxis.scaled(Math.cos(angle)).add(vAxis.scaled(Math.sin(angle)));
+		return center.add(outward.scaled(radius + insetDepth)).add(up.scaled(height));
+	}
+
+	/**
 		`res/sprites/painting--biome-hub-*.png`'s own newest variant —
 		every non-hub biome's own return/exit painting shows this, since
 		they all lead to the same place (the hub's own to-biome paintings

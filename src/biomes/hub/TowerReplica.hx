@@ -85,8 +85,25 @@ class TowerReplica {
 		carrying an old angle over to a new radius unpredictably over- or
 		under-shoots the safe margin. Re-derived again for the current `10`:
 		`0.2` keeps the sagitta (`0.20`) comfortably under `SURFACE_INSET`.
+
+		This constraint stopped actually binding once `buildPainting` moved
+		to `PaintingModel.buildArcQuad` (hooman: "can we make the tower
+		painting in the hub keep the same resolution, but bend along the
+		tower?") — a painting that follows the wall's own curve instead of
+		cutting a flat chord across it has no sagitta to manage at all.
+		Left at `0.2` anyway: changing it now would resize the painting,
+		which wasn't part of that ask ("keep the same resolution").
 	**/
 	static inline final PAINTING_HALF_ANGLE:Float = 0.2;
+
+	/**
+		How many flat facets `PaintingModel.buildArcQuad` sweeps the
+		painting's own arc across. Small on purpose: at `PAINTING_HALF_ANGLE`'s
+		own narrow span, even a handful of facets reads as smoothly curved —
+		this is about the painting *following* the wall's curvature, not
+		matching its `WALL_SEGMENTS`-level tessellation facet-for-facet.
+	**/
+	static inline final PAINTING_ARC_SEGMENTS:Int = 8;
 
 	/**
 		How far beyond `OUTER_RADIUS` collision blocks the player — the
@@ -151,13 +168,17 @@ class TowerReplica {
 		buildPainting(parent, basis, texture);
 	}
 
-	/** The tower's own painting, mounted on the outer wall at ground level. **/
+	/**
+		The tower's own painting, mounted on the outer wall at ground level
+		— bent along the wall's own curvature (`PaintingModel.buildArcQuad`)
+		rather than cutting a flat chord across it, so it reads as sitting
+		flush on the spire's own round surface instead of like a flat
+		picture leaned against it.
+	**/
 	static function buildPainting(parent:h3d.scene.Object, basis:StructureBasis, texture:h3d.mat.Texture):Void {
-		var wallA = paintingWallEdge(basis, true);
-		var wallB = paintingWallEdge(basis, false);
-		var roomCenter = ringPoint(basis, OUTER_RADIUS + RETURN_SPAWN_OFFSET, PAINTING_ANGLE, 0);
 		var size = PaintingModel.fillWall(FLOOR_HEIGHT);
-		PaintingModel.buildQuad(parent, wallA, wallB, roomCenter, texture, size.baseHeight, size.height, basis.up);
+		PaintingModel.buildArcQuad(parent, basis.origin, basis.uAxis, basis.vAxis, basis.up, OUTER_RADIUS, PAINTING_ANGLE - PAINTING_HALF_ANGLE,
+			PAINTING_ANGLE + PAINTING_HALF_ANGLE, PAINTING_ARC_SEGMENTS, texture, size.baseHeight, size.height);
 	}
 
 	/** One edge of the painting's own mounting segment on the outer wall, at ground level — mirrors `biomes.tower.TowerModel.paintingWallEdge`. **/

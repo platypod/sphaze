@@ -3,7 +3,7 @@ package biomes.hub;
 import biomes.common.Biome;
 import biomes.maze.MazeBiome;
 import entities.player.PlayerModel;
-import world.Painting;
+import entities.painting.PaintingModel;
 
 /**
 	The hub — a peer `Biome` like any other (see `biomes.common.Biome`'s own
@@ -31,7 +31,7 @@ class HubBiome implements Biome {
 		return PlayerModel.spawnAt(HubModel.SPAWN_THETA, HubModel.SPAWN_PHI, 0, HubModel.RADIUS);
 	}
 
-	public function exitPainting():Painting {
+	public function exitPainting():PaintingModel {
 		return HubModel.toBiomePainting(MazeBiome.ID);
 	}
 

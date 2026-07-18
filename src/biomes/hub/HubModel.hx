@@ -1,7 +1,7 @@
 package biomes.hub;
 
 import biomes.common.space.sphere.SphereMath;
-import world.Painting;
+import entities.painting.PaintingModel;
 
 /**
 	The hub's own state and pure geometry queries — no scene graph here (see
@@ -76,7 +76,7 @@ class HubModel {
 		player can actually stand.
 
 		Every time `RADIUS`/`COLUMN_RADIUS` changes, this is re-derived from
-		scratch, not scaled from whatever it was before: `Painting`'s own
+		scratch, not scaled from whatever it was before: `PaintingModel`'s own
 		`BASE_HEIGHT`/`HEIGHT` are fixed absolute constants (a painting is a
 		physical object with its own natural size, not something that
 		should balloon just because the room around it did), so naively
@@ -90,7 +90,7 @@ class HubModel {
 		distance from the nearest reachable player position to this exact
 		point), not assumed.
 		`PAINTING_TRIGGER_DISTANCE` is sized against that same measurement
-		rather than reusing `Painting.TRIGGER_DISTANCE`, since how close the
+		rather than reusing `PaintingModel.TRIGGER_DISTANCE`, since how close the
 		player can physically get to a mounting point scales with the room,
 		not with a fixed constant tuned for biome-scale walls.
 	**/
@@ -98,7 +98,7 @@ class HubModel {
 
 	/**
 		How close the player needs to walk to trigger the to-biome painting
-		— `Painting.TRIGGER_DISTANCE` (4) doesn't clear the gap at this
+		— `PaintingModel.TRIGGER_DISTANCE` (4) doesn't clear the gap at this
 		scale (confirmed numerically — see `PAINTING_HEIGHT`'s own doc), so
 		the hub's own painting gets its own value instead of that shared
 		constant.
@@ -119,10 +119,10 @@ class HubModel {
 		@param destinationBiomeId the `biomes.common.Biome.id()` this painting leads to.
 		@return the hub's exit painting.
 	**/
-	public static function toBiomePainting(destinationBiomeId:String):Painting {
+	public static function toBiomePainting(destinationBiomeId:String):PaintingModel {
 		var left = toBiomeFaceEdge(true);
 		var right = toBiomeFaceEdge(false);
-		return new Painting(Painting.centerOf(left, right, new h3d.Vector(0, 1, 0)), destinationBiomeId, PAINTING_TRIGGER_DISTANCE);
+		return new PaintingModel(PaintingModel.centerOf(left, right, new h3d.Vector(0, 1, 0)), destinationBiomeId, PAINTING_TRIGGER_DISTANCE);
 	}
 
 	/**

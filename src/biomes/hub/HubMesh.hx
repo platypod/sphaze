@@ -1,7 +1,7 @@
 package biomes.hub;
 
 import game.MeshBuilder;
-import world.Painting;
+import entities.painting.PaintingModel;
 
 /**
 	Builds the hub's actual scene-graph meshes: the outer shell (an
@@ -84,10 +84,10 @@ class HubMesh {
 		// everything except the small painting quad itself unrendered).
 		var left = HubModel.toBiomeFaceEdge(true);
 		var right = HubModel.toBiomeFaceEdge(false);
-		var mid = Painting.midpointOf(left, right);
+		var mid = PaintingModel.midpointOf(left, right);
 		var outward = new h3d.Vector(mid.x, 0, mid.z).normalized();
 		var outwardRef = mid.add(outward.scaled(HubModel.COLUMN_RADIUS));
-		Painting.buildQuad(parent, left, right, outwardRef, Painting.TO_BIOME_COLOR, new h3d.Vector(0, 1, 0));
+		PaintingModel.buildQuad(parent, left, right, outwardRef, PaintingModel.TO_BIOME_COLOR, new h3d.Vector(0, 1, 0));
 	}
 
 	/** A triangle fan closing off the column's top (`top = true`) or bottom end. **/

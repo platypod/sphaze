@@ -1,7 +1,7 @@
 package biomes.common;
 
 import entities.player.PlayerModel;
-import world.Painting;
+import entities.painting.PaintingModel;
 
 /**
 	Contract every biome instance implements — the hub included. `Main`
@@ -34,7 +34,7 @@ interface Biome {
 	function spawnPlayer(returning:Bool):PlayerModel;
 
 	/** This biome's own exit painting, checked each tick against the player's position (see `Main.checkPaintingTrigger`). **/
-	function exitPainting():Painting;
+	function exitPainting():PaintingModel;
 
 	/**
 		Attempts to move `player` by `distance` along `direction` through this biome's own collision rule.

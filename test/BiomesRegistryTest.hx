@@ -1,7 +1,7 @@
 import utest.Test;
 import utest.Assert;
 import entities.registries.BiomesRegistry;
-import world.Painting;
+import entities.painting.PaintingModel;
 import entities.player.PlayerModel;
 import biomes.common.Biome;
 
@@ -75,8 +75,8 @@ private class StubBiome implements Biome {
 		return PlayerModel.spawnAt(0, 0, 0, 1);
 	}
 
-	public function exitPainting():Painting {
-		return new Painting(new h3d.Vector(0, 0, 0), "nowhere");
+	public function exitPainting():PaintingModel {
+		return new PaintingModel(new h3d.Vector(0, 0, 0), "nowhere");
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {}

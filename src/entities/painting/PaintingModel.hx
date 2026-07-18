@@ -1,6 +1,7 @@
-package world;
+package entities.painting;
 
 import biomes.common.space.sphere.SphereMath;
+import entities.Entity;
 
 /**
 	A painting mounted on a wall — the diegetic warp mechanism: walking
@@ -13,8 +14,15 @@ import biomes.common.space.sphere.SphereMath;
 	visible quad is scene/rendering code (see `buildQuad`), kept separate so
 	the trigger math itself stays unit-testable without needing a scene
 	graph (`docs/GUIDELINES.md` §1.4/§5.4).
+
+	An `Entity` since it's a thing that exists in the game world with a
+	position — but only the warp-linked shape is built here
+	(`destinationBiomeId`/`triggerDistance`); a purely decorative painting
+	with no mechanism behind it isn't a real use case yet, so this doesn't
+	try to anticipate what that would look like (same discipline as
+	`CreatureSpawnTable`'s own doc).
 **/
-class Painting {
+class PaintingModel extends Entity {
 	/** How close the player needs to walk for this painting to trigger. **/
 	public static inline final TRIGGER_DISTANCE:Float = 4;
 
@@ -58,6 +66,7 @@ class Painting {
 		@param triggerDistance how close the player needs to walk for it to trigger — defaults to `TRIGGER_DISTANCE`; a larger scene (e.g. a bigger hub) may need its own, since how close a player can physically get to a given mounting point scales with the room, not with this constant.
 	**/
 	public function new(position:h3d.Vector, destinationBiomeId:String, ?triggerDistance:Float) {
+		super();
 		this.position = position;
 		this.destinationBiomeId = destinationBiomeId;
 		this.triggerDistance = triggerDistance != null ? triggerDistance : TRIGGER_DISTANCE;

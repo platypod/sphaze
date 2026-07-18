@@ -51,7 +51,8 @@ class CreaturesRegistry {
 	**/
 	public function creaturesIn(biomeId:String):Array<String> {
 		return [
-			for (creatureId => location in locations) if (location.biomeId == biomeId) creatureId
+			for (creatureId => location in locations)
+				if (location.biomeId == biomeId) creatureId
 		];
 	}
 

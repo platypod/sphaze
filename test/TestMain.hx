@@ -15,7 +15,7 @@ class TestMain {
 		runner.addCase(new CameraTest());
 		runner.addCase(new GridMeshTest());
 		runner.addCase(new GridCollisionTest());
-		runner.addCase(new PaintingTest());
+		runner.addCase(new PaintingModelTest());
 		runner.addCase(new MazeExitWallTest());
 		runner.addCase(new BiomesRegistryTest());
 		runner.addCase(new ProcessTest());

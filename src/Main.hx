@@ -7,7 +7,7 @@ import biomes.maze.MazeGenerator;
 import entities.player.Camera;
 import entities.player.PlayerModel;
 import entities.registries.BiomesRegistry;
-import world.Painting;
+import entities.painting.PaintingModel;
 
 /**
 	Entry point. Owns the fixed-timestep accumulator (CLAUDE.md "Architecture")
@@ -44,7 +44,7 @@ class Main extends hxd.App {
 	var mazeGroup:h3d.scene.Object;
 
 	/** The current biome's own exit painting — checked each tick against `player.pos`. **/
-	var activePainting:Painting;
+	var activePainting:PaintingModel;
 
 	var spaceHoldTime:Float = 0;
 	var spaceTiltReleased:Bool = false;
@@ -131,7 +131,7 @@ class Main extends hxd.App {
 
 	/**
 		Walking into `activePainting` warps to wherever it leads — no
-		interact-key confirmation, on purpose (see `world.Painting`'s own class
+		interact-key confirmation, on purpose (see `entities.painting.PaintingModel`'s own class
 		doc). Uniform for every biome, hub included: there's no "which kind
 		of destination is this" branch, just "enter whichever biome id this
 		painting names."

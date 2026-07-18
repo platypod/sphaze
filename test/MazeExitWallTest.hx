@@ -1,9 +1,9 @@
 import utest.Test;
 import utest.Assert;
-import grid.Grid;
-import grid.Grid.GridData;
-import grid.Grid.GridNode;
-import grid.GridMesh;
+import biomes.common.grid.GridMesh;
+import biomes.common.grid.GridModel;
+import biomes.common.grid.GridModel.GridData;
+import biomes.common.grid.GridModel.GridNode;
 import biomes.maze.MazeExitWall;
 
 /** Covers MazeExitWall's placement scan — a deterministic, hand-built GridData, not a random generated one. **/
@@ -22,7 +22,7 @@ class MazeExitWallTest extends Test {
 		var maze:GridData = {openEdges: new haxe.ds.StringMap()};
 		// Open row 1's whole ring (every west/east edge in it) so the scan
 		// has to move on to row 2 entirely before finding a closed one.
-		var cols = Grid.colsForRow(1);
+		var cols = GridModel.colsForRow(1);
 		for (col in 0...cols) {
 			var here = RingNode(1, col);
 			var east = RingNode(1, (col + 1) % cols);
@@ -38,7 +38,7 @@ class MazeExitWallTest extends Test {
 
 	function testUsesTheEastWallWhenWestIsOpenButEastIsClosed():Void {
 		var maze:GridData = {openEdges: new haxe.ds.StringMap()};
-		var cols = Grid.colsForRow(1);
+		var cols = GridModel.colsForRow(1);
 		// Row 1 col 0's west edge open, so the scan must check its east
 		// side (also closed, since nothing else is open) before moving on.
 		maze.openEdges.set(edgeKeyForTest(RingNode(1, 0), RingNode(1, cols - 1)), true);
@@ -56,10 +56,10 @@ class MazeExitWallTest extends Test {
 		Assert.floatEquals(expected.z, actual.z, 1e-9);
 	}
 
-	/** Test-only stand-in for Grid's private edgeKey — same sort-then-join format (see GridCollisionTest's own copy of this). **/
+	/** Test-only stand-in for GridModel's private edgeKey — same sort-then-join format (see GridCollisionTest's own copy of this). **/
 	function edgeKeyForTest(a:GridNode, b:GridNode):String {
-		var keyA = Grid.nodeKey(a);
-		var keyB = Grid.nodeKey(b);
+		var keyA = GridModel.nodeKey(a);
+		var keyB = GridModel.nodeKey(b);
 		return keyA < keyB ? '$keyA|$keyB' : '$keyB|$keyA';
 	}
 }

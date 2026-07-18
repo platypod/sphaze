@@ -9,7 +9,7 @@ class TestMain {
 	static function main():Void {
 		var runner = new Runner();
 		runner.addCase(new SphereMathTest());
-		runner.addCase(new GridTest());
+		runner.addCase(new GridModelTest());
 		runner.addCase(new MazeGeneratorTest());
 		runner.addCase(new PlayerTest());
 		runner.addCase(new GridMeshTest());

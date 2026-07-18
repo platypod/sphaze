@@ -1,10 +1,10 @@
+import biomes.common.grid.GridModel;
 import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
 import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
 import entities.Player;
 import game.Biome;
-import grid.Grid;
 import world.BiomeRegistry;
 import world.Painting;
 
@@ -311,7 +311,7 @@ class Main extends hxd.App {
 	function updateDebugOverlay():Void {
 		var theta = SphereMath.thetaOf(player.pos);
 		var phi = SphereMath.phiOf(player.pos);
-		var node = Grid.nodeAt(theta, phi);
+		var node = GridModel.nodeAt(theta, phi);
 
 		var thetaTangent = SphereMath.thetaTangentAt(theta, phi);
 		var phiTangent = SphereMath.phiTangentAt(phi);

@@ -33,7 +33,7 @@ import world.Painting;
 **/
 class Hub {
 	/**
-		This sphere's own radius — no longer `grid.GridGeometry.RADIUS`; the
+		This sphere's own radius — no longer `biomes.common.grid.GridGeometry.RADIUS`; the
 		hub isn't biome-scale. Doubled from an initial `35` after hooman
 		found that scale disorienting.
 	**/
@@ -72,7 +72,7 @@ class Hub {
 	/** Which of the column's 8 faces holds the painting back to the one existing biome — arbitrary, just needs to be a real face index. **/
 	static inline final TO_BIOME_FACE_INDEX = 0;
 
-	/** Extra margin `isInside` blocks at, short of the column's actual rendered face — same role as `grid.GridGeometry.COLLISION_CLEARANCE` plays for biomes. **/
+	/** Extra margin `isInside` blocks at, short of the column's actual rendered face — same role as `biomes.common.grid.GridGeometry.COLLISION_CLEARANCE` plays for biomes. **/
 	static inline final COLLISION_CLEARANCE:Float = 1;
 
 	/**

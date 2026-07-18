@@ -38,7 +38,7 @@ class MeshBuilder {
 
 	/**
 		Appends a triangle to `points`/`idx` — for a fan/variable-vertex-count
-		triangulation (e.g. `grid.GridMesh.addFloor`) rather than `addQuad`'s
+		triangulation (e.g. `biomes.common.grid.GridMesh.addFloor`) rather than `addQuad`'s
 		fixed four.
 		@param points vertex buffer to append to.
 		@param idx index buffer to append to.

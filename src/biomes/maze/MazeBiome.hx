@@ -1,16 +1,16 @@
 package biomes.maze;
 
+import biomes.common.grid.GridCollision;
+import biomes.common.grid.GridGeometry;
+import biomes.common.grid.GridMesh;
+import biomes.common.grid.GridModel.GridData;
 import biomes.hub.HubBiome;
 import entities.Player;
 import game.Biome;
-import grid.Grid.GridData;
-import grid.GridCollision;
-import grid.GridGeometry;
-import grid.GridMesh;
 import world.Painting;
 
 /**
-	The one generated-maze biome that exists today — wraps `grid.Grid`/
+	The one generated-maze biome that exists today — wraps `GridModel`/
 	`GridMesh`/`GridCollision` behind the `Biome` contract, plus its own
 	`MazeGenerator` for the spanning-tree layout that's specifically what
 	makes this a *maze*. Its own maze data can be swapped out via `reload`
@@ -26,9 +26,9 @@ class MazeBiome implements Biome {
 		the maze": the old `SPAWN_THETA` (1.3) landed only ~2.53 units from
 		the row 5/6 boundary, just barely outside the
 		`GridGeometry.WALL_THICKNESS + GridGeometry.COLLISION_CLEARANCE`
-		(2.5) zone `Grid.wallZoneNeighbor` otherwise guarantees a player can
+		(2.5) zone `GridModel.wallZoneNeighbor` otherwise guarantees a player can
 		never get closer than. Centering on row 5 instead gives every
-		direction a comfortable margin. `Math.PI * 5 / (Grid.ROWS - 1)` —
+		direction a comfortable margin. `Math.PI * 5 / (GridModel.ROWS - 1)` —
 		row 5's own center theta — spelled out as a literal since a `static
 		inline final` can't initialize from another class's constant.
 	**/

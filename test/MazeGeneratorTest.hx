@@ -1,8 +1,8 @@
 import utest.Test;
 import utest.Assert;
-import grid.Grid;
-import grid.Grid.GridNode;
-import grid.Grid.GridData;
+import biomes.common.grid.GridModel;
+import biomes.common.grid.GridModel.GridNode;
+import biomes.common.grid.GridModel.GridData;
 import biomes.maze.MazeGenerator;
 
 /**
@@ -13,14 +13,14 @@ import biomes.maze.MazeGenerator;
 class MazeGeneratorTest extends Test {
 	function testGenerateProducesASpanningTree():Void {
 		var maze = MazeGenerator.generate(new SeededRandom(1).next);
-		var nodes = Grid.allNodes();
+		var nodes = GridModel.allNodes();
 
 		Assert.equals(nodes.length - 1, countOpenEdges(maze));
 	}
 
 	function testGenerateConnectsEveryNodeToEveryOther():Void {
 		var maze = MazeGenerator.generate(new SeededRandom(42).next);
-		var nodes = Grid.allNodes();
+		var nodes = GridModel.allNodes();
 		var start = nodes[0];
 		if (start == null) {
 			Assert.fail("allNodes() returned no nodes");
@@ -28,7 +28,7 @@ class MazeGeneratorTest extends Test {
 		}
 
 		var visited = new haxe.ds.StringMap<Bool>();
-		visited.set(Grid.nodeKey(start), true);
+		visited.set(GridModel.nodeKey(start), true);
 
 		var stack:Array<GridNode> = [start];
 		while (stack.length > 0) {
@@ -36,9 +36,9 @@ class MazeGeneratorTest extends Test {
 			if (current == null) {
 				continue;
 			}
-			for (neighbor in Grid.neighborsOf(current)) {
-				var key = Grid.nodeKey(neighbor);
-				if (Grid.isOpen(maze, current, neighbor) && !visited.exists(key)) {
+			for (neighbor in GridModel.neighborsOf(current)) {
+				var key = GridModel.nodeKey(neighbor);
+				if (GridModel.isOpen(maze, current, neighbor) && !visited.exists(key)) {
 					visited.set(key, true);
 					stack.push(neighbor);
 				}

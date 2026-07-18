@@ -1,17 +1,17 @@
-package grid;
+package biomes.common.grid;
 
 /**
 	The physical sphere the grid is mapped onto. `GridMesh` derives its own
-	corner positions directly from `Grid.ROWS`/`Grid.COLS` and this radius
+	corner positions directly from `GridModel.ROWS`/`GridModel.COLS` and this radius
 	via `SphereMath`, rather than through a per-node lookup here — walls
 	need shared *corner* points with their neighboring floor cells to
 	connect seamlessly, not independent per-node centers.
 **/
 class GridGeometry {
-	// Corridor width scales directly with this at a *fixed* Grid.ROWS/COLS —
+	// Corridor width scales directly with this at a *fixed* GridModel.ROWS/COLS —
 	// bumping RADIUS alone widens corridors by roughly the same factor as
 	// the sphere itself grows, no more. Bumped 58->87 (1.5x) for a bigger
-	// sphere; Grid.ROWS/COLS were *also* dropped 16/32->14/28 in the same
+	// sphere; GridModel.ROWS/COLS were *also* dropped 16/32->14/28 in the same
 	// change specifically to widen corridors further on top of that, to
 	// about 2x their old width — reducing the grid resolution independently
 	// of RADIUS is the only way to decouple "how big is the sphere" from
@@ -28,13 +28,13 @@ class GridGeometry {
 		`GridMesh.innerCornersOf`) — each cell's own contribution to a shared
 		wall's total thickness. Lives here rather than in `GridMesh` because
 		`grid.GridCollision` needs the exact same value to block movement at
-		the wall's actual visible face (`Grid.wallZoneNeighbor`) instead of
+		the wall's actual visible face (`GridModel.wallZoneNeighbor`) instead of
 		the old zero-thickness boundary line the wall no longer sits on.
 	**/
 	public static inline final WALL_THICKNESS:Float = 1.5;
 
 	/**
-		Extra buffer `Grid.wallZoneNeighbor` adds on top of `WALL_THICKNESS`
+		Extra buffer `GridModel.wallZoneNeighbor` adds on top of `WALL_THICKNESS`
 		when blocking movement — purely a collision-side margin, not a
 		render one. `GridMesh` still builds the wall's visible face exactly
 		`WALL_THICKNESS` in from the cell boundary; this keeps the *player*

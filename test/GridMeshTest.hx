@@ -1,8 +1,10 @@
 import utest.Test;
 import utest.Assert;
+import biomes.common.grid.GridGeometry;
+import biomes.common.grid.GridMesh;
+import biomes.common.grid.GridModel;
+import biomes.common.grid.GridModel.GridNode;
 import biomes.common.space.sphere.SphereMath;
-import grid.GridMesh;
-import grid.Grid.GridNode;
 
 /**
 	Covers exactly the property that broke: neighboring cells must compute
@@ -23,7 +25,7 @@ class GridMeshTest extends Test {
 
 	function testColumnsWrapAroundSeamlessly():Void {
 		var row = 5;
-		var lastCol = grid.Grid.COLS - 1;
+		var lastCol = GridModel.COLS - 1;
 		var here = GridMesh.cornersOf(row, lastCol);
 		var wrapped = GridMesh.cornersOf(row, 0);
 
@@ -55,27 +57,27 @@ class GridMeshTest extends Test {
 		// different thetas for that correction.
 		var row = 5;
 		var col = 10;
-		var radius = grid.GridGeometry.RADIUS;
-		var halfTheta = Math.PI / (grid.Grid.ROWS - 1) / 2;
-		var centerTheta = Math.PI * row / (grid.Grid.ROWS - 1);
+		var radius = GridGeometry.RADIUS;
+		var halfTheta = Math.PI / (GridModel.ROWS - 1) / 2;
+		var centerTheta = Math.PI * row / (GridModel.ROWS - 1);
 		var outer = GridMesh.cornersOf(row, col);
 		var inner = GridMesh.innerCornersOf(row, col);
 
 		var thetaOuterNw = SphereMath.thetaOf(outer.nw);
 		var thetaInnerNw = SphereMath.thetaOf(inner.nw);
-		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (thetaInnerNw - thetaOuterNw) * radius, 1e-6);
+		Assert.floatEquals(GridGeometry.WALL_THICKNESS, (thetaInnerNw - thetaOuterNw) * radius, 1e-6);
 
 		var phiOuterNw = SphereMath.phiOf(outer.nw);
 		var phiInnerNw = SphereMath.phiOf(inner.nw);
-		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (phiInnerNw - phiOuterNw) * radius * Math.sin(centerTheta - halfTheta), 1e-6);
+		Assert.floatEquals(GridGeometry.WALL_THICKNESS, (phiInnerNw - phiOuterNw) * radius * Math.sin(centerTheta - halfTheta), 1e-6);
 
 		var thetaOuterSe = SphereMath.thetaOf(outer.se);
 		var thetaInnerSe = SphereMath.thetaOf(inner.se);
-		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (thetaOuterSe - thetaInnerSe) * radius, 1e-6);
+		Assert.floatEquals(GridGeometry.WALL_THICKNESS, (thetaOuterSe - thetaInnerSe) * radius, 1e-6);
 
 		var phiOuterSe = SphereMath.phiOf(outer.se);
 		var phiInnerSe = SphereMath.phiOf(inner.se);
-		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (phiOuterSe - phiInnerSe) * radius * Math.sin(centerTheta + halfTheta), 1e-6);
+		Assert.floatEquals(GridGeometry.WALL_THICKNESS, (phiOuterSe - phiInnerSe) * radius * Math.sin(centerTheta + halfTheta), 1e-6);
 	}
 
 	// The bug this session's fix targets: a west/east wall's inner corner
@@ -160,18 +162,18 @@ class GridMeshTest extends Test {
 			{row: 12, otherRow: 11}
 		];
 		for (boundary in boundaries) {
-			var myCols = grid.Grid.colsForRow(boundary.row);
-			var otherCols = grid.Grid.colsForRow(boundary.otherRow);
+			var myCols = GridModel.colsForRow(boundary.row);
+			var otherCols = GridModel.colsForRow(boundary.otherRow);
 			Assert.isTrue(otherCols > myCols, 'expected a doubling at row ${boundary.row} -> ${boundary.otherRow}');
 
 			// Whichever row is further south (larger theta) has its own
 			// north edge (nw/ne) on this boundary; the other has its south
 			// edge (sw/se) on it instead.
 			var childIsSouthOfParent = boundary.otherRow > boundary.row;
-			var parentOuterTheta = Math.PI * boundary.row / (grid.Grid.ROWS - 1) + (childIsSouthOfParent ? 1 : -1) * Math.PI / (grid.Grid.ROWS - 1) / 2;
+			var parentOuterTheta = Math.PI * boundary.row / (GridModel.ROWS - 1) + (childIsSouthOfParent ? 1 : -1) * Math.PI / (GridModel.ROWS - 1) / 2;
 
 			for (col in 0...myCols) {
-				for (entry in grid.Grid.rowBoundaryNeighbors(boundary.row, col, boundary.otherRow)) {
+				for (entry in GridModel.rowBoundaryNeighbors(boundary.row, col, boundary.otherRow)) {
 					var childCol = switch entry.node {
 						case RingNode(_, c): c;
 						case PoleNode(_): -1;

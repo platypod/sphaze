@@ -1,15 +1,15 @@
-package grid;
+package biomes.common.grid;
 
+import biomes.common.grid.GridModel.GridData;
+import biomes.common.grid.GridModel.GridNode;
+import biomes.common.grid.GridModel.RowBoundaryNeighbor;
 import biomes.common.space.sphere.SphereMath;
 import entities.Player;
-import grid.Grid.GridNode;
-import grid.Grid.GridData;
-import grid.Grid.RowBoundaryNeighbor;
 
 /**
 	Blocks `Player` from crossing a closed grid edge, sliding along it
 	instead of stopping dead when it's hit at an angle. Kept as a thin
-	wrapper around `Player` rather than teaching `Player` about `Grid` —
+	wrapper around `Player` rather than teaching `Player` about `GridModel` —
 	`Player` is otherwise fully grid-agnostic (see its class doc), and the
 	only thing collision needs is the node the player was in versus whatever
 	blocks the step.
@@ -18,7 +18,7 @@ import grid.Grid.RowBoundaryNeighbor;
 	wall geometry. A step is blocked one of two ways (see `blockingNode`):
 	entering the *wall-zone* of a closed side without necessarily leaving the
 	current node (the thickness a wall actually occupies, per
-	`Grid.wallZoneNeighbor` — this is the common case now that walls have
+	`GridModel.wallZoneNeighbor` — this is the common case now that walls have
 	real thickness, not the zero-width planes they started as), or, as a
 	fallback for a step large enough to skip clean over that check, landing
 	directly in a different, non-open node. At `Main.WALK_SPEED` versus the
@@ -56,7 +56,7 @@ class GridCollision {
 	public static function tryMove(player:Player, direction:h3d.Vector, distance:Float, radius:Float, maze:GridData):Bool {
 		var fromTheta = SphereMath.thetaOf(player.pos);
 		var fromPhi = SphereMath.phiOf(player.pos);
-		var fromNode = Grid.nodeAt(fromTheta, fromPhi);
+		var fromNode = GridModel.nodeAt(fromTheta, fromPhi);
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 
@@ -74,7 +74,7 @@ class GridCollision {
 
 	/**
 		Whichever node blocks a position nominally within `fromNode`: a
-		neighbor whose wall-zone (see `Grid.wallZoneNeighbor`) has been
+		neighbor whose wall-zone (see `GridModel.wallZoneNeighbor`) has been
 		entered *more deeply than at* `fromTheta`/`fromPhi`, or — the
 		fallback described in the class doc — a genuinely different,
 		non-open neighbor landed in directly, for a step large enough to
@@ -89,13 +89,13 @@ class GridCollision {
 		@return the node whose wall blocks this position, or null if it's unobstructed.
 	**/
 	static function blockingNode(maze:GridData, fromNode:GridNode, fromTheta:Float, fromPhi:Float, theta:Float, phi:Float, radius:Float):Null<GridNode> {
-		var wallZone = Grid.wallZoneNeighbor(maze, fromNode, fromTheta, fromPhi, theta, phi, radius);
+		var wallZone = GridModel.wallZoneNeighbor(maze, fromNode, fromTheta, fromPhi, theta, phi, radius);
 		if (wallZone != null) {
 			return wallZone;
 		}
 
-		var atNode = Grid.nodeAt(theta, phi);
-		if (Grid.nodeKey(fromNode) != Grid.nodeKey(atNode) && !Grid.isOpen(maze, fromNode, atNode)) {
+		var atNode = GridModel.nodeAt(theta, phi);
+		if (GridModel.nodeKey(fromNode) != GridModel.nodeKey(atNode) && !GridModel.isOpen(maze, fromNode, atNode)) {
 			return atNode;
 		}
 		return null;
@@ -206,7 +206,7 @@ class GridCollision {
 		column.
 
 		The segment's own two corners come from `fromNode`'s specific
-		`Grid.rowBoundaryNeighbors` entry matching `blockedNode`, not
+		`GridModel.rowBoundaryNeighbors` entry matching `blockedNode`, not
 		`fromNode`'s own full phi width — at a row boundary where column
 		count doubles moving away from a pole, the wall segment actually
 		blocking the step is only *half* that width (see that function's
@@ -218,7 +218,7 @@ class GridCollision {
 		Either node being a `PoleNode` instead falls back to the plain
 		cross-product tangent against `blockedNode`'s nominal center: `pos`
 		is right at (or immediately next to) the pole in that case, where
-		phi is undefined, so a chord built from `Grid.centerOf`'s
+		phi is undefined, so a chord built from `GridModel.centerOf`'s
 		placeholder phi at the pole would be meaningless. The cross-product
 		is exact for this one endpoint regardless, and a pole never has a
 		same-row *or* cross-row slide long enough to drift along.
@@ -231,7 +231,7 @@ class GridCollision {
 		var fromRow = ringRow(fromNode);
 		var blockedRow = ringRow(blockedNode);
 		if (fromRow == null || blockedRow == null) {
-			var blockedCenter = Grid.centerOf(blockedNode);
+			var blockedCenter = GridModel.centerOf(blockedNode);
 			var blockedDir = SphereMath.sphericalToCartesian(1, blockedCenter.theta, blockedCenter.phi);
 			return pos.normalized().cross(blockedDir).normalized();
 		}
@@ -246,9 +246,9 @@ class GridCollision {
 			return SphereMath.thetaTangentAt(SphereMath.thetaOf(pos), SphereMath.phiOf(pos));
 		}
 
-		var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
+		var halfTheta = Math.PI / (GridModel.ROWS - 1) / 2;
 		var sign = blockedRow > fromRow ? 1 : -1;
-		var wallTheta = Math.PI * fromRow / (Grid.ROWS - 1) + sign * halfTheta;
+		var wallTheta = Math.PI * fromRow / (GridModel.ROWS - 1) + sign * halfTheta;
 		var entry = matchingRowBoundaryEntry(fromRow, fromCol, blockedRow, blockedNode);
 		var corner1 = SphereMath.sphericalToCartesian(1, wallTheta, entry.phiStart);
 		var corner2 = SphereMath.sphericalToCartesian(1, wallTheta, entry.phiEnd);
@@ -257,7 +257,7 @@ class GridCollision {
 	}
 
 	/**
-		Whichever of `fromNode`'s `Grid.rowBoundaryNeighbors` entries toward
+		Whichever of `fromNode`'s `GridModel.rowBoundaryNeighbors` entries toward
 		`otherRow` is actually `blockedNode` — the specific phi sub-range of
 		the wall segment that blocked the step, not `fromNode`'s own full
 		width (see `wallTangentAlong`'s doc comment for why that distinction
@@ -269,9 +269,9 @@ class GridCollision {
 		@return that entry.
 	**/
 	static function matchingRowBoundaryEntry(row:Int, col:Int, otherRow:Int, blockedNode:GridNode):RowBoundaryNeighbor {
-		var blockedKey = Grid.nodeKey(blockedNode);
-		for (entry in Grid.rowBoundaryNeighbors(row, col, otherRow)) {
-			if (Grid.nodeKey(entry.node) == blockedKey) {
+		var blockedKey = GridModel.nodeKey(blockedNode);
+		for (entry in GridModel.rowBoundaryNeighbors(row, col, otherRow)) {
+			if (GridModel.nodeKey(entry.node) == blockedKey) {
 				return entry;
 			}
 		}

@@ -1,9 +1,9 @@
-package grid;
+package biomes.common.grid;
 
+import biomes.common.grid.GridModel.GridData;
+import biomes.common.grid.GridModel.GridNode;
 import biomes.common.space.sphere.SphereMath;
 import game.MeshBuilder;
-import grid.Grid.GridNode;
-import grid.Grid.GridData;
 
 /** A ring cell's four corners — "N"/"S" for the smaller/larger theta edge, "W"/"E" for the smaller/larger phi edge. **/
 typedef CellCorners = {
@@ -113,7 +113,7 @@ class GridMesh {
 		sliver-shaped gap (or overlap) right at the seam, confirmed
 		in-browser as a crack in the floor at exactly those latitudes. Fixed
 		by inserting this cell's own vertex at each interior split point
-		(`Grid.rowBoundaryNeighbors`'s own boundaries, at this cell's own
+		(`GridModel.rowBoundaryNeighbors`'s own boundaries, at this cell's own
 		theta) — the same point the finer neighbor already has on its side —
 		so both sides of the seam share identical vertices instead of a
 		coarse straight edge cutting across a finer bent one.
@@ -121,20 +121,20 @@ class GridMesh {
 	static function addFloor(points:Array<h3d.Vector>, idx:hxd.IndexBuffer):Void {
 		eachCell((row, col) -> {
 			var corners = cornersOf(row, col);
-			var theta = Math.PI * row / (Grid.ROWS - 1);
-			var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
+			var theta = Math.PI * row / (GridModel.ROWS - 1);
+			var halfTheta = Math.PI / (GridModel.ROWS - 1) / 2;
 
 			var perimeter = [corners.nw];
 			if (row > 1) {
-				var northEntries = Grid.rowBoundaryNeighbors(row, col, row - 1);
+				var northEntries = GridModel.rowBoundaryNeighbors(row, col, row - 1);
 				for (i in 0...northEntries.length - 1) {
 					perimeter.push(cornerAt(theta - halfTheta, northEntries[i].phiEnd));
 				}
 			}
 			perimeter.push(corners.ne);
 			perimeter.push(corners.se);
-			if (row < Grid.ROWS - 2) {
-				var southEntries = Grid.rowBoundaryNeighbors(row, col, row + 1);
+			if (row < GridModel.ROWS - 2) {
+				var southEntries = GridModel.rowBoundaryNeighbors(row, col, row + 1);
 				var i = southEntries.length - 2;
 				while (i >= 0) {
 					perimeter.push(cornerAt(theta + halfTheta, southEntries[i].phiEnd));
@@ -161,15 +161,15 @@ class GridMesh {
 		matching points for their shared edge, which is what makes the floor
 		— and each side's wall piece, built from these same points — connect
 		seamlessly to each other.
-		@param row the cell's row (1 to Grid.ROWS - 2).
-		@param col the cell's column (0 to Grid.colsForRow(row) - 1).
+		@param row the cell's row (1 to GridModel.ROWS - 2).
+		@param col the cell's column (0 to GridModel.colsForRow(row) - 1).
 		@return the cell's four outer corners.
 	**/
 	public static function cornersOf(row:Int, col:Int):CellCorners {
-		var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
-		var cols = Grid.colsForRow(row);
+		var halfTheta = Math.PI / (GridModel.ROWS - 1) / 2;
+		var cols = GridModel.colsForRow(row);
 		var halfPhi = Math.PI / cols;
-		var theta = Math.PI * row / (Grid.ROWS - 1);
+		var theta = Math.PI * row / (GridModel.ROWS - 1);
 		var phi = 2 * Math.PI * (col + 0.5) / cols;
 
 		return {
@@ -213,7 +213,7 @@ class GridMesh {
 
 		Clamped to the cell's own half-width so a cell doesn't invert near a
 		pole, where a column could otherwise be physically narrower than
-		WALL_THICKNESS itself — much less likely now that `Grid.colsForRow`
+		WALL_THICKNESS itself — much less likely now that `GridModel.colsForRow`
 		reduces column count near the poles specifically to keep cell width
 		from collapsing there, but still a real possibility for a small or
 		oddly-tuned `WALL_THICKNESS`, so the clamp stays.
@@ -230,8 +230,8 @@ class GridMesh {
 		keeps that end at the *full* outer theta instead, flush with
 		whatever continues it. The phi inset is unaffected either way —
 		it's the wall's thickness, not conditional on what's next door.
-		@param row the cell's row (1 to Grid.ROWS - 2).
-		@param col the cell's column (0 to Grid.colsForRow(row) - 1).
+		@param row the cell's row (1 to GridModel.ROWS - 2).
+		@param col the cell's column (0 to GridModel.colsForRow(row) - 1).
 		@param retreatNorth whether the north end retreats along theta (default true).
 		@param retreatSouth whether the south end retreats along theta (default true).
 		@return the cell's four inner corners.
@@ -239,10 +239,10 @@ class GridMesh {
 	public static function innerCornersOf(row:Int, col:Int, ?retreatNorth:Bool, ?retreatSouth:Bool):CellCorners {
 		var doRetreatNorth = retreatNorth == null ? true : retreatNorth;
 		var doRetreatSouth = retreatSouth == null ? true : retreatSouth;
-		var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
-		var cols = Grid.colsForRow(row);
+		var halfTheta = Math.PI / (GridModel.ROWS - 1) / 2;
+		var cols = GridModel.colsForRow(row);
 		var halfPhi = Math.PI / cols;
-		var theta = Math.PI * row / (Grid.ROWS - 1);
+		var theta = Math.PI * row / (GridModel.ROWS - 1);
 		var phi = 2 * Math.PI * (col + 0.5) / cols;
 
 		var insetTheta = Math.min(halfTheta, GridGeometry.WALL_THICKNESS / GridGeometry.RADIUS);
@@ -266,8 +266,8 @@ class GridMesh {
 
 	/** Walks every ring cell, calling `f` with its row/col. **/
 	static function eachCell(f:(row:Int, col:Int) -> Void):Void {
-		for (row in 1...(Grid.ROWS - 1)) {
-			for (col in 0...Grid.colsForRow(row)) {
+		for (row in 1...(GridModel.ROWS - 1)) {
+			for (col in 0...GridModel.colsForRow(row)) {
 				f(row, col);
 			}
 		}
@@ -330,37 +330,37 @@ private class WallBuilder {
 	public function addWallsAround(row:Int, col:Int):Void {
 		var outer = GridMesh.cornersOf(row, col);
 		var here = RingNode(row, col);
-		var cols = Grid.colsForRow(row);
+		var cols = GridModel.colsForRow(row);
 		var west = RingNode(row, (col - 1 + cols) % cols);
 		var east = RingNode(row, (col + 1) % cols);
-		var westClosed = !Grid.isOpen(maze, here, west);
-		var eastClosed = !Grid.isOpen(maze, here, east);
+		var westClosed = !GridModel.isOpen(maze, here, west);
+		var eastClosed = !GridModel.isOpen(maze, here, east);
 
-		var northEntries = row == 1 ? null : Grid.rowBoundaryNeighbors(row, col, row - 1);
-		var southEntries = row == Grid.ROWS - 2 ? null : Grid.rowBoundaryNeighbors(row, col, row + 1);
+		var northEntries = row == 1 ? null : GridModel.rowBoundaryNeighbors(row, col, row - 1);
+		var southEntries = row == GridModel.ROWS - 2 ? null : GridModel.rowBoundaryNeighbors(row, col, row + 1);
 		var northWestNode = row == 1 ? PoleNode(North) : northEntries[0].node;
 		var northEastNode = row == 1 ? PoleNode(North) : northEntries[northEntries.length - 1].node;
-		var southWestNode = row == Grid.ROWS - 2 ? PoleNode(South) : southEntries[0].node;
-		var southEastNode = row == Grid.ROWS - 2 ? PoleNode(South) : southEntries[southEntries.length - 1].node;
-		var northWestClosed = !Grid.isOpen(maze, here, northWestNode);
-		var northEastClosed = !Grid.isOpen(maze, here, northEastNode);
-		var southWestClosed = !Grid.isOpen(maze, here, southWestNode);
-		var southEastClosed = !Grid.isOpen(maze, here, southEastNode);
+		var southWestNode = row == GridModel.ROWS - 2 ? PoleNode(South) : southEntries[0].node;
+		var southEastNode = row == GridModel.ROWS - 2 ? PoleNode(South) : southEntries[southEntries.length - 1].node;
+		var northWestClosed = !GridModel.isOpen(maze, here, northWestNode);
+		var northEastClosed = !GridModel.isOpen(maze, here, northEastNode);
+		var southWestClosed = !GridModel.isOpen(maze, here, southWestNode);
+		var southEastClosed = !GridModel.isOpen(maze, here, southEastNode);
 
 		var northWestFlush = row != 1
-			&& isGenuineRowBoundaryCorner(cols, Grid.colsForRow(row - 1), col, true)
+			&& isGenuineRowBoundaryCorner(cols, GridModel.colsForRow(row - 1), col, true)
 			&& !northWestClosed
 			&& continuesAcrossRowBoundary(northWestNode, true);
 		var northEastFlush = row != 1
-			&& isGenuineRowBoundaryCorner(cols, Grid.colsForRow(row - 1), col, false)
+			&& isGenuineRowBoundaryCorner(cols, GridModel.colsForRow(row - 1), col, false)
 			&& !northEastClosed
 			&& continuesAcrossRowBoundary(northEastNode, false);
-		var southWestFlush = row != Grid.ROWS - 2
-			&& isGenuineRowBoundaryCorner(cols, Grid.colsForRow(row + 1), col, true)
+		var southWestFlush = row != GridModel.ROWS - 2
+			&& isGenuineRowBoundaryCorner(cols, GridModel.colsForRow(row + 1), col, true)
 			&& !southWestClosed
 			&& continuesAcrossRowBoundary(southWestNode, true);
-		var southEastFlush = row != Grid.ROWS - 2
-			&& isGenuineRowBoundaryCorner(cols, Grid.colsForRow(row + 1), col, false)
+		var southEastFlush = row != GridModel.ROWS - 2
+			&& isGenuineRowBoundaryCorner(cols, GridModel.colsForRow(row + 1), col, false)
 			&& !southEastClosed
 			&& continuesAcrossRowBoundary(southEastNode, false);
 
@@ -376,7 +376,7 @@ private class WallBuilder {
 		} else {
 			addRowBoundaryPieces(here, row, col, row - 1, true, westClosed, eastClosed);
 		}
-		if (row == Grid.ROWS - 2) {
+		if (row == GridModel.ROWS - 2) {
 			var poleInner = GridMesh.innerCornersOf(row, col);
 			maybeAddPiece(here, PoleNode(South), outer.sw, outer.se, poleInner.sw, poleInner.se, !westClosed, !eastClosed);
 		} else {
@@ -402,9 +402,9 @@ private class WallBuilder {
 		return switch neighborNode {
 			case PoleNode(_): false;
 			case RingNode(nRow, nCol):
-				var nCols = Grid.colsForRow(nRow);
+				var nCols = GridModel.colsForRow(nRow);
 				var neighborSide = RingNode(nRow, wantWest ? (nCol - 1 + nCols) % nCols : (nCol + 1) % nCols);
-				!Grid.isOpen(maze, neighborNode, neighborSide);
+				!GridModel.isOpen(maze, neighborNode, neighborSide);
 		}
 	}
 
@@ -416,7 +416,7 @@ private class WallBuilder {
 
 		Only matters when this row has *more* columns than `otherRow` (a
 		single coarser cell then spans several of this row's own cells —
-		`Grid.rowBoundaryNeighbors` collapses them all to that one parent,
+		`GridModel.rowBoundaryNeighbors` collapses them all to that one parent,
 		see its own doc): only this cell's outermost west or east corner
 		within that shared parent lands on one of the parent's own real
 		edges (where the parent meets ITS OWN west or east neighbor); every
@@ -426,7 +426,7 @@ private class WallBuilder {
 		into or a wall to meet. `col % ratio`/`(col + 1) % ratio` picks out
 		exactly those two outermost children (`ratio` is always this row's
 		column count divided by the coarser row's, an exact doubling at
-		every banding change — see `Grid.colsForRow`).
+		every banding change — see `GridModel.colsForRow`).
 
 		Always true when this row's own column count is less than or equal
 		to `otherRow`'s: either a plain one-to-one row (every corner is a
@@ -450,13 +450,13 @@ private class WallBuilder {
 	/**
 		Adds this cell's piece(s) for its north (`towardNorth = true`) or
 		south side, toward `otherRow` — one piece per
-		`Grid.rowBoundaryNeighbors` entry, each spanning only that entry's
+		`GridModel.rowBoundaryNeighbors` entry, each spanning only that entry's
 		own fraction of this cell's phi width (matching whichever of
 		`otherRow`'s cells actually borders it there), rather than assuming
 		a single neighbor spans the whole side the way west/east always do.
 
 		An entry's `phiStart`/`phiEnd` are already this cell's true *outer*
-		boundary phi for that fraction (`Grid.rowBoundaryNeighbors` computes
+		boundary phi for that fraction (`GridModel.rowBoundaryNeighbors` computes
 		them the same way `cornersOf` does) — used directly for the outer
 		corners. The matching *inner* corners need the same fraction applied
 		to this cell's own inner phi range instead, so a split piece still
@@ -496,9 +496,9 @@ private class WallBuilder {
 		@param eastClosed whether this cell's own east side is closed.
 	**/
 	function addRowBoundaryPieces(here:GridNode, row:Int, col:Int, otherRow:Int, towardNorth:Bool, westClosed:Bool, eastClosed:Bool):Void {
-		var theta = Math.PI * row / (Grid.ROWS - 1);
-		var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
-		var cols = Grid.colsForRow(row);
+		var theta = Math.PI * row / (GridModel.ROWS - 1);
+		var halfTheta = Math.PI / (GridModel.ROWS - 1) / 2;
+		var cols = GridModel.colsForRow(row);
 		var centerPhi = 2 * Math.PI * (col + 0.5) / cols;
 		var halfPhi = Math.PI / cols;
 		var insetTheta = Math.min(halfTheta, GridGeometry.WALL_THICKNESS / GridGeometry.RADIUS);
@@ -516,7 +516,7 @@ private class WallBuilder {
 		var innerRangeStart = westFlush ? outerRangeStart : outerRangeStart + insetPhi;
 		var innerRangeEnd = eastFlush ? outerRangeEnd : outerRangeEnd - insetPhi;
 
-		var entries = Grid.rowBoundaryNeighbors(row, col, otherRow);
+		var entries = GridModel.rowBoundaryNeighbors(row, col, otherRow);
 		for (i in 0...entries.length) {
 			var entry = entries[i];
 			var fractionStart = (entry.phiStart - outerRangeStart) / (2 * halfPhi);
@@ -532,8 +532,8 @@ private class WallBuilder {
 			var innerA = GridMesh.cornerAt(innerTheta, towardNorth ? innerPhiEnd : innerPhiStart);
 			var innerB = GridMesh.cornerAt(innerTheta, towardNorth ? innerPhiStart : innerPhiEnd);
 
-			var westEndCap = i == 0 ? (!westClosed && !westFlush) : Grid.isOpen(maze, here, entries[i - 1].node);
-			var eastEndCap = i == entries.length - 1 ? (!eastClosed && !eastFlush) : Grid.isOpen(maze, here, entries[i + 1].node);
+			var westEndCap = i == 0 ? (!westClosed && !westFlush) : GridModel.isOpen(maze, here, entries[i - 1].node);
+			var eastEndCap = i == entries.length - 1 ? (!eastClosed && !eastFlush) : GridModel.isOpen(maze, here, entries[i + 1].node);
 			var capA = towardNorth ? eastEndCap : westEndCap;
 			var capB = towardNorth ? westEndCap : eastEndCap;
 
@@ -560,9 +560,9 @@ private class WallBuilder {
 	**/
 	function continuesAcrossColumnBoundary(row:Int, neighborCol:Int, otherRow:Int, wantNeighborsEastmostEntry:Bool):Bool {
 		var neighborHere = RingNode(row, neighborCol);
-		var neighborEntries = Grid.rowBoundaryNeighbors(row, neighborCol, otherRow);
+		var neighborEntries = GridModel.rowBoundaryNeighbors(row, neighborCol, otherRow);
 		var entry = wantNeighborsEastmostEntry ? neighborEntries[neighborEntries.length - 1] : neighborEntries[0];
-		return !Grid.isOpen(maze, neighborHere, entry.node);
+		return !GridModel.isOpen(maze, neighborHere, entry.node);
 	}
 
 	/**
@@ -585,7 +585,7 @@ private class WallBuilder {
 		faces.
 	**/
 	function maybeAddPiece(a:GridNode, b:GridNode, outerA:h3d.Vector, outerB:h3d.Vector, innerA:h3d.Vector, innerB:h3d.Vector, capA:Bool, capB:Bool):Void {
-		if (Grid.isOpen(maze, a, b)) {
+		if (GridModel.isOpen(maze, a, b)) {
 			return;
 		}
 

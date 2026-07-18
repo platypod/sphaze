@@ -1,13 +1,13 @@
 package biomes.maze;
 
-import grid.Grid;
-import grid.Grid.GridData;
-import grid.Grid.GridNode;
+import biomes.common.grid.GridModel;
+import biomes.common.grid.GridModel.GridData;
+import biomes.common.grid.GridModel.GridNode;
 
 /**
 	Generates and (de)serializes the maze biome's own layout — the spanning-
 	tree puzzle-generation algorithm that's specifically what makes this
-	biome a *maze*, as opposed to `grid.Grid`'s topology/query logic, which
+	biome a *maze*, as opposed to `GridModel`'s topology/query logic, which
 	any grid-based biome shares.
 
 	Ported from old/src/maze/mazeGenerator.ts — the algorithm is engine-
@@ -27,13 +27,13 @@ class MazeGenerator {
 		var visited = new haxe.ds.StringMap<Bool>();
 		var openEdges = new haxe.ds.StringMap<Bool>();
 
-		var start = Grid.allNodes()[0];
+		var start = GridModel.allNodes()[0];
 		if (start == null) {
 			return {openEdges: openEdges};
 		}
 
 		var stack:Array<GridNode> = [start];
-		visited.set(Grid.nodeKey(start), true);
+		visited.set(GridModel.nodeKey(start), true);
 
 		while (stack.length > 0) {
 			var current = stack[stack.length - 1];
@@ -41,7 +41,7 @@ class MazeGenerator {
 				break;
 			}
 
-			var unvisited = Grid.neighborsOf(current).filter(neighbor -> !visited.exists(Grid.nodeKey(neighbor)));
+			var unvisited = GridModel.neighborsOf(current).filter(neighbor -> !visited.exists(GridModel.nodeKey(neighbor)));
 			if (unvisited.length == 0) {
 				stack.pop();
 				continue;
@@ -51,8 +51,8 @@ class MazeGenerator {
 			if (next == null) {
 				continue;
 			}
-			openEdges.set(Grid.edgeKey(current, next), true);
-			visited.set(Grid.nodeKey(next), true);
+			openEdges.set(GridModel.edgeKey(current, next), true);
+			visited.set(GridModel.nodeKey(next), true);
 			stack.push(next);
 		}
 
@@ -65,9 +65,9 @@ class MazeGenerator {
 		whatever fresh random one the last page load produced, which made a
 		maze that a bug showed up in impossible to hand off or come back to.
 
-		Encodes the open edges only (as `Grid.nodeKey`-pair strings, same as
+		Encodes the open edges only (as `GridModel.nodeKey`-pair strings, same as
 		`openEdges`'s own keys) rather than the RNG seed that produced them:
-		this ties a saved maze to the *grid* (`Grid.ROWS`/`colsForRow`), which
+		this ties a saved maze to the *grid* (`GridModel.ROWS`/`colsForRow`), which
 		only changes with a deliberate design change, not to `generate`'s
 		own algorithm, which could evolve — and it's what every other query
 		reads the maze through, so a deserialized maze is exactly as valid as

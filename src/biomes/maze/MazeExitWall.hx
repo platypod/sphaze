@@ -1,9 +1,9 @@
 package biomes.maze;
 
-import grid.Grid;
-import grid.Grid.GridData;
-import grid.Grid.GridNode;
-import grid.GridMesh;
+import biomes.common.grid.GridMesh;
+import biomes.common.grid.GridModel;
+import biomes.common.grid.GridModel.GridData;
+import biomes.common.grid.GridModel.GridNode;
 
 /** The wall segment `MazeExitWall.find` found, plus enough context to render a painting flush against it. **/
 typedef FoundWall = {
@@ -38,17 +38,17 @@ class MazeExitWall {
 		@return the found wall segment.
 	**/
 	public static function find(maze:GridData):FoundWall {
-		for (row in 1...(Grid.ROWS - 1)) {
-			var cols = Grid.colsForRow(row);
+		for (row in 1...(GridModel.ROWS - 1)) {
+			var cols = GridModel.colsForRow(row);
 			for (col in 0...cols) {
 				var here = RingNode(row, col);
 				var west = RingNode(row, (col - 1 + cols) % cols);
-				if (!Grid.isOpen(maze, here, west)) {
+				if (!GridModel.isOpen(maze, here, west)) {
 					var inner = GridMesh.innerCornersOf(row, col);
 					return {a: inner.nw, b: inner.sw, cellCenter: cellCenterOf(row, col)};
 				}
 				var east = RingNode(row, (col + 1) % cols);
-				if (!Grid.isOpen(maze, here, east)) {
+				if (!GridModel.isOpen(maze, here, east)) {
 					var inner = GridMesh.innerCornersOf(row, col);
 					return {a: inner.ne, b: inner.se, cellCenter: cellCenterOf(row, col)};
 				}
@@ -59,8 +59,8 @@ class MazeExitWall {
 
 	/** A ring cell's center point — same theta/phi formula `GridMesh.cornersOf`/`innerCornersOf` use internally. **/
 	static function cellCenterOf(row:Int, col:Int):h3d.Vector {
-		var theta = Math.PI * row / (Grid.ROWS - 1);
-		var cols = Grid.colsForRow(row);
+		var theta = Math.PI * row / (GridModel.ROWS - 1);
+		var cols = GridModel.colsForRow(row);
 		var phi = 2 * Math.PI * (col + 0.5) / cols;
 		return GridMesh.cornerAt(theta, phi);
 	}

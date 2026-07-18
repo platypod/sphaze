@@ -1,4 +1,4 @@
-package grid;
+package biomes.common.grid;
 
 /**
 	A latitude/longitude grid over the sphere — the substrate any grid-based
@@ -27,19 +27,19 @@ enum GridNode {
 
 /** Which edges between adjacent nodes are open passages — a biome's own generated layout. **/
 typedef GridData = {
-	/** Keys are `Grid.nodeKey`-formatted edge keys (see `Grid.isOpen`), not node keys. **/
+	/** Keys are `GridModel.nodeKey`-formatted edge keys (see `GridModel.isOpen`), not node keys. **/
 	var openEdges:haxe.ds.StringMap<Bool>;
 }
 
 /**
 	One row-boundary neighbor a `RingNode` has toward an adjacent row, paired
 	with its own share of that cell's phi range on that side — see
-	`Grid.rowBoundaryNeighbors`.
+	`GridModel.rowBoundaryNeighbors`.
 **/
 typedef RowBoundaryNeighbor = {node:GridNode, phiStart:Float, phiEnd:Float}
 
-/** Grid queries for the topology defined by GridNode/GridData above. **/
-class Grid {
+/** GridModel queries for the topology defined by GridNode/GridData above. **/
+class GridModel {
 	/** Row count of the ring grid, poles excluded (poles are merged nodes, not rows). **/
 	public static inline final ROWS:Int = 14;
 

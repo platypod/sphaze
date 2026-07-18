@@ -1,7 +1,7 @@
 package grid;
 
+import biomes.common.space.sphere.SphereMath;
 import entities.Player;
-import game.SphereMath;
 import grid.Grid.GridNode;
 import grid.Grid.GridData;
 import grid.Grid.RowBoundaryNeighbor;

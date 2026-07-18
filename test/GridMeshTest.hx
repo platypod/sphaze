@@ -1,5 +1,6 @@
 import utest.Test;
 import utest.Assert;
+import biomes.common.space.sphere.SphereMath;
 import grid.GridMesh;
 import grid.Grid.GridNode;
 
@@ -60,20 +61,20 @@ class GridMeshTest extends Test {
 		var outer = GridMesh.cornersOf(row, col);
 		var inner = GridMesh.innerCornersOf(row, col);
 
-		var thetaOuterNw = game.SphereMath.thetaOf(outer.nw);
-		var thetaInnerNw = game.SphereMath.thetaOf(inner.nw);
+		var thetaOuterNw = SphereMath.thetaOf(outer.nw);
+		var thetaInnerNw = SphereMath.thetaOf(inner.nw);
 		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (thetaInnerNw - thetaOuterNw) * radius, 1e-6);
 
-		var phiOuterNw = game.SphereMath.phiOf(outer.nw);
-		var phiInnerNw = game.SphereMath.phiOf(inner.nw);
+		var phiOuterNw = SphereMath.phiOf(outer.nw);
+		var phiInnerNw = SphereMath.phiOf(inner.nw);
 		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (phiInnerNw - phiOuterNw) * radius * Math.sin(centerTheta - halfTheta), 1e-6);
 
-		var thetaOuterSe = game.SphereMath.thetaOf(outer.se);
-		var thetaInnerSe = game.SphereMath.thetaOf(inner.se);
+		var thetaOuterSe = SphereMath.thetaOf(outer.se);
+		var thetaInnerSe = SphereMath.thetaOf(inner.se);
 		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (thetaOuterSe - thetaInnerSe) * radius, 1e-6);
 
-		var phiOuterSe = game.SphereMath.phiOf(outer.se);
-		var phiInnerSe = game.SphereMath.phiOf(inner.se);
+		var phiOuterSe = SphereMath.phiOf(outer.se);
+		var phiInnerSe = SphereMath.phiOf(inner.se);
 		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (phiOuterSe - phiInnerSe) * radius * Math.sin(centerTheta + halfTheta), 1e-6);
 	}
 
@@ -102,8 +103,8 @@ class GridMeshTest extends Test {
 		var col = 10;
 		var here = GridMesh.innerCornersOf(row, col);
 		var south = GridMesh.innerCornersOf(row + 1, col);
-		Assert.floatEquals(game.SphereMath.phiOf(here.sw), game.SphereMath.phiOf(south.nw), 1e-9);
-		Assert.floatEquals(game.SphereMath.phiOf(here.se), game.SphereMath.phiOf(south.ne), 1e-9);
+		Assert.floatEquals(SphereMath.phiOf(here.sw), SphereMath.phiOf(south.nw), 1e-9);
+		Assert.floatEquals(SphereMath.phiOf(here.se), SphereMath.phiOf(south.ne), 1e-9);
 
 		// Across a doubling boundary too: row 1's own south-west/south-east
 		// inner corners' phi must match row 2's leftmost/rightmost child's
@@ -113,8 +114,8 @@ class GridMeshTest extends Test {
 		var parent = GridMesh.innerCornersOf(1, parentCol);
 		var childWest = GridMesh.innerCornersOf(2, parentCol * 2);
 		var childEast = GridMesh.innerCornersOf(2, parentCol * 2 + 1);
-		Assert.floatEquals(game.SphereMath.phiOf(parent.sw), game.SphereMath.phiOf(childWest.nw), 1e-9);
-		Assert.floatEquals(game.SphereMath.phiOf(parent.se), game.SphereMath.phiOf(childEast.ne), 1e-9);
+		Assert.floatEquals(SphereMath.phiOf(parent.sw), SphereMath.phiOf(childWest.nw), 1e-9);
+		Assert.floatEquals(SphereMath.phiOf(parent.se), SphereMath.phiOf(childEast.ne), 1e-9);
 	}
 
 	// The pinch bug this session's second fix targets: a west/east wall
@@ -138,8 +139,8 @@ class GridMeshTest extends Test {
 		var southNotRetreated = GridMesh.innerCornersOf(row, col, true, false);
 		var northNotRetreatedNextRow = GridMesh.innerCornersOf(row + 1, col, false, true);
 
-		Assert.floatEquals(game.SphereMath.thetaOf(outer.sw), game.SphereMath.thetaOf(southNotRetreated.sw), 1e-9);
-		Assert.floatEquals(game.SphereMath.thetaOf(outer.se), game.SphereMath.thetaOf(southNotRetreated.se), 1e-9);
+		Assert.floatEquals(SphereMath.thetaOf(outer.sw), SphereMath.thetaOf(southNotRetreated.sw), 1e-9);
+		Assert.floatEquals(SphereMath.thetaOf(outer.se), SphereMath.thetaOf(southNotRetreated.se), 1e-9);
 		assertSamePoint(southNotRetreated.sw, northNotRetreatedNextRow.nw);
 		assertSamePoint(southNotRetreated.se, northNotRetreatedNextRow.ne);
 	}

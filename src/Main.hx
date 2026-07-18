@@ -1,3 +1,4 @@
+import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
 import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
@@ -308,12 +309,12 @@ class Main extends hxd.App {
 		"n/a", when it isn't available).
 	**/
 	function updateDebugOverlay():Void {
-		var theta = game.SphereMath.thetaOf(player.pos);
-		var phi = game.SphereMath.phiOf(player.pos);
+		var theta = SphereMath.thetaOf(player.pos);
+		var phi = SphereMath.phiOf(player.pos);
 		var node = Grid.nodeAt(theta, phi);
 
-		var thetaTangent = game.SphereMath.thetaTangentAt(theta, phi);
-		var phiTangent = game.SphereMath.phiTangentAt(phi);
+		var thetaTangent = SphereMath.thetaTangentAt(theta, phi);
+		var phiTangent = SphereMath.phiTangentAt(phi);
 		var facing = Math.atan2(player.forward.dot(phiTangent), player.forward.dot(thetaTangent));
 
 		var lines = [

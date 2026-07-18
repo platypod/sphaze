@@ -1,4 +1,4 @@
-package game;
+package biomes.common.space.sphere;
 
 /**
 	Sphere geometry helpers: local "up" on the interior surface, tangent

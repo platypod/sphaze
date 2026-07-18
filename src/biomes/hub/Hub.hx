@@ -1,5 +1,6 @@
 package biomes.hub;
 
+import biomes.common.space.sphere.SphereMath;
 import game.MeshBuilder;
 import world.Painting;
 
@@ -154,7 +155,7 @@ class Hub {
 		@return true if `pos` hasn't crossed into the column.
 	**/
 	public static function isInside(pos:h3d.Vector):Bool {
-		var theta = game.SphereMath.thetaOf(pos);
+		var theta = SphereMath.thetaOf(pos);
 		var distanceFromAxis = RADIUS * Math.sin(theta);
 		return distanceFromAxis > COLUMN_RADIUS + COLLISION_CLEARANCE;
 	}

@@ -2,7 +2,7 @@ import utest.Test;
 import utest.Assert;
 import entities.Player;
 import grid.GridCollision;
-import game.SphereMath;
+import biomes.common.space.sphere.SphereMath;
 import grid.Grid;
 import grid.Grid.GridNode;
 import grid.Grid.GridData;

@@ -1,5 +1,6 @@
 import utest.Test;
 import utest.Assert;
+import biomes.common.space.sphere.SphereMath;
 import entities.Player;
 
 /** Covers Player's pure movement/pitch math and its composition into applyToCamera. **/
@@ -67,7 +68,7 @@ class PlayerTest extends Test {
 		var radius = 50.0;
 		var player = Player.spawnAt(1.1, 2.2, 0.7, radius);
 		var oldPosDir = player.pos.normalized();
-		var direction = game.SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
+		var direction = SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
 
 		player.moveAlong(direction, 4, radius);
 
@@ -85,7 +86,7 @@ class PlayerTest extends Test {
 		// Player.moveAlong's doc comment).
 		var radius = 50.0;
 		var player = Player.spawnAt(1.1, 2.2, 0.7, radius);
-		var direction = game.SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
+		var direction = SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
 
 		player.moveAlong(direction, 4, radius);
 
@@ -105,7 +106,7 @@ class PlayerTest extends Test {
 		var player = Player.spawnAt(1.1, 2.2, 0.7, radius);
 
 		for (_ in 0...50) {
-			var direction = game.SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
+			var direction = SphereMath.upVectorAt(player.pos, new h3d.Vector(0, 0, 0)).cross(player.forward).normalized();
 			player.moveAlong(direction, 2, radius);
 		}
 
@@ -190,7 +191,7 @@ class PlayerTest extends Test {
 		player.applyToCamera(camera, 50);
 
 		var viewDirection = camera.target.sub(camera.pos).normalized();
-		var towardCenter = game.SphereMath.upVectorAt(camera.pos, new h3d.Vector(0, 0, 0));
+		var towardCenter = SphereMath.upVectorAt(camera.pos, new h3d.Vector(0, 0, 0));
 		Assert.isTrue(viewDirection.dot(towardCenter) > 0.999);
 	}
 

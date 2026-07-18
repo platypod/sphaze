@@ -1,8 +1,8 @@
 package entities;
 
-import game.Space;
-import game.SphereMath;
-import game.SphereSpace;
+import biomes.common.space.common.Space;
+import biomes.common.space.sphere.SphereMath;
+import biomes.common.space.sphere.SphereSpace;
 
 /**
 	The player's position and facing direction on the maze sphere's interior

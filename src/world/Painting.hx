@@ -1,5 +1,7 @@
 package world;
 
+import biomes.common.space.sphere.SphereMath;
+
 /**
 	A painting mounted on a wall — the diegetic warp mechanism: walking
 	close enough triggers the transition, no interact-key confirmation, on
@@ -97,7 +99,7 @@ class Painting {
 	**/
 	public static function centerOf(wallA:h3d.Vector, wallB:h3d.Vector, ?up:h3d.Vector):h3d.Vector {
 		var mid = midpointOf(wallA, wallB);
-		var upDir = up != null ? up : game.SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
+		var upDir = up != null ? up : SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
 		return mid.add(upDir.scaled(BASE_HEIGHT + HEIGHT / 2));
 	}
 
@@ -131,7 +133,7 @@ class Painting {
 	**/
 	public static function buildQuad(parent:h3d.scene.Object, wallA:h3d.Vector, wallB:h3d.Vector, roomCenter:h3d.Vector, color:Int, ?up:h3d.Vector):Void {
 		var mid = midpointOf(wallA, wallB);
-		var upDir = up != null ? up : game.SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
+		var upDir = up != null ? up : SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
 		var along = wallB.sub(wallA).normalized();
 
 		var faceNormal = along.cross(upDir).normalized();

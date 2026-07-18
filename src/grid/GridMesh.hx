@@ -1,5 +1,6 @@
 package grid;
 
+import biomes.common.space.sphere.SphereMath;
 import game.MeshBuilder;
 import grid.Grid.GridNode;
 import grid.Grid.GridData;
@@ -150,7 +151,7 @@ class GridMesh {
 
 	/** A point on the grid's sphere at the given spherical coordinates. Public so `WallBuilder` can build split boundary pieces from it directly. **/
 	public static function cornerAt(theta:Float, phi:Float):h3d.Vector {
-		return game.SphereMath.sphericalToCartesian(GridGeometry.RADIUS, theta, phi);
+		return SphereMath.sphericalToCartesian(GridGeometry.RADIUS, theta, phi);
 	}
 
 	/**
@@ -589,8 +590,8 @@ private class WallBuilder {
 		}
 
 		var center = new h3d.Vector(0, 0, 0);
-		var upA = game.SphereMath.upVectorAt(outerA, center);
-		var upB = game.SphereMath.upVectorAt(outerB, center);
+		var upA = SphereMath.upVectorAt(outerA, center);
+		var upB = SphereMath.upVectorAt(outerB, center);
 		var topOuterA = outerA.add(upA.scaled(GridMesh.WALL_HEIGHT));
 		var topOuterB = outerB.add(upB.scaled(GridMesh.WALL_HEIGHT));
 		var topInnerA = innerA.add(upA.scaled(GridMesh.WALL_HEIGHT));

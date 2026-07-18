@@ -1,4 +1,6 @@
-package game;
+package biomes.common.space.sphere;
+
+import biomes.common.space.common.Space;
 
 /**
 	The only `Space` implementation today: a sphere centered at the world

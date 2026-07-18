@@ -1,4 +1,4 @@
-package game;
+package biomes.common.space.common;
 
 /**
 	How a biome's walkable surface behaves: the local "up" at a position, and

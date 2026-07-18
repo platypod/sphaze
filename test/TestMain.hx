@@ -9,6 +9,7 @@ import biomes.common.space.sphere.SphereMathTest;
 import biomes.hub.HubModelTest;
 import biomes.maze.MazeExitWallTest;
 import biomes.maze.MazeGeneratorTest;
+import biomes.tower.TowerCollisionTest;
 import biomes.tower.TowerGeneratorTest;
 import biomes.tower.TowerModelTest;
 import entities.CreatureSpawnTableTest;
@@ -46,6 +47,7 @@ class TestMain {
 		runner.addCase(new FlatSpaceTest());
 		runner.addCase(new TowerModelTest());
 		runner.addCase(new TowerGeneratorTest());
+		runner.addCase(new TowerCollisionTest());
 		Report.create(runner);
 		runner.run();
 	}

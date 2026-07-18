@@ -17,8 +17,13 @@ interface Biome {
 	/** This biome's own registry id (e.g. `"hub"`, `"maze"`) — how paintings and the biome registry refer to it. **/
 	function id():String;
 
-	/** This biome's own physical sphere radius — must match whatever this biome's own `Space`/collision math was built against. **/
-	function radius():Float;
+	/**
+		This biome's own gravity strength, in world units/s² — how fast a
+		falling or jumping player accelerates here (see `applyGravity`). A
+		property of the biome, not a shared global, so e.g. the tower can
+		feel lighter than the hub/maze.
+	**/
+	function gravity():Float;
 
 	/** (Re)builds this biome's meshes under `parent`. Called each time the biome is entered. **/
 	function build(parent:h3d.scene.Object):Void;
@@ -43,6 +48,18 @@ interface Biome {
 		@param distance arc length to move; negative moves the opposite way.
 	**/
 	function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void;
+
+	/**
+		Advances `player`'s vertical physics by one fixed step: gravity
+		pulls `player.verticalVelocity` down at this biome's own `gravity()`,
+		and landing — where "the ground" actually is directly below
+		`player.pos`, and what happens once `player` reaches it — is this
+		biome's own collision rule, same reasoning `tryMove` already uses
+		for horizontal movement.
+		@param player the player to update.
+		@param dt fixed timestep duration, in seconds.
+	**/
+	function applyGravity(player:PlayerModel, dt:Float):Void;
 
 	/**
 		This biome's own state as a JSON string, for `GameLoop`'s E (export) dev

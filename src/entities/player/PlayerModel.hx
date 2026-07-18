@@ -74,6 +74,36 @@ class PlayerModel extends Entity {
 	**/
 	public final space:Space;
 
+	/**
+		Current vertical speed — positive moves away from the ground,
+		negative toward it. Shared physics state that any biome's own
+		`biomes.common.Biome.applyGravity` integrates every fixed step;
+		*where* that motion actually shows up (`airborneHeight` here, or a
+		biome tracking real world height in `pos` directly, like the tower)
+		is that biome's own concern, not this class's.
+	**/
+	public var verticalVelocity:Float = 0;
+
+	/**
+		Whether the player is currently standing on solid ground, per
+		whichever biome's own `biomes.common.Biome.applyGravity` last
+		decided. `jump` only takes effect while this is true, so holding the
+		key doesn't stack impulses in mid-air.
+	**/
+	public var grounded:Bool = true;
+
+	/**
+		How far above the surface `pos` sits, along `space.upAt(pos)` — a
+		cosmetic offset for a biome whose floor is present everywhere (see
+		`biomes.common.Gravity.fallToSurface`), so a jump never has to touch
+		`pos` itself and none of the horizontal collision math built against
+		a fixed `pos` (e.g. `biomes.common.grid.GridCollision`'s theta/phi
+		lookups) needs to change while airborne. A biome with real
+		multi-level falling (the tower) tracks height in `pos` directly
+		instead and leaves this at 0, unused.
+	**/
+	public var airborneHeight:Float = 0;
+
 	public function new(pos:h3d.Vector, forward:h3d.Vector, pitch:Float = 0, ?space:Space) {
 		super();
 		this.pos = pos;
@@ -178,6 +208,21 @@ class PlayerModel extends Entity {
 	**/
 	public function lookUp(deltaAngle:Float):Void {
 		pitch = clampPitch(pitch + deltaAngle);
+	}
+
+	/**
+		Launches the player upward at `impulse` — a no-op unless `grounded`.
+		Leaving the ground from here on (gravity's pull, landing) is each
+		biome's own `biomes.common.Biome.applyGravity`, not this method's
+		concern.
+		@param impulse initial upward speed.
+	**/
+	public function jump(impulse:Float):Void {
+		if (!grounded) {
+			return;
+		}
+		verticalVelocity = impulse;
+		grounded = false;
 	}
 
 	static function clampPitch(p:Float):Float {

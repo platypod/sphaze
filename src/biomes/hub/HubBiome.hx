@@ -1,6 +1,7 @@
 package biomes.hub;
 
 import biomes.common.Biome;
+import biomes.common.Gravity;
 import biomes.maze.MazeBiome;
 import entities.player.PlayerModel;
 import entities.painting.PaintingModel;
@@ -19,14 +20,22 @@ import entities.painting.PaintingModel;
 class HubBiome implements Biome {
 	public static inline final ID:String = "hub";
 
+	/**
+		Same first-pass value as the maze's own — kept as its own constant
+		rather than a shared one since gravity is deliberately a per-biome
+		property (see `biomes.common.Biome.gravity`'s own doc), not shared
+		plumbing that happens to read the same today.
+	**/
+	static inline final GRAVITY:Float = 60;
+
 	public function new() {}
 
 	public function id():String {
 		return ID;
 	}
 
-	public function radius():Float {
-		return HubModel.RADIUS;
+	public function gravity():Float {
+		return GRAVITY;
 	}
 
 	public function build(parent:h3d.scene.Object):Void {
@@ -54,6 +63,10 @@ class HubBiome implements Biome {
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {
 		HubCollision.tryMove(player, direction, distance);
+	}
+
+	public function applyGravity(player:PlayerModel, dt:Float):Void {
+		Gravity.fallToSurface(player, GRAVITY, dt);
 	}
 
 	/** Nothing worth saving — the hub never changes shape. **/

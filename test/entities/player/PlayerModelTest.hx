@@ -169,4 +169,23 @@ class PlayerModelTest extends Test {
 
 		Assert.floatEquals(-PlayerModel.MAX_PITCH, player.pitch);
 	}
+
+	function testJumpSetsVerticalVelocityAndClearsGroundedWhileGrounded():Void {
+		var player = PlayerModel.spawnAt(1, 0, 0, 1);
+
+		player.jump(18);
+
+		Assert.floatEquals(18, player.verticalVelocity);
+		Assert.isFalse(player.grounded);
+	}
+
+	function testJumpIsANoOpWhileAirborne():Void {
+		// Holding the jump key shouldn't stack impulses mid-air.
+		var player = PlayerModel.spawnAt(1, 0, 0, 1);
+		player.jump(18);
+
+		player.jump(30);
+
+		Assert.floatEquals(18, player.verticalVelocity);
+	}
 }

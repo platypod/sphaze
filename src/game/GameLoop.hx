@@ -26,6 +26,16 @@ class GameLoop {
 	static inline final TURN_SPEED:Float = 2.5;
 	static inline final MOUSE_SENSITIVITY:Float = 0.0025;
 
+	/**
+		Initial upward speed a jump launches the player at — one shared
+		constant rather than a per-biome one (unlike `Biome.gravity()`): a
+		lighter-gravity biome naturally jumps higher and longer off the same
+		launch speed, no separate knob needed. First-pass value — tuned by
+		feel for "a small hop," not high up, same as `GridGeometry`'s own
+		constants were tuned iteratively against playtesting.
+	**/
+	static inline final JUMP_IMPULSE:Float = 18;
+
 	final s3d:h3d.scene.Scene;
 
 	var player:PlayerModel;
@@ -111,7 +121,7 @@ class GameLoop {
 		activePainting = biome.exitPainting();
 
 		player = biome.spawnPlayer(returning);
-		Camera.applyTo(s3d.camera, player, biome.radius());
+		Camera.applyTo(s3d.camera, player);
 	}
 
 	/**
@@ -246,10 +256,14 @@ class GameLoop {
 		if (hxd.Key.isDown(Keybinds.STRAFE_RIGHT)) {
 			tryMove(player.rightVector(), -speed * dt);
 		}
+		if (hxd.Key.isPressed(Keybinds.JUMP)) {
+			player.jump(JUMP_IMPULSE);
+		}
+		currentBiome.applyGravity(player, dt);
 
 		checkPaintingTrigger();
 
-		Camera.applyTo(s3d.camera, player, currentBiome.radius());
+		Camera.applyTo(s3d.camera, player);
 
 		if (hxd.Key.isPressed(Keybinds.TOGGLE_DEBUG_OVERLAY)) {
 			debugOverlayVisible = !debugOverlayVisible;

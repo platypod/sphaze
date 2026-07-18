@@ -10,7 +10,7 @@ class CameraTest extends Test {
 		var player = PlayerModel.spawnAt(Math.PI / 2, 0, 0, 50);
 		var camera = new h3d.Camera();
 
-		Camera.applyTo(camera, player, 50);
+		Camera.applyTo(camera, player);
 
 		var viewDirection = camera.target.sub(camera.pos).normalized();
 		Assert.floatEquals(0, viewDirection.dot(camera.up), 1e-9);
@@ -25,7 +25,7 @@ class CameraTest extends Test {
 		player.lookUp(100);
 		var camera = new h3d.Camera();
 
-		Camera.applyTo(camera, player, 50);
+		Camera.applyTo(camera, player);
 
 		var viewDirection = camera.target.sub(camera.pos).normalized();
 		var towardCenter = SphereMath.upVectorAt(camera.pos, new h3d.Vector(0, 0, 0));
@@ -44,7 +44,7 @@ class CameraTest extends Test {
 
 		for (pitch in [0.0, 0.5, 1.0, PlayerModel.MAX_PITCH]) {
 			player.pitch = pitch;
-			Camera.applyTo(camera, player, 50);
+			Camera.applyTo(camera, player);
 
 			var viewDirection = camera.target.sub(camera.pos).normalized();
 			Assert.floatEquals(0, viewDirection.dot(camera.up), 1e-6);
@@ -62,8 +62,21 @@ class CameraTest extends Test {
 		var player = PlayerModel.spawnAt(Math.PI / 2, 0, 0, radius);
 		var camera = new h3d.Camera();
 
-		Camera.applyTo(camera, player, radius);
+		Camera.applyTo(camera, player);
 
 		Assert.floatEquals(radius - Camera.EYE_HEIGHT, camera.pos.length(), 1e-9);
+	}
+
+	function testApplyToCameraAddsAirborneHeightOnTopOfEyeHeight():Void {
+		// A mid-jump hop should lift the camera further "up" (toward the
+		// center, same convention as EYE_HEIGHT) than standing on the floor.
+		var radius = 50.0;
+		var player = PlayerModel.spawnAt(Math.PI / 2, 0, 0, radius);
+		player.airborneHeight = 3;
+		var camera = new h3d.Camera();
+
+		Camera.applyTo(camera, player);
+
+		Assert.floatEquals(radius - Camera.EYE_HEIGHT - 3, camera.pos.length(), 1e-9);
 	}
 }

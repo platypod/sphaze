@@ -1,5 +1,6 @@
 import utest.Runner;
 import utest.ui.Report;
+import biomes.common.GravityTest;
 import biomes.common.grid.GridCollisionTest;
 import biomes.common.grid.GridMeshTest;
 import biomes.common.grid.GridModelTest;
@@ -38,6 +39,7 @@ class TestMain {
 		runner.addCase(new CreatureSpawnTableTest());
 		runner.addCase(new NpcsRegistryTest());
 		runner.addCase(new CreaturesRegistryTest());
+		runner.addCase(new GravityTest());
 		Report.create(runner);
 		runner.run();
 	}

@@ -66,8 +66,8 @@ private class StubBiome implements Biome {
 		return biomeId;
 	}
 
-	public function radius():Float {
-		return 1;
+	public function gravity():Float {
+		return 60;
 	}
 
 	public function build(parent:h3d.scene.Object):Void {}
@@ -81,6 +81,8 @@ private class StubBiome implements Biome {
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {}
+
+	public function applyGravity(player:PlayerModel, dt:Float):Void {}
 
 	public function serialize():String {
 		return "{}";

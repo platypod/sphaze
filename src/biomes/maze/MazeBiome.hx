@@ -9,6 +9,7 @@ import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridData;
 import biomes.common.space.sphere.SphereMath;
 import biomes.common.Biome;
+import biomes.common.Gravity;
 import biomes.hub.HubBiome;
 import entities.player.PlayerModel;
 import entities.painting.PaintingModel;
@@ -51,6 +52,9 @@ class MazeBiome implements Biome {
 	**/
 	static inline final RETURN_SPAWN_OFFSET:Float = 6;
 
+	/** Same first-pass value as the hub's own — see `biomes.hub.HubBiome.GRAVITY`'s own doc for why this is its own constant rather than shared. **/
+	static inline final GRAVITY:Float = 60;
+
 	var maze:GridData;
 	var exitWall:MazeExitWall.FoundWall;
 
@@ -72,8 +76,8 @@ class MazeBiome implements Biome {
 		return ID;
 	}
 
-	public function radius():Float {
-		return GridGeometry.RADIUS;
+	public function gravity():Float {
+		return GRAVITY;
 	}
 
 	public function build(parent:h3d.scene.Object):Void {
@@ -111,6 +115,10 @@ class MazeBiome implements Biome {
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {
 		GridCollision.tryMove(player, direction, distance, GridGeometry.RADIUS, maze);
+	}
+
+	public function applyGravity(player:PlayerModel, dt:Float):Void {
+		Gravity.fallToSurface(player, GRAVITY, dt);
 	}
 
 	public function serialize():String {

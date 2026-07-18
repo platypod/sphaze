@@ -36,11 +36,10 @@ class Camera {
 		visibly squeezed to a sliver long before anything looked "wrong").
 		@param camera the camera to position.
 		@param player the player to position it at.
-		@param radius sphere radius — must match the biome's physical sphere (see GridGeometry.RADIUS).
 	**/
-	public static function applyTo(camera:h3d.Camera, player:PlayerModel, radius:Float):Void {
+	public static function applyTo(camera:h3d.Camera, player:PlayerModel):Void {
 		var up = player.space.upAt(player.pos);
-		var eyePos = player.pos.add(up.scaled(EYE_HEIGHT));
+		var eyePos = player.pos.add(up.scaled(EYE_HEIGHT + player.airborneHeight));
 		var right = player.rightVector();
 		var viewForward = SphereMath.rotateAroundAxis(player.forward, right, player.pitch);
 		var viewUp = SphereMath.rotateAroundAxis(up, right, player.pitch);

@@ -290,6 +290,154 @@ class GridModel {
 	}
 
 	/**
+		Range `cellMarginFraction` draws a ring cell's own margin from — a
+		fraction of the cell's span, not a physical distance, so it holds
+		regardless of `colsForRow`'s own physical-width normalization. The
+		low end (`DECORATION_MARGIN_MIN`) still clears `GridGeometry.WALL_THICKNESS`
+		comfortably (about 7% of a cell's own span at this grid's tuning) so
+		even the smallest margin never lets decoration clip through an
+		actual wall.
+
+		Varied per cell (see `cellMarginFraction`) rather than one fixed
+		fraction for every cell: an identical margin on every *closed* side
+		of every cell still shrinks otherwise-similar dead-end/corner cells
+		to the same shape — less visible now that `isWellClearOfWalls` only
+		applies a margin where there's actually a wall (see its own doc),
+		but still worth the variety on the cells that do have several closed
+		sides.
+	**/
+	public static inline final DECORATION_MARGIN_MIN:Float = 0.08;
+
+	public static inline final DECORATION_MARGIN_MAX:Float = 0.3;
+
+	/**
+		Whether (theta, phi) sits well clear of every *closed* edge of its
+		own ring cell — an open edge (no wall there) imposes no margin at
+		all, so decoration can grow flush to the true cell boundary and
+		spill toward whatever's through the passage, the same way a player
+		can walk straight through. Closed edges still keep back
+		`cellMarginFraction` of the cell's own span, same reasoning as
+		before (see that function's own doc).
+
+		An earlier version applied the margin to every edge uniformly,
+		regardless of whether a wall was actually there — simpler (no
+		`GridData` needed) but wrong in a way that showed once grass
+		density made it obvious: patches stopped short of open doorways for
+		no in-world reason, and every dead-end cell's clump read as an
+		identical rounded rectangle instead of tracing that cell's own
+		actual wall shape.
+
+		`PoleNode` is never "well clear": the merged pole cap isn't a
+		row/col rectangle a margin like this means anything against.
+		@param grid the layout whose open/closed edges this checks against.
+		@param theta polar angle from +Y, in radians.
+		@param phi azimuth around Y, in radians, in [0, 2*pi).
+		@return true if (theta, phi) is far enough from every closed edge of its own cell.
+	**/
+	public static function isWellClearOfWalls(grid:GridData, theta:Float, phi:Float):Bool {
+		var node = nodeAt(theta, phi);
+		switch node {
+			case PoleNode(_):
+				return false;
+			case RingNode(row, col):
+				var dTheta = Math.PI / (ROWS - 1);
+				var cols = colsForRow(row);
+				var dPhi = 2 * Math.PI / cols;
+				var center = centerOf(node);
+
+				var thetaOffset = (theta - center.theta) / dTheta;
+
+				var phiDiff = phi - center.phi;
+				if (phiDiff > Math.PI) {
+					phiDiff -= 2 * Math.PI;
+				}
+				if (phiDiff < -Math.PI) {
+					phiDiff += 2 * Math.PI;
+				}
+				var phiOffset = phiDiff / dPhi;
+				// Same raw (unwrapped, boundary-anchored) numbering
+				// `rowBoundaryNeighbors`'s own phiStart/phiEnd use — see
+				// `rowBoundaryOpenAt`.
+				var unwrappedPhi = center.phi + phiDiff;
+
+				var thetaMargin = cellMarginFraction(row, col, 0);
+				var phiMargin = cellMarginFraction(row, col, 1);
+
+				var west = RingNode(row, (col - 1 + cols) % cols);
+				var east = RingNode(row, (col + 1) % cols);
+				if (phiOffset < -(0.5 - phiMargin) && !isOpen(grid, node, west)) {
+					return false;
+				}
+				if (phiOffset > 0.5 - phiMargin && !isOpen(grid, node, east)) {
+					return false;
+				}
+				if (thetaOffset < -(0.5 - thetaMargin) && !rowBoundaryOpenAt(grid, node, row, col, row - 1, unwrappedPhi)) {
+					return false;
+				}
+				if (thetaOffset > 0.5 - thetaMargin && !rowBoundaryOpenAt(grid, node, row, col, row + 1, unwrappedPhi)) {
+					return false;
+				}
+				return true;
+		}
+	}
+
+	/**
+		Whether the row-boundary neighbor toward `otherRow` that actually
+		covers `phi` — this cell's own boundary at that latitude, possibly
+		split into several entries at a doubling boundary, see
+		`rowBoundaryNeighbors` — is an open passage. `otherRow` past either
+		pole row isn't a real ring row; `here`'s own single pole neighbor is
+		used directly instead, same special case `addWallsAround` has for
+		the wall geometry itself.
+		@param grid the layout to query.
+		@param here this cell's own node.
+		@param row this cell's row.
+		@param col this cell's column.
+		@param otherRow the row on the other side of this boundary — row - 1 or row + 1.
+		@param phi the phi to find the covering entry for, in `rowBoundaryNeighbors`'s own raw numbering (see `isWellClearOfWalls`'s `unwrappedPhi`).
+		@return true if that entry's own edge is open.
+	**/
+	static function rowBoundaryOpenAt(grid:GridData, here:GridNode, row:Int, col:Int, otherRow:Int, phi:Float):Bool {
+		if (otherRow < 1) {
+			return isOpen(grid, here, PoleNode(North));
+		}
+		if (otherRow > ROWS - 2) {
+			return isOpen(grid, here, PoleNode(South));
+		}
+
+		for (entry in rowBoundaryNeighbors(row, col, otherRow)) {
+			if (phi >= entry.phiStart && phi < entry.phiEnd) {
+				return isOpen(grid, here, entry.node);
+			}
+		}
+		// Unreachable in practice — entries partition this cell's whole
+		// phi range with no gap (see rowBoundaryNeighbors's own doc) — but
+		// err toward "closed" (keep the margin) over letting a rounding
+		// edge case grow decoration through a wall that IS there.
+		return false;
+	}
+
+	/**
+		A deterministic pseudo-random margin fraction, in
+		[DECORATION_MARGIN_MIN, DECORATION_MARGIN_MAX], for cell (row, col)
+		on one axis — `salt` draws theta's and phi's independently (0 vs 1)
+		so a cell's patch varies in shape, not just overall size. Classic
+		sin-hash: deterministic and stable across rebuilds (the same cell
+		always gets the same margin — no RNG threaded through this pure
+		geometry query), it just needs to look scattered, not actually be
+		random.
+		@param row the cell's row.
+		@param col the cell's column.
+		@param salt which axis this draw is for (0 = theta, 1 = phi).
+		@return a margin fraction in [DECORATION_MARGIN_MIN, DECORATION_MARGIN_MAX].
+	**/
+	static function cellMarginFraction(row:Int, col:Int, salt:Int):Float {
+		var h = Math.sin(row * 127.1 + col * 311.7 + salt * 74.7) * 43758.5453;
+		var frac = h - Math.floor(h);
+		return DECORATION_MARGIN_MIN + frac * (DECORATION_MARGIN_MAX - DECORATION_MARGIN_MIN);
+	}
+
+	/**
 		Whether a biome's own layout has an open passage between two
 		(necessarily adjacent) nodes.
 		@param grid the layout to query.

@@ -11,9 +11,6 @@ class Colours {
 
 	public static inline final TO_BIOME:Int = 0xFFCC8844;
 
-	/** `GridMesh`'s flat floor fill. **/
-	public static inline final GRID_FLOOR:Int = 0xFF444444;
-
 	/** `GrassMesh`'s blade gradient — darker at the root, lighter/yellower at the tip. **/
 	public static inline final GRASS_BASE:Int = 0xFF2E5C2E;
 

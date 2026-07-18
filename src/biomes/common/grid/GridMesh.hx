@@ -4,7 +4,6 @@ import biomes.common.grid.GridModel.GridData;
 import biomes.common.grid.GridModel.GridNode;
 import biomes.common.space.sphere.SphereMath;
 import game.MeshBuilder;
-import graphics.Colours;
 import graphics.shaders.UnlitTexture;
 
 /** A ring cell's four corners — "N"/"S" for the smaller/larger theta edge, "W"/"E" for the smaller/larger phi edge. **/
@@ -64,15 +63,13 @@ typedef CellCorners = {
 	only wasted overlapping geometry.
 
 	Unlit and double-sided (so the sphere's inward-facing geometry doesn't get
-	backface-culled away). The floor stays a flat color via an
-	h3d.shader.FixedColor pass rather than material.color + enableLights=false
-	— the latter still let the PBR technique's other lighting/falloff terms
-	through (no scene light, but every face's shading still depended on its
-	normal, which the Polygon primitive never had set, producing a smooth
-	gradient and half-dark faces instead of a flat color). Walls use the same
-	unlit trick but sample a stone texture instead of one flat color — see
-	graphics.shaders.UnlitTexture — while staying just as immune to that PBR
-	pitfall, since it never touches the lighting pipeline either.
+	backface-culled away) — material.color + enableLights=false still let the
+	PBR technique's other lighting/falloff terms through (no scene light, but
+	every face's shading still depended on its normal, which the Polygon
+	primitive never had set, producing a smooth gradient and half-dark faces
+	instead of a flat tone). The floor and walls both sample a texture
+	through `graphics.shaders.UnlitTexture` — grass and stone respectively —
+	rather than any lighting-pipeline shader, for that same reason.
 **/
 class GridMesh {
 	// Doubled from 6 on request, for taller, more prominent walls — a
@@ -81,6 +78,11 @@ class GridMesh {
 	// not an oversight to reconcile back to that ratio later.
 	public static inline final WALL_HEIGHT:Float = 12;
 
+	/** Grass texture repeat density across the floor: tiles around the equator, and pole to pole — sized so a tile is about the same physical size (~11 units) as `biomes.hub.HubMesh`'s own floor tile, despite this grid's larger `GridGeometry.RADIUS`, so the two floors read at a consistent texel density. **/
+	static inline final FLOOR_TILE_U:Int = 50;
+
+	static inline final FLOOR_TILE_V:Int = 25;
+
 	/**
 		@param maze the biome's generated layout to build meshes for.
 		@param parent the scene object to attach the meshes under.
@@ -88,9 +90,14 @@ class GridMesh {
 	public static function build(maze:GridData, parent:h3d.scene.Object):Void {
 		var floorPoints:Array<h3d.Vector> = [];
 		var floorIdx = new hxd.IndexBuffer();
-		addFloor(floorPoints, floorIdx);
-		var floorMesh = new h3d.scene.Mesh(new h3d.prim.Polygon(floorPoints, floorIdx), parent);
-		floorMesh.material.mainPass.addShader(new h3d.shader.FixedColor(Colours.GRID_FLOOR));
+		var floorUvs:Array<h3d.prim.UV> = [];
+		addFloor(floorPoints, floorIdx, floorUvs);
+		var floorPrim = new h3d.prim.Polygon(floorPoints, floorIdx);
+		floorPrim.uvs = floorUvs;
+		var floorMesh = new h3d.scene.Mesh(floorPrim, parent);
+		var grassTexture = hxd.Res.textures.grass.toTexture();
+		grassTexture.wrap = Repeat;
+		floorMesh.material.mainPass.addShader(new UnlitTexture(grassTexture, FLOOR_TILE_U, FLOOR_TILE_V));
 		floorMesh.material.mainPass.culling = None;
 
 		var wallBuilder = new WallBuilder(maze);
@@ -118,7 +125,7 @@ class GridMesh {
 		so both sides of the seam share identical vertices instead of a
 		coarse straight edge cutting across a finer bent one.
 	**/
-	static function addFloor(points:Array<h3d.Vector>, idx:hxd.IndexBuffer):Void {
+	static function addFloor(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>):Void {
 		eachCell((row, col) -> {
 			var corners = cornersOf(row, col);
 			var theta = Math.PI * row / (GridModel.ROWS - 1);
@@ -145,8 +152,37 @@ class GridMesh {
 
 			for (i in 1...perimeter.length - 1) {
 				MeshBuilder.addTriangle(points, idx, perimeter[0], perimeter[i], perimeter[i + 1]);
+				addFloorTriangleUVs(uvs, perimeter[0], perimeter[i], perimeter[i + 1]);
 			}
 		});
+	}
+
+	/**
+		Appends one triangle's own floor UVs — plain equirectangular (phi /
+		2*pi, theta / pi) — with `b`/`c`'s own phi unwrapped relative to
+		`a`'s (see `unwrapPhi`) so a triangle that happens to straddle the
+		phi = 0/2*pi seam (only ever the last column of any row) doesn't get
+		one vertex's UV wrapped to the opposite edge of the texture,
+		stretching it across the whole triangle instead of reading as a
+		continuous tile.
+	**/
+	static function addFloorTriangleUVs(uvs:Array<h3d.prim.UV>, a:h3d.Vector, b:h3d.Vector, c:h3d.Vector):Void {
+		var phiA = SphereMath.phiOf(a);
+		uvs.push(new h3d.prim.UV(phiA / (2 * Math.PI), SphereMath.thetaOf(a) / Math.PI));
+		uvs.push(new h3d.prim.UV(unwrapPhi(SphereMath.phiOf(b), phiA) / (2 * Math.PI), SphereMath.thetaOf(b) / Math.PI));
+		uvs.push(new h3d.prim.UV(unwrapPhi(SphereMath.phiOf(c), phiA) / (2 * Math.PI), SphereMath.thetaOf(c) / Math.PI));
+	}
+
+	/** Shifts `phi` by a multiple of 2*pi so it lands within half a turn of `reference` — see `addFloorTriangleUVs`. **/
+	static function unwrapPhi(phi:Float, reference:Float):Float {
+		var result = phi;
+		while (result - reference > Math.PI) {
+			result -= 2 * Math.PI;
+		}
+		while (result - reference < -Math.PI) {
+			result += 2 * Math.PI;
+		}
+		return result;
 	}
 
 	/** A point on the grid's sphere at the given spherical coordinates. Public so `WallBuilder` can build split boundary pieces from it directly. **/

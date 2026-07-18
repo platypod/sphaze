@@ -1,14 +1,19 @@
 package biomes.maze;
 
+import biomes.common.grass.GrassMesh;
+import biomes.common.grass.GrassModel;
 import biomes.common.grid.GridCollision;
 import biomes.common.grid.GridGeometry;
 import biomes.common.grid.GridMesh;
+import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridData;
+import biomes.common.space.sphere.SphereMath;
 import biomes.common.Biome;
 import biomes.hub.HubBiome;
 import entities.player.PlayerModel;
 import entities.painting.PaintingModel;
 import graphics.Colours;
+import graphics.shaders.GrassWind;
 
 /**
 	The one generated-maze biome that exists today — wraps `GridModel`/
@@ -74,6 +79,26 @@ class MazeBiome implements Biome {
 	public function build(parent:h3d.scene.Object):Void {
 		GridMesh.build(maze, parent);
 		PaintingModel.buildQuad(parent, exitWall.a, exitWall.b, exitWall.cellCenter, Colours.TO_HUB);
+		// Windier and thicker than the hub's own grass: open corridors
+		// stretching across the sphere read as more exposed than the hub's
+		// small enclosed room, and a sparser hub floor already reads as
+		// "the calm room" by contrast — the maze is where the weather is.
+		GrassMesh.build(parent, GridGeometry.RADIUS, isWalkable, GrassModel.DEFAULT_TUFT_COUNT * 20, GrassWind.DEFAULT_SWAY_AMPLITUDE * 1.8,
+			GrassWind.DEFAULT_SWAY_FREQUENCY * 1.2);
+	}
+
+	/**
+		Whether `pos` is a valid place to grow a grass tuft — well clear of
+		every *closed* edge of its own ring cell (see
+		`GridModel.isWellClearOfWalls`), open ones included so grass grows
+		flush to a doorway instead of leaving a gap there for no in-world
+		reason. Not `static`: it needs this specific maze's own `maze` data
+		to know which edges are actually open.
+		@param pos the candidate world position.
+		@return true if `pos` is well clear of its own cell's walls.
+	**/
+	function isWalkable(pos:h3d.Vector):Bool {
+		return GridModel.isWellClearOfWalls(maze, SphereMath.thetaOf(pos), SphereMath.phiOf(pos));
 	}
 
 	public function spawnPlayer(returning:Bool):PlayerModel {

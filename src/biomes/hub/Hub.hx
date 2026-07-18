@@ -1,4 +1,4 @@
-package hub;
+package biomes.hub;
 
 import game.MeshBuilder;
 import world.Painting;

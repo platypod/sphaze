@@ -1,9 +1,8 @@
-package biomes;
+package biomes.hub;
 
+import biomes.maze.MazeBiome;
 import entities.Player;
 import game.Biome;
-import hub.Hub;
-import hub.HubCollision;
 import world.Painting;
 
 /**

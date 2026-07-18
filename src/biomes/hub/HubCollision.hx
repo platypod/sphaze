@@ -1,11 +1,11 @@
-package hub;
+package biomes.hub;
 
 import entities.Player;
 
 /**
-	Movement/collision for the hub room. Doesn't reuse `game.Collision`/
-	`Maze`'s grid-based approach — see `Hub`'s own class doc for why the hub
-	isn't built on that pipeline at all; a sphere with one fixed central
+	Movement/collision for the hub room. Doesn't reuse `grid.GridCollision`/
+	`grid.Grid`'s grid-based approach — see `Hub`'s own class doc for why the
+	hub isn't built on that pipeline at all; a sphere with one fixed central
 	obstacle needs nothing more than "did this step cross into the column",
 	not wall-thickness zones, sliding, or per-edge open/closed state.
 **/
@@ -13,7 +13,7 @@ class HubCollision {
 	/**
 		Attempts to move `player` by `distance` along `direction` — a unit
 		tangent at `player.pos`. Blocks the whole step (no wall-slide, unlike
-		`game.Collision`) if it would cross into the column — good enough
+		`grid.GridCollision`) if it would cross into the column — good enough
 		for a single fixed obstacle; revisit if a flat stop against it ever
 		feels bad in practice.
 		@param player the player to move.

@@ -1,4 +1,4 @@
-package biomes;
+package biomes.maze;
 
 import grid.Grid;
 import grid.Grid.GridData;

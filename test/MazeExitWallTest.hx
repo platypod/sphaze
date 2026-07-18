@@ -4,7 +4,7 @@ import grid.Grid;
 import grid.Grid.GridData;
 import grid.Grid.GridNode;
 import grid.GridMesh;
-import biomes.MazeExitWall;
+import biomes.maze.MazeExitWall;
 
 /** Covers MazeExitWall's placement scan — a deterministic, hand-built GridData, not a random generated one. **/
 class MazeExitWallTest extends Test {

@@ -1,5 +1,6 @@
-package biomes;
+package biomes.maze;
 
+import biomes.hub.HubBiome;
 import entities.Player;
 import game.Biome;
 import grid.Grid.GridData;

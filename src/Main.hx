@@ -1,5 +1,5 @@
-import biomes.HubBiome;
-import biomes.MazeBiome;
+import biomes.hub.HubBiome;
+import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
 import entities.Player;
 import game.Biome;

@@ -1,5 +1,6 @@
 package biomes.hub;
 
+import biomes.common.grid.GridGeometry;
 import biomes.common.grid.GridMesh;
 import biomes.hub.HubStructure.StructureBasis;
 import entities.painting.PaintingModel;
@@ -29,8 +30,8 @@ class MazeShrine {
 	/** How much longer each successive wall is than the last — also the spiral's own radial growth per arm. Tripled from an initial `2.4` (hooman: "still much too small... make them thrice bigger") — the wall height/texture stay matched to the real maze regardless (`GridMesh.WALL_HEIGHT`), only the spiral's own footprint scales. **/
 	static inline final ARM_UNIT:Float = 7.2;
 
-	/** Half the wall's own thickness, plus clearance — collision blocks within this distance of any wall segment's own centerline, since the walls themselves are built as flat (zero-thickness) quads. **/
-	static inline final WALL_CLEARANCE:Float = 1.2;
+	/** Half a wall's own real thickness (`GridGeometry.WALL_THICKNESS`, matching the real maze's own walls), plus `GridGeometry.COLLISION_CLEARANCE` beyond that face — collision blocks within this distance of any wall segment's own centerline, mirroring `biomes.common.grid.GridModel.wallZoneNeighbor`'s own "thickness plus clearance past the visible face" reasoning. **/
+	static inline final WALL_CLEARANCE:Float = GridGeometry.WALL_THICKNESS / 2 + GridGeometry.COLLISION_CLEARANCE;
 
 	/** How far past wall 7's own tip the player reappears when returning from the maze, arc-length in the spiral's own local frame — mirrors `biomes.maze.MazeBiome.RETURN_SPAWN_OFFSET`'s own role. **/
 	static inline final RETURN_SPAWN_OFFSET:Float = 4;
@@ -85,18 +86,7 @@ class MazeShrine {
 		var uvs:Array<h3d.prim.UV> = [];
 
 		for (segment in wallSegments()) {
-			var bottomA = HubStructure.worldPoint(basis, segment.aU, segment.aV, 0);
-			var bottomB = HubStructure.worldPoint(basis, segment.bU, segment.bV, 0);
-			var topA = bottomA.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
-			var topB = bottomB.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
-
-			var uRepeat = bottomA.sub(bottomB).length() / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
-			var vRepeat = GridMesh.WALL_HEIGHT / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
-			MeshBuilder.addQuad(points, idx, bottomA, bottomB, topB, topA);
-			uvs.push(new h3d.prim.UV(0, vRepeat));
-			uvs.push(new h3d.prim.UV(uRepeat, vRepeat));
-			uvs.push(new h3d.prim.UV(uRepeat, 0));
-			uvs.push(new h3d.prim.UV(0, 0));
+			addWallBox(basis, segment, points, idx, uvs);
 		}
 
 		var prim = new h3d.prim.Polygon(points, idx);
@@ -110,14 +100,112 @@ class MazeShrine {
 		buildPainting(parent, basis, texture);
 	}
 
+	/**
+		One wall segment's own solid box — inner face, outer face, a top
+		cap, and end caps at both extremities — real thickness
+		(`GridGeometry.WALL_THICKNESS`, the same as the real maze's own
+		walls), not the flat single-sided quad this used to be (reported
+		directly as reading as 2D next to the real maze's own walls).
+
+		Each segment extends its own two ends by half that thickness before
+		offsetting perpendicular to its own length, so consecutive walls'
+		boxes overlap slightly at the spiral's own 90-degree turns rather
+		than leaving a gap there — invisible either way, since both
+		are solid opaque stone (the same "never actually visible" reasoning
+		`biomes.common.grid.GridMesh`'s own `WallBuilder` already relies on
+		for its own redundant faces, just traded here for a simpler,
+		corner-agnostic segment shape rather than that class's own
+		per-cell mitred corners).
+	**/
+	static function addWallBox(basis:StructureBasis, segment:{
+		aU:Float,
+		aV:Float,
+		bU:Float,
+		bV:Float
+	}, points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>):Void {
+		var dirU = segment.bU - segment.aU;
+		var dirV = segment.bV - segment.aV;
+		var length = Math.sqrt(dirU * dirU + dirV * dirV);
+		dirU /= length;
+		dirV /= length;
+		var perpU = -dirV;
+		var perpV = dirU;
+		var half = GridGeometry.WALL_THICKNESS / 2;
+
+		var extAU = segment.aU - dirU * half;
+		var extAV = segment.aV - dirV * half;
+		var extBU = segment.bU + dirU * half;
+		var extBV = segment.bV + dirV * half;
+
+		var outerA = HubStructure.worldPoint(basis, extAU + perpU * half, extAV + perpV * half, 0);
+		var outerB = HubStructure.worldPoint(basis, extBU + perpU * half, extBV + perpV * half, 0);
+		var innerA = HubStructure.worldPoint(basis, extAU - perpU * half, extAV - perpV * half, 0);
+		var innerB = HubStructure.worldPoint(basis, extBU - perpU * half, extBV - perpV * half, 0);
+
+		var outerATop = outerA.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
+		var outerBTop = outerB.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
+		var innerATop = innerA.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
+		var innerBTop = innerB.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
+
+		var uRepeat = length / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
+		var vRepeat = GridMesh.WALL_HEIGHT / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
+		var tRepeat = GridGeometry.WALL_THICKNESS / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
+
+		addTexturedQuad(points, idx, uvs, innerA, innerB, innerBTop, innerATop, uRepeat, vRepeat);
+		addTexturedQuad(points, idx, uvs, outerB, outerA, outerATop, outerBTop, uRepeat, vRepeat);
+		addTexturedQuad(points, idx, uvs, outerATop, outerBTop, innerBTop, innerATop, uRepeat, tRepeat);
+		addTexturedQuad(points, idx, uvs, outerA, innerA, innerATop, outerATop, tRepeat, vRepeat);
+		addTexturedQuad(points, idx, uvs, innerB, outerB, outerBTop, innerBTop, tRepeat, vRepeat);
+	}
+
+	/** Appends a quad plus matching UVs — `a`/`d` at u=0, `b`/`c` at u=uRepeat, `a`/`b` at v=vSpan, `c`/`d` at v=0 — same convention `biomes.common.grid.GridMesh`'s own private `WallBuilder.addTexturedQuad` uses. **/
+	static function addTexturedQuad(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, a:h3d.Vector, b:h3d.Vector, c:h3d.Vector,
+			d:h3d.Vector, uRepeat:Float, vSpan:Float):Void {
+		MeshBuilder.addQuad(points, idx, a, b, c, d);
+		uvs.push(new h3d.prim.UV(0, vSpan));
+		uvs.push(new h3d.prim.UV(uRepeat, vSpan));
+		uvs.push(new h3d.prim.UV(uRepeat, 0));
+		uvs.push(new h3d.prim.UV(0, 0));
+	}
+
+	/**
+		Wall 2's own two edges, offset half a wall's own thickness toward
+		the shrine's own local origin — the actual inner face a painting
+		mounts flush against now that walls have real thickness, not the
+		centerline `wallSegments` itself returns (which `buildPainting`/
+		`exitPainting` used directly back when a wall's visible face and
+		its centerline were the same thing).
+	**/
+	static function wall2InnerFaceEdge(basis:StructureBasis):{a:h3d.Vector, b:h3d.Vector} {
+		var wall2 = wallSegments()[1];
+		var dirU = wall2.bU - wall2.aU;
+		var dirV = wall2.bV - wall2.aV;
+		var length = Math.sqrt(dirU * dirU + dirV * dirV);
+		dirU /= length;
+		dirV /= length;
+		var perpU = -dirV;
+		var perpV = dirU;
+
+		var midU = (wall2.aU + wall2.bU) / 2;
+		var midV = (wall2.aV + wall2.bV) / 2;
+		// Flip perp so it points toward the shrine's own local origin (0, 0) - the inner, room-facing side - regardless of this particular wall's own direction.
+		if (perpU * (0 - midU) + perpV * (0 - midV) < 0) {
+			perpU = -perpU;
+			perpV = -perpV;
+		}
+
+		var half = GridGeometry.WALL_THICKNESS / 2;
+		var a = HubStructure.worldPoint(basis, wall2.aU + perpU * half, wall2.aV + perpV * half, 0);
+		var b = HubStructure.worldPoint(basis, wall2.bU + perpU * half, wall2.bV + perpV * half, 0);
+		return {a: a, b: b};
+	}
+
 	/** The maze's own painting, mounted on wall 2's inner (center-facing) side. **/
 	static function buildPainting(parent:h3d.scene.Object, basis:StructureBasis, texture:h3d.mat.Texture):Void {
-		var wall2 = wallSegments()[1];
-		var wallA = HubStructure.worldPoint(basis, wall2.aU, wall2.aV, 0);
-		var wallB = HubStructure.worldPoint(basis, wall2.bU, wall2.bV, 0);
+		var edge = wall2InnerFaceEdge(basis);
 		var roomCenter = basis.origin;
 		var size = PaintingModel.fillWall(GridMesh.WALL_HEIGHT);
-		PaintingModel.buildQuad(parent, wallA, wallB, roomCenter, texture, size.baseHeight, size.height, basis.up);
+		PaintingModel.buildQuad(parent, edge.a, edge.b, roomCenter, texture, size.baseHeight, size.height, basis.up);
 	}
 
 	/**
@@ -149,10 +237,8 @@ class MazeShrine {
 		@return the shrine's own exit painting.
 	**/
 	public static function exitPainting(basis:StructureBasis, destinationBiomeId:String):PaintingModel {
-		var wall2 = wallSegments()[1];
-		var wallA = HubStructure.worldPoint(basis, wall2.aU, wall2.aV, 0);
-		var wallB = HubStructure.worldPoint(basis, wall2.bU, wall2.bV, 0);
-		return new PaintingModel(PaintingModel.midpointOf(wallA, wallB), destinationBiomeId);
+		var edge = wall2InnerFaceEdge(basis);
+		return new PaintingModel(PaintingModel.midpointOf(edge.a, edge.b), destinationBiomeId);
 	}
 
 	/**

@@ -23,23 +23,46 @@ import graphics.shaders.UnlitTexture;
 	local `(u, v)` frame instead of the shaft's own world-space axis.
 **/
 class TowerReplica {
-	/** The spire's own outer wall radius — small next to the real tower's `biomes.tower.TowerModel.OUTER_RADIUS` (40), on purpose: a landmark, not an enterable space. Tripled from an initial `7.5` (hooman: "still much too small... make them thrice bigger"). **/
-	static inline final OUTER_RADIUS:Float = 22.5;
+	/**
+		The spire's own outer wall radius — small next to the real tower's
+		`biomes.tower.TowerModel.OUTER_RADIUS` (40), on purpose: a landmark,
+		not an enterable space. Pulled back down from a since-tripled `22.5`
+		(itself tripled from an initial `7.5`): that radius, combined with
+		`COLLISION_CLEARANCE`, made the painting's own trigger window a
+		needle to thread rather than a wall to walk up to (reported directly
+		as an invisible obstacle that made the painting hard to reach at
+		all) — see `COLLISION_CLEARANCE`'s own doc for the actual geometry.
+		Smaller alone fixes it: the fixed collision gap (`COLLISION_CLEARANCE`)
+		matters relative to the radius it's applied to, not in absolute
+		terms, so shrinking `OUTER_RADIUS` widens the reachable arc even
+		though the straight-on gap itself doesn't change.
+	**/
+	static inline final OUTER_RADIUS:Float = 10;
 
 	/** How many cosmetic floor divisions the spire reads as — "3 or 4" per the ask. **/
 	static inline final FLOORS:Int = 4;
 
-	/** Vertical span of one cosmetic floor — unlike the real tower's own `LAYER_HEIGHT`, this never gates anything; it's just how tall each division reads. Tripled alongside `OUTER_RADIUS` to keep the spire's own proportions. **/
-	static inline final FLOOR_HEIGHT:Float = 10.5;
+	/**
+		Vertical span of one cosmetic floor — unlike the real tower's own
+		`LAYER_HEIGHT`, this never gates anything; it's just how tall each
+		division reads, and how much clear height `buildPainting`'s own
+		`PaintingModel.fillWall(FLOOR_HEIGHT)` call has to work with. Raised
+		alongside shrinking `OUTER_RADIUS` per a direct follow-up ask ("make
+		the tower smaller in radius, a bit higher, with more space between
+		levels so the painting has more space as well") — a taller, thinner
+		silhouette than the tripled version's own proportions, not a return
+		to the original pre-tripling ones.
+	**/
+	static inline final FLOOR_HEIGHT:Float = 13;
 
 	/** Segments the spire's circular cross-section is built from — smaller than `biomes.tower.TowerMesh.WALL_SEGMENTS` (32), since this structure's own radius is a fraction of the real shaft's. **/
 	static inline final WALL_SEGMENTS:Int = 24;
 
-	/** How far a floor-division ledge steps out from the main wall, before stepping back in — what actually reads as a belt course rather than a texture seam alone. Tripled alongside `OUTER_RADIUS` to keep the spire's own proportions. **/
-	static inline final LEDGE_PROTRUSION:Float = 1.2;
+	/** How far a floor-division ledge steps out from the main wall, before stepping back in — what actually reads as a belt course rather than a texture seam alone. Scaled down alongside `OUTER_RADIUS` to keep the spire's own proportions. **/
+	static inline final LEDGE_PROTRUSION:Float = 0.6;
 
-	/** How tall a ledge's own outward-stepped band is. Tripled alongside `OUTER_RADIUS` to keep the spire's own proportions. **/
-	static inline final LEDGE_HEIGHT:Float = 0.9;
+	/** How tall a ledge's own outward-stepped band is. Scaled down alongside `OUTER_RADIUS` to keep the spire's own proportions. **/
+	static inline final LEDGE_HEIGHT:Float = 0.4;
 
 	/** Fixed local angle the painting mounts at, same role `biomes.tower.TowerModel.PAINTING_ANGLE` plays on the real shaft. **/
 	static inline final PAINTING_ANGLE:Float = 0;
@@ -51,31 +74,39 @@ class TowerReplica {
 		`PaintingModel.buildQuad` mounts a *flat* quad, inset `SURFACE_INSET`
 		off that flat chord — between the two edges, the actual curved wall
 		bulges toward the chord by the arc's own sagitta,
-		`OUTER_RADIUS * (1 - cos(PAINTING_HALF_ANGLE))`. An earlier `0.47`
-		(at a since-tripled, smaller `OUTER_RADIUS`) put that bulge (`0.6`)
-		past `SURFACE_INSET` (`0.4`) entirely: the curved wall poked out in
-		front of the recessed painting partway along its own width,
-		occluding it in a visible vertical strip (reported directly as the
-		painting reading as two separate slivers with solid wall between
-		them) — much more visible here than on the real tower's own much
-		larger `OUTER_RADIUS`, where the same-order absolute bulge is a tiny
-		fraction of the wall's own scale.
-
-		Not simply tripled alongside `OUTER_RADIUS`: the sagitta scales with
+		`OUTER_RADIUS * (1 - cos(PAINTING_HALF_ANGLE))`. History of this
+		constant is really a history of `OUTER_RADIUS` changing under it:
+		an original `0.47` (at `OUTER_RADIUS = 5.5`) put the bulge past
+		`SURFACE_INSET` (`0.4`) entirely — two slivers of artwork with
+		solid wall between them, reported directly. `0.2` (at `7.5`), then
+		`0.14` (at a since-shrunk-back-down `22.5`), each re-derived rather
+		than reused for the same reason: the sagitta scales with
 		`OUTER_RADIUS * angle`, not with the structure's own size alone, so
-		naively keeping the previous `0.2` here would have re-widened the
-		bulge past `SURFACE_INSET` right back out (`22.5 * (1 - cos(0.2))
-		= 0.45`) — the same bug, reintroduced by the tripling itself.
-		Re-derived for the new radius instead: `0.14` keeps the sagitta
-		(`0.22`) comfortably under `SURFACE_INSET`, trading some of the
-		original `7.5`-radius fix's own safety margin (`0.25` to spare
-		there vs. `0.18` here) for a wider, better-proportioned painting on
-		the now much bigger spire — still a healthy margin, just not as
-		conservative as the first fix needed to be.
+		carrying an old angle over to a new radius unpredictably over- or
+		under-shoots the safe margin. Re-derived again for the current `10`:
+		`0.2` keeps the sagitta (`0.20`) comfortably under `SURFACE_INSET`.
 	**/
-	static inline final PAINTING_HALF_ANGLE:Float = 0.14;
+	static inline final PAINTING_HALF_ANGLE:Float = 0.2;
 
-	/** How far beyond `OUTER_RADIUS` collision blocks the player — the spire is solid all the way through, so unlike `MazeShrine`'s per-wall check this is a single circular boundary. **/
+	/**
+		How far beyond `OUTER_RADIUS` collision blocks the player — the
+		spire is solid all the way through, so unlike `MazeShrine`'s
+		per-wall check this is a single circular boundary.
+
+		This fixed gap is also what made the painting hard to actually
+		trigger at the since-shrunk `OUTER_RADIUS = 22.5`: standing exactly
+		on the collision boundary, dead-on with the painting's own angle,
+		clears it by only `COLLISION_CLEARANCE` (`1.5`) — comfortably inside
+		`PaintingModel.TRIGGER_DISTANCE` (`4`) — but stray off that one exact
+		angle and the straight-line distance to the painting's own fixed
+		point grows fast: at `22.5`, only within about 9 degrees of
+		dead-on still triggers, everywhere else on the boundary reads as
+		blocked by an invisible wall that never lets the player close
+		enough (reported directly). The window widens as `OUTER_RADIUS`
+		shrinks with this same `COLLISION_CLEARANCE` held fixed — about 20
+		degrees at the current `10` — which is the real reason "smaller
+		radius" was the fix asked for, not just a proportions preference.
+	**/
 	static inline final COLLISION_CLEARANCE:Float = 1.5;
 
 	/** How far past the wall the player reappears when returning from the tower, arc-length in the spire's own local frame — must clear `PaintingModel.TRIGGER_DISTANCE` (4) same as every other biome's own return spawn (see `biomes.maze.MazeBiome.RETURN_SPAWN_OFFSET`'s own doc). **/

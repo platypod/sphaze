@@ -8,6 +8,7 @@ import biomes.common.Biome;
 import biomes.hub.HubBiome;
 import entities.player.PlayerModel;
 import entities.painting.PaintingModel;
+import graphics.Colours;
 
 /**
 	The one generated-maze biome that exists today — wraps `GridModel`/
@@ -72,7 +73,7 @@ class MazeBiome implements Biome {
 
 	public function build(parent:h3d.scene.Object):Void {
 		GridMesh.build(maze, parent);
-		PaintingModel.buildQuad(parent, exitWall.a, exitWall.b, exitWall.cellCenter, PaintingModel.TO_HUB_COLOR);
+		PaintingModel.buildQuad(parent, exitWall.a, exitWall.b, exitWall.cellCenter, Colours.TO_HUB);
 	}
 
 	public function spawnPlayer(returning:Bool):PlayerModel {

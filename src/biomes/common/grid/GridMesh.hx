@@ -4,6 +4,8 @@ import biomes.common.grid.GridModel.GridData;
 import biomes.common.grid.GridModel.GridNode;
 import biomes.common.space.sphere.SphereMath;
 import game.MeshBuilder;
+import graphics.Colours;
+import graphics.shaders.UnlitTexture;
 
 /** A ring cell's four corners — "N"/"S" for the smaller/larger theta edge, "W"/"E" for the smaller/larger phi edge. **/
 typedef CellCorners = {
@@ -69,7 +71,7 @@ typedef CellCorners = {
 	normal, which the Polygon primitive never had set, producing a smooth
 	gradient and half-dark faces instead of a flat color). Walls use the same
 	unlit trick but sample a stone texture instead of one flat color — see
-	game.shader.UnlitTexture — while staying just as immune to that PBR
+	graphics.shaders.UnlitTexture — while staying just as immune to that PBR
 	pitfall, since it never touches the lighting pipeline either.
 **/
 class GridMesh {
@@ -78,8 +80,6 @@ class GridMesh {
 	// subtense tuning noted in prior sessions (see docs/PROJECT_LOG.md),
 	// not an oversight to reconcile back to that ratio later.
 	public static inline final WALL_HEIGHT:Float = 12;
-
-	static inline final FLOOR_COLOR:Int = 0xFF444444;
 
 	/**
 		@param maze the biome's generated layout to build meshes for.
@@ -90,7 +90,7 @@ class GridMesh {
 		var floorIdx = new hxd.IndexBuffer();
 		addFloor(floorPoints, floorIdx);
 		var floorMesh = new h3d.scene.Mesh(new h3d.prim.Polygon(floorPoints, floorIdx), parent);
-		floorMesh.material.mainPass.addShader(new h3d.shader.FixedColor(FLOOR_COLOR));
+		floorMesh.material.mainPass.addShader(new h3d.shader.FixedColor(Colours.GRID_FLOOR));
 		floorMesh.material.mainPass.culling = None;
 
 		var wallBuilder = new WallBuilder(maze);
@@ -100,7 +100,7 @@ class GridMesh {
 		var wallTexture = hxd.Res.textures.wall_stone.toTexture();
 		wallTexture.wrap = Repeat;
 		var wallMesh = new h3d.scene.Mesh(wallPrim, parent);
-		wallMesh.material.mainPass.addShader(new game.shader.UnlitTexture(wallTexture));
+		wallMesh.material.mainPass.addShader(new UnlitTexture(wallTexture));
 		wallMesh.material.mainPass.culling = None;
 	}
 

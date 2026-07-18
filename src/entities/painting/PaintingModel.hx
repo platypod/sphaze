@@ -26,11 +26,6 @@ class PaintingModel extends Entity {
 	/** How close the player needs to walk for this painting to trigger. **/
 	public static inline final TRIGGER_DISTANCE:Float = 4;
 
-	/** Shared placeholder colors so every painting leading to the hub — or back to the biome — reads consistently regardless of which one the player finds first. **/
-	public static inline final TO_HUB_COLOR:Int = 0xFF4488CC;
-
-	public static inline final TO_BIOME_COLOR:Int = 0xFFCC8844;
-
 	/** How far up from the floor a painting's bottom edge sits. **/
 	static inline final BASE_HEIGHT:Float = 3;
 

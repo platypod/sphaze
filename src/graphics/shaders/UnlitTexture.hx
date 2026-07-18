@@ -1,11 +1,11 @@
-package game.shader;
+package graphics.shaders;
 
 /**
 	Samples a texture straight to the fragment output, bypassing the PBR
 	pipeline entirely — the textured equivalent of `h3d.shader.FixedColor`
-	(see `maze.MazeMesh`'s class doc for why: `enableLights = false` alone
-	still leaves PBR's other lighting/falloff terms running, and those
-	depend on per-vertex normals this mesh never sets). `h3d.shader.Texture`
+	(see `biomes.common.grid.GridMesh`'s class doc for why: `enableLights =
+	false` alone still leaves PBR's other lighting/falloff terms running, and
+	those depend on per-vertex normals this mesh never sets). `h3d.shader.Texture`
 	multiplies into `pixelColor` for use *within* that pipeline instead of
 	replacing it, so it doesn't fit here.
 **/

@@ -2,6 +2,9 @@ package biomes.hub;
 
 import game.MeshBuilder;
 import entities.painting.PaintingModel;
+import graphics.Colours;
+import graphics.shaders.UnlitChecker;
+import graphics.shaders.UnlitTexture;
 
 /**
 	Builds the hub's actual scene-graph meshes: the outer shell (an
@@ -17,11 +20,6 @@ class HubMesh {
 	static inline final SHELL_SEGS_W = 32;
 
 	static inline final SHELL_SEGS_H = 24;
-
-	/** Checkerboard colors for the outer shell — a solid flat fill gave the room's curvature and the player's own distance from anything no visual cues at all; alternating cells fix that without needing a texture asset. **/
-	static inline final FLOOR_COLOR_A:Int = 0xFF3A3A44;
-
-	static inline final FLOOR_COLOR_B:Int = 0xFF4A4A58;
 
 	/** Checkerboard density: cells around the equator, and pole to pole — chosen so cells read roughly square (the equator's circumference is about twice the pole-to-pole distance). **/
 	static inline final FLOOR_CHECKER_U = 40;
@@ -42,7 +40,7 @@ class HubMesh {
 		shellPrim.addUVs();
 		var shellMesh = new h3d.scene.Mesh(shellPrim, parent);
 		shellMesh.setRotation(-Math.PI / 2, 0, 0);
-		shellMesh.material.mainPass.addShader(new game.shader.UnlitChecker(FLOOR_COLOR_A, FLOOR_COLOR_B, FLOOR_CHECKER_U, FLOOR_CHECKER_V));
+		shellMesh.material.mainPass.addShader(new UnlitChecker(Colours.HUB_FLOOR_A, Colours.HUB_FLOOR_B, FLOOR_CHECKER_U, FLOOR_CHECKER_V));
 		shellMesh.material.mainPass.culling = None;
 
 		buildColumn(parent);
@@ -74,7 +72,7 @@ class HubMesh {
 		var texture = hxd.Res.textures.wall_stone.toTexture();
 		texture.wrap = Repeat;
 		var mesh = new h3d.scene.Mesh(prim, parent);
-		mesh.material.mainPass.addShader(new game.shader.UnlitTexture(texture));
+		mesh.material.mainPass.addShader(new UnlitTexture(texture));
 		mesh.material.mainPass.culling = None;
 
 		// The painting mounts as an inset overlay on top of its face's own
@@ -87,7 +85,7 @@ class HubMesh {
 		var mid = PaintingModel.midpointOf(left, right);
 		var outward = new h3d.Vector(mid.x, 0, mid.z).normalized();
 		var outwardRef = mid.add(outward.scaled(HubModel.COLUMN_RADIUS));
-		PaintingModel.buildQuad(parent, left, right, outwardRef, PaintingModel.TO_BIOME_COLOR, new h3d.Vector(0, 1, 0));
+		PaintingModel.buildQuad(parent, left, right, outwardRef, Colours.TO_BIOME, new h3d.Vector(0, 1, 0));
 	}
 
 	/** A triangle fan closing off the column's top (`top = true`) or bottom end. **/

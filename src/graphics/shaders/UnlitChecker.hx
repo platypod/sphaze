@@ -1,8 +1,8 @@
-package game.shader;
+package graphics.shaders;
 
 /**
-	Flat-shaded (no lighting — see `maze.MazeMesh`'s own doc for why:
-	`enableLights = false` alone still leaves PBR's other lighting/falloff
+	Flat-shaded (no lighting — see `biomes.common.grid.GridMesh`'s own doc for
+	why: `enableLights = false` alone still leaves PBR's other lighting/falloff
 	terms running, and those depend on per-vertex normals this project's
 	`Polygon` meshes never set) checkerboard: two alternating flat colors by
 	UV, same idea as Heaps' own `h3d.shader.Checker` but writing directly to
@@ -10,7 +10,7 @@ package game.shader;
 	pipeline `h3d.shader.Texture` already doesn't fit into either — see
 	`UnlitTexture`'s own doc). Gives an otherwise-featureless surface actual
 	visual structure to read curvature, orientation, and distance from —
-	`hub.Hub`'s outer shell was a solid flat fill with zero cues for either.
+	`biomes.hub.HubMesh`'s outer shell was a solid flat fill with zero cues for either.
 **/
 class UnlitChecker extends hxsl.Shader {
 	static var SRC = {

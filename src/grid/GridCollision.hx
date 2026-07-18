@@ -1,16 +1,16 @@
-package game;
+package grid;
 
 import entities.Player;
-import maze.Maze;
-import maze.Maze.MazeData;
-import maze.Maze.MazeNode;
-import maze.Maze.RowBoundaryNeighbor;
+import game.SphereMath;
+import grid.Grid.GridNode;
+import grid.Grid.GridData;
+import grid.Grid.RowBoundaryNeighbor;
 
 /**
-	Blocks `Player` from crossing a closed maze edge, sliding along it
+	Blocks `Player` from crossing a closed grid edge, sliding along it
 	instead of stopping dead when it's hit at an angle. Kept as a thin
-	wrapper around `Player` rather than teaching `Player` about `Maze` —
-	`Player` is otherwise fully maze-agnostic (see its class doc), and the
+	wrapper around `Player` rather than teaching `Player` about `Grid` —
+	`Player` is otherwise fully grid-agnostic (see its class doc), and the
 	only thing collision needs is the node the player was in versus whatever
 	blocks the step.
 
@@ -18,23 +18,23 @@ import maze.Maze.RowBoundaryNeighbor;
 	wall geometry. A step is blocked one of two ways (see `blockingNode`):
 	entering the *wall-zone* of a closed side without necessarily leaving the
 	current node (the thickness a wall actually occupies, per
-	`Maze.wallZoneNeighbor` — this is the common case now that walls have
+	`Grid.wallZoneNeighbor` — this is the common case now that walls have
 	real thickness, not the zero-width planes they started as), or, as a
 	fallback for a step large enough to skip clean over that check, landing
 	directly in a different, non-open node. At `Main.WALK_SPEED` versus the
 	grid's cell size the fallback essentially never fires in practice.
 **/
-class Collision {
+class GridCollision {
 	/**
 		`tryMove` along `player.forward` specifically — walking forward or
 		backward. See `tryMove` for the general form (e.g. strafing).
 		@param player the player to move.
 		@param distance arc length to walk; negative walks backward.
-		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
-		@param maze the maze whose closed edges block movement.
+		@param radius sphere radius — must match the layout's physical sphere (see GridGeometry.RADIUS).
+		@param maze the layout whose closed edges block movement.
 		@return true if any movement was applied (a full step or a slide), false if a wall stopped the player outright.
 	**/
-	public static function tryMoveForward(player:Player, distance:Float, radius:Float, maze:MazeData):Bool {
+	public static function tryMoveForward(player:Player, distance:Float, radius:Float, maze:GridData):Bool {
 		return tryMove(player, player.forward, distance, radius, maze);
 	}
 
@@ -49,14 +49,14 @@ class Collision {
 		@param player the player to move.
 		@param direction unit tangent at `player.pos` to move along.
 		@param distance arc length to move; negative moves the opposite way.
-		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
-		@param maze the maze whose closed edges block movement.
+		@param radius sphere radius — must match the layout's physical sphere (see GridGeometry.RADIUS).
+		@param maze the layout whose closed edges block movement.
 		@return true if any movement was applied (a full step or a slide), false if a wall stopped the player outright.
 	**/
-	public static function tryMove(player:Player, direction:h3d.Vector, distance:Float, radius:Float, maze:MazeData):Bool {
+	public static function tryMove(player:Player, direction:h3d.Vector, distance:Float, radius:Float, maze:GridData):Bool {
 		var fromTheta = SphereMath.thetaOf(player.pos);
 		var fromPhi = SphereMath.phiOf(player.pos);
-		var fromNode = Maze.nodeAt(fromTheta, fromPhi);
+		var fromNode = Grid.nodeAt(fromTheta, fromPhi);
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 
@@ -74,28 +74,28 @@ class Collision {
 
 	/**
 		Whichever node blocks a position nominally within `fromNode`: a
-		neighbor whose wall-zone (see `Maze.wallZoneNeighbor`) has been
+		neighbor whose wall-zone (see `Grid.wallZoneNeighbor`) has been
 		entered *more deeply than at* `fromTheta`/`fromPhi`, or — the
 		fallback described in the class doc — a genuinely different,
 		non-open neighbor landed in directly, for a step large enough to
 		skip clean over the wall-zone check.
-		@param maze the maze whose closed edges block movement.
+		@param maze the layout whose closed edges block movement.
 		@param fromNode the node the step started in.
 		@param fromTheta this tick's starting polar angle, before the attempted move.
 		@param fromPhi this tick's starting azimuth, before the attempted move.
 		@param theta the candidate position's polar angle.
 		@param phi the candidate position's azimuth.
-		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
+		@param radius sphere radius — must match the layout's physical sphere (see GridGeometry.RADIUS).
 		@return the node whose wall blocks this position, or null if it's unobstructed.
 	**/
-	static function blockingNode(maze:MazeData, fromNode:MazeNode, fromTheta:Float, fromPhi:Float, theta:Float, phi:Float, radius:Float):Null<MazeNode> {
-		var wallZone = Maze.wallZoneNeighbor(maze, fromNode, fromTheta, fromPhi, theta, phi, radius);
+	static function blockingNode(maze:GridData, fromNode:GridNode, fromTheta:Float, fromPhi:Float, theta:Float, phi:Float, radius:Float):Null<GridNode> {
+		var wallZone = Grid.wallZoneNeighbor(maze, fromNode, fromTheta, fromPhi, theta, phi, radius);
 		if (wallZone != null) {
 			return wallZone;
 		}
 
-		var atNode = Maze.nodeAt(theta, phi);
-		if (Maze.nodeKey(fromNode) != Maze.nodeKey(atNode) && !Maze.isOpen(maze, fromNode, atNode)) {
+		var atNode = Grid.nodeAt(theta, phi);
+		if (Grid.nodeKey(fromNode) != Grid.nodeKey(atNode) && !Grid.isOpen(maze, fromNode, atNode)) {
 			return atNode;
 		}
 		return null;
@@ -128,12 +128,12 @@ class Collision {
 		@param blockedNode the node whose wall blocked the step (see `blockingNode`).
 		@param attemptedDirection the direction the blocked step was attempted along — not necessarily `player.forward` (e.g. strafing).
 		@param distance arc length of the original attempted step.
-		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
-		@param maze the maze whose closed edges block movement.
+		@param radius sphere radius — must match the layout's physical sphere (see GridGeometry.RADIUS).
+		@param maze the layout whose closed edges block movement.
 		@return true if the slide moved the player at all.
 	**/
-	static function slideAlong(player:Player, fromNode:MazeNode, blockedNode:MazeNode, attemptedDirection:h3d.Vector, distance:Float, radius:Float,
-			maze:MazeData):Bool {
+	static function slideAlong(player:Player, fromNode:GridNode, blockedNode:GridNode, attemptedDirection:h3d.Vector, distance:Float, radius:Float,
+			maze:GridData):Bool {
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 		var oldPosDir = oldPos.normalized();
@@ -206,7 +206,7 @@ class Collision {
 		column.
 
 		The segment's own two corners come from `fromNode`'s specific
-		`Maze.rowBoundaryNeighbors` entry matching `blockedNode`, not
+		`Grid.rowBoundaryNeighbors` entry matching `blockedNode`, not
 		`fromNode`'s own full phi width — at a row boundary where column
 		count doubles moving away from a pole, the wall segment actually
 		blocking the step is only *half* that width (see that function's
@@ -218,7 +218,7 @@ class Collision {
 		Either node being a `PoleNode` instead falls back to the plain
 		cross-product tangent against `blockedNode`'s nominal center: `pos`
 		is right at (or immediately next to) the pole in that case, where
-		phi is undefined, so a chord built from `Maze.centerOf`'s
+		phi is undefined, so a chord built from `Grid.centerOf`'s
 		placeholder phi at the pole would be meaningless. The cross-product
 		is exact for this one endpoint regardless, and a pole never has a
 		same-row *or* cross-row slide long enough to drift along.
@@ -227,11 +227,11 @@ class Collision {
 		@param pos the position to evaluate the tangent at — typically the player's own current position.
 		@return unit tangent along the wall at `pos`.
 	**/
-	static function wallTangentAlong(fromNode:MazeNode, blockedNode:MazeNode, pos:h3d.Vector):h3d.Vector {
+	static function wallTangentAlong(fromNode:GridNode, blockedNode:GridNode, pos:h3d.Vector):h3d.Vector {
 		var fromRow = ringRow(fromNode);
 		var blockedRow = ringRow(blockedNode);
 		if (fromRow == null || blockedRow == null) {
-			var blockedCenter = Maze.centerOf(blockedNode);
+			var blockedCenter = Grid.centerOf(blockedNode);
 			var blockedDir = SphereMath.sphericalToCartesian(1, blockedCenter.theta, blockedCenter.phi);
 			return pos.normalized().cross(blockedDir).normalized();
 		}
@@ -246,9 +246,9 @@ class Collision {
 			return SphereMath.thetaTangentAt(SphereMath.thetaOf(pos), SphereMath.phiOf(pos));
 		}
 
-		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
+		var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
 		var sign = blockedRow > fromRow ? 1 : -1;
-		var wallTheta = Math.PI * fromRow / (Maze.ROWS - 1) + sign * halfTheta;
+		var wallTheta = Math.PI * fromRow / (Grid.ROWS - 1) + sign * halfTheta;
 		var entry = matchingRowBoundaryEntry(fromRow, fromCol, blockedRow, blockedNode);
 		var corner1 = SphereMath.sphericalToCartesian(1, wallTheta, entry.phiStart);
 		var corner2 = SphereMath.sphericalToCartesian(1, wallTheta, entry.phiEnd);
@@ -257,7 +257,7 @@ class Collision {
 	}
 
 	/**
-		Whichever of `fromNode`'s `Maze.rowBoundaryNeighbors` entries toward
+		Whichever of `fromNode`'s `Grid.rowBoundaryNeighbors` entries toward
 		`otherRow` is actually `blockedNode` — the specific phi sub-range of
 		the wall segment that blocked the step, not `fromNode`'s own full
 		width (see `wallTangentAlong`'s doc comment for why that distinction
@@ -268,10 +268,10 @@ class Collision {
 		@param blockedNode the specific neighbor to find the matching entry for.
 		@return that entry.
 	**/
-	static function matchingRowBoundaryEntry(row:Int, col:Int, otherRow:Int, blockedNode:MazeNode):RowBoundaryNeighbor {
-		var blockedKey = Maze.nodeKey(blockedNode);
-		for (entry in Maze.rowBoundaryNeighbors(row, col, otherRow)) {
-			if (Maze.nodeKey(entry.node) == blockedKey) {
+	static function matchingRowBoundaryEntry(row:Int, col:Int, otherRow:Int, blockedNode:GridNode):RowBoundaryNeighbor {
+		var blockedKey = Grid.nodeKey(blockedNode);
+		for (entry in Grid.rowBoundaryNeighbors(row, col, otherRow)) {
+			if (Grid.nodeKey(entry.node) == blockedKey) {
 				return entry;
 			}
 		}
@@ -279,7 +279,7 @@ class Collision {
 	}
 
 	/** A `RingNode`'s row, or null for a `PoleNode` (which has no row). **/
-	static function ringRow(node:MazeNode):Null<Int> {
+	static function ringRow(node:GridNode):Null<Int> {
 		return switch node {
 			case RingNode(row, _): row;
 			case PoleNode(_): null;
@@ -287,7 +287,7 @@ class Collision {
 	}
 
 	/** A `RingNode`'s column, or null for a `PoleNode` (which has no column). **/
-	static function ringCol(node:MazeNode):Null<Int> {
+	static function ringCol(node:GridNode):Null<Int> {
 		return switch node {
 			case RingNode(_, col): col;
 			case PoleNode(_): null;

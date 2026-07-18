@@ -1,6 +1,6 @@
 package hub;
 
-import maze.MazeMesh;
+import game.MeshBuilder;
 import world.Painting;
 
 /**
@@ -32,7 +32,7 @@ import world.Painting;
 **/
 class Hub {
 	/**
-		This sphere's own radius — no longer `maze.MazeGeometry.RADIUS`; the
+		This sphere's own radius — no longer `grid.GridGeometry.RADIUS`; the
 		hub isn't biome-scale. Doubled from an initial `35` after hooman
 		found that scale disorienting.
 	**/
@@ -71,7 +71,7 @@ class Hub {
 	/** Which of the column's 8 faces holds the painting back to the one existing biome — arbitrary, just needs to be a real face index. **/
 	static inline final TO_BIOME_FACE_INDEX = 0;
 
-	/** Extra margin `isInside` blocks at, short of the column's actual rendered face — same role as `MazeGeometry.COLLISION_CLEARANCE` plays for biomes. **/
+	/** Extra margin `isInside` blocks at, short of the column's actual rendered face — same role as `grid.GridGeometry.COLLISION_CLEARANCE` plays for biomes. **/
 	static inline final COLLISION_CLEARANCE:Float = 1;
 
 	/**
@@ -192,9 +192,9 @@ class Hub {
 			var a = columnEdge(i);
 			var b = columnEdge(i + 1);
 
-			var uRepeat = a.top.sub(b.top).length() / MazeMesh.WALL_TEXTURE_TILE_SIZE;
-			var vHeight = 2 * COLUMN_HALF_HEIGHT / MazeMesh.WALL_TEXTURE_TILE_SIZE;
-			MazeMesh.addQuad(points, idx, a.top, b.top, b.bottom, a.bottom);
+			var uRepeat = a.top.sub(b.top).length() / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
+			var vHeight = 2 * COLUMN_HALF_HEIGHT / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
+			MeshBuilder.addQuad(points, idx, a.top, b.top, b.bottom, a.bottom);
 			uvs.push(new h3d.prim.UV(0, vHeight));
 			uvs.push(new h3d.prim.UV(uRepeat, vHeight));
 			uvs.push(new h3d.prim.UV(uRepeat, 0));
@@ -214,7 +214,7 @@ class Hub {
 
 		// The painting mounts as an inset overlay on top of its face's own
 		// wall texture, same as a biome return painting sits in front of
-		// MazeMesh's already-built wall — not a replacement for it (an
+		// GridMesh's already-built wall — not a replacement for it (an
 		// earlier version skipped the whole face's own panel here, leaving
 		// everything except the small painting quad itself unrendered).
 		var left = toBiomeFaceEdge(true);

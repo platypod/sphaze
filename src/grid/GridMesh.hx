@@ -1,7 +1,8 @@
-package maze;
+package grid;
 
-import maze.Maze.MazeNode;
-import maze.Maze.MazeData;
+import game.MeshBuilder;
+import grid.Grid.GridNode;
+import grid.Grid.GridData;
 
 /** A ring cell's four corners — "N"/"S" for the smaller/larger theta edge, "W"/"E" for the smaller/larger phi edge. **/
 typedef CellCorners = {
@@ -12,9 +13,9 @@ typedef CellCorners = {
 }
 
 /**
-	Builds renderable meshes for a generated maze: a floor patch per ring
-	cell, and a wall wherever an edge between two grid-adjacent nodes is
-	closed.
+	Builds renderable meshes for a grid-based biome's own layout: a floor
+	patch per ring cell, and a wall wherever an edge between two
+	grid-adjacent nodes is closed.
 
 	The floor uses each cell's outer corners (`cornersOf`) unchanged — full
 	size, same as before thickness existed — except at a doubling boundary,
@@ -70,23 +71,20 @@ typedef CellCorners = {
 	game.shader.UnlitTexture — while staying just as immune to that PBR
 	pitfall, since it never touches the lighting pipeline either.
 **/
-class MazeMesh {
+class GridMesh {
 	// Doubled from 6 on request, for taller, more prominent walls — a
 	// deliberate departure from the earlier "present but not dominant" FOV-
 	// subtense tuning noted in prior sessions (see docs/PROJECT_LOG.md),
 	// not an oversight to reconcile back to that ratio later.
 	public static inline final WALL_HEIGHT:Float = 12;
 
-	/** World units per repeat of the wall texture — matches WALL_HEIGHT so a tile reads roughly square rather than stretched. **/
-	public static inline final WALL_TEXTURE_TILE_SIZE:Float = 12;
-
 	static inline final FLOOR_COLOR:Int = 0xFF444444;
 
 	/**
-		@param maze the generated maze to build meshes for.
+		@param maze the biome's generated layout to build meshes for.
 		@param parent the scene object to attach the meshes under.
 	**/
-	public static function build(maze:MazeData, parent:h3d.scene.Object):Void {
+	public static function build(maze:GridData, parent:h3d.scene.Object):Void {
 		var floorPoints:Array<h3d.Vector> = [];
 		var floorIdx = new hxd.IndexBuffer();
 		addFloor(floorPoints, floorIdx);
@@ -114,7 +112,7 @@ class MazeMesh {
 		sliver-shaped gap (or overlap) right at the seam, confirmed
 		in-browser as a crack in the floor at exactly those latitudes. Fixed
 		by inserting this cell's own vertex at each interior split point
-		(`Maze.rowBoundaryNeighbors`'s own boundaries, at this cell's own
+		(`Grid.rowBoundaryNeighbors`'s own boundaries, at this cell's own
 		theta) — the same point the finer neighbor already has on its side —
 		so both sides of the seam share identical vertices instead of a
 		coarse straight edge cutting across a finer bent one.
@@ -122,20 +120,20 @@ class MazeMesh {
 	static function addFloor(points:Array<h3d.Vector>, idx:hxd.IndexBuffer):Void {
 		eachCell((row, col) -> {
 			var corners = cornersOf(row, col);
-			var theta = Math.PI * row / (Maze.ROWS - 1);
-			var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
+			var theta = Math.PI * row / (Grid.ROWS - 1);
+			var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
 
 			var perimeter = [corners.nw];
 			if (row > 1) {
-				var northEntries = Maze.rowBoundaryNeighbors(row, col, row - 1);
+				var northEntries = Grid.rowBoundaryNeighbors(row, col, row - 1);
 				for (i in 0...northEntries.length - 1) {
 					perimeter.push(cornerAt(theta - halfTheta, northEntries[i].phiEnd));
 				}
 			}
 			perimeter.push(corners.ne);
 			perimeter.push(corners.se);
-			if (row < Maze.ROWS - 2) {
-				var southEntries = Maze.rowBoundaryNeighbors(row, col, row + 1);
+			if (row < Grid.ROWS - 2) {
+				var southEntries = Grid.rowBoundaryNeighbors(row, col, row + 1);
 				var i = southEntries.length - 2;
 				while (i >= 0) {
 					perimeter.push(cornerAt(theta + halfTheta, southEntries[i].phiEnd));
@@ -145,32 +143,32 @@ class MazeMesh {
 			perimeter.push(corners.sw);
 
 			for (i in 1...perimeter.length - 1) {
-				addTriangle(points, idx, perimeter[0], perimeter[i], perimeter[i + 1]);
+				MeshBuilder.addTriangle(points, idx, perimeter[0], perimeter[i], perimeter[i + 1]);
 			}
 		});
 	}
 
-	/** A point on the maze's sphere at the given spherical coordinates. Public so `WallBuilder` can build split boundary pieces from it directly. **/
+	/** A point on the grid's sphere at the given spherical coordinates. Public so `WallBuilder` can build split boundary pieces from it directly. **/
 	public static function cornerAt(theta:Float, phi:Float):h3d.Vector {
-		return game.SphereMath.sphericalToCartesian(MazeGeometry.RADIUS, theta, phi);
+		return game.SphereMath.sphericalToCartesian(GridGeometry.RADIUS, theta, phi);
 	}
 
 	/**
 		A ring cell's four outer corners — the true grid boundary, shared
 		exactly with its neighbors. Public so adjacency can be checked
-		directly (see test/MazeMeshTest.hx): neighboring cells must compute
+		directly (see test/GridMeshTest.hx): neighboring cells must compute
 		matching points for their shared edge, which is what makes the floor
 		— and each side's wall piece, built from these same points — connect
 		seamlessly to each other.
-		@param row the cell's row (1 to Maze.ROWS - 2).
-		@param col the cell's column (0 to Maze.colsForRow(row) - 1).
+		@param row the cell's row (1 to Grid.ROWS - 2).
+		@param col the cell's column (0 to Grid.colsForRow(row) - 1).
 		@return the cell's four outer corners.
 	**/
 	public static function cornersOf(row:Int, col:Int):CellCorners {
-		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
-		var cols = Maze.colsForRow(row);
+		var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
+		var cols = Grid.colsForRow(row);
 		var halfPhi = Math.PI / cols;
-		var theta = Math.PI * row / (Maze.ROWS - 1);
+		var theta = Math.PI * row / (Grid.ROWS - 1);
 		var phi = 2 * Math.PI * (col + 0.5) / cols;
 
 		return {
@@ -214,7 +212,7 @@ class MazeMesh {
 
 		Clamped to the cell's own half-width so a cell doesn't invert near a
 		pole, where a column could otherwise be physically narrower than
-		WALL_THICKNESS itself — much less likely now that `Maze.colsForRow`
+		WALL_THICKNESS itself — much less likely now that `Grid.colsForRow`
 		reduces column count near the poles specifically to keep cell width
 		from collapsing there, but still a real possibility for a small or
 		oddly-tuned `WALL_THICKNESS`, so the clamp stays.
@@ -231,8 +229,8 @@ class MazeMesh {
 		keeps that end at the *full* outer theta instead, flush with
 		whatever continues it. The phi inset is unaffected either way —
 		it's the wall's thickness, not conditional on what's next door.
-		@param row the cell's row (1 to Maze.ROWS - 2).
-		@param col the cell's column (0 to Maze.colsForRow(row) - 1).
+		@param row the cell's row (1 to Grid.ROWS - 2).
+		@param col the cell's column (0 to Grid.colsForRow(row) - 1).
 		@param retreatNorth whether the north end retreats along theta (default true).
 		@param retreatSouth whether the south end retreats along theta (default true).
 		@return the cell's four inner corners.
@@ -240,20 +238,20 @@ class MazeMesh {
 	public static function innerCornersOf(row:Int, col:Int, ?retreatNorth:Bool, ?retreatSouth:Bool):CellCorners {
 		var doRetreatNorth = retreatNorth == null ? true : retreatNorth;
 		var doRetreatSouth = retreatSouth == null ? true : retreatSouth;
-		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
-		var cols = Maze.colsForRow(row);
+		var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
+		var cols = Grid.colsForRow(row);
 		var halfPhi = Math.PI / cols;
-		var theta = Math.PI * row / (Maze.ROWS - 1);
+		var theta = Math.PI * row / (Grid.ROWS - 1);
 		var phi = 2 * Math.PI * (col + 0.5) / cols;
 
-		var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / MazeGeometry.RADIUS);
+		var insetTheta = Math.min(halfTheta, GridGeometry.WALL_THICKNESS / GridGeometry.RADIUS);
 		var innerHalfThetaNorth = doRetreatNorth ? halfTheta - insetTheta : halfTheta;
 		var innerHalfThetaSouth = doRetreatSouth ? halfTheta - insetTheta : halfTheta;
 
 		var northTheta = theta - halfTheta;
 		var southTheta = theta + halfTheta;
-		var insetPhiNorth = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(northTheta)));
-		var insetPhiSouth = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(southTheta)));
+		var insetPhiNorth = Math.min(halfPhi, GridGeometry.WALL_THICKNESS / (GridGeometry.RADIUS * Math.sin(northTheta)));
+		var insetPhiSouth = Math.min(halfPhi, GridGeometry.WALL_THICKNESS / (GridGeometry.RADIUS * Math.sin(southTheta)));
 		var innerHalfPhiNorth = halfPhi - insetPhiNorth;
 		var innerHalfPhiSouth = halfPhi - insetPhiSouth;
 
@@ -267,57 +265,11 @@ class MazeMesh {
 
 	/** Walks every ring cell, calling `f` with its row/col. **/
 	static function eachCell(f:(row:Int, col:Int) -> Void):Void {
-		for (row in 1...(Maze.ROWS - 1)) {
-			for (col in 0...Maze.colsForRow(row)) {
+		for (row in 1...(Grid.ROWS - 1)) {
+			for (col in 0...Grid.colsForRow(row)) {
 				f(row, col);
 			}
 		}
-	}
-
-	/**
-		Appends a quad (as two triangles) to `points`/`idx`. Public so
-		`WallBuilder` — a separate class — can share it.
-		@param points vertex buffer to append to.
-		@param idx index buffer to append to.
-		@param a first corner, in perimeter order.
-		@param b second corner, in perimeter order.
-		@param c third corner, in perimeter order.
-		@param d fourth corner, in perimeter order.
-	**/
-	public static function addQuad(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, a:h3d.Vector, b:h3d.Vector, c:h3d.Vector, d:h3d.Vector):Void {
-		var start = points.length;
-		points.push(a);
-		points.push(b);
-		points.push(c);
-		points.push(d);
-
-		idx.push(start);
-		idx.push(start + 1);
-		idx.push(start + 2);
-		idx.push(start);
-		idx.push(start + 2);
-		idx.push(start + 3);
-	}
-
-	/**
-		Appends a triangle to `points`/`idx` — used for a floor cell's fan
-		triangulation (`addFloor`), which needs a variable vertex count per
-		cell rather than `addQuad`'s fixed four.
-		@param points vertex buffer to append to.
-		@param idx index buffer to append to.
-		@param a first corner.
-		@param b second corner.
-		@param c third corner.
-	**/
-	static function addTriangle(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, a:h3d.Vector, b:h3d.Vector, c:h3d.Vector):Void {
-		var start = points.length;
-		points.push(a);
-		points.push(b);
-		points.push(c);
-
-		idx.push(start);
-		idx.push(start + 1);
-		idx.push(start + 2);
 	}
 }
 
@@ -332,9 +284,9 @@ private class WallBuilder {
 	/** Wall UV buffer, parallel to `points` — one entry per vertex, in the same push order. **/
 	public final uvs:Array<h3d.prim.UV> = [];
 
-	final maze:MazeData;
+	final maze:GridData;
 
-	public function new(maze:MazeData) {
+	public function new(maze:GridData) {
 		this.maze = maze;
 	}
 
@@ -375,56 +327,56 @@ private class WallBuilder {
 		doubling boundary, zero elsewhere).
 	**/
 	public function addWallsAround(row:Int, col:Int):Void {
-		var outer = MazeMesh.cornersOf(row, col);
+		var outer = GridMesh.cornersOf(row, col);
 		var here = RingNode(row, col);
-		var cols = Maze.colsForRow(row);
+		var cols = Grid.colsForRow(row);
 		var west = RingNode(row, (col - 1 + cols) % cols);
 		var east = RingNode(row, (col + 1) % cols);
-		var westClosed = !Maze.isOpen(maze, here, west);
-		var eastClosed = !Maze.isOpen(maze, here, east);
+		var westClosed = !Grid.isOpen(maze, here, west);
+		var eastClosed = !Grid.isOpen(maze, here, east);
 
-		var northEntries = row == 1 ? null : Maze.rowBoundaryNeighbors(row, col, row - 1);
-		var southEntries = row == Maze.ROWS - 2 ? null : Maze.rowBoundaryNeighbors(row, col, row + 1);
+		var northEntries = row == 1 ? null : Grid.rowBoundaryNeighbors(row, col, row - 1);
+		var southEntries = row == Grid.ROWS - 2 ? null : Grid.rowBoundaryNeighbors(row, col, row + 1);
 		var northWestNode = row == 1 ? PoleNode(North) : northEntries[0].node;
 		var northEastNode = row == 1 ? PoleNode(North) : northEntries[northEntries.length - 1].node;
-		var southWestNode = row == Maze.ROWS - 2 ? PoleNode(South) : southEntries[0].node;
-		var southEastNode = row == Maze.ROWS - 2 ? PoleNode(South) : southEntries[southEntries.length - 1].node;
-		var northWestClosed = !Maze.isOpen(maze, here, northWestNode);
-		var northEastClosed = !Maze.isOpen(maze, here, northEastNode);
-		var southWestClosed = !Maze.isOpen(maze, here, southWestNode);
-		var southEastClosed = !Maze.isOpen(maze, here, southEastNode);
+		var southWestNode = row == Grid.ROWS - 2 ? PoleNode(South) : southEntries[0].node;
+		var southEastNode = row == Grid.ROWS - 2 ? PoleNode(South) : southEntries[southEntries.length - 1].node;
+		var northWestClosed = !Grid.isOpen(maze, here, northWestNode);
+		var northEastClosed = !Grid.isOpen(maze, here, northEastNode);
+		var southWestClosed = !Grid.isOpen(maze, here, southWestNode);
+		var southEastClosed = !Grid.isOpen(maze, here, southEastNode);
 
 		var northWestFlush = row != 1
-			&& isGenuineRowBoundaryCorner(cols, Maze.colsForRow(row - 1), col, true)
+			&& isGenuineRowBoundaryCorner(cols, Grid.colsForRow(row - 1), col, true)
 			&& !northWestClosed
 			&& continuesAcrossRowBoundary(northWestNode, true);
 		var northEastFlush = row != 1
-			&& isGenuineRowBoundaryCorner(cols, Maze.colsForRow(row - 1), col, false)
+			&& isGenuineRowBoundaryCorner(cols, Grid.colsForRow(row - 1), col, false)
 			&& !northEastClosed
 			&& continuesAcrossRowBoundary(northEastNode, false);
-		var southWestFlush = row != Maze.ROWS - 2
-			&& isGenuineRowBoundaryCorner(cols, Maze.colsForRow(row + 1), col, true)
+		var southWestFlush = row != Grid.ROWS - 2
+			&& isGenuineRowBoundaryCorner(cols, Grid.colsForRow(row + 1), col, true)
 			&& !southWestClosed
 			&& continuesAcrossRowBoundary(southWestNode, true);
-		var southEastFlush = row != Maze.ROWS - 2
-			&& isGenuineRowBoundaryCorner(cols, Maze.colsForRow(row + 1), col, false)
+		var southEastFlush = row != Grid.ROWS - 2
+			&& isGenuineRowBoundaryCorner(cols, Grid.colsForRow(row + 1), col, false)
 			&& !southEastClosed
 			&& continuesAcrossRowBoundary(southEastNode, false);
 
-		var westInner = MazeMesh.innerCornersOf(row, col, !northWestFlush, !southWestFlush);
-		var eastInner = MazeMesh.innerCornersOf(row, col, !northEastFlush, !southEastFlush);
+		var westInner = GridMesh.innerCornersOf(row, col, !northWestFlush, !southWestFlush);
+		var eastInner = GridMesh.innerCornersOf(row, col, !northEastFlush, !southEastFlush);
 
 		maybeAddPiece(here, west, outer.nw, outer.sw, westInner.nw, westInner.sw, !northWestClosed && !northWestFlush, !southWestClosed && !southWestFlush);
 		maybeAddPiece(here, east, outer.se, outer.ne, eastInner.se, eastInner.ne, !southEastClosed && !southEastFlush, !northEastClosed && !northEastFlush);
 
 		if (row == 1) {
-			var poleInner = MazeMesh.innerCornersOf(row, col);
+			var poleInner = GridMesh.innerCornersOf(row, col);
 			maybeAddPiece(here, PoleNode(North), outer.ne, outer.nw, poleInner.ne, poleInner.nw, !eastClosed, !westClosed);
 		} else {
 			addRowBoundaryPieces(here, row, col, row - 1, true, westClosed, eastClosed);
 		}
-		if (row == Maze.ROWS - 2) {
-			var poleInner = MazeMesh.innerCornersOf(row, col);
+		if (row == Grid.ROWS - 2) {
+			var poleInner = GridMesh.innerCornersOf(row, col);
 			maybeAddPiece(here, PoleNode(South), outer.sw, outer.se, poleInner.sw, poleInner.se, !westClosed, !eastClosed);
 		} else {
 			addRowBoundaryPieces(here, row, col, row + 1, false, westClosed, eastClosed);
@@ -445,13 +397,13 @@ private class WallBuilder {
 		@param wantWest whether to check that neighbor's own west side (true) or east side (false).
 		@return whether the wall continues flush into that neighbor.
 	**/
-	function continuesAcrossRowBoundary(neighborNode:MazeNode, wantWest:Bool):Bool {
+	function continuesAcrossRowBoundary(neighborNode:GridNode, wantWest:Bool):Bool {
 		return switch neighborNode {
 			case PoleNode(_): false;
 			case RingNode(nRow, nCol):
-				var nCols = Maze.colsForRow(nRow);
+				var nCols = Grid.colsForRow(nRow);
 				var neighborSide = RingNode(nRow, wantWest ? (nCol - 1 + nCols) % nCols : (nCol + 1) % nCols);
-				!Maze.isOpen(maze, neighborNode, neighborSide);
+				!Grid.isOpen(maze, neighborNode, neighborSide);
 		}
 	}
 
@@ -463,7 +415,7 @@ private class WallBuilder {
 
 		Only matters when this row has *more* columns than `otherRow` (a
 		single coarser cell then spans several of this row's own cells —
-		`Maze.rowBoundaryNeighbors` collapses them all to that one parent,
+		`Grid.rowBoundaryNeighbors` collapses them all to that one parent,
 		see its own doc): only this cell's outermost west or east corner
 		within that shared parent lands on one of the parent's own real
 		edges (where the parent meets ITS OWN west or east neighbor); every
@@ -473,7 +425,7 @@ private class WallBuilder {
 		into or a wall to meet. `col % ratio`/`(col + 1) % ratio` picks out
 		exactly those two outermost children (`ratio` is always this row's
 		column count divided by the coarser row's, an exact doubling at
-		every banding change — see `Maze.colsForRow`).
+		every banding change — see `Grid.colsForRow`).
 
 		Always true when this row's own column count is less than or equal
 		to `otherRow`'s: either a plain one-to-one row (every corner is a
@@ -497,13 +449,13 @@ private class WallBuilder {
 	/**
 		Adds this cell's piece(s) for its north (`towardNorth = true`) or
 		south side, toward `otherRow` — one piece per
-		`Maze.rowBoundaryNeighbors` entry, each spanning only that entry's
+		`Grid.rowBoundaryNeighbors` entry, each spanning only that entry's
 		own fraction of this cell's phi width (matching whichever of
 		`otherRow`'s cells actually borders it there), rather than assuming
 		a single neighbor spans the whole side the way west/east always do.
 
 		An entry's `phiStart`/`phiEnd` are already this cell's true *outer*
-		boundary phi for that fraction (`Maze.rowBoundaryNeighbors` computes
+		boundary phi for that fraction (`Grid.rowBoundaryNeighbors` computes
 		them the same way `cornersOf` does) — used directly for the outer
 		corners. The matching *inner* corners need the same fraction applied
 		to this cell's own inner phi range instead, so a split piece still
@@ -542,17 +494,17 @@ private class WallBuilder {
 		@param westClosed whether this cell's own west side is closed.
 		@param eastClosed whether this cell's own east side is closed.
 	**/
-	function addRowBoundaryPieces(here:MazeNode, row:Int, col:Int, otherRow:Int, towardNorth:Bool, westClosed:Bool, eastClosed:Bool):Void {
-		var theta = Math.PI * row / (Maze.ROWS - 1);
-		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
-		var cols = Maze.colsForRow(row);
+	function addRowBoundaryPieces(here:GridNode, row:Int, col:Int, otherRow:Int, towardNorth:Bool, westClosed:Bool, eastClosed:Bool):Void {
+		var theta = Math.PI * row / (Grid.ROWS - 1);
+		var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
+		var cols = Grid.colsForRow(row);
 		var centerPhi = 2 * Math.PI * (col + 0.5) / cols;
 		var halfPhi = Math.PI / cols;
-		var insetTheta = Math.min(halfTheta, MazeGeometry.WALL_THICKNESS / MazeGeometry.RADIUS);
+		var insetTheta = Math.min(halfTheta, GridGeometry.WALL_THICKNESS / GridGeometry.RADIUS);
 
 		var outerTheta = towardNorth ? theta - halfTheta : theta + halfTheta;
 		var innerTheta = towardNorth ? theta - (halfTheta - insetTheta) : theta + (halfTheta - insetTheta);
-		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (MazeGeometry.RADIUS * Math.sin(outerTheta)));
+		var insetPhi = Math.min(halfPhi, GridGeometry.WALL_THICKNESS / (GridGeometry.RADIUS * Math.sin(outerTheta)));
 		var outerRangeStart = centerPhi - halfPhi;
 		var outerRangeEnd = centerPhi + halfPhi;
 
@@ -563,7 +515,7 @@ private class WallBuilder {
 		var innerRangeStart = westFlush ? outerRangeStart : outerRangeStart + insetPhi;
 		var innerRangeEnd = eastFlush ? outerRangeEnd : outerRangeEnd - insetPhi;
 
-		var entries = Maze.rowBoundaryNeighbors(row, col, otherRow);
+		var entries = Grid.rowBoundaryNeighbors(row, col, otherRow);
 		for (i in 0...entries.length) {
 			var entry = entries[i];
 			var fractionStart = (entry.phiStart - outerRangeStart) / (2 * halfPhi);
@@ -574,13 +526,13 @@ private class WallBuilder {
 			// North orders its two corners (east, west); south orders them
 			// (west, east) — matches cornersOf/innerCornersOf's own nw/ne
 			// vs sw/se ordering for a whole (unsplit) piece.
-			var outerA = MazeMesh.cornerAt(outerTheta, towardNorth ? entry.phiEnd : entry.phiStart);
-			var outerB = MazeMesh.cornerAt(outerTheta, towardNorth ? entry.phiStart : entry.phiEnd);
-			var innerA = MazeMesh.cornerAt(innerTheta, towardNorth ? innerPhiEnd : innerPhiStart);
-			var innerB = MazeMesh.cornerAt(innerTheta, towardNorth ? innerPhiStart : innerPhiEnd);
+			var outerA = GridMesh.cornerAt(outerTheta, towardNorth ? entry.phiEnd : entry.phiStart);
+			var outerB = GridMesh.cornerAt(outerTheta, towardNorth ? entry.phiStart : entry.phiEnd);
+			var innerA = GridMesh.cornerAt(innerTheta, towardNorth ? innerPhiEnd : innerPhiStart);
+			var innerB = GridMesh.cornerAt(innerTheta, towardNorth ? innerPhiStart : innerPhiEnd);
 
-			var westEndCap = i == 0 ? (!westClosed && !westFlush) : Maze.isOpen(maze, here, entries[i - 1].node);
-			var eastEndCap = i == entries.length - 1 ? (!eastClosed && !eastFlush) : Maze.isOpen(maze, here, entries[i + 1].node);
+			var westEndCap = i == 0 ? (!westClosed && !westFlush) : Grid.isOpen(maze, here, entries[i - 1].node);
+			var eastEndCap = i == entries.length - 1 ? (!eastClosed && !eastFlush) : Grid.isOpen(maze, here, entries[i + 1].node);
 			var capA = towardNorth ? eastEndCap : westEndCap;
 			var capB = towardNorth ? westEndCap : eastEndCap;
 
@@ -607,9 +559,9 @@ private class WallBuilder {
 	**/
 	function continuesAcrossColumnBoundary(row:Int, neighborCol:Int, otherRow:Int, wantNeighborsEastmostEntry:Bool):Bool {
 		var neighborHere = RingNode(row, neighborCol);
-		var neighborEntries = Maze.rowBoundaryNeighbors(row, neighborCol, otherRow);
+		var neighborEntries = Grid.rowBoundaryNeighbors(row, neighborCol, otherRow);
 		var entry = wantNeighborsEastmostEntry ? neighborEntries[neighborEntries.length - 1] : neighborEntries[0];
-		return !Maze.isOpen(maze, neighborHere, entry.node);
+		return !Grid.isOpen(maze, neighborHere, entry.node);
 	}
 
 	/**
@@ -631,27 +583,27 @@ private class WallBuilder {
 		instead of a hexagonal one, chamfered by two overlapping diagonal cap
 		faces.
 	**/
-	function maybeAddPiece(a:MazeNode, b:MazeNode, outerA:h3d.Vector, outerB:h3d.Vector, innerA:h3d.Vector, innerB:h3d.Vector, capA:Bool, capB:Bool):Void {
-		if (Maze.isOpen(maze, a, b)) {
+	function maybeAddPiece(a:GridNode, b:GridNode, outerA:h3d.Vector, outerB:h3d.Vector, innerA:h3d.Vector, innerB:h3d.Vector, capA:Bool, capB:Bool):Void {
+		if (Grid.isOpen(maze, a, b)) {
 			return;
 		}
 
 		var center = new h3d.Vector(0, 0, 0);
 		var upA = game.SphereMath.upVectorAt(outerA, center);
 		var upB = game.SphereMath.upVectorAt(outerB, center);
-		var topOuterA = outerA.add(upA.scaled(MazeMesh.WALL_HEIGHT));
-		var topOuterB = outerB.add(upB.scaled(MazeMesh.WALL_HEIGHT));
-		var topInnerA = innerA.add(upA.scaled(MazeMesh.WALL_HEIGHT));
-		var topInnerB = innerB.add(upB.scaled(MazeMesh.WALL_HEIGHT));
+		var topOuterA = outerA.add(upA.scaled(GridMesh.WALL_HEIGHT));
+		var topOuterB = outerB.add(upB.scaled(GridMesh.WALL_HEIGHT));
+		var topInnerA = innerA.add(upA.scaled(GridMesh.WALL_HEIGHT));
+		var topInnerB = innerB.add(upB.scaled(GridMesh.WALL_HEIGHT));
 
 		// Chord length as a stand-in for arc length (cells are small relative
 		// to the sphere, so the two are close enough for texture tiling) —
 		// repeats the texture across the wall's length rather than stretching
 		// one tile to fit, so differently-sized walls read at a consistent
 		// texel density.
-		var uRepeat = outerA.sub(outerB).length() / MazeMesh.WALL_TEXTURE_TILE_SIZE;
-		var vHeight = MazeMesh.WALL_HEIGHT / MazeMesh.WALL_TEXTURE_TILE_SIZE;
-		var vThickness = MazeGeometry.WALL_THICKNESS / MazeMesh.WALL_TEXTURE_TILE_SIZE;
+		var uRepeat = outerA.sub(outerB).length() / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
+		var vHeight = GridMesh.WALL_HEIGHT / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
+		var vThickness = GridGeometry.WALL_THICKNESS / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
 
 		// Inner face — visible to a player standing in this cell.
 		addTexturedQuad(innerA, innerB, topInnerB, topInnerA, uRepeat, vHeight);
@@ -668,7 +620,7 @@ private class WallBuilder {
 
 	/** Appends a quad plus matching UVs — `a`/`d` at u=0, `b`/`c` at u=uRepeat, `a`/`b` at v=vSpan, `c`/`d` at v=0. **/
 	function addTexturedQuad(a:h3d.Vector, b:h3d.Vector, c:h3d.Vector, d:h3d.Vector, uRepeat:Float, vSpan:Float):Void {
-		MazeMesh.addQuad(points, idx, a, b, c, d);
+		MeshBuilder.addQuad(points, idx, a, b, c, d);
 		uvs.push(new h3d.prim.UV(0, vSpan));
 		uvs.push(new h3d.prim.UV(uRepeat, vSpan));
 		uvs.push(new h3d.prim.UV(uRepeat, 0));

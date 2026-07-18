@@ -2,18 +2,19 @@ package biomes;
 
 import entities.Player;
 import game.Biome;
-import game.Collision;
+import grid.Grid.GridData;
+import grid.GridCollision;
+import grid.GridGeometry;
+import grid.GridMesh;
 import world.Painting;
-import maze.Maze.MazeData;
-import maze.MazeGeometry;
-import maze.MazeMesh;
 
 /**
-	The one generated-maze biome that exists today — wraps `maze.Maze`/
-	`MazeMesh`/`game.Collision` behind the `Biome` contract. Its own maze
-	data can be swapped out via `reload` (see `Main`'s E/L export/import dev
-	tooling) without losing its place in whichever biome-id slot it's
-	registered under.
+	The one generated-maze biome that exists today — wraps `grid.Grid`/
+	`GridMesh`/`GridCollision` behind the `Biome` contract, plus its own
+	`MazeGenerator` for the spanning-tree layout that's specifically what
+	makes this a *maze*. Its own maze data can be swapped out via `reload`
+	(see `Main`'s E/L export/import dev tooling) without losing its place in
+	whichever biome-id slot it's registered under.
 **/
 class MazeBiome implements Biome {
 	public static inline final ID:String = "maze";
@@ -23,10 +24,10 @@ class MazeBiome implements Biome {
 		5's own boundaries (its cell's center theta), not just "somewhere in
 		the maze": the old `SPAWN_THETA` (1.3) landed only ~2.53 units from
 		the row 5/6 boundary, just barely outside the
-		`MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE`
-		(2.5) zone `Maze.wallZoneNeighbor` otherwise guarantees a player can
+		`GridGeometry.WALL_THICKNESS + GridGeometry.COLLISION_CLEARANCE`
+		(2.5) zone `Grid.wallZoneNeighbor` otherwise guarantees a player can
 		never get closer than. Centering on row 5 instead gives every
-		direction a comfortable margin. `Math.PI * 5 / (Maze.ROWS - 1)` —
+		direction a comfortable margin. `Math.PI * 5 / (Grid.ROWS - 1)` —
 		row 5's own center theta — spelled out as a literal since a `static
 		inline final` can't initialize from another class's constant.
 	**/
@@ -43,10 +44,10 @@ class MazeBiome implements Biome {
 	**/
 	static inline final RETURN_SPAWN_OFFSET:Float = 6;
 
-	var maze:MazeData;
+	var maze:GridData;
 	var exitWall:MazeExitWall.FoundWall;
 
-	public function new(maze:MazeData) {
+	public function new(maze:GridData) {
 		reload(maze);
 	}
 
@@ -56,13 +57,13 @@ class MazeBiome implements Biome {
 		different edges.
 		@param maze the maze data to adopt.
 	**/
-	public function reload(maze:MazeData):Void {
+	public function reload(maze:GridData):Void {
 		this.maze = maze;
 		this.exitWall = MazeExitWall.find(maze);
 	}
 
 	/** This biome's own current maze data — exposed for `Main`'s E (export) dev tool. **/
-	public function data():MazeData {
+	public function data():GridData {
 		return maze;
 	}
 
@@ -71,16 +72,16 @@ class MazeBiome implements Biome {
 	}
 
 	public function radius():Float {
-		return MazeGeometry.RADIUS;
+		return GridGeometry.RADIUS;
 	}
 
 	public function build(parent:h3d.scene.Object):Void {
-		MazeMesh.build(maze, parent);
+		GridMesh.build(maze, parent);
 		Painting.buildQuad(parent, exitWall.a, exitWall.b, exitWall.cellCenter, Painting.TO_HUB_COLOR);
 	}
 
 	public function spawnPlayer(returning:Bool):Player {
-		return returning ? playerInFrontOfExitWall() : Player.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, MazeGeometry.RADIUS);
+		return returning ? playerInFrontOfExitWall() : Player.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, GridGeometry.RADIUS);
 	}
 
 	public function exitPainting():Painting {
@@ -88,7 +89,7 @@ class MazeBiome implements Biome {
 	}
 
 	public function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {
-		Collision.tryMove(player, direction, distance, MazeGeometry.RADIUS, maze);
+		GridCollision.tryMove(player, direction, distance, GridGeometry.RADIUS, maze);
 	}
 
 	/**
@@ -106,7 +107,7 @@ class MazeBiome implements Biome {
 	function playerInFrontOfExitWall():Player {
 		var mid = Painting.midpointOf(exitWall.a, exitWall.b);
 		var intoRoom = exitWall.cellCenter.sub(mid).normalized();
-		var pos = mid.add(intoRoom.scaled(RETURN_SPAWN_OFFSET)).normalized().scaled(MazeGeometry.RADIUS);
+		var pos = mid.add(intoRoom.scaled(RETURN_SPAWN_OFFSET)).normalized().scaled(GridGeometry.RADIUS);
 
 		var posDir = pos.normalized();
 		var forward = intoRoom.sub(posDir.scaled(intoRoom.dot(posDir))).normalized();

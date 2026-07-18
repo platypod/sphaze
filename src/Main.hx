@@ -1,8 +1,9 @@
 import biomes.HubBiome;
 import biomes.MazeBiome;
+import biomes.maze.MazeGenerator;
 import entities.Player;
 import game.Biome;
-import maze.Maze;
+import grid.Grid;
 import world.BiomeRegistry;
 import world.Painting;
 
@@ -61,7 +62,7 @@ class Main extends hxd.App {
 		mazeGroup = new h3d.scene.Object(s3d);
 		biomeRegistry = new BiomeRegistry();
 		biomeRegistry.register(new HubBiome(), true); // always known - it's home, not something to stumble into
-		biomeRegistry.register(new MazeBiome(Maze.generate()));
+		biomeRegistry.register(new MazeBiome(MazeGenerator.generate()));
 		enterBiome(MazeBiome.ID, false);
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,
@@ -145,7 +146,7 @@ class Main extends hxd.App {
 		Downloads the current maze biome's data as a JSON file (E) — pairs
 		with L (`promptImportMaze`) to make a maze a specific bug showed up
 		in something that can actually be saved and handed back, instead of
-		lost the moment the page reloads (see `Maze.serialize`'s own doc).
+		lost the moment the page reloads (see `MazeGenerator.serialize`'s own doc).
 		No-ops outside a `MazeBiome` (e.g. while in the hub) — there's
 		nothing to export there.
 	**/
@@ -155,7 +156,7 @@ class Main extends hxd.App {
 			return;
 		}
 
-		var json = Maze.serialize(mazeBiome.data());
+		var json = MazeGenerator.serialize(mazeBiome.data());
 		var blob = new js.html.Blob([json], {type: "application/json"});
 		var url:String = js.Syntax.code("URL.createObjectURL({0})", blob);
 		var anchor:js.html.AnchorElement = cast js.Browser.document.createElement("a");
@@ -190,7 +191,7 @@ class Main extends hxd.App {
 			if (mazeBiome == null) {
 				return;
 			}
-			mazeBiome.reload(Maze.deserialize(reader.result));
+			mazeBiome.reload(MazeGenerator.deserialize(reader.result));
 			enterBiome(MazeBiome.ID, false);
 		};
 		reader.readAsText(file);
@@ -309,7 +310,7 @@ class Main extends hxd.App {
 	function updateDebugOverlay():Void {
 		var theta = game.SphereMath.thetaOf(player.pos);
 		var phi = game.SphereMath.phiOf(player.pos);
-		var node = Maze.nodeAt(theta, phi);
+		var node = Grid.nodeAt(theta, phi);
 
 		var thetaTangent = game.SphereMath.thetaTangentAt(theta, phi);
 		var phiTangent = game.SphereMath.phiTangentAt(phi);

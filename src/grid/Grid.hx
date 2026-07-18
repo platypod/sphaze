@@ -1,15 +1,17 @@
-package maze;
+package grid;
 
 /**
-	The maze lives on a latitude/longitude grid over the sphere. The two pole
-	rows would otherwise collapse into COLS degenerate slivers meeting at a
-	point, so each pole is a single merged node that every cell in the
-	adjacent ring connects to directly.
+	A latitude/longitude grid over the sphere — the substrate any grid-based
+	biome walks on (today: the maze; likely reused as-is by a future compass
+	or candlelight biome, per docs/game-design.md's backlog, since those read
+	as mechanic variations on the same corridors, not a different layout).
+	The two pole rows would otherwise collapse into COLS degenerate slivers
+	meeting at a point, so each pole is a single merged node that every cell
+	in the adjacent ring connects to directly.
 
-	Ported from old/src/maze/mazeGenerator.ts — the algorithm is engine-
-	agnostic, so it carries over unchanged; only language/API details differ
-	(a Haxe enum instead of a tagged union, a StringMap-backed set instead of
-	Set<string>).
+	Topology and queries only — generating a specific maze's open-edge
+	pattern is `biomes.maze.MazeGenerator`'s job, one biome's own content,
+	not this grid's.
 **/
 /** Which pole a `PoleNode` merges into. **/
 enum Pole {
@@ -17,27 +19,27 @@ enum Pole {
 	South;
 }
 
-/** A single cell on the maze grid: one of the two merged poles, or a ring cell at (row, col). **/
-enum MazeNode {
+/** A single cell on the grid: one of the two merged poles, or a ring cell at (row, col). **/
+enum GridNode {
 	PoleNode(pole:Pole);
 	RingNode(row:Int, col:Int);
 }
 
-/** A generated maze: which edges between adjacent nodes are open passages. **/
-typedef MazeData = {
-	/** Keys are `Maze.nodeKey`-formatted edge keys (see `Maze.isOpen`), not node keys. **/
+/** Which edges between adjacent nodes are open passages — a biome's own generated layout. **/
+typedef GridData = {
+	/** Keys are `Grid.nodeKey`-formatted edge keys (see `Grid.isOpen`), not node keys. **/
 	var openEdges:haxe.ds.StringMap<Bool>;
 }
 
 /**
 	One row-boundary neighbor a `RingNode` has toward an adjacent row, paired
 	with its own share of that cell's phi range on that side — see
-	`Maze.rowBoundaryNeighbors`.
+	`Grid.rowBoundaryNeighbors`.
 **/
-typedef RowBoundaryNeighbor = {node:MazeNode, phiStart:Float, phiEnd:Float}
+typedef RowBoundaryNeighbor = {node:GridNode, phiStart:Float, phiEnd:Float}
 
-/** Grid queries and generation for the maze defined by MazeNode/MazeData above. **/
-class Maze {
+/** Grid queries for the topology defined by GridNode/GridData above. **/
+class Grid {
 	/** Row count of the ring grid, poles excluded (poles are merged nodes, not rows). **/
 	public static inline final ROWS:Int = 14;
 
@@ -136,7 +138,7 @@ class Maze {
 		@param node the node to compute a key for.
 		@return the node's stable string key.
 	**/
-	public static function nodeKey(node:MazeNode):String {
+	public static function nodeKey(node:GridNode):String {
 		return switch node {
 			case PoleNode(North): "pole:north";
 			case PoleNode(South): "pole:south";
@@ -144,7 +146,16 @@ class Maze {
 		}
 	}
 
-	static function edgeKey(a:MazeNode, b:MazeNode):String {
+	/**
+		Stable string key for an edge between two nodes — public so
+		`biomes.maze.MazeGenerator` (and any future biome's own layout
+		generator) can populate a `GridData`'s `openEdges` map with the same
+		format `isOpen` reads it back through.
+		@param a one endpoint.
+		@param b the other endpoint.
+		@return the edge's stable string key.
+	**/
+	public static function edgeKey(a:GridNode, b:GridNode):String {
 		var keyA = nodeKey(a);
 		var keyB = nodeKey(b);
 		return keyA < keyB ? '$keyA|$keyB' : '$keyB|$keyA';
@@ -152,16 +163,16 @@ class Maze {
 
 	/**
 		Every node directly reachable from `node` on the grid (not accounting
-		for which edges the maze has actually opened). A ring cell's west/
-		east neighbors are always exactly one node (column count never
-		changes within a row); its north/south neighbors — unless it's the
-		one ring row adjacent to a pole, still its own special case — come
-		from `rowBoundaryNeighbors` and so can be more than one, at a row
-		boundary where column count doubles moving away from a pole.
+		for which edges a biome's own layout has actually opened). A ring
+		cell's west/east neighbors are always exactly one node (column count
+		never changes within a row); its north/south neighbors — unless it's
+		the one ring row adjacent to a pole, still its own special case —
+		come from `rowBoundaryNeighbors` and so can be more than one, at a
+		row boundary where column count doubles moving away from a pole.
 		@param node the node to find neighbors of.
 		@return `node`'s neighbors on the grid.
 	**/
-	public static function neighborsOf(node:MazeNode):Array<MazeNode> {
+	public static function neighborsOf(node:GridNode):Array<GridNode> {
 		return switch node {
 			case PoleNode(pole):
 				var row = pole == North ? 1 : ROWS - 2;
@@ -189,12 +200,13 @@ class Maze {
 
 	/**
 		Every node on the grid: the two poles plus every ring cell. Order is
-		significant only in that `generate` starts its spanning tree from the
-		first element.
+		significant only in that a layout generator (see
+		`biomes.maze.MazeGenerator.generate`) starts its spanning tree from
+		the first element.
 		@return every node on the grid.
 	**/
-	public static function allNodes():Array<MazeNode> {
-		var nodes:Array<MazeNode> = [PoleNode(North), PoleNode(South)];
+	public static function allNodes():Array<GridNode> {
+		var nodes:Array<GridNode> = [PoleNode(North), PoleNode(South)];
 		for (row in 1...(ROWS - 1)) {
 			for (col in 0...colsForRow(row)) {
 				nodes.push(RingNode(row, col));
@@ -204,87 +216,8 @@ class Maze {
 	}
 
 	/**
-		Generates a perfect maze (spanning tree — exactly one path between any
-		two cells) over the sphere's lat/long grid via randomized depth-first
-		search.
-		@param random source of randomness in [0, 1); defaults to Math.random.
-		@return the generated maze's open edges.
-	**/
-	public static function generate(?random:Void->Float):MazeData {
-		var rng = random != null ? random : Math.random;
-		var visited = new haxe.ds.StringMap<Bool>();
-		var openEdges = new haxe.ds.StringMap<Bool>();
-
-		var start = allNodes()[0];
-		if (start == null) {
-			return {openEdges: openEdges};
-		}
-
-		var stack:Array<MazeNode> = [start];
-		visited.set(nodeKey(start), true);
-
-		while (stack.length > 0) {
-			var current = stack[stack.length - 1];
-			if (current == null) {
-				break;
-			}
-
-			var unvisited = neighborsOf(current).filter(neighbor -> !visited.exists(nodeKey(neighbor)));
-			if (unvisited.length == 0) {
-				stack.pop();
-				continue;
-			}
-
-			var next = unvisited[Math.floor(rng() * unvisited.length)];
-			if (next == null) {
-				continue;
-			}
-			openEdges.set(edgeKey(current, next), true);
-			visited.set(nodeKey(next), true);
-			stack.push(next);
-		}
-
-		return {openEdges: openEdges};
-	}
-
-	/**
-		Serializes a generated maze to a JSON string, so a specific maze can
-		be saved to a file and reloaded later — instead of only ever having
-		whatever fresh random one the last page load produced, which made a
-		maze that a bug showed up in impossible to hand off or come back to.
-
-		Encodes the open edges only (as `nodeKey`-pair strings, same as
-		`openEdges`'s own keys) rather than the RNG seed that produced them:
-		this ties a saved maze to the *grid* (`ROWS`/`colsForRow`), which
-		only changes with a deliberate design change, not to `generate`'s
-		own algorithm, which could evolve — and it's what every other query
-		in this module already reads the maze through, so a deserialized
-		maze is exactly as valid as a freshly generated one, not a special case.
-		@param maze the maze to serialize.
-		@return a JSON string.
-	**/
-	public static function serialize(maze:MazeData):String {
-		var edges = [for (key in maze.openEdges.keys()) key];
-		return haxe.Json.stringify({openEdges: edges});
-	}
-
-	/**
-		Inverse of `serialize`.
-		@param json a JSON string produced by `serialize`.
-		@return the maze it encodes.
-	**/
-	public static function deserialize(json:String):MazeData {
-		var parsed:{openEdges:Array<String>} = haxe.Json.parse(json);
-		var openEdges = new haxe.ds.StringMap<Bool>();
-		for (key in parsed.openEdges) {
-			openEdges.set(key, true);
-		}
-		return {openEdges: openEdges};
-	}
-
-	/**
 		Which node a physical position on the grid's sphere belongs to —
-		the inverse of the cell/pole layout `MazeMesh.cornersOf` and
+		the inverse of the cell/pole layout `GridMesh.cornersOf` and
 		`neighborsOf` assume. Takes plain spherical coordinates rather than a
 		3D point so this module stays engine-agnostic (see the class doc);
 		callers on a 3D point go through `SphereMath.thetaOf`/`phiOf` first.
@@ -308,7 +241,7 @@ class Maze {
 		@param phi azimuth around Y, in radians, in [0, 2*pi).
 		@return the node the position falls within.
 	**/
-	public static function nodeAt(theta:Float, phi:Float):MazeNode {
+	public static function nodeAt(theta:Float, phi:Float):GridNode {
 		var halfTheta = Math.PI / (ROWS - 1) / 2;
 		if (theta < halfTheta) {
 			return PoleNode(North);
@@ -328,7 +261,7 @@ class Maze {
 
 	/**
 		A node's nominal position in spherical coordinates — the same
-		theta/phi `MazeMesh` derives a cell's corners around. For a pole this
+		theta/phi `GridMesh` derives a cell's corners around. For a pole this
 		is theta=0/pi at an arbitrary phi (meaningless there — the point
 		itself is what matters, see `entities.Player`'s class doc on the
 		phi singularity at the poles).
@@ -348,7 +281,7 @@ class Maze {
 		@param node the node to find the nominal center of.
 		@return the node's center in spherical coordinates.
 	**/
-	public static function centerOf(node:MazeNode):{theta:Float, phi:Float} {
+	public static function centerOf(node:GridNode):{theta:Float, phi:Float} {
 		return switch node {
 			case PoleNode(North): {theta: 0.0, phi: 0.0};
 			case PoleNode(South): {theta: Math.PI, phi: 0.0};
@@ -357,23 +290,23 @@ class Maze {
 	}
 
 	/**
-		Whether the maze has an open passage between two (necessarily
-		adjacent) nodes.
-		@param maze the maze to query.
+		Whether a biome's own layout has an open passage between two
+		(necessarily adjacent) nodes.
+		@param grid the layout to query.
 		@param a one endpoint.
 		@param b the other endpoint.
 		@return true if a passage is open between `a` and `b`.
 	**/
-	public static function isOpen(maze:MazeData, a:MazeNode, b:MazeNode):Bool {
-		return maze.openEdges.exists(edgeKey(a, b));
+	public static function isOpen(grid:GridData, a:GridNode, b:GridNode):Bool {
+		return grid.openEdges.exists(edgeKey(a, b));
 	}
 
 	/**
 		Which of `node`'s neighbors, if any, the position (theta, phi) has
 		crossed into the *wall-zone* of — the strip between this cell's own
 		inner boundary and its true outer boundary (see
-		`MazeMesh.innerCornersOf`), *plus* `MazeGeometry.COLLISION_CLEARANCE`,
-		on whichever side has a closed edge. Lets `game.Collision` block
+		`GridMesh.innerCornersOf`), *plus* `GridGeometry.COLLISION_CLEARANCE`,
+		on whichever side has a closed edge. Lets `grid.GridCollision` block
 		movement a bit short of the wall's actual visible face instead of
 		the old zero-thickness boundary line the wall no longer sits on —
 		without the base thickness, a player could walk into (and partway
@@ -386,7 +319,7 @@ class Maze {
 		isn't subdivided by column, so it has no per-neighbor wall-zone
 		concept the way a ring cell does. A player approaching a wall right
 		at the pole boundary is still stopped by the ordinary node-transition
-		check in `Collision.tryMoveForward` (just at the old zero-thickness
+		check in `GridCollision.tryMoveForward` (just at the old zero-thickness
 		line rather than the wall's actual face) — a known, small gap in an
 		already-distorted corner of the grid, not solved here.
 
@@ -399,20 +332,21 @@ class Maze {
 		comparison, every subsequent tick would see "still inside the zone"
 		and reject the *entire* step back to the exact starting position,
 		forever — a genuine, permanent lockup approaching square-on, where
-		`Collision.slideAlong`'s own square-hit fallback also has nothing to
-		slide with. Comparing against the tick's own starting depth instead
-		allows any move that's a net retreat (or sideways, not changing this
-		axis at all) while still blocking one that digs in further.
-		@param maze the maze whose closed edges have thickness.
+		`GridCollision.slideAlong`'s own square-hit fallback also has
+		nothing to slide with. Comparing against the tick's own starting
+		depth instead allows any move that's a net retreat (or sideways, not
+		changing this axis at all) while still blocking one that digs in
+		further.
+		@param grid the layout whose closed edges have thickness.
 		@param node the cell the position is nominally within.
 		@param fromTheta this tick's starting polar angle, before the attempted move.
 		@param fromPhi this tick's starting azimuth, before the attempted move.
 		@param theta the candidate position's polar angle.
 		@param phi the candidate position's azimuth.
-		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
+		@param radius sphere radius — must match the layout's physical sphere (see GridGeometry.RADIUS).
 		@return the neighbor whose wall-zone was entered *more deeply than at the start of this tick*, or null.
 	**/
-	public static function wallZoneNeighbor(maze:MazeData, node:MazeNode, fromTheta:Float, fromPhi:Float, theta:Float, phi:Float, radius:Float):Null<MazeNode> {
+	public static function wallZoneNeighbor(grid:GridData, node:GridNode, fromTheta:Float, fromPhi:Float, theta:Float, phi:Float, radius:Float):Null<GridNode> {
 		switch node {
 			case PoleNode(_):
 				return null;
@@ -421,7 +355,7 @@ class Maze {
 				var cols = colsForRow(row);
 				var halfTheta = Math.PI / (ROWS - 1) / 2;
 				var halfPhi = Math.PI / cols;
-				var blockAt = MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE;
+				var blockAt = GridGeometry.WALL_THICKNESS + GridGeometry.COLLISION_CLEARANCE;
 				var insetTheta = Math.min(halfTheta, blockAt / radius);
 				var insetPhi = Math.min(halfPhi, blockAt / (radius * Math.sin(center.theta)));
 
@@ -433,25 +367,25 @@ class Maze {
 				var west = RingNode(row, (col - 1 + cols) % cols);
 				var east = RingNode(row, (col + 1) % cols);
 
-				if (dPhi < -(halfPhi - insetPhi) && dPhi < fromDPhi && !isOpen(maze, node, west)) {
+				if (dPhi < -(halfPhi - insetPhi) && dPhi < fromDPhi && !isOpen(grid, node, west)) {
 					return west;
 				}
-				if (dPhi > (halfPhi - insetPhi) && dPhi > fromDPhi && !isOpen(maze, node, east)) {
+				if (dPhi > (halfPhi - insetPhi) && dPhi > fromDPhi && !isOpen(grid, node, east)) {
 					return east;
 				}
 				// North/south can be more than one node (a row boundary where
 				// column count doubles moving away from a pole) — pick
 				// whichever one the candidate's own phi actually sits above,
-				// matching whatever MazeMesh renders there.
+				// matching whatever GridMesh renders there.
 				if (dTheta < -(halfTheta - insetTheta) && dTheta < fromDTheta) {
 					var north = row == 1 ? PoleNode(North) : neighborAcrossRowBoundaryAt(row, col, row - 1, phi);
-					if (!isOpen(maze, node, north)) {
+					if (!isOpen(grid, node, north)) {
 						return north;
 					}
 				}
 				if (dTheta > (halfTheta - insetTheta) && dTheta > fromDTheta) {
 					var south = row == ROWS - 2 ? PoleNode(South) : neighborAcrossRowBoundaryAt(row, col, row + 1, phi);
-					if (!isOpen(maze, node, south)) {
+					if (!isOpen(grid, node, south)) {
 						return south;
 					}
 				}
@@ -473,7 +407,7 @@ class Maze {
 		@param phi the azimuth to find the matching neighbor for.
 		@return the specific neighbor whose phi range `phi` falls into (or nearest to).
 	**/
-	static function neighborAcrossRowBoundaryAt(row:Int, col:Int, otherRow:Int, phi:Float):MazeNode {
+	static function neighborAcrossRowBoundaryAt(row:Int, col:Int, otherRow:Int, phi:Float):GridNode {
 		var entries = rowBoundaryNeighbors(row, col, otherRow);
 		var closest:Null<RowBoundaryNeighbor> = null;
 		var closestDistance = Math.POSITIVE_INFINITY;

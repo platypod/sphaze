@@ -9,10 +9,11 @@ class TestMain {
 	static function main():Void {
 		var runner = new Runner();
 		runner.addCase(new SphereMathTest());
-		runner.addCase(new MazeTest());
+		runner.addCase(new GridTest());
+		runner.addCase(new MazeGeneratorTest());
 		runner.addCase(new PlayerTest());
-		runner.addCase(new MazeMeshTest());
-		runner.addCase(new CollisionTest());
+		runner.addCase(new GridMeshTest());
+		runner.addCase(new GridCollisionTest());
 		runner.addCase(new PaintingTest());
 		runner.addCase(new MazeExitWallTest());
 		runner.addCase(new BiomeRegistryTest());

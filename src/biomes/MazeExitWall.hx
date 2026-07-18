@@ -1,9 +1,9 @@
 package biomes;
 
-import maze.Maze;
-import maze.Maze.MazeData;
-import maze.Maze.MazeNode;
-import maze.MazeMesh;
+import grid.Grid;
+import grid.Grid.GridData;
+import grid.Grid.GridNode;
+import grid.GridMesh;
 
 /** The wall segment `MazeExitWall.find` found, plus enough context to render a painting flush against it. **/
 typedef FoundWall = {
@@ -37,19 +37,19 @@ class MazeExitWall {
 		@param maze the maze to find a wall in.
 		@return the found wall segment.
 	**/
-	public static function find(maze:MazeData):FoundWall {
-		for (row in 1...(Maze.ROWS - 1)) {
-			var cols = Maze.colsForRow(row);
+	public static function find(maze:GridData):FoundWall {
+		for (row in 1...(Grid.ROWS - 1)) {
+			var cols = Grid.colsForRow(row);
 			for (col in 0...cols) {
 				var here = RingNode(row, col);
 				var west = RingNode(row, (col - 1 + cols) % cols);
-				if (!Maze.isOpen(maze, here, west)) {
-					var inner = MazeMesh.innerCornersOf(row, col);
+				if (!Grid.isOpen(maze, here, west)) {
+					var inner = GridMesh.innerCornersOf(row, col);
 					return {a: inner.nw, b: inner.sw, cellCenter: cellCenterOf(row, col)};
 				}
 				var east = RingNode(row, (col + 1) % cols);
-				if (!Maze.isOpen(maze, here, east)) {
-					var inner = MazeMesh.innerCornersOf(row, col);
+				if (!Grid.isOpen(maze, here, east)) {
+					var inner = GridMesh.innerCornersOf(row, col);
 					return {a: inner.ne, b: inner.se, cellCenter: cellCenterOf(row, col)};
 				}
 			}
@@ -57,11 +57,11 @@ class MazeExitWall {
 		throw "unreachable: a generated/imported maze is a spanning tree, so some west/east edge is always closed somewhere";
 	}
 
-	/** A ring cell's center point — same theta/phi formula `MazeMesh.cornersOf`/`innerCornersOf` use internally. **/
+	/** A ring cell's center point — same theta/phi formula `GridMesh.cornersOf`/`innerCornersOf` use internally. **/
 	static function cellCenterOf(row:Int, col:Int):h3d.Vector {
-		var theta = Math.PI * row / (Maze.ROWS - 1);
-		var cols = Maze.colsForRow(row);
+		var theta = Math.PI * row / (Grid.ROWS - 1);
+		var cols = Grid.colsForRow(row);
 		var phi = 2 * Math.PI * (col + 0.5) / cols;
-		return MazeMesh.cornerAt(theta, phi);
+		return GridMesh.cornerAt(theta, phi);
 	}
 }

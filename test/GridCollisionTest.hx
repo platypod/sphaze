@@ -1,35 +1,36 @@
 import utest.Test;
 import utest.Assert;
 import entities.Player;
-import game.Collision;
+import grid.GridCollision;
 import game.SphereMath;
-import maze.Maze;
-import maze.Maze.MazeNode;
-import maze.Maze.MazeData;
-import maze.Maze.RowBoundaryNeighbor;
-import maze.MazeGeometry;
-import MazeTest.SeededRandom;
+import grid.Grid;
+import grid.Grid.GridNode;
+import grid.Grid.GridData;
+import grid.Grid.RowBoundaryNeighbor;
+import grid.GridGeometry;
+import biomes.maze.MazeGenerator;
+import MazeGeneratorTest.SeededRandom;
 
 /**
-	Exercises Collision.tryMoveForward against a real generated maze (see
-	MazeTest's SeededRandom) rather than a hand-built edge map — that way
-	these tests go through the same `Maze.nodeAt`/`isOpen` machinery the game
-	itself does, instead of duplicating its edge-key format.
+	Exercises GridCollision.tryMoveForward against a real generated maze (see
+	MazeGeneratorTest's SeededRandom) rather than a hand-built edge map — that
+	way these tests go through the same `Grid.nodeAt`/`isOpen` machinery the
+	game itself does, instead of duplicating its edge-key format.
 **/
-class CollisionTest extends Test {
+class GridCollisionTest extends Test {
 	static inline final RADIUS:Float = 50;
 
 	function testMoveWithinTheSameNodeIsAlwaysAllowed():Void {
-		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open anywhere
+		var maze:GridData = {openEdges: new haxe.ds.StringMap()}; // nothing open anywhere
 		// A cell *center* rather than theta=pi/2: ROWS-1 is odd, so no row
 		// center actually sits on the equator — pi/2 is exactly the boundary
 		// between row 7 and row 8, which made this flaky (a tiny step could
 		// round to either side).
-		var theta = Math.PI * 5 / (Maze.ROWS - 1);
-		var phi = 2 * Math.PI * 10.5 / Maze.COLS; // column phi is boundary-anchored — the center is at col+0.5
+		var theta = Math.PI * 5 / (Grid.ROWS - 1);
+		var phi = 2 * Math.PI * 10.5 / Grid.COLS; // column phi is boundary-anchored — the center is at col+0.5
 		var player = Player.spawnAt(theta, phi, 0, RADIUS);
 
-		var moved = Collision.tryMoveForward(player, 0.01, RADIUS, maze); // far short of a cell boundary
+		var moved = GridCollision.tryMoveForward(player, 0.01, RADIUS, maze); // far short of a cell boundary
 
 		Assert.isTrue(moved);
 	}
@@ -41,15 +42,15 @@ class CollisionTest extends Test {
 		var row = 5;
 		var col = 10;
 		var here = RingNode(row, col);
-		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
+		var maze:GridData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
 
-		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
-		var centerPhi = 2 * Math.PI * (col + 0.5) / Maze.COLS; // column phi is boundary-anchored
-		var halfPhi = Math.PI / Maze.COLS;
-		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
+		var centerTheta = Math.PI * row / (Grid.ROWS - 1);
+		var centerPhi = 2 * Math.PI * (col + 0.5) / Grid.COLS; // column phi is boundary-anchored
+		var halfPhi = Math.PI / Grid.COLS;
+		var insetPhi = Math.min(halfPhi, GridGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
 
 		// Just inside the wall-zone: past (halfPhi - insetPhi), short of
-		// halfPhi. Maze.nodeAt still classifies this as `here` (confirmed
+		// halfPhi. Grid.nodeAt still classifies this as `here` (confirmed
 		// below) — the pre-thickness model would have allowed walking
 		// further still, right up to halfPhi, since it had no concept of the
 		// wall occupying part of the cell.
@@ -57,10 +58,10 @@ class CollisionTest extends Test {
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, phi);
 		var forward = SphereMath.phiTangentAt(phi); // due east, straight at the wall
 
-		Assert.isTrue(Maze.nodeKey(Maze.nodeAt(centerTheta, phi)) == Maze.nodeKey(here));
+		Assert.isTrue(Grid.nodeKey(Grid.nodeAt(centerTheta, phi)) == Grid.nodeKey(here));
 
 		var player = new Player(pos0, forward);
-		var moved = Collision.tryMoveForward(player, 0.1, RADIUS, maze); // tiny step, nowhere near nodeAt's own boundary
+		var moved = GridCollision.tryMoveForward(player, 0.1, RADIUS, maze); // tiny step, nowhere near nodeAt's own boundary
 
 		Assert.isFalse(moved);
 	}
@@ -77,12 +78,12 @@ class CollisionTest extends Test {
 		// here to prove the block doesn't depend on it.
 		var row = 5;
 		var col = 10;
-		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
+		var maze:GridData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
 
-		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
-		var centerPhi = 2 * Math.PI * (col + 0.5) / Maze.COLS; // column phi is boundary-anchored
-		var halfPhi = Math.PI / Maze.COLS;
-		var insetPhi = Math.min(halfPhi, MazeGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
+		var centerTheta = Math.PI * row / (Grid.ROWS - 1);
+		var centerPhi = 2 * Math.PI * (col + 0.5) / Grid.COLS; // column phi is boundary-anchored
+		var halfPhi = Math.PI / Grid.COLS;
+		var insetPhi = Math.min(halfPhi, GridGeometry.WALL_THICKNESS / (RADIUS * Math.sin(centerTheta)));
 
 		var phi = centerPhi + (halfPhi - insetPhi / 2);
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, phi);
@@ -90,7 +91,7 @@ class CollisionTest extends Test {
 		var player = new Player(pos0, forward);
 		var strafeDirection = SphereMath.phiTangentAt(phi); // due east, straight at the wall
 
-		var moved = Collision.tryMove(player, strafeDirection, 0.1, RADIUS, maze);
+		var moved = GridCollision.tryMove(player, strafeDirection, 0.1, RADIUS, maze);
 
 		Assert.isFalse(moved);
 	}
@@ -115,22 +116,22 @@ class CollisionTest extends Test {
 		// Seed 3 (used by the other tests in this file) has no match once
 		// findFreeStandingEastWall is restricted to rows 4-6 (see its own
 		// doc for why) — seed 1 does.
-		var maze = Maze.generate(new SeededRandom(1).next);
+		var maze = MazeGenerator.generate(new SeededRandom(1).next);
 		var wall = findFreeStandingEastWall(maze);
 		if (wall == null) {
 			Assert.fail("no free-standing east wall found for this seed — pick another");
 			return;
 		}
 
-		var wallCols = Maze.colsForRow(wall.row);
-		var centerTheta = Math.PI * wall.row / (Maze.ROWS - 1);
+		var wallCols = Grid.colsForRow(wall.row);
+		var centerTheta = Math.PI * wall.row / (Grid.ROWS - 1);
 		var centerPhi = 2 * Math.PI * (wall.col + 0.5) / wallCols; // column phi is boundary-anchored
 		var halfPhi = Math.PI / wallCols;
-		// Matches Maze.wallZoneNeighbor's own blocking distance exactly —
+		// Matches Grid.wallZoneNeighbor's own blocking distance exactly —
 		// COLLISION_CLEARANCE on top of WALL_THICKNESS, not the rendered
 		// wall's thickness alone — so this offset is actually outside the
 		// zone the real code blocks at, not just outside the render.
-		var insetPhi = Math.min(halfPhi, (MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE) / (RADIUS * Math.sin(centerTheta)));
+		var insetPhi = Math.min(halfPhi, (GridGeometry.WALL_THICKNESS + GridGeometry.COLLISION_CLEARANCE) / (RADIUS * Math.sin(centerTheta)));
 
 		// Starts short of the wall zone (unlike the other tests here, which
 		// place pos0 right at its edge) — this needs room to slide toward
@@ -155,7 +156,7 @@ class CollisionTest extends Test {
 		var totalMoved = 0.0;
 		for (_ in 0...ticks) {
 			var before = player.pos;
-			Collision.tryMoveForward(player, stepDistance, RADIUS, maze);
+			GridCollision.tryMoveForward(player, stepDistance, RADIUS, maze);
 			totalMoved += player.pos.sub(before).length();
 		}
 
@@ -190,17 +191,17 @@ class CollisionTest extends Test {
 		// entry seam away from a doubling boundary, so this is the correct
 		// stand-in for how a normal, uniform-width slide gets positioned.
 		var row = 1;
-		var maze = Maze.generate(new SeededRandom(1).next);
+		var maze = MazeGenerator.generate(new SeededRandom(1).next);
 		var wall = findFreeStandingSouthWall(maze, row);
 		if (wall == null) {
 			Assert.fail('no free-standing south wall found in row $row for this seed — pick another');
 			return;
 		}
 
-		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
+		var centerTheta = Math.PI * row / (Grid.ROWS - 1);
 		var centerPhi = (wall.entry.phiStart + wall.entry.phiEnd) / 2;
-		var halfTheta = Math.PI / (Maze.ROWS - 1) / 2;
-		var insetTheta = Math.min(halfTheta, (MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE) / RADIUS);
+		var halfTheta = Math.PI / (Grid.ROWS - 1) / 2;
+		var insetTheta = Math.min(halfTheta, (GridGeometry.WALL_THICKNESS + GridGeometry.COLLISION_CLEARANCE) / RADIUS);
 
 		var theta = centerTheta + (halfTheta - insetTheta) * 0.5;
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, theta, centerPhi);
@@ -221,7 +222,7 @@ class CollisionTest extends Test {
 		var totalMoved = 0.0;
 		for (_ in 0...ticks) {
 			var before = player.pos;
-			Collision.tryMoveForward(player, stepDistance, RADIUS, maze);
+			GridCollision.tryMoveForward(player, stepDistance, RADIUS, maze);
 			totalMoved += player.pos.sub(before).length();
 		}
 
@@ -230,29 +231,29 @@ class CollisionTest extends Test {
 
 	/**
 		First parent column (in order) of `row` whose full south boundary is
-		closed (every `Maze.rowBoundaryNeighbors` entry toward `row + 1`)
+		closed (every `Grid.rowBoundaryNeighbors` entry toward `row + 1`)
 		while its own west/east stay open for a couple of columns — a free-
 		standing north/south wall with room to slide along.
 		@param maze the maze to search.
 		@param row the row to search within.
 		@return the cell's column and its first south-boundary sub-entry, or null if this seed has none.
 	**/
-	function findFreeStandingSouthWall(maze:MazeData, row:Int):Null<{col:Int, entry:RowBoundaryNeighbor}> {
-		var cols = Maze.colsForRow(row);
+	function findFreeStandingSouthWall(maze:GridData, row:Int):Null<{col:Int, entry:RowBoundaryNeighbor}> {
+		var cols = Grid.colsForRow(row);
 		for (col in 0...cols) {
 			var here = RingNode(row, col);
 			var west = RingNode(row, (col - 1 + cols) % cols);
 			var east = RingNode(row, (col + 1) % cols);
 			var east2 = RingNode(row, (col + 2) % cols);
-			var entries = Maze.rowBoundaryNeighbors(row, col, row + 1);
+			var entries = Grid.rowBoundaryNeighbors(row, col, row + 1);
 			var allClosed = true;
 			for (entry in entries) {
-				if (Maze.isOpen(maze, here, entry.node)) {
+				if (Grid.isOpen(maze, here, entry.node)) {
 					allClosed = false;
 					break;
 				}
 			}
-			if (allClosed && Maze.isOpen(maze, here, west) && Maze.isOpen(maze, here, east) && Maze.isOpen(maze, east, east2)) {
+			if (allClosed && Grid.isOpen(maze, here, west) && Grid.isOpen(maze, here, east) && Grid.isOpen(maze, east, east2)) {
 				return {col: col, entry: entries[0]};
 			}
 		}
@@ -264,7 +265,7 @@ class CollisionTest extends Test {
 		// angle) into a wall until pressed right up against its face, then
 		// trying to back away, left the player permanently frozen — not
 		// just slowed, completely stuck, every direction, forever. Root
-		// cause was Maze.wallZoneNeighbor treating "candidate position is
+		// cause was Grid.wallZoneNeighbor treating "candidate position is
 		// still nominally within the wall's thickness zone" as blocked,
 		// full stop — with no notion of whether the candidate was deeper
 		// into the zone than where the step started. The zone is thicker
@@ -278,7 +279,7 @@ class CollisionTest extends Test {
 		// Checks that retreating actually gets back near the starting
 		// point, rather than asserting a fixed minimum on every single
 		// tick: row 5 isn't exactly on the equator (no row center is,
-		// ROWS-1 being odd — see MazeMeshTest's own note on this), so "due
+		// ROWS-1 being odd — see GridMeshTest's own note on this), so "due
 		// east" isn't quite a geodesic there, and `forward` drifts a little
 		// off being exactly wall-perpendicular over the approach — a real
 		// but harmless side effect of the sphere's curvature (unrelated to
@@ -286,22 +287,22 @@ class CollisionTest extends Test {
 		// symmetrically rather than at a fixed per-tick rate.
 		var row = 5;
 		var col = 10;
-		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
+		var maze:GridData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
 
-		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
-		var centerPhi = 2 * Math.PI * (col + 0.5) / Maze.COLS; // column phi is boundary-anchored
+		var centerTheta = Math.PI * row / (Grid.ROWS - 1);
+		var centerPhi = 2 * Math.PI * (col + 0.5) / Grid.COLS; // column phi is boundary-anchored
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, centerPhi);
 		var forward = SphereMath.phiTangentAt(centerPhi); // due east, straight at the wall, square-on
 		var player = new Player(pos0, forward);
 
 		var step = 15.0 / 60; // Main.WALK_SPEED * FIXED_DT, the real per-tick distance
 		for (_ in 0...20) {
-			Collision.tryMoveForward(player, step, RADIUS, maze); // walk into the wall until pressed against it
+			GridCollision.tryMoveForward(player, step, RADIUS, maze); // walk into the wall until pressed against it
 		}
 		var pressedPhi = SphereMath.phiOf(player.pos);
 
 		for (_ in 0...20) {
-			Collision.tryMoveForward(player, -step, RADIUS, maze); // retreat
+			GridCollision.tryMoveForward(player, -step, RADIUS, maze); // retreat
 		}
 
 		// A permanent lockup would leave phi exactly where it was pressed
@@ -320,15 +321,15 @@ class CollisionTest extends Test {
 	function testRetreatingFromASquareOnWallHitWorksAtEveryReducedColumnRow():Void {
 		// The same square-on-retreat check as the test above, repeated at
 		// each row whose column count differs from the equatorial band
-		// (rows 1, 3, 10, 12 — see Maze.colsForRow) — this is what actually
+		// (rows 1, 3, 10, 12 — see Grid.colsForRow) — this is what actually
 		// exercises wallZoneNeighbor's colsForRow-based halfPhi/west/east,
-		// rather than the flat Maze.COLS it used before.
+		// rather than the flat Grid.COLS it used before.
 		for (row in [1, 3, 10, 12]) {
 			var col = 0;
-			var cols = Maze.colsForRow(row);
-			var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
+			var cols = Grid.colsForRow(row);
+			var maze:GridData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> the east edge is closed
 
-			var centerTheta = Math.PI * row / (Maze.ROWS - 1);
+			var centerTheta = Math.PI * row / (Grid.ROWS - 1);
 			var centerPhi = 2 * Math.PI * (col + 0.5) / cols;
 			var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, centerPhi);
 			var forward = SphereMath.phiTangentAt(centerPhi); // due east, straight at the wall, square-on
@@ -336,12 +337,12 @@ class CollisionTest extends Test {
 
 			var step = 15.0 / 60;
 			for (_ in 0...20) {
-				Collision.tryMoveForward(player, step, RADIUS, maze);
+				GridCollision.tryMoveForward(player, step, RADIUS, maze);
 			}
 			var pressedPhi = SphereMath.phiOf(player.pos);
 
 			for (_ in 0...20) {
-				Collision.tryMoveForward(player, -step, RADIUS, maze);
+				GridCollision.tryMoveForward(player, -step, RADIUS, maze);
 			}
 
 			var finalPhi = SphereMath.phiOf(player.pos);
@@ -358,11 +359,11 @@ class CollisionTest extends Test {
 		// open must be treated independently — approaching square-on into
 		// the closed one's own phi range blocks, approaching into the open
 		// one's doesn't, even though both are "row 1 col 0's south side".
-		var maze:MazeData = {openEdges: new haxe.ds.StringMap()};
+		var maze:GridData = {openEdges: new haxe.ds.StringMap()};
 		var row = 1;
 		var col = 0;
 		var otherRow = 2;
-		var entries = Maze.rowBoundaryNeighbors(row, col, otherRow);
+		var entries = Grid.rowBoundaryNeighbors(row, col, otherRow);
 		Assert.equals(2, entries.length); // row 1 -> row 2 is a doubling boundary
 
 		var closedChild = entries[0];
@@ -373,7 +374,7 @@ class CollisionTest extends Test {
 		}
 		maze.openEdges.set(nodeKeyPairForTest(RingNode(row, col), openChild.node), true);
 
-		var centerTheta = Math.PI * row / (Maze.ROWS - 1);
+		var centerTheta = Math.PI * row / (Grid.ROWS - 1);
 		var step = 15.0 / 60;
 
 		// Toward the closed child's own phi range: should press against it
@@ -382,9 +383,9 @@ class CollisionTest extends Test {
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, closedPhi);
 		var player = new Player(pos0, SphereMath.thetaTangentAt(centerTheta, closedPhi));
 		for (_ in 0...20) {
-			Collision.tryMoveForward(player, step, RADIUS, maze);
+			GridCollision.tryMoveForward(player, step, RADIUS, maze);
 		}
-		Assert.isTrue(SphereMath.thetaOf(player.pos) < centerTheta + Math.PI / (Maze.ROWS - 1) / 2, "blocked short of the row boundary");
+		Assert.isTrue(SphereMath.thetaOf(player.pos) < centerTheta + Math.PI / (Grid.ROWS - 1) / 2, "blocked short of the row boundary");
 
 		// Toward the open child's own phi range: nothing should stop it at
 		// all — it should cross cleanly into row 2.
@@ -392,19 +393,19 @@ class CollisionTest extends Test {
 		var pos1 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, openPhi);
 		var player2 = new Player(pos1, SphereMath.thetaTangentAt(centerTheta, openPhi));
 		for (_ in 0...40) {
-			Collision.tryMoveForward(player2, step, RADIUS, maze);
+			GridCollision.tryMoveForward(player2, step, RADIUS, maze);
 		}
-		var landedRow = switch Maze.nodeAt(SphereMath.thetaOf(player2.pos), SphereMath.phiOf(player2.pos)) {
+		var landedRow = switch Grid.nodeAt(SphereMath.thetaOf(player2.pos), SphereMath.phiOf(player2.pos)) {
 			case RingNode(r, _): r;
 			case PoleNode(_): -1;
 		}
 		Assert.equals(otherRow, landedRow);
 	}
 
-	/** Test-only stand-in for Maze's private edgeKey — same sort-then-join format. **/
-	function nodeKeyPairForTest(a:MazeNode, b:MazeNode):String {
-		var keyA = Maze.nodeKey(a);
-		var keyB = Maze.nodeKey(b);
+	/** Test-only stand-in for Grid's private edgeKey — same sort-then-join format. **/
+	function nodeKeyPairForTest(a:GridNode, b:GridNode):String {
+		var keyA = Grid.nodeKey(a);
+		var keyB = Grid.nodeKey(b);
 		return keyA < keyB ? '$keyA|$keyB' : '$keyB|$keyA';
 	}
 
@@ -425,9 +426,9 @@ class CollisionTest extends Test {
 		@param maze the maze to search.
 		@return the cell's row/col, or null if this seed has none.
 	**/
-	function findFreeStandingEastWall(maze:MazeData):Null<{row:Int, col:Int}> {
+	function findFreeStandingEastWall(maze:GridData):Null<{row:Int, col:Int}> {
 		for (row in 4...7) {
-			var cols = Maze.colsForRow(row);
+			var cols = Grid.colsForRow(row);
 			for (col in 0...cols) {
 				var here = RingNode(row, col);
 				var east = RingNode(row, (col + 1) % cols);
@@ -435,8 +436,8 @@ class CollisionTest extends Test {
 				var south = RingNode(row + 1, col);
 				var south2 = RingNode(row + 2, col);
 				var south3 = RingNode(row + 3, col);
-				if (!Maze.isOpen(maze, here, east) && Maze.isOpen(maze, here, north) && Maze.isOpen(maze, here, south) && Maze.isOpen(maze, south, south2)
-					&& Maze.isOpen(maze, south2, south3)) {
+				if (!Grid.isOpen(maze, here, east) && Grid.isOpen(maze, here, north) && Grid.isOpen(maze, here, south) && Grid.isOpen(maze, south, south2)
+					&& Grid.isOpen(maze, south2, south3)) {
 					return {row: row, col: col};
 				}
 			}
@@ -453,15 +454,15 @@ class CollisionTest extends Test {
 	}
 
 	function testMoveAtAnAngleIntoAClosedEdgeSlidesAlongTheWallInstead():Void {
-		var maze = Maze.generate(new SeededRandom(3).next);
+		var maze = MazeGenerator.generate(new SeededRandom(3).next);
 		var pair = findPair(maze, false);
 		if (pair == null) {
 			Assert.fail("no closed edge found for this seed — pick another");
 			return;
 		}
 
-		var fromCenter = Maze.centerOf(pair.from);
-		var toCenter = Maze.centerOf(pair.to);
+		var fromCenter = Grid.centerOf(pair.from);
+		var toCenter = Grid.centerOf(pair.to);
 		var fromDir = SphereMath.sphericalToCartesian(1, fromCenter.theta, fromCenter.phi);
 		var toDir = SphereMath.sphericalToCartesian(1, toCenter.theta, toCenter.phi);
 		var axis = fromDir.cross(toDir).normalized();
@@ -476,7 +477,7 @@ class CollisionTest extends Test {
 
 		// intoWall: continuing straight on toward the neighbor from here.
 		// wallTangent: perpendicular to that, in the tangent plane — exactly
-		// what Collision.slideAlong itself derives from the blocked node.
+		// what GridCollision.slideAlong itself derives from the blocked node.
 		var intoWall = axis.cross(pos0Dir).normalized();
 		var wallTangent = pos0Dir.cross(toDir).normalized();
 		// Squarely between "straight at the wall" and "along the wall" —
@@ -485,7 +486,7 @@ class CollisionTest extends Test {
 		var distance = 0.5; // comfortably covers the small remaining gap even split diagonally
 
 		var player = new Player(pos0, forward);
-		var moved = Collision.tryMoveForward(player, distance, RADIUS, maze);
+		var moved = GridCollision.tryMoveForward(player, distance, RADIUS, maze);
 
 		Assert.isTrue(moved);
 		Assert.isTrue(player.pos.sub(pos0).length() > 0.01); // actually slid, not just stopped
@@ -496,32 +497,32 @@ class CollisionTest extends Test {
 		Assert.floatEquals(1, player.forward.length(), 1e-6);
 		Assert.floatEquals(0, player.pos.normalized().dot(player.forward), 1e-6);
 
-		var landedNode = Maze.nodeAt(SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos));
-		Assert.isTrue(Maze.nodeKey(landedNode) == Maze.nodeKey(pair.from) || Maze.isOpen(maze, pair.from, landedNode));
+		var landedNode = Grid.nodeAt(SphereMath.thetaOf(player.pos), SphereMath.phiOf(player.pos));
+		Assert.isTrue(Grid.nodeKey(landedNode) == Grid.nodeKey(pair.from) || Grid.isOpen(maze, pair.from, landedNode));
 	}
 
 	function assertMoveAcrossEdge(wantOpen:Bool):Void {
-		var maze = Maze.generate(new SeededRandom(3).next);
+		var maze = MazeGenerator.generate(new SeededRandom(3).next);
 		var pair = findPair(maze, wantOpen);
 		if (pair == null) {
 			Assert.fail('no ${wantOpen ? "open" : "closed"} edge found for this seed — pick another');
 			return;
 		}
 
-		var fromCenter = Maze.centerOf(pair.from);
-		var toCenter = Maze.centerOf(pair.to);
+		var fromCenter = Grid.centerOf(pair.from);
+		var toCenter = Grid.centerOf(pair.to);
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, fromCenter.theta, fromCenter.phi);
 		var posTarget = SphereMath.sphericalToCartesian(RADIUS, toCenter.theta, toCenter.phi);
 
 		// The exact great-circle direction/distance from pos0 to posTarget —
-		// see Collision's class doc: a step landing exactly on the
+		// see GridCollision's class doc: a step landing exactly on the
 		// neighboring cell's center is the clearest case to assert against.
 		var axis = pos0.cross(posTarget).normalized();
 		var forward = axis.cross(pos0.normalized()).normalized();
 		var distance = Math.acos(hxd.Math.clamp(pos0.normalized().dot(posTarget.normalized()), -1, 1)) * RADIUS;
 
 		var player = new Player(pos0, forward);
-		var moved = Collision.tryMoveForward(player, distance, RADIUS, maze);
+		var moved = GridCollision.tryMoveForward(player, distance, RADIUS, maze);
 
 		Assert.equals(wantOpen, moved);
 		var expected = wantOpen ? posTarget : pos0;
@@ -530,11 +531,11 @@ class CollisionTest extends Test {
 		Assert.floatEquals(expected.z, player.pos.z, 1e-6);
 	}
 
-	/** First node pair (in `Maze.allNodes()`/`neighborsOf` order) whose edge's open-ness matches `wantOpen`. **/
-	function findPair(maze:MazeData, wantOpen:Bool):Null<{from:MazeNode, to:MazeNode}> {
-		for (node in Maze.allNodes()) {
-			for (neighbor in Maze.neighborsOf(node)) {
-				if (Maze.isOpen(maze, node, neighbor) == wantOpen) {
+	/** First node pair (in `Grid.allNodes()`/`neighborsOf` order) whose edge's open-ness matches `wantOpen`. **/
+	function findPair(maze:GridData, wantOpen:Bool):Null<{from:GridNode, to:GridNode}> {
+		for (node in Grid.allNodes()) {
+			for (neighbor in Grid.neighborsOf(node)) {
+				if (Grid.isOpen(maze, node, neighbor) == wantOpen) {
 					return {from: node, to: neighbor};
 				}
 			}

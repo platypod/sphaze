@@ -1,7 +1,7 @@
 import utest.Test;
 import utest.Assert;
-import maze.MazeMesh;
-import maze.Maze.MazeNode;
+import grid.GridMesh;
+import grid.Grid.GridNode;
 
 /**
 	Covers exactly the property that broke: neighboring cells must compute
@@ -9,12 +9,12 @@ import maze.Maze.MazeNode;
 	own cell's corners) visibly seam apart on the sphere instead of
 	connecting to their neighbors and to the floor.
 **/
-class MazeMeshTest extends Test {
+class GridMeshTest extends Test {
 	function testEastCornersMatchWestNeighborsCorners():Void {
 		var row = 5;
 		var col = 3;
-		var here = MazeMesh.cornersOf(row, col);
-		var east = MazeMesh.cornersOf(row, col + 1);
+		var here = GridMesh.cornersOf(row, col);
+		var east = GridMesh.cornersOf(row, col + 1);
 
 		assertSamePoint(here.ne, east.nw);
 		assertSamePoint(here.se, east.sw);
@@ -22,9 +22,9 @@ class MazeMeshTest extends Test {
 
 	function testColumnsWrapAroundSeamlessly():Void {
 		var row = 5;
-		var lastCol = maze.Maze.COLS - 1;
-		var here = MazeMesh.cornersOf(row, lastCol);
-		var wrapped = MazeMesh.cornersOf(row, 0);
+		var lastCol = grid.Grid.COLS - 1;
+		var here = GridMesh.cornersOf(row, lastCol);
+		var wrapped = GridMesh.cornersOf(row, 0);
 
 		assertSamePoint(here.ne, wrapped.nw);
 		assertSamePoint(here.se, wrapped.sw);
@@ -33,8 +33,8 @@ class MazeMeshTest extends Test {
 	function testSouthCornersMatchNorthNeighborsCorners():Void {
 		var row = 5;
 		var col = 3;
-		var here = MazeMesh.cornersOf(row, col);
-		var south = MazeMesh.cornersOf(row + 1, col);
+		var here = GridMesh.cornersOf(row, col);
+		var south = GridMesh.cornersOf(row + 1, col);
 
 		assertSamePoint(here.sw, south.nw);
 		assertSamePoint(here.se, south.ne);
@@ -54,27 +54,27 @@ class MazeMeshTest extends Test {
 		// different thetas for that correction.
 		var row = 5;
 		var col = 10;
-		var radius = maze.MazeGeometry.RADIUS;
-		var halfTheta = Math.PI / (maze.Maze.ROWS - 1) / 2;
-		var centerTheta = Math.PI * row / (maze.Maze.ROWS - 1);
-		var outer = MazeMesh.cornersOf(row, col);
-		var inner = MazeMesh.innerCornersOf(row, col);
+		var radius = grid.GridGeometry.RADIUS;
+		var halfTheta = Math.PI / (grid.Grid.ROWS - 1) / 2;
+		var centerTheta = Math.PI * row / (grid.Grid.ROWS - 1);
+		var outer = GridMesh.cornersOf(row, col);
+		var inner = GridMesh.innerCornersOf(row, col);
 
 		var thetaOuterNw = game.SphereMath.thetaOf(outer.nw);
 		var thetaInnerNw = game.SphereMath.thetaOf(inner.nw);
-		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (thetaInnerNw - thetaOuterNw) * radius, 1e-6);
+		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (thetaInnerNw - thetaOuterNw) * radius, 1e-6);
 
 		var phiOuterNw = game.SphereMath.phiOf(outer.nw);
 		var phiInnerNw = game.SphereMath.phiOf(inner.nw);
-		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (phiInnerNw - phiOuterNw) * radius * Math.sin(centerTheta - halfTheta), 1e-6);
+		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (phiInnerNw - phiOuterNw) * radius * Math.sin(centerTheta - halfTheta), 1e-6);
 
 		var thetaOuterSe = game.SphereMath.thetaOf(outer.se);
 		var thetaInnerSe = game.SphereMath.thetaOf(inner.se);
-		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (thetaOuterSe - thetaInnerSe) * radius, 1e-6);
+		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (thetaOuterSe - thetaInnerSe) * radius, 1e-6);
 
 		var phiOuterSe = game.SphereMath.phiOf(outer.se);
 		var phiInnerSe = game.SphereMath.phiOf(inner.se);
-		Assert.floatEquals(maze.MazeGeometry.WALL_THICKNESS, (phiOuterSe - phiInnerSe) * radius * Math.sin(centerTheta + halfTheta), 1e-6);
+		Assert.floatEquals(grid.GridGeometry.WALL_THICKNESS, (phiOuterSe - phiInnerSe) * radius * Math.sin(centerTheta + halfTheta), 1e-6);
 	}
 
 	// The bug this session's fix targets: a west/east wall's inner corner
@@ -100,8 +100,8 @@ class MazeMeshTest extends Test {
 		// common case, most of the grid.
 		var row = 5;
 		var col = 10;
-		var here = MazeMesh.innerCornersOf(row, col);
-		var south = MazeMesh.innerCornersOf(row + 1, col);
+		var here = GridMesh.innerCornersOf(row, col);
+		var south = GridMesh.innerCornersOf(row + 1, col);
 		Assert.floatEquals(game.SphereMath.phiOf(here.sw), game.SphereMath.phiOf(south.nw), 1e-9);
 		Assert.floatEquals(game.SphereMath.phiOf(here.se), game.SphereMath.phiOf(south.ne), 1e-9);
 
@@ -110,9 +110,9 @@ class MazeMeshTest extends Test {
 		// own north-west/north-east inner corners' phi (ratio 2, so child
 		// columns 0 and 1 for parent column 0).
 		var parentCol = 0;
-		var parent = MazeMesh.innerCornersOf(1, parentCol);
-		var childWest = MazeMesh.innerCornersOf(2, parentCol * 2);
-		var childEast = MazeMesh.innerCornersOf(2, parentCol * 2 + 1);
+		var parent = GridMesh.innerCornersOf(1, parentCol);
+		var childWest = GridMesh.innerCornersOf(2, parentCol * 2);
+		var childEast = GridMesh.innerCornersOf(2, parentCol * 2 + 1);
 		Assert.floatEquals(game.SphereMath.phiOf(parent.sw), game.SphereMath.phiOf(childWest.nw), 1e-9);
 		Assert.floatEquals(game.SphereMath.phiOf(parent.se), game.SphereMath.phiOf(childEast.ne), 1e-9);
 	}
@@ -134,9 +134,9 @@ class MazeMeshTest extends Test {
 	function testNotRetreatingLandsExactlyOnTheOuterBoundaryAndMatchesTheNextRow():Void {
 		var row = 5;
 		var col = 10;
-		var outer = MazeMesh.cornersOf(row, col);
-		var southNotRetreated = MazeMesh.innerCornersOf(row, col, true, false);
-		var northNotRetreatedNextRow = MazeMesh.innerCornersOf(row + 1, col, false, true);
+		var outer = GridMesh.cornersOf(row, col);
+		var southNotRetreated = GridMesh.innerCornersOf(row, col, true, false);
+		var northNotRetreatedNextRow = GridMesh.innerCornersOf(row + 1, col, false, true);
 
 		Assert.floatEquals(game.SphereMath.thetaOf(outer.sw), game.SphereMath.thetaOf(southNotRetreated.sw), 1e-9);
 		Assert.floatEquals(game.SphereMath.thetaOf(outer.se), game.SphereMath.thetaOf(southNotRetreated.se), 1e-9);
@@ -144,7 +144,7 @@ class MazeMeshTest extends Test {
 		assertSamePoint(southNotRetreated.se, northNotRetreatedNextRow.ne);
 	}
 
-	// The specific property MazeMesh's split boundary pieces need at a
+	// The specific property GridMesh's split boundary pieces need at a
 	// doubling boundary (see WallBuilder.addRowBoundaryPieces): each split
 	// piece's own outer corners must land exactly on the corresponding
 	// child cell's own corners, computed completely independently via
@@ -159,28 +159,28 @@ class MazeMeshTest extends Test {
 			{row: 12, otherRow: 11}
 		];
 		for (boundary in boundaries) {
-			var myCols = maze.Maze.colsForRow(boundary.row);
-			var otherCols = maze.Maze.colsForRow(boundary.otherRow);
+			var myCols = grid.Grid.colsForRow(boundary.row);
+			var otherCols = grid.Grid.colsForRow(boundary.otherRow);
 			Assert.isTrue(otherCols > myCols, 'expected a doubling at row ${boundary.row} -> ${boundary.otherRow}');
 
 			// Whichever row is further south (larger theta) has its own
 			// north edge (nw/ne) on this boundary; the other has its south
 			// edge (sw/se) on it instead.
 			var childIsSouthOfParent = boundary.otherRow > boundary.row;
-			var parentOuterTheta = Math.PI * boundary.row / (maze.Maze.ROWS - 1) + (childIsSouthOfParent ? 1 : -1) * Math.PI / (maze.Maze.ROWS - 1) / 2;
+			var parentOuterTheta = Math.PI * boundary.row / (grid.Grid.ROWS - 1) + (childIsSouthOfParent ? 1 : -1) * Math.PI / (grid.Grid.ROWS - 1) / 2;
 
 			for (col in 0...myCols) {
-				for (entry in maze.Maze.rowBoundaryNeighbors(boundary.row, col, boundary.otherRow)) {
+				for (entry in grid.Grid.rowBoundaryNeighbors(boundary.row, col, boundary.otherRow)) {
 					var childCol = switch entry.node {
 						case RingNode(_, c): c;
 						case PoleNode(_): -1;
 					}
-					var childCorners = MazeMesh.cornersOf(boundary.otherRow, childCol);
+					var childCorners = GridMesh.cornersOf(boundary.otherRow, childCol);
 					var childWest = childIsSouthOfParent ? childCorners.nw : childCorners.sw;
 					var childEast = childIsSouthOfParent ? childCorners.ne : childCorners.se;
 
-					var splitWest = MazeMesh.cornerAt(parentOuterTheta, entry.phiStart);
-					var splitEast = MazeMesh.cornerAt(parentOuterTheta, entry.phiEnd);
+					var splitWest = GridMesh.cornerAt(parentOuterTheta, entry.phiStart);
+					var splitEast = GridMesh.cornerAt(parentOuterTheta, entry.phiEnd);
 
 					assertSamePoint(splitWest, childWest);
 					assertSamePoint(splitEast, childEast);

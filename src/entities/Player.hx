@@ -22,10 +22,13 @@ import game.SphereSpace;
 	Storing `pos`/`forward` as vectors and rotating them directly has no
 	such singularity anywhere on the sphere, poles included.
 
-	Standalone rather than an `Entity` subclass for now — the Entity/Process
-	foundation (CLAUDE.md "Architecture") doesn't exist yet and shouldn't be
-	built ahead of a second use case that actually needs it (see
-	docs/GUIDELINES.md §1.3).
+	An `Entity` (CLAUDE.md "Architecture") — the first one, now that
+	cross-biome creatures and NPCs are the second use case the foundation
+	was deferred pending (see docs/GUIDELINES.md §1.3). Doesn't override
+	`onFixedUpdate`: its own movement stays driven by `Main`'s explicit
+	input handling, not automatic per-tick behavior, so being an `Entity`
+	today only means it can be parented in a `Process` tree — nothing about
+	how it moves has changed.
 
 	Rotation math (local "up", moving `pos`/`forward` along a tangent) is
 	delegated through `space:Space` rather than hardcoded here — every method
@@ -39,7 +42,7 @@ import game.SphereSpace;
 	relationship exactly in theory, and this hasn't shown up as a problem in
 	practice. Revisit (e.g. a periodic Gram-Schmidt pass) if it ever does.
 **/
-class Player {
+class Player extends Entity {
 	/**
 		Clamped just short of pi/2: at exactly pi/2 the view direction would
 		be exactly parallel to the camera's up vector, which is a degenerate
@@ -79,6 +82,7 @@ class Player {
 	public final space:Space;
 
 	public function new(pos:h3d.Vector, forward:h3d.Vector, pitch:Float = 0, ?space:Space) {
+		super();
 		this.pos = pos;
 		this.forward = forward;
 		this.pitch = clampPitch(pitch);

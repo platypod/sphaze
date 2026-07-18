@@ -30,22 +30,31 @@ class PaintingModel extends Entity {
 	public static inline final TRIGGER_DISTANCE:Float = 4;
 
 	/**
-		Fraction of the wall's own length a painting's width spans — big
-		enough to leave only a small margin on either side ("as big as the
-		wall allows," per the ask), not the old `0.5` (half the wall, wide
-		margins either side).
+		Fraction of the wall's own length a painting's width spans — bigger
+		than the original `0.5` (half the wall, wide margins either side),
+		per "as big as the wall allows," but pulled back from an earlier
+		`0.92` that read as crowding the wall rather than filling it
+		(reported directly).
 	**/
-	static inline final WIDTH_FRACTION:Float = 0.92;
+	static inline final WIDTH_FRACTION:Float = 0.78;
 
 	/**
 		Fraction of an available wall height (`fillWall`'s own `availableHeight`
-		parameter) spent as margin, split evenly top and bottom — "very
-		little," per the ask, not a fixed absolute distance, so a painting
-		mounted against a short wall (e.g. the tower's own layer-to-layer
+		parameter) reserved as margin around the *whole visible assembly*
+		— frame included, not just the inner painting — split evenly top
+		and bottom. Not a fixed absolute distance, so a painting mounted
+		against a short wall (e.g. the tower's own layer-to-layer
 		clearance) and a tall one (e.g. the maze's) both read as filling
-		their own wall almost edge to edge.
+		their own wall with a consistently small gap left over. `0.15`, not
+		an even smaller value: an earlier `0.06` read as too big for both
+		(reported directly) — worse, it measured margin against the inner
+		painting alone, so the frame's own border (`FRAME_BORDER_FRACTION`)
+		extended past that margin into the wall's actual edge undetected
+		(reported directly too, on the tower — "touching the wall and the
+		ceiling"). `fillWall` now sizes the inner painting so the *frame's*
+		own outer edge is what respects this margin.
 	**/
-	static inline final MARGIN_FRACTION:Float = 0.06;
+	static inline final MARGIN_FRACTION:Float = 0.15;
 
 	/**
 		How far off the wall's surface a painting's quad sits, so it doesn't
@@ -148,7 +157,16 @@ class PaintingModel extends Entity {
 	**/
 	public static function fillWall(availableHeight:Float):{baseHeight:Float, height:Float} {
 		var margin = availableHeight * MARGIN_FRACTION / 2;
-		return {baseHeight: margin, height: availableHeight - margin * 2};
+		// buildFrame's own border extends height * FRAME_BORDER_FRACTION
+		// beyond the painting's own baseHeight/height on both edges - the
+		// inner painting has to shrink by that much (solved directly, not
+		// iteratively, since the border is just a fixed fraction of
+		// whatever height comes out) so it's the *frame's* outer edge that
+		// ends up margin away from availableHeight's own bounds, not the
+		// painting's own bare quad.
+		var height = (availableHeight - margin * 2) / (1 + 2 * FRAME_BORDER_FRACTION);
+		var frameBorder = height * FRAME_BORDER_FRACTION;
+		return {baseHeight: margin + frameBorder, height: height};
 	}
 
 	/**

@@ -2,8 +2,9 @@ import biomes.HubBiome;
 import biomes.MazeBiome;
 import entities.Player;
 import game.Biome;
-import hub.Painting;
 import maze.Maze;
+import world.BiomeRegistry;
+import world.Painting;
 
 /**
 	Entry point. Owns the fixed-timestep accumulator (CLAUDE.md "Architecture")
@@ -31,8 +32,8 @@ class Main extends hxd.App {
 	var accumulator:Float = 0;
 	var player:Player;
 
-	/** Every biome that exists, keyed by `Biome.id()` — see `game.Biome`'s own class doc for why the hub is one of these too, not a special case. **/
-	var biomes:Map<String, Biome>;
+	/** Every biome that exists, plus which ones the player has discovered so far — see `game.Biome`'s own class doc for why the hub is one of these too, not a special case. **/
+	var biomeRegistry:BiomeRegistry;
 
 	/** Whichever biome the player is currently in. **/
 	var currentBiome:Biome;
@@ -58,7 +59,9 @@ class Main extends hxd.App {
 		s3d.camera.fovY = CAMERA_FOV_Y;
 
 		mazeGroup = new h3d.scene.Object(s3d);
-		biomes = [MazeBiome.ID => new MazeBiome(Maze.generate()), HubBiome.ID => new HubBiome()];
+		biomeRegistry = new BiomeRegistry();
+		biomeRegistry.register(new HubBiome(), true); // always known - it's home, not something to stumble into
+		biomeRegistry.register(new MazeBiome(Maze.generate()));
 		enterBiome(MazeBiome.ID, false);
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,
@@ -98,10 +101,11 @@ class Main extends hxd.App {
 		@param returning whether the player is coming back into a biome they already visited rather than a fresh arrival — see `Biome.spawnPlayer`.
 	**/
 	function enterBiome(id:String, returning:Bool):Void {
-		var biome = biomes.get(id);
+		var biome = biomeRegistry.get(id);
 		if (biome == null) {
 			throw 'unreachable: no biome registered for id "$id"';
 		}
+		biomeRegistry.markDiscovered(id);
 
 		currentBiome = biome;
 		mazeGroup.removeChildren();
@@ -124,7 +128,7 @@ class Main extends hxd.App {
 
 	/**
 		Walking into `activePainting` warps to wherever it leads — no
-		interact-key confirmation, on purpose (see `hub.Painting`'s own class
+		interact-key confirmation, on purpose (see `world.Painting`'s own class
 		doc). Uniform for every biome, hub included: there's no "which kind
 		of destination is this" branch, just "enter whichever biome id this
 		painting names."

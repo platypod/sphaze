@@ -1,6 +1,6 @@
 import utest.Test;
 import utest.Assert;
-import hub.Painting;
+import world.Painting;
 
 /** Covers Painting's pure trigger/placement math — not its scene/rendering side (see docs/GUIDELINES.md §1.4/§5.4). **/
 class PaintingTest extends Test {

@@ -3,7 +3,7 @@ package biomes;
 import entities.Player;
 import game.Biome;
 import game.Collision;
-import hub.Painting;
+import world.Painting;
 import maze.Maze.MazeData;
 import maze.MazeGeometry;
 import maze.MazeMesh;

@@ -4,7 +4,7 @@ import entities.Player;
 import game.Biome;
 import hub.Hub;
 import hub.HubCollision;
-import hub.Painting;
+import world.Painting;
 
 /**
 	The hub — a peer `Biome` like any other (see `game.Biome`'s own class

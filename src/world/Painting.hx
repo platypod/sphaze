@@ -1,4 +1,4 @@
-package hub;
+package world;
 
 /**
 	A painting mounted on a wall — the diegetic warp mechanism: walking

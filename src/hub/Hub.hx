@@ -1,6 +1,7 @@
 package hub;
 
 import maze.MazeMesh;
+import world.Painting;
 
 /**
 	The hub: a large sphere with a freestanding octagonal column through its

@@ -1,7 +1,7 @@
 package game;
 
 import entities.Player;
-import hub.Painting;
+import world.Painting;
 
 /**
 	Contract every biome instance implements — the hub included. `Main`

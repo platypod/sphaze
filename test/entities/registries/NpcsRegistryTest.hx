@@ -1,6 +1,7 @@
+package entities.registries;
+
 import utest.Test;
 import utest.Assert;
-import entities.registries.NpcsRegistry;
 
 /** Covers NpcsRegistry's location bookkeeping — no scene graph or real NPC content involved. **/
 class NpcsRegistryTest extends Test {

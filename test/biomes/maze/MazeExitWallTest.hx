@@ -1,10 +1,11 @@
+package biomes.maze;
+
 import utest.Test;
 import utest.Assert;
 import biomes.common.grid.GridMesh;
 import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridData;
 import biomes.common.grid.GridModel.GridNode;
-import biomes.maze.MazeExitWall;
 
 /** Covers MazeExitWall's placement scan — a deterministic, hand-built GridData, not a random generated one. **/
 class MazeExitWallTest extends Test {

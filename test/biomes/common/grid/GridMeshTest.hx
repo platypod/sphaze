@@ -1,8 +1,7 @@
+package biomes.common.grid;
+
 import utest.Test;
 import utest.Assert;
-import biomes.common.grid.GridGeometry;
-import biomes.common.grid.GridMesh;
-import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridNode;
 import biomes.common.space.sphere.SphereMath;
 

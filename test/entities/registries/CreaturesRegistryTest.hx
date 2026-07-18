@@ -1,6 +1,7 @@
+package entities.registries;
+
 import utest.Test;
 import utest.Assert;
-import entities.registries.CreaturesRegistry;
 
 /** Covers CreaturesRegistry's location bookkeeping — no scene graph or real creature content involved. **/
 class CreaturesRegistryTest extends Test {

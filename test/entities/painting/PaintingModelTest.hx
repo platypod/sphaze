@@ -1,6 +1,7 @@
+package entities.painting;
+
 import utest.Test;
 import utest.Assert;
-import entities.painting.PaintingModel;
 
 /** Covers PaintingModel's pure trigger/placement math — not its scene/rendering side (see docs/GUIDELINES.md §1.4/§5.4). **/
 class PaintingModelTest extends Test {

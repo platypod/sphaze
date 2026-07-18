@@ -1,5 +1,19 @@
 import utest.Runner;
 import utest.ui.Report;
+import biomes.common.grid.GridCollisionTest;
+import biomes.common.grid.GridMeshTest;
+import biomes.common.grid.GridModelTest;
+import biomes.common.space.sphere.SphereMathTest;
+import biomes.maze.MazeExitWallTest;
+import biomes.maze.MazeGeneratorTest;
+import entities.CreatureSpawnTableTest;
+import entities.painting.PaintingModelTest;
+import entities.player.CameraTest;
+import entities.player.PlayerModelTest;
+import entities.registries.BiomesRegistryTest;
+import entities.registries.CreaturesRegistryTest;
+import entities.registries.NpcsRegistryTest;
+import game.ProcessTest;
 
 /**
 	utest entry point — runs every test case registered below.

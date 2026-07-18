@@ -1,8 +1,8 @@
+package entities.player;
+
 import utest.Test;
 import utest.Assert;
 import biomes.common.space.sphere.SphereMath;
-import entities.player.Camera;
-import entities.player.PlayerModel;
 
 /** Covers Camera's composition of a PlayerModel's own state into a camera placement. **/
 class CameraTest extends Test {

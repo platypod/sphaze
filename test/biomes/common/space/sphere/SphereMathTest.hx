@@ -1,6 +1,7 @@
+package biomes.common.space.sphere;
+
 import utest.Test;
 import utest.Assert;
-import biomes.common.space.sphere.SphereMath;
 
 /**
 	Mirrors old/src/scene/sphereMath.test.ts case for case, for behavioral

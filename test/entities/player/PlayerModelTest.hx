@@ -1,7 +1,8 @@
+package entities.player;
+
 import utest.Test;
 import utest.Assert;
 import biomes.common.space.sphere.SphereMath;
-import entities.player.PlayerModel;
 
 /** Covers PlayerModel's pure movement/pitch math — see CameraTest for its composition into a camera. **/
 class PlayerModelTest extends Test {

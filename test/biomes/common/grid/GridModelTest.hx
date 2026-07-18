@@ -1,6 +1,7 @@
+package biomes.common.grid;
+
 import utest.Test;
 import utest.Assert;
-import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridNode;
 
 /** Covers GridModel's topology/query logic — no generated layout involved (see MazeGeneratorTest for that). **/

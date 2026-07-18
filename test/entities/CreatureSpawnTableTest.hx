@@ -1,6 +1,7 @@
+package entities;
+
 import utest.Test;
 import utest.Assert;
-import entities.CreatureSpawnTable;
 
 /** Covers CreatureSpawnTable's JSON parsing — see docs/GUIDELINES.md §1.4/§5.4 (data parsing, not rendering, is the testable target here). **/
 class CreatureSpawnTableTest extends Test {

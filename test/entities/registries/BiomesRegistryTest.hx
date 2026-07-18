@@ -1,6 +1,7 @@
+package entities.registries;
+
 import utest.Test;
 import utest.Assert;
-import entities.registries.BiomesRegistry;
 import entities.painting.PaintingModel;
 import entities.player.PlayerModel;
 import biomes.common.Biome;

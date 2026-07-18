@@ -1,9 +1,10 @@
+package biomes.maze;
+
 import utest.Test;
 import utest.Assert;
 import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridNode;
 import biomes.common.grid.GridModel.GridData;
-import biomes.maze.MazeGenerator;
 
 /**
 	Mirrors old/src/maze/mazeGenerator.test.ts, for behavioral parity with the

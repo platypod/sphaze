@@ -1,6 +1,7 @@
+package game;
+
 import utest.Test;
 import utest.Assert;
-import game.Process;
 
 /** Covers Process's update/pause/parent-child propagation — see docs/GUIDELINES.md §1.3. **/
 class ProcessTest extends Test {

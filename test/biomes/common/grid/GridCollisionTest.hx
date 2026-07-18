@@ -1,15 +1,14 @@
+package biomes.common.grid;
+
 import utest.Test;
 import utest.Assert;
-import biomes.common.grid.GridCollision;
-import biomes.common.grid.GridGeometry;
-import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridData;
 import biomes.common.grid.GridModel.GridNode;
 import biomes.common.grid.GridModel.RowBoundaryNeighbor;
 import biomes.common.space.sphere.SphereMath;
 import biomes.maze.MazeGenerator;
 import entities.player.PlayerModel;
-import MazeGeneratorTest.SeededRandom;
+import biomes.maze.MazeGeneratorTest.SeededRandom;
 
 /**
 	Exercises GridCollision.tryMoveForward against a real generated maze (see

@@ -34,12 +34,25 @@ interface Biome {
 		already visited (e.g. from the hub) rather than a fresh visit — a
 		biome may resume near wherever they left, or ignore this and always
 		use a fixed spawn (see `biomes.HubBiome`).
+		@param fromBiomeId the `id()` of the biome the player is arriving
+		from — null exactly when `returning` is false (there's no meaningful
+		"from" for a fresh arrival); a biome that cares (e.g. the hub, to
+		pick which of its own several column faces to spawn in front of)
+		can rely on it being non-null whenever `returning` is true.
 		@return the spawned player.
 	**/
-	function spawnPlayer(returning:Bool):PlayerModel;
+	function spawnPlayer(returning:Bool, fromBiomeId:Null<String>):PlayerModel;
 
-	/** This biome's own exit painting, checked each tick against the player's position (see `GameLoop.checkPaintingTrigger`). **/
-	function exitPainting():PaintingModel;
+	/**
+		This biome's own exit paintings, checked each tick against the
+		player's position (see `GameLoop.checkPaintingTrigger`) — re-read
+		fresh every tick rather than cached at entry, since a biome's own set
+		can change mid-visit (e.g. the tower's own return painting, absent
+		until enough levels are dropped). Empty if this biome has nothing to
+		warp out to right now.
+		@return this biome's currently active exit paintings.
+	**/
+	function exitPaintings():Array<PaintingModel>;
 
 	/**
 		Attempts to move `player` by `distance` along `direction` through this biome's own collision rule.

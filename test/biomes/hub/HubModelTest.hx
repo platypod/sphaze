@@ -8,32 +8,37 @@ import entities.player.PlayerModel;
 /** Covers HubModel's pure geometry queries — not HubMesh's scene/rendering side (see docs/GUIDELINES.md §1.4/§5.4). **/
 class HubModelTest extends Test {
 	function testToBiomeFaceAzimuthMatchesTheFacesOwnMidAngle():Void {
-		// TO_BIOME_FACE_INDEX is face 0 of COLUMN_SIDES (8): its left/right
-		// edges sit at 0 and 2*pi/8, so the face's own azimuth is the
-		// midpoint of those, pi/8.
-		Assert.floatEquals(Math.PI / HubModel.COLUMN_SIDES, HubModel.toBiomeFaceAzimuth(), 1e-9);
+		// Face 0 of COLUMN_SIDES (8): its left/right edges sit at 0 and
+		// 2*pi/8, so the face's own azimuth is the midpoint of those, pi/8.
+		Assert.floatEquals(Math.PI / HubModel.COLUMN_SIDES, HubModel.toBiomeFaceAzimuth(0), 1e-9);
+	}
+
+	function testToBiomeFaceAzimuthDiffersPerFace():Void {
+		// Two distinct faces mustn't collapse to the same azimuth - this is
+		// what actually lets the hub tell two destinations' return spots apart.
+		Assert.isFalse(HubModel.toBiomeFaceAzimuth(0) == HubModel.toBiomeFaceAzimuth(2));
 	}
 
 	function testReturnSpawnThetaIsOnTheWalkableSideOfTheColumn():Void {
 		var theta = HubModel.returnSpawnTheta();
-		var pos = SphereMath.sphericalToCartesian(HubModel.RADIUS, theta, HubModel.toBiomeFaceAzimuth());
+		var pos = SphereMath.sphericalToCartesian(HubModel.RADIUS, theta, HubModel.toBiomeFaceAzimuth(0));
 
 		Assert.isTrue(HubModel.isInside(pos));
 	}
 
 	function testReturnSpawnPointDoesNotImmediatelyRetriggerTheToBiomePainting():Void {
 		var theta = HubModel.returnSpawnTheta();
-		var phi = HubModel.toBiomeFaceAzimuth();
+		var phi = HubModel.toBiomeFaceAzimuth(0);
 		var pos = SphereMath.sphericalToCartesian(HubModel.RADIUS, theta, phi);
 
-		var painting = HubModel.toBiomePainting("maze");
+		var painting = HubModel.toBiomePainting(0, "maze");
 
 		Assert.isFalse(painting.triggeredBy(pos));
 	}
 
 	function testReturnSpawnPlayerFacesAwayFromTheColumnAxis():Void {
 		var theta = HubModel.returnSpawnTheta();
-		var phi = HubModel.toBiomeFaceAzimuth();
+		var phi = HubModel.toBiomeFaceAzimuth(0);
 		var player = PlayerModel.spawnAt(theta, phi, 0, HubModel.RADIUS);
 
 		// "Away from the column" is the same as "away from the nearest

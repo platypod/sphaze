@@ -57,9 +57,6 @@ class HubModel {
 
 	public static inline final COLUMN_SIDES = 8;
 
-	/** Which of the column's 8 faces holds the painting back to the one existing biome — arbitrary, just needs to be a real face index. **/
-	static inline final TO_BIOME_FACE_INDEX = 0;
-
 	/** Extra margin `isInside` blocks at, short of the column's actual rendered face — same role as `biomes.common.grid.GridGeometry.COLLISION_CLEARANCE` plays for biomes. **/
 	static inline final COLLISION_CLEARANCE:Float = 1;
 
@@ -111,28 +108,32 @@ class HubModel {
 	public static final SPAWN_PHI:Float = Math.PI / COLUMN_SIDES;
 
 	/**
-		The hub's one painting back to a biome, mounted on `TO_BIOME_FACE_INDEX`
-		at `PAINTING_HEIGHT` — matches exactly where `HubMesh.buildColumn` renders it.
-		Takes the destination biome's id rather than hardcoding one so `HubModel`
-		itself stays biome-agnostic — see `biomes.hub.HubBiome`, which is what
-		actually knows which biome that is.
+		A painting back to a biome, mounted on `faceIndex` at
+		`PAINTING_HEIGHT` — matches exactly where `HubMesh.buildColumn`
+		renders it. Takes the destination biome's id rather than hardcoding
+		one so `HubModel` itself stays biome-agnostic — see
+		`biomes.hub.HubBiome`, which is what actually knows which face leads
+		to which biome.
+		@param faceIndex which of the column's `COLUMN_SIDES` faces this painting mounts on.
 		@param destinationBiomeId the `biomes.common.Biome.id()` this painting leads to.
-		@return the hub's exit painting.
+		@return the hub's exit painting for that destination.
 	**/
-	public static function toBiomePainting(destinationBiomeId:String):PaintingModel {
-		var left = toBiomeFaceEdge(true);
-		var right = toBiomeFaceEdge(false);
+	public static function toBiomePainting(faceIndex:Int, destinationBiomeId:String):PaintingModel {
+		var left = toBiomeFaceEdge(faceIndex, true);
+		var right = toBiomeFaceEdge(faceIndex, false);
 		return new PaintingModel(PaintingModel.centerOf(left, right, new h3d.Vector(0, 1, 0)), destinationBiomeId, PAINTING_TRIGGER_DISTANCE);
 	}
 
 	/**
-		`TO_BIOME_FACE_INDEX`'s left or right edge, at `PAINTING_HEIGHT` — the
-		shared reference both `toBiomePainting` and `HubMesh.buildColumn`
-		mount the painting from, so the trigger position always matches
-		where it's actually rendered. Public so `HubMesh` can share it.
+		`faceIndex`'s left or right edge, at `PAINTING_HEIGHT` — the shared
+		reference both `toBiomePainting` and `HubMesh.buildColumn` mount a
+		painting from, so a trigger position always matches where it's
+		actually rendered. Public so `HubMesh` can share it.
+		@param faceIndex which of the column's `COLUMN_SIDES` faces to use.
+		@param left the face's left edge if true, right edge if false.
 	**/
-	public static function toBiomeFaceEdge(left:Bool):h3d.Vector {
-		var edge = columnEdge(TO_BIOME_FACE_INDEX + (left ? 0 : 1));
+	public static function toBiomeFaceEdge(faceIndex:Int, left:Bool):h3d.Vector {
+		var edge = columnEdge(faceIndex + (left ? 0 : 1));
 		return new h3d.Vector(edge.top.x, PAINTING_HEIGHT, edge.top.z);
 	}
 
@@ -178,15 +179,16 @@ class HubModel {
 	}
 
 	/**
-		The to-biome painting's own azimuth around the column's axis — the
+		A to-biome painting's own azimuth around the column's axis — the
 		`phi` its return spawn point shares, so the player reappears facing
 		away from the column at the same angle the painting itself sits at,
 		derived from `toBiomeFaceEdge`'s own points rather than duplicating
 		them.
+		@param faceIndex which of the column's `COLUMN_SIDES` faces to use.
 		@return azimuth around Y, in radians.
 	**/
-	public static function toBiomeFaceAzimuth():Float {
-		var mid = PaintingModel.midpointOf(toBiomeFaceEdge(true), toBiomeFaceEdge(false));
+	public static function toBiomeFaceAzimuth(faceIndex:Int):Float {
+		var mid = PaintingModel.midpointOf(toBiomeFaceEdge(faceIndex, true), toBiomeFaceEdge(faceIndex, false));
 		return SphereMath.phiOf(mid);
 	}
 

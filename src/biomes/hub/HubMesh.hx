@@ -31,8 +31,9 @@ class HubMesh {
 
 	/**
 		@param parent the scene object to attach the meshes under.
+		@param paintingFaceIndices which of the column's `HubModel.COLUMN_SIDES` faces mount a to-biome painting — see `HubBiome`, which owns the actual face-to-biome mapping.
 	**/
-	public static function build(parent:h3d.scene.Object):Void {
+	public static function build(parent:h3d.scene.Object, paintingFaceIndices:Array<Int>):Void {
 		// h3d.prim.Sphere's own poles sit on the Z axis (built from
 		// cos/sin(t) into x/y, cos(t) into z) — rotated here to match this
 		// project's Y-axis pole convention (SphereMath.sphericalToCartesian)
@@ -47,7 +48,7 @@ class HubMesh {
 		shellMesh.material.mainPass.addShader(new UnlitTexture(grassTexture, FLOOR_TILE_U, FLOOR_TILE_V));
 		shellMesh.material.mainPass.culling = None;
 
-		buildColumn(parent);
+		buildColumn(parent, paintingFaceIndices);
 		// Denser and calmer than the baseline: the hub is a small, mostly-empty
 		// room the player lingers in rather than passes through, so a thicker
 		// floor reads better, and a busier sway would compete with the room's
@@ -55,7 +56,7 @@ class HubMesh {
 		GrassMesh.build(parent, HubModel.RADIUS, HubModel.isInside, GrassModel.DEFAULT_TUFT_COUNT * 4, GrassWind.DEFAULT_SWAY_AMPLITUDE * 2 / 3);
 	}
 
-	static function buildColumn(parent:h3d.scene.Object):Void {
+	static function buildColumn(parent:h3d.scene.Object, paintingFaceIndices:Array<Int>):Void {
 		var points:Array<h3d.Vector> = [];
 		var idx = new hxd.IndexBuffer();
 		var uvs:Array<h3d.prim.UV> = [];
@@ -84,17 +85,19 @@ class HubMesh {
 		mesh.material.mainPass.addShader(new UnlitTexture(texture));
 		mesh.material.mainPass.culling = None;
 
-		// The painting mounts as an inset overlay on top of its face's own
+		// Each painting mounts as an inset overlay on top of its own face's
 		// wall texture, same as a biome return painting sits in front of
 		// GridMesh's already-built wall — not a replacement for it (an
 		// earlier version skipped the whole face's own panel here, leaving
 		// everything except the small painting quad itself unrendered).
-		var left = HubModel.toBiomeFaceEdge(true);
-		var right = HubModel.toBiomeFaceEdge(false);
-		var mid = PaintingModel.midpointOf(left, right);
-		var outward = new h3d.Vector(mid.x, 0, mid.z).normalized();
-		var outwardRef = mid.add(outward.scaled(HubModel.COLUMN_RADIUS));
-		PaintingModel.buildQuad(parent, left, right, outwardRef, Colours.TO_BIOME, new h3d.Vector(0, 1, 0));
+		for (faceIndex in paintingFaceIndices) {
+			var left = HubModel.toBiomeFaceEdge(faceIndex, true);
+			var right = HubModel.toBiomeFaceEdge(faceIndex, false);
+			var mid = PaintingModel.midpointOf(left, right);
+			var outward = new h3d.Vector(mid.x, 0, mid.z).normalized();
+			var outwardRef = mid.add(outward.scaled(HubModel.COLUMN_RADIUS));
+			PaintingModel.buildQuad(parent, left, right, outwardRef, Colours.TO_BIOME, new h3d.Vector(0, 1, 0));
+		}
 	}
 
 	/** A triangle fan closing off the column's top (`top = true`) or bottom end. **/

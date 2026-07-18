@@ -9,7 +9,6 @@ import biomes.maze.MazeGenerator;
 import entities.player.Camera;
 import entities.player.PlayerModel;
 import entities.registries.BiomesRegistry;
-import entities.painting.PaintingModel;
 
 /**
 	Everything about actually playing the game: biome setup/switching, input
@@ -47,9 +46,6 @@ class GameLoop {
 	var currentBiome:Biome;
 
 	var mazeGroup:h3d.scene.Object;
-
-	/** The current biome's own exit painting — checked each tick against `player.pos`. **/
-	var activePainting:PaintingModel;
 
 	var debugOverlay:h2d.Text;
 	var debugOverlayVisible:Bool = false;
@@ -113,14 +109,14 @@ class GameLoop {
 		if (biome == null) {
 			throw 'unreachable: no biome registered for id "$id"';
 		}
+		var fromBiomeId = currentBiome != null ? currentBiome.id() : null;
 		biomeRegistry.markDiscovered(id);
 
 		currentBiome = biome;
 		mazeGroup.removeChildren();
 		biome.build(mazeGroup);
-		activePainting = biome.exitPainting();
 
-		player = biome.spawnPlayer(returning);
+		player = biome.spawnPlayer(returning, fromBiomeId);
 		Camera.applyTo(s3d.camera, player);
 	}
 
@@ -135,18 +131,22 @@ class GameLoop {
 	}
 
 	/**
-		Walking into `activePainting` warps to wherever it leads — no
-		interact-key confirmation, on purpose (see `entities.painting.PaintingModel`'s own class
-		doc). Uniform for every biome, hub included: there's no "which kind
-		of destination is this" branch, just "enter whichever biome id this
-		painting names."
+		Walking into any of the current biome's own exit paintings warps to
+		wherever it leads — no interact-key confirmation, on purpose (see
+		`entities.painting.PaintingModel`'s own class doc). Uniform for every
+		biome, hub included: there's no "which kind of destination is this"
+		branch, just "enter whichever biome id this painting names." Reads
+		`Biome.exitPaintings` fresh every tick rather than caching it at
+		entry — see that method's own doc for why (a biome's own set can
+		change mid-visit).
 	**/
 	function checkPaintingTrigger():Void {
-		if (!activePainting.triggeredBy(player.pos)) {
-			return;
+		for (painting in currentBiome.exitPaintings()) {
+			if (painting.triggeredBy(player.pos)) {
+				enterBiome(painting.destinationBiomeId, true);
+				return;
+			}
 		}
-
-		enterBiome(activePainting.destinationBiomeId, true);
 	}
 
 	/**

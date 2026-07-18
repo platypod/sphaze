@@ -72,12 +72,12 @@ private class StubBiome implements Biome {
 
 	public function build(parent:h3d.scene.Object):Void {}
 
-	public function spawnPlayer(returning:Bool):PlayerModel {
+	public function spawnPlayer(returning:Bool, fromBiomeId:Null<String>):PlayerModel {
 		return PlayerModel.spawnAt(0, 0, 0, 1);
 	}
 
-	public function exitPainting():PaintingModel {
-		return new PaintingModel(new h3d.Vector(0, 0, 0), "nowhere");
+	public function exitPaintings():Array<PaintingModel> {
+		return [new PaintingModel(new h3d.Vector(0, 0, 0), "nowhere")];
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {}

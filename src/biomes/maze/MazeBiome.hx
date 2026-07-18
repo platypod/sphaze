@@ -105,12 +105,13 @@ class MazeBiome implements Biome {
 		return GridModel.isWellClearOfWalls(maze, SphereMath.thetaOf(pos), SphereMath.phiOf(pos));
 	}
 
-	public function spawnPlayer(returning:Bool):PlayerModel {
+	/** Only one biome ever leads here (the hub), so `fromBiomeId` is never ambiguous and isn't needed. **/
+	public function spawnPlayer(returning:Bool, fromBiomeId:Null<String>):PlayerModel {
 		return returning ? playerInFrontOfExitWall() : PlayerModel.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, GridGeometry.RADIUS);
 	}
 
-	public function exitPainting():PaintingModel {
-		return new PaintingModel(PaintingModel.midpointOf(exitWall.a, exitWall.b), HubBiome.ID);
+	public function exitPaintings():Array<PaintingModel> {
+		return [new PaintingModel(PaintingModel.midpointOf(exitWall.a, exitWall.b), HubBiome.ID)];
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {

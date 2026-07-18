@@ -68,13 +68,27 @@ class PaintingModel extends Entity {
 	static inline final FRAME_BORDER_FRACTION:Float = 0.07;
 
 	/**
-		How far past the painting's own surface the frame's inner edge sits
-		— the whole reason it reads as raised trim instead of a flat
-		painted border. Added on top of `SURFACE_INSET`, same reasoning:
-		this is depth *beyond* the painting's own surface, not from the
-		wall.
+		How much the frame's own depth varies from its outer edge (nearer
+		the wall) to its inner edge (nearer the painting) — subtracted from
+		`SURFACE_INSET` at the outer edge, so the frame reads as a bevel
+		rising from wall-depth up to flush with the painting's own surface,
+		not a flat painted border. The inner edge sits at exactly
+		`SURFACE_INSET` (see `buildFrame`) — matching `buildQuad`'s own
+		painting inset exactly, not offset further out from it, since a
+		frame proud of the *painting itself* left a gap at the seam with
+		nothing built to fill the resulting step (reported directly as
+		visible space between the painting and its frame).
 	**/
 	static inline final FRAME_DEPTH:Float = 0.35;
+
+	/**
+		How wide the frame's two thin black outline bands (see
+		`buildOutline`) are, as a fraction of the frame's own border width
+		— eaten out of the frame's own band, not added beyond it, so
+		outer/inner outline plus the main band exactly fill the same
+		footprint the frame always had with no gap or overlap between them.
+	**/
+	static inline final OUTLINE_WIDTH_FRACTION:Float = 0.2;
 
 	public final position:h3d.Vector;
 
@@ -213,14 +227,16 @@ class PaintingModel extends Entity {
 
 	/**
 		Builds the raised frame "moulding" around a painting's quad: a
-		single sloped band running all the way around, flush with the
-		wall's own `SURFACE_INSET` depth (matching `buildQuad`'s own quad)
-		on its outer edge, and proud of it by `FRAME_DEPTH` on its inner
-		edge — right where it meets the painting — so it reads as trim
-		standing off the wall rather than a flat painted border. Just four
-		quads (`culling = None`, so winding order doesn't matter for
-		visibility, and `FixedColor` ignores normals entirely, so it doesn't
-		matter for shading either).
+		sloped band running all the way around, recessed toward the wall
+		(`SURFACE_INSET - FRAME_DEPTH`) on its outer edge and rising to
+		meet the painting exactly flush (`SURFACE_INSET`, matching
+		`buildQuad`'s own inset precisely) on its inner edge — no gap at
+		that seam, since inner-edge depth and extent both match the
+		painting's own edge exactly. Two thin black outline bands
+		(`buildOutline`) are eaten out of the same footprint, right along
+		the frame's own outer and inner borders, standing in for the edge
+		definition this project's flat/unlit shading has no real lighting
+		to produce on its own.
 		@param parent the scene object to attach the mesh under.
 		@param mid the painting's own wall-segment midpoint (`midpointOf`).
 		@param along the wall's own length axis — normalized.
@@ -236,29 +252,112 @@ class PaintingModel extends Entity {
 		var outerHalfWidth = halfWidth + horizontalBorder;
 		var outerBottom = BASE_HEIGHT - verticalBorder;
 		var outerTop = BASE_HEIGHT + HEIGHT + verticalBorder;
-		var wallInset = faceNormal.scaled(SURFACE_INSET);
-		var peakInset = faceNormal.scaled(SURFACE_INSET + FRAME_DEPTH);
+		var wallInset = faceNormal.scaled(SURFACE_INSET - FRAME_DEPTH);
+		var peakInset = faceNormal.scaled(SURFACE_INSET);
 
-		var outerBottomA = mid.add(along.scaled(-outerHalfWidth)).add(upDir.scaled(outerBottom)).add(wallInset);
-		var outerBottomB = mid.add(along.scaled(outerHalfWidth)).add(upDir.scaled(outerBottom)).add(wallInset);
-		var outerTopA = mid.add(along.scaled(-outerHalfWidth)).add(upDir.scaled(outerTop)).add(wallInset);
-		var outerTopB = mid.add(along.scaled(outerHalfWidth)).add(upDir.scaled(outerTop)).add(wallInset);
-
-		var peakBottomA = mid.add(along.scaled(-halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(peakInset);
-		var peakBottomB = mid.add(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(peakInset);
-		var peakTopA = mid.add(along.scaled(-halfWidth)).add(upDir.scaled(BASE_HEIGHT + HEIGHT)).add(peakInset);
-		var peakTopB = mid.add(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT + HEIGHT)).add(peakInset);
+		// The main band's own inner/outer edges each give up
+		// OUTLINE_WIDTH_FRACTION of the border's width to the two outline
+		// bands below — shrinking, not shrinking-then-re-extending, so
+		// all three bands share exact boundary points with no gap or
+		// overlap between them.
+		var innerHalfWidth = halfWidth + horizontalBorder * OUTLINE_WIDTH_FRACTION;
+		var innerBottom = BASE_HEIGHT - verticalBorder * OUTLINE_WIDTH_FRACTION;
+		var innerTop = BASE_HEIGHT + HEIGHT + verticalBorder * OUTLINE_WIDTH_FRACTION;
+		var mainOuterHalfWidth = outerHalfWidth - horizontalBorder * OUTLINE_WIDTH_FRACTION;
+		var mainOuterBottom = outerBottom + verticalBorder * OUTLINE_WIDTH_FRACTION;
+		var mainOuterTop = outerTop - verticalBorder * OUTLINE_WIDTH_FRACTION;
 
 		var points:Array<h3d.Vector> = [];
 		var idx = new hxd.IndexBuffer();
-		MeshBuilder.addQuad(points, idx, outerBottomA, outerBottomB, peakBottomB, peakBottomA);
-		MeshBuilder.addQuad(points, idx, outerBottomB, outerTopB, peakTopB, peakBottomB);
-		MeshBuilder.addQuad(points, idx, outerTopB, outerTopA, peakTopA, peakTopB);
-		MeshBuilder.addQuad(points, idx, outerTopA, outerBottomA, peakBottomA, peakTopA);
-
+		addRingBand(points, idx, mid, along, upDir, innerHalfWidth, innerBottom, innerTop, peakInset, mainOuterHalfWidth, mainOuterBottom, mainOuterTop,
+			wallInset);
 		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
 		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(Colours.PAINTING_FRAME));
 		mesh.material.mainPass.culling = None;
+
+		buildOutline(parent, mid, along, upDir, halfWidth, innerHalfWidth, mainOuterHalfWidth, outerHalfWidth, outerBottom, outerTop, wallInset, peakInset);
+	}
+
+	/**
+		The frame's own two thin black outline bands — flat (no depth
+		ramp, unlike the main band), one right where the frame meets the
+		painting (at `peakInset`, the same depth *and* extent as the
+		painting's own edge — flush, continuing `buildFrame`'s own
+		gap-free seam) and one right where it meets the wall (at
+		`wallInset`, the main band's own outer depth). Each shares its
+		outer boundary points exactly with the main band's own inner/outer
+		edge (see `buildFrame`), so neither overlaps nor gaps against it.
+		@param parent the scene object to attach the mesh under.
+		@param mid the painting's own wall-segment midpoint.
+		@param along the wall's own length axis — normalized.
+		@param upDir the wall's own height axis — normalized.
+		@param halfWidth half the painting's own width — the inner outline's own inner edge.
+		@param innerOutlineOuterHalfWidth the inner outline's own outer edge — `buildFrame`'s own (shrunk) inner edge.
+		@param outerOutlineInnerHalfWidth the outer outline's own inner edge — `buildFrame`'s own (shrunk) outer edge.
+		@param outerHalfWidth the outer outline's own outer edge — the frame's true outer boundary.
+		@param outerBottom the frame's true outer boundary, bottom.
+		@param outerTop the frame's true outer boundary, top.
+		@param wallInset the outer outline's own depth — `buildFrame`'s own outer-edge inset.
+		@param peakInset the inner outline's own depth — `buildQuad`'s own painting inset.
+	**/
+	static function buildOutline(parent:h3d.scene.Object, mid:h3d.Vector, along:h3d.Vector, upDir:h3d.Vector, halfWidth:Float,
+			innerOutlineOuterHalfWidth:Float, outerOutlineInnerHalfWidth:Float, outerHalfWidth:Float, outerBottom:Float, outerTop:Float, wallInset:h3d.Vector,
+			peakInset:h3d.Vector):Void {
+		var innerBorder = innerOutlineOuterHalfWidth - halfWidth;
+		var outerBorder = outerHalfWidth - outerOutlineInnerHalfWidth;
+
+		var points:Array<h3d.Vector> = [];
+		var idx = new hxd.IndexBuffer();
+		addRingBand(points, idx, mid, along, upDir, halfWidth, BASE_HEIGHT, BASE_HEIGHT
+			+ HEIGHT, peakInset, innerOutlineOuterHalfWidth,
+			BASE_HEIGHT
+			- innerBorder, BASE_HEIGHT
+			+ HEIGHT
+			+ innerBorder, peakInset);
+		addRingBand(points, idx, mid, along, upDir, outerOutlineInnerHalfWidth, outerBottom + outerBorder, outerTop - outerBorder, wallInset, outerHalfWidth,
+			outerBottom, outerTop, wallInset);
+
+		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
+		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(Colours.PAINTING_FRAME_OUTLINE));
+		mesh.material.mainPass.culling = None;
+	}
+
+	/**
+		Four quads forming a rectangular ring band around `mid` — the
+		shared shape `buildFrame`'s own main band and `buildOutline`'s two
+		bands are all built from, just with different extents/depths.
+		Winding order doesn't matter for visibility (`culling = None`) or
+		shading (`FixedColor` ignores normals entirely).
+		@param points appended to — the mesh's own vertex buffer.
+		@param idx appended to — the mesh's own index buffer.
+		@param mid the ring's own center — a painting's wall-segment midpoint.
+		@param along the wall's own length axis — normalized.
+		@param upDir the wall's own height axis — normalized.
+		@param innerHalfWidth the ring's own inner edge, along `along`.
+		@param innerBottom the ring's own inner edge, bottom.
+		@param innerTop the ring's own inner edge, top.
+		@param innerInset the ring's own inner edge, depth off the wall (along the face normal).
+		@param outerHalfWidth the ring's own outer edge, along `along`.
+		@param outerBottom the ring's own outer edge, bottom.
+		@param outerTop the ring's own outer edge, top.
+		@param outerInset the ring's own outer edge, depth off the wall.
+	**/
+	static function addRingBand(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, mid:h3d.Vector, along:h3d.Vector, upDir:h3d.Vector, innerHalfWidth:Float,
+			innerBottom:Float, innerTop:Float, innerInset:h3d.Vector, outerHalfWidth:Float, outerBottom:Float, outerTop:Float, outerInset:h3d.Vector):Void {
+		var innerBottomA = mid.add(along.scaled(-innerHalfWidth)).add(upDir.scaled(innerBottom)).add(innerInset);
+		var innerBottomB = mid.add(along.scaled(innerHalfWidth)).add(upDir.scaled(innerBottom)).add(innerInset);
+		var innerTopA = mid.add(along.scaled(-innerHalfWidth)).add(upDir.scaled(innerTop)).add(innerInset);
+		var innerTopB = mid.add(along.scaled(innerHalfWidth)).add(upDir.scaled(innerTop)).add(innerInset);
+
+		var outerBottomA = mid.add(along.scaled(-outerHalfWidth)).add(upDir.scaled(outerBottom)).add(outerInset);
+		var outerBottomB = mid.add(along.scaled(outerHalfWidth)).add(upDir.scaled(outerBottom)).add(outerInset);
+		var outerTopA = mid.add(along.scaled(-outerHalfWidth)).add(upDir.scaled(outerTop)).add(outerInset);
+		var outerTopB = mid.add(along.scaled(outerHalfWidth)).add(upDir.scaled(outerTop)).add(outerInset);
+
+		MeshBuilder.addQuad(points, idx, outerBottomA, outerBottomB, innerBottomB, innerBottomA);
+		MeshBuilder.addQuad(points, idx, outerBottomB, outerTopB, innerTopB, innerBottomB);
+		MeshBuilder.addQuad(points, idx, outerTopB, outerTopA, innerTopA, innerTopB);
+		MeshBuilder.addQuad(points, idx, outerTopA, outerBottomA, innerBottomA, innerTopA);
 	}
 
 	/**

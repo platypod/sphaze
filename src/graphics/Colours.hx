@@ -13,4 +13,7 @@ class Colours {
 
 	/** `entities.painting.PaintingModel.buildFrame`'s own moulding — a plain wood-brown placeholder, no real art for it yet either. **/
 	public static inline final PAINTING_FRAME:Int = 0xFF7A5C3E;
+
+	/** `entities.painting.PaintingModel.buildFrame`'s own thin edge bands — flat unlit shading has no real lighting to read the frame's relief from, so a traced black keyline along its inner/outer border stands in for one. **/
+	public static inline final PAINTING_FRAME_OUTLINE:Int = 0xFF000000;
 }

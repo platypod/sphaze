@@ -35,6 +35,20 @@ class TowerModel {
 	/** Vertical gap between consecutive layers. **/
 	public static inline final LAYER_HEIGHT:Float = 12;
 
+	/**
+		How far down a solid tile (or the center disk) is extruded — see
+		`TowerMesh`, which builds the actual relief geometry this
+		describes. Lives here, not there, because a hub-bound painting
+		mounted on the shaft's own wall (`TowerBiome.wallPainting`) needs
+		it too: the ring immediately above such a painting hangs its own
+		floor's underside down by this much, so the painting's own
+		available clear height is `LAYER_HEIGHT - TILE_THICKNESS`, not the
+		full gap between layers (reported directly — a painting mounted
+		assuming the full gap clipped into the tile relief hanging above
+		it).
+	**/
+	public static inline final TILE_THICKNESS:Float = 2.5;
+
 	/** The shaft's own outer wall, measured from the central axis. **/
 	public static inline final OUTER_RADIUS:Float = 40;
 

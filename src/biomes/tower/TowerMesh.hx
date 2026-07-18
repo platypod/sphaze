@@ -8,7 +8,7 @@ import graphics.shaders.UnlitTexture;
 /**
 	Builds the tower's own scene-graph meshes: a floor patch per solid tile
 	per layer (the always-solid center disk, plus whichever ring tiles
-	`TowerGenerator` made solid), extruded down by `TILE_THICKNESS` rather
+	`TowerGenerator` made solid), extruded down by `TowerModel.TILE_THICKNESS` rather
 	than a bare flat plane, and one continuous cylindrical outer wall
 	spanning the whole shaft.
 
@@ -36,9 +36,6 @@ import graphics.shaders.UnlitTexture;
 	`biomes.hub.HubMesh.buildColumn` already uses).
 **/
 class TowerMesh {
-	/** How far down a solid tile (or the center disk) is extruded — what actually makes the floor read as solid stone blocks rather than a flat painted plane. **/
-	static inline final TILE_THICKNESS:Float = 2.5;
-
 	/** Segments the outer wall's circular cross-section is built from — smooth enough not to read as faceted, unlike `biomes.hub.HubMesh`'s deliberately 8-sided column. **/
 	static inline final WALL_SEGMENTS:Int = 32;
 
@@ -91,7 +88,8 @@ class TowerMesh {
 		var left = TowerModel.paintingWallEdge(layer, true);
 		var right = TowerModel.paintingWallEdge(layer, false);
 		var roomCenter = new h3d.Vector(0, left.y, 0);
-		PaintingModel.buildQuad(parent, left, right, roomCenter, PaintingModel.toHubTexture(), new h3d.Vector(0, 1, 0));
+		var size = PaintingModel.fillWall(TowerModel.LAYER_HEIGHT - TowerModel.TILE_THICKNESS);
+		PaintingModel.buildQuad(parent, left, right, roomCenter, PaintingModel.toHubTexture(), size.baseHeight, size.height, new h3d.Vector(0, 1, 0));
 	}
 
 	/** Every layer's own center disk plus whichever ring tiles are solid there — top/bottom faces only; see `addReliefWalls` for the sides. **/
@@ -110,15 +108,15 @@ class TowerMesh {
 		}
 	}
 
-	/** The always-solid center disk's top and bottom faces at height `y`, as matching triangle fans `TILE_THICKNESS` apart. **/
+	/** The always-solid center disk's top and bottom faces at height `y`, as matching triangle fans `TowerModel.TILE_THICKNESS` apart. **/
 	static function addCenterDiskFaces(y:Float, points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>):Void {
 		var top = new h3d.Vector(0, y, 0);
-		var bottom = new h3d.Vector(0, y - TILE_THICKNESS, 0);
+		var bottom = new h3d.Vector(0, y - TowerModel.TILE_THICKNESS, 0);
 		for (s in 0...TowerModel.ANGULAR_SEGMENTS) {
 			var a = slotPoint(TowerModel.CENTER_DISK_RADIUS, s, y);
 			var b = slotPoint(TowerModel.CENTER_DISK_RADIUS, s + 1, y);
-			var aBottom = slotPoint(TowerModel.CENTER_DISK_RADIUS, s, y - TILE_THICKNESS);
-			var bBottom = slotPoint(TowerModel.CENTER_DISK_RADIUS, s + 1, y - TILE_THICKNESS);
+			var aBottom = slotPoint(TowerModel.CENTER_DISK_RADIUS, s, y - TowerModel.TILE_THICKNESS);
+			var bBottom = slotPoint(TowerModel.CENTER_DISK_RADIUS, s + 1, y - TowerModel.TILE_THICKNESS);
 			addFloorTriangle(top, a, b, points, idx, uvs);
 			addFloorTriangle(bottom, aBottom, bBottom, points, idx, uvs);
 		}
@@ -139,10 +137,10 @@ class TowerMesh {
 			var outerB = slotPoint(outerR, s + 1, y);
 			addFloorQuad(innerA, outerA, outerB, innerB, points, idx, uvs);
 
-			var innerABottom = slotPoint(innerR, s, y - TILE_THICKNESS);
-			var innerBBottom = slotPoint(innerR, s + 1, y - TILE_THICKNESS);
-			var outerABottom = slotPoint(outerR, s, y - TILE_THICKNESS);
-			var outerBBottom = slotPoint(outerR, s + 1, y - TILE_THICKNESS);
+			var innerABottom = slotPoint(innerR, s, y - TowerModel.TILE_THICKNESS);
+			var innerBBottom = slotPoint(innerR, s + 1, y - TowerModel.TILE_THICKNESS);
+			var outerABottom = slotPoint(outerR, s, y - TowerModel.TILE_THICKNESS);
+			var outerBBottom = slotPoint(outerR, s + 1, y - TowerModel.TILE_THICKNESS);
 			addFloorQuad(innerABottom, outerABottom, outerBBottom, innerBBottom, points, idx, uvs);
 		}
 	}
@@ -217,21 +215,21 @@ class TowerMesh {
 		return layout.solidTiles[layer][ring][TowerModel.tileIndexAtSlot(ring, s)];
 	}
 
-	/** A radial (tile-to-tile) end cap wall at shared-grid slot boundary `slot`, spanning `innerR` to `outerR` and `y` down to `y - TILE_THICKNESS`. **/
+	/** A radial (tile-to-tile) end cap wall at shared-grid slot boundary `slot`, spanning `innerR` to `outerR` and `y` down to `y - TowerModel.TILE_THICKNESS`. **/
 	static function addRadialEndCap(innerR:Float, outerR:Float, slot:Int, y:Float, points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>):Void {
 		var inner = slotPoint(innerR, slot, y);
 		var outer = slotPoint(outerR, slot, y);
-		var innerBottom = slotPoint(innerR, slot, y - TILE_THICKNESS);
-		var outerBottom = slotPoint(outerR, slot, y - TILE_THICKNESS);
+		var innerBottom = slotPoint(innerR, slot, y - TowerModel.TILE_THICKNESS);
+		var outerBottom = slotPoint(outerR, slot, y - TowerModel.TILE_THICKNESS);
 		addWallQuad(inner, outer, outerBottom, innerBottom, points, idx, uvs);
 	}
 
-	/** A relief side wall's own single shared-grid segment, at radius `radius`, from slot `s` to `s + 1`, `y` down to `y - TILE_THICKNESS`. **/
+	/** A relief side wall's own single shared-grid segment, at radius `radius`, from slot `s` to `s + 1`, `y` down to `y - TowerModel.TILE_THICKNESS`. **/
 	static function addWallQuadAtSlot(radius:Float, s:Int, y:Float, points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>):Void {
 		var a = slotPoint(radius, s, y);
 		var b = slotPoint(radius, s + 1, y);
-		var aBottom = slotPoint(radius, s, y - TILE_THICKNESS);
-		var bBottom = slotPoint(radius, s + 1, y - TILE_THICKNESS);
+		var aBottom = slotPoint(radius, s, y - TowerModel.TILE_THICKNESS);
+		var bBottom = slotPoint(radius, s + 1, y - TowerModel.TILE_THICKNESS);
 		addWallQuad(a, b, bBottom, aBottom, points, idx, uvs);
 	}
 

@@ -30,19 +30,22 @@ class PaintingModel extends Entity {
 	public static inline final TRIGGER_DISTANCE:Float = 4;
 
 	/**
-		How far up from the floor a painting's bottom edge sits. `3` read as
-		sitting right on the ground from a standing player's eye line
-		(`entities.player.Camera.EYE_HEIGHT` is `6`, so the old bottom edge
-		was only half an eye-height up) — raised so the whole piece reads as
-		mounted at a normal wall height instead.
+		Fraction of the wall's own length a painting's width spans — big
+		enough to leave only a small margin on either side ("as big as the
+		wall allows," per the ask), not the old `0.5` (half the wall, wide
+		margins either side).
 	**/
-	static inline final BASE_HEIGHT:Float = 4.5;
+	static inline final WIDTH_FRACTION:Float = 0.92;
 
-	/** A painting's height, floor-clearance to top edge. **/
-	static inline final HEIGHT:Float = 6;
-
-	/** Fraction of the wall's own length a painting's width spans. **/
-	static inline final WIDTH_FRACTION:Float = 0.5;
+	/**
+		Fraction of an available wall height (`fillWall`'s own `availableHeight`
+		parameter) spent as margin, split evenly top and bottom — "very
+		little," per the ask, not a fixed absolute distance, so a painting
+		mounted against a short wall (e.g. the tower's own layer-to-layer
+		clearance) and a tall one (e.g. the maze's) both read as filling
+		their own wall almost edge to edge.
+	**/
+	static inline final MARGIN_FRACTION:Float = 0.06;
 
 	/**
 		How far off the wall's surface a painting's quad sits, so it doesn't
@@ -132,21 +135,40 @@ class PaintingModel extends Entity {
 	}
 
 	/**
+		A `{baseHeight, height}` pair that fills `availableHeight` — a
+		wall's own total clear vertical span, floor to ceiling/whatever
+		obstruction bounds it above — leaving only `MARGIN_FRACTION` as
+		margin, split evenly top and bottom. What most callers pass to
+		`centerOf`/`buildQuad`; the hub's own column-face paintings are the
+		one exception (see `biomes.hub.HubModel`'s own doc), since a
+		column-mounted painting doesn't have a simple floor-to-ceiling span
+		to fill in the first place.
+		@param availableHeight the wall's own total clear vertical span.
+		@return `baseHeight`/`height` to pass to `centerOf`/`buildQuad`.
+	**/
+	public static function fillWall(availableHeight:Float):{baseHeight:Float, height:Float} {
+		var margin = availableHeight * MARGIN_FRACTION / 2;
+		return {baseHeight: margin, height: availableHeight - margin * 2};
+	}
+
+	/**
 		The actual center of the quad `buildQuad` renders for this wall
 		segment — unlike `midpointOf` alone, this accounts for
-		`BASE_HEIGHT`/`HEIGHT`, so a painting's trigger position (which
+		`baseHeight`/`height`, so a painting's trigger position (which
 		should use this, not `midpointOf`) actually lines up with where the
 		painting visually is instead of the wall's own floor-level
 		reference point, well below it.
 		@param wallA one end of the wall segment.
 		@param wallB the other end.
+		@param baseHeight how far up from `wallA`/`wallB` the painting's own bottom edge sits — see `fillWall`.
+		@param height the painting's own height, floor-clearance to top edge — see `fillWall`.
 		@param up which way "up the wall" is (see `buildQuad`'s own doc) — defaults to radially inward.
 		@return the quad's true center point.
 	**/
-	public static function centerOf(wallA:h3d.Vector, wallB:h3d.Vector, ?up:h3d.Vector):h3d.Vector {
+	public static function centerOf(wallA:h3d.Vector, wallB:h3d.Vector, baseHeight:Float, height:Float, ?up:h3d.Vector):h3d.Vector {
 		var mid = midpointOf(wallA, wallB);
 		var upDir = up != null ? up : SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
-		return mid.add(upDir.scaled(BASE_HEIGHT + HEIGHT / 2));
+		return mid.add(upDir.scaled(baseHeight + height / 2));
 	}
 
 	/**
@@ -174,10 +196,13 @@ class PaintingModel extends Entity {
 		@param wallB the other end.
 		@param roomCenter a point on the room's own side of the wall — only used to pick which way the face normal points, not for exact positioning.
 		@param texture the destination biome's own artwork, shown flat across the quad's face.
+		@param baseHeight how far up from `wallA`/`wallB` the painting's own bottom edge sits — see `fillWall`.
+		@param height the painting's own height, floor-clearance to top edge — see `fillWall`.
 		@param up which way "up the wall" is — defaults to radially inward (`SphereMath.upVectorAt`), correct for a wall on a sphere's surface; pass an explicit direction (e.g. `(0,1,0)`) for a wall whose own "up" isn't radial, like a straight column's side face.
+		@param imageUpMatchesUp whether `up` (or its default) actually matches the direction a *nearby player* perceives as up — true for every straight wall this project has so far (the flat `FlatSpace` biomes, and ordinary radial walls, both keep the two in sync), false for the hub's own column: its face panels need `up = (0,1,0)` to stay flush with the panel's own vertical extrusion, but a player standing near enough to read a face-mounted painting is near the sphere's own pole, where *their* up (`SphereSpace`'s "toward center") points close to the opposite direction — mounting the artwork's own top row at the geometrically-flush end there reads as upside down (reported directly). Pass `false` to swap which edge gets the texture's own top row instead of its bottom, without touching the geometry at all.
 	**/
 	public static function buildQuad(parent:h3d.scene.Object, wallA:h3d.Vector, wallB:h3d.Vector, roomCenter:h3d.Vector, texture:h3d.mat.Texture,
-			?up:h3d.Vector):Void {
+			baseHeight:Float, height:Float, ?up:h3d.Vector, imageUpMatchesUp:Bool = true):Void {
 		var mid = midpointOf(wallA, wallB);
 		var upDir = up != null ? up : SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
 		var along = wallB.sub(wallA).normalized();
@@ -190,10 +215,10 @@ class PaintingModel extends Entity {
 		var halfWidth = wallA.sub(wallB).length() * WIDTH_FRACTION / 2;
 		var inset = faceNormal.scaled(SURFACE_INSET);
 
-		var bottomA = mid.sub(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(inset);
-		var bottomB = mid.add(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(inset);
-		var topA = bottomA.add(upDir.scaled(HEIGHT));
-		var topB = bottomB.add(upDir.scaled(HEIGHT));
+		var bottomA = mid.sub(along.scaled(halfWidth)).add(upDir.scaled(baseHeight)).add(inset);
+		var bottomB = mid.add(along.scaled(halfWidth)).add(upDir.scaled(baseHeight)).add(inset);
+		var topA = bottomA.add(upDir.scaled(height));
+		var topB = bottomB.add(upDir.scaled(height));
 
 		var points = [bottomA, bottomB, topB, topA];
 		var idx = new hxd.IndexBuffer();
@@ -205,24 +230,28 @@ class PaintingModel extends Entity {
 		idx.push(3);
 
 		var prim = new h3d.prim.Polygon(points, idx);
-		// Matches points' own bottomA/bottomB/topB/topA order — bottom edge
-		// at v=1, top edge at v=0. Loaded images come in row-0-at-top, and
-		// unlike `HubMesh.buildColumn`'s own wall UVs (top=v-max, bottom=0
-		// — never actually noticed as backwards since a tileable stone
-		// texture doesn't have an "up"), a painting's own artwork very
-		// visibly does: v=0 has to land on the texture's own top row.
+		// Matches points' own bottomA/bottomB/topB/topA order. Loaded images
+		// come in row-0-at-top, so the texture's own top row (v=0) needs to
+		// land on whichever edge reads as "up" *to a nearby player standing
+		// on the ground*, not necessarily `topA`/`topB` (see
+		// `imageUpMatchesUp`'s own doc) — the usual case (unlike
+		// `HubMesh.buildColumn`'s own wall UVs, top=v-max, bottom=0, never
+		// actually noticed as backwards since a tileable stone texture
+		// doesn't have an "up").
+		var topV = imageUpMatchesUp ? 0 : 1;
+		var bottomV = imageUpMatchesUp ? 1 : 0;
 		prim.uvs = [
-			new h3d.prim.UV(0, 1),
-			new h3d.prim.UV(1, 1),
-			new h3d.prim.UV(1, 0),
-			new h3d.prim.UV(0, 0)
+			new h3d.prim.UV(0, bottomV),
+			new h3d.prim.UV(1, bottomV),
+			new h3d.prim.UV(1, topV),
+			new h3d.prim.UV(0, topV)
 		];
 
 		var mesh = new h3d.scene.Mesh(prim, parent);
 		mesh.material.mainPass.addShader(new UnlitTexture(texture));
 		mesh.material.mainPass.culling = None;
 
-		buildFrame(parent, mid, along, upDir, faceNormal, halfWidth);
+		buildFrame(parent, mid, along, upDir, faceNormal, halfWidth, baseHeight, height);
 	}
 
 	/**
@@ -243,15 +272,18 @@ class PaintingModel extends Entity {
 		@param upDir the wall's own height axis — normalized.
 		@param faceNormal the wall's own outward face normal — normalized, pointing into the room.
 		@param halfWidth half the painting's own width, along `along`.
+		@param baseHeight how far up from the wall's own floor-level reference the painting's bottom edge sits.
+		@param height the painting's own height, floor-clearance to top edge.
 	**/
-	static function buildFrame(parent:h3d.scene.Object, mid:h3d.Vector, along:h3d.Vector, upDir:h3d.Vector, faceNormal:h3d.Vector, halfWidth:Float):Void {
+	static function buildFrame(parent:h3d.scene.Object, mid:h3d.Vector, along:h3d.Vector, upDir:h3d.Vector, faceNormal:h3d.Vector, halfWidth:Float,
+			baseHeight:Float, height:Float):Void {
 		// Each axis' own border is a fraction of that axis' own span — see
 		// `FRAME_BORDER_FRACTION`'s own doc for why not a fixed distance.
 		var horizontalBorder = 2 * halfWidth * FRAME_BORDER_FRACTION;
-		var verticalBorder = HEIGHT * FRAME_BORDER_FRACTION;
+		var verticalBorder = height * FRAME_BORDER_FRACTION;
 		var outerHalfWidth = halfWidth + horizontalBorder;
-		var outerBottom = BASE_HEIGHT - verticalBorder;
-		var outerTop = BASE_HEIGHT + HEIGHT + verticalBorder;
+		var outerBottom = baseHeight - verticalBorder;
+		var outerTop = baseHeight + height + verticalBorder;
 		var wallInset = faceNormal.scaled(SURFACE_INSET - FRAME_DEPTH);
 		var peakInset = faceNormal.scaled(SURFACE_INSET);
 
@@ -261,8 +293,8 @@ class PaintingModel extends Entity {
 		// all three bands share exact boundary points with no gap or
 		// overlap between them.
 		var innerHalfWidth = halfWidth + horizontalBorder * OUTLINE_WIDTH_FRACTION;
-		var innerBottom = BASE_HEIGHT - verticalBorder * OUTLINE_WIDTH_FRACTION;
-		var innerTop = BASE_HEIGHT + HEIGHT + verticalBorder * OUTLINE_WIDTH_FRACTION;
+		var innerBottom = baseHeight - verticalBorder * OUTLINE_WIDTH_FRACTION;
+		var innerTop = baseHeight + height + verticalBorder * OUTLINE_WIDTH_FRACTION;
 		var mainOuterHalfWidth = outerHalfWidth - horizontalBorder * OUTLINE_WIDTH_FRACTION;
 		var mainOuterBottom = outerBottom + verticalBorder * OUTLINE_WIDTH_FRACTION;
 		var mainOuterTop = outerTop - verticalBorder * OUTLINE_WIDTH_FRACTION;
@@ -275,7 +307,8 @@ class PaintingModel extends Entity {
 		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(Colours.PAINTING_FRAME));
 		mesh.material.mainPass.culling = None;
 
-		buildOutline(parent, mid, along, upDir, halfWidth, innerHalfWidth, mainOuterHalfWidth, outerHalfWidth, outerBottom, outerTop, wallInset, peakInset);
+		buildOutline(parent, mid, along, upDir, halfWidth, innerHalfWidth, mainOuterHalfWidth, outerHalfWidth, outerBottom, outerTop, wallInset, peakInset,
+			baseHeight, height);
 	}
 
 	/**
@@ -299,20 +332,22 @@ class PaintingModel extends Entity {
 		@param outerTop the frame's true outer boundary, top.
 		@param wallInset the outer outline's own depth — `buildFrame`'s own outer-edge inset.
 		@param peakInset the inner outline's own depth — `buildQuad`'s own painting inset.
+		@param baseHeight how far up from the wall's own floor-level reference the painting's bottom edge sits.
+		@param height the painting's own height, floor-clearance to top edge.
 	**/
 	static function buildOutline(parent:h3d.scene.Object, mid:h3d.Vector, along:h3d.Vector, upDir:h3d.Vector, halfWidth:Float,
 			innerOutlineOuterHalfWidth:Float, outerOutlineInnerHalfWidth:Float, outerHalfWidth:Float, outerBottom:Float, outerTop:Float, wallInset:h3d.Vector,
-			peakInset:h3d.Vector):Void {
+			peakInset:h3d.Vector, baseHeight:Float, height:Float):Void {
 		var innerBorder = innerOutlineOuterHalfWidth - halfWidth;
 		var outerBorder = outerHalfWidth - outerOutlineInnerHalfWidth;
 
 		var points:Array<h3d.Vector> = [];
 		var idx = new hxd.IndexBuffer();
-		addRingBand(points, idx, mid, along, upDir, halfWidth, BASE_HEIGHT, BASE_HEIGHT
-			+ HEIGHT, peakInset, innerOutlineOuterHalfWidth,
-			BASE_HEIGHT
-			- innerBorder, BASE_HEIGHT
-			+ HEIGHT
+		addRingBand(points, idx, mid, along, upDir, halfWidth, baseHeight, baseHeight
+			+ height, peakInset, innerOutlineOuterHalfWidth,
+			baseHeight
+			- innerBorder, baseHeight
+			+ height
 			+ innerBorder, peakInset);
 		addRingBand(points, idx, mid, along, upDir, outerOutlineInnerHalfWidth, outerBottom + outerBorder, outerTop - outerBorder, wallInset, outerHalfWidth,
 			outerBottom, outerTop, wallInset);

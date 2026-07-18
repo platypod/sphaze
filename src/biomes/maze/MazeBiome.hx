@@ -81,7 +81,8 @@ class MazeBiome implements Biome {
 
 	public function build(parent:h3d.scene.Object):Void {
 		GridMesh.build(maze, parent);
-		PaintingModel.buildQuad(parent, exitWall.a, exitWall.b, exitWall.cellCenter, PaintingModel.toHubTexture());
+		var size = PaintingModel.fillWall(GridMesh.WALL_HEIGHT);
+		PaintingModel.buildQuad(parent, exitWall.a, exitWall.b, exitWall.cellCenter, PaintingModel.toHubTexture(), size.baseHeight, size.height);
 		// Windier and thicker than the hub's own grass: open corridors
 		// stretching across the sphere read as more exposed than the hub's
 		// small enclosed room, and a sparser hub floor already reads as

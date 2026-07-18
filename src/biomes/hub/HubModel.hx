@@ -61,53 +61,63 @@ class HubModel {
 	static inline final COLLISION_CLEARANCE:Float = 1;
 
 	/**
-		Height (along the column's own axis) a face painting mounts at —
-		deliberately *not* 0 (equatorial, the column's widest cross-section
-		and so the room's most spacious walking band): the player's own
-		distance from the column's axis and their height are the same
-		function of `theta` (`RADIUS*sin(theta)` and `RADIUS*cos(theta)`
-		respectively), so the closest they can ever get to the column at all
-		is right at the collision boundary itself — near the *top* of the
-		walkable band, not the middle. A painting mounted at the equator
-		would sit a full corridor-width (14 units) away from anywhere the
-		player can actually stand.
+		Height (along the column's own axis) a face painting's own *bottom
+		edge* sits at — deliberately mounted near the pole, not 0
+		(equatorial, the column's widest cross-section and so the room's
+		most spacious walking band): the player's own distance from the
+		column's axis and their height are the same function of `theta`
+		(`RADIUS*sin(theta)` and `RADIUS*cos(theta)` respectively), so the
+		closest they can ever get to the column at all is right at the
+		collision boundary itself — near the *top* of the walkable band,
+		not the middle. A painting mounted at the equator would sit a full
+		corridor-width (14 units) away from anywhere the player can
+		actually stand.
 
-		Every time `RADIUS`/`COLUMN_RADIUS` changes, this needs re-checking
-		in-browser, not just re-derived on paper: the naive version of this
-		derivation (aim the quad's own top edge just under
-		`COLUMN_HALF_HEIGHT`, i.e. as high on the column as it can go) reads
-		fine as a pure height comparison, but ignores that the *floor*
-		right around the column is itself close to that same height — the
-		sphere's own surface at radius `COLUMN_RADIUS` from the axis is, by
-		construction (see this class' own doc), exactly `COLUMN_HALF_HEIGHT`
-		up, and stays within a few units of that for a good distance out
-		from the column too (the surface is steep here — this is right next
-		to where the column meets the sphere, deep in "near the pole"
-		territory). A painting mounted right at the top of the column, at
-		this same latitude the player is forced to view it from, reads as
-		buried floor-first in the grass rather than mounted on a wall
-		(reported directly, screenshot showing the painting's own lower
-		half swallowed by the floor) — confirmed empirically in-browser (a
-		temporary debug spawn placed the camera at the exact return-spawn
-		position, screenshotted at a spread of `PAINTING_HEIGHT` values;
-		analytical height-vs-`COLUMN_HALF_HEIGHT` comparisons alone
-		predicted the wrong direction more than once). `61` is the value
-		that actually reads as mounted on the wall rather than sunk into
-		the floor at that vantage point, not the highest value that avoids
-		overshooting `COLUMN_HALF_HEIGHT` on paper — those two turned out
-		not to be the same thing, and only one of them is the thing anyone
-		can actually see.
+		This whole neighborhood turned out to be a real, numerically-
+		confirmed squeeze, not a tuning knob: right where the column meets
+		the sphere (deep in "near the pole" territory, where the sphere's
+		own surface is steep), the *floor* the player can walk right up to
+		is itself within a fraction of a unit of `COLUMN_HALF_HEIGHT` — so
+		a painting sized anywhere close to a normal wall-mounted one (this
+		project's other paintings fill most of a 12-unit-tall wall) has
+		nowhere to sit that's both below the column's own cap and above
+		that floor. Reported twice: first as the painting's lower half
+		swallowed by the floor (this constant alone raised, `57`→`61`,
+		wasn't enough — a scratch script bisecting the *actual* worst-case
+		approach, bounded by `PAINTING_TRIGGER_DISTANCE` rather than raw
+		collision, showed `61` still overlapped the floor at some
+		approaches and *also* overshot `COLUMN_HALF_HEIGHT`, a second bug
+		that first script run caught), then as "much bigger, filling the
+		wall" — both resolved together by widening
+		`PAINTING_TRIGGER_DISTANCE` instead of moving this constant alone:
+		a bigger trigger radius pushes the closest reachable approach
+		further from the pole, where the floor is meaningfully lower,
+		opening up real vertical room. `57.4558`/`PAINTING_HEIGHT_SPAN`
+		below are the bottom edge and total height a bisection search found
+		that (a) stays `0.3` clear of `COLUMN_HALF_HEIGHT` at the top and
+		(b) stays `0.3` clear of the floor at the closest reachable
+		approach (now bounded by the wider `PAINTING_TRIGGER_DISTANCE`) at
+		the bottom — re-run that search (not hand algebra; see
+		`docs/PROJECT_LOG.md`'s own entry on why the naive version of this
+		kept predicting the wrong direction) whenever `RADIUS`/
+		`COLUMN_RADIUS`/`PAINTING_TRIGGER_DISTANCE` change.
 	**/
-	static inline final PAINTING_HEIGHT:Float = 61;
+	static inline final PAINTING_HEIGHT:Float = 57.4558;
+
+	/** A face painting's own total height, floor-clearance to top edge — see `PAINTING_HEIGHT`'s own doc for how this was derived alongside it. Public so `HubMesh` can share it (see `toBiomeFaceEdge`'s own doc on why `baseHeight` is always `0` here). **/
+	public static inline final PAINTING_HEIGHT_SPAN:Float = 9.0199;
 
 	/**
 		How close the player needs to walk to trigger the to-biome painting
-		— `PaintingModel.TRIGGER_DISTANCE` (4) doesn't clear the gap at this
-		scale (confirmed numerically — see `PAINTING_HEIGHT`'s own doc), so
-		the hub's own painting gets its own value instead of that shared
-		constant.
+		— `PaintingModel.TRIGGER_DISTANCE` (4) doesn't clear the gap at
+		this scale. Doubles as the knob that sets how close a player can
+		physically get to a mounted painting at all (see `PAINTING_HEIGHT`'s
+		own doc): raised well past the minimum needed just to avoid an
+		instant re-trigger, specifically to push the closest reachable
+		approach far enough from the pole that there's real vertical room
+		for a big painting between the floor and `COLUMN_HALF_HEIGHT`.
 	**/
-	static inline final PAINTING_TRIGGER_DISTANCE:Float = 6;
+	static inline final PAINTING_TRIGGER_DISTANCE:Float = 20;
 
 	/** Where the player spawns entering the hub: the equator — the room's widest, most open point, not particularly close to the column (see `PAINTING_HEIGHT`'s own doc for why that's the *least* reachable latitude, not the most). **/
 	public static final SPAWN_THETA:Float = Math.PI / 2;
@@ -128,14 +138,18 @@ class HubModel {
 	public static function toBiomePainting(faceIndex:Int, destinationBiomeId:String):PaintingModel {
 		var left = toBiomeFaceEdge(faceIndex, true);
 		var right = toBiomeFaceEdge(faceIndex, false);
-		return new PaintingModel(PaintingModel.centerOf(left, right, new h3d.Vector(0, 1, 0)), destinationBiomeId, PAINTING_TRIGGER_DISTANCE);
+		var center = PaintingModel.centerOf(left, right, 0, PAINTING_HEIGHT_SPAN, new h3d.Vector(0, 1, 0));
+		return new PaintingModel(center, destinationBiomeId, PAINTING_TRIGGER_DISTANCE);
 	}
 
 	/**
 		`faceIndex`'s left or right edge, at `PAINTING_HEIGHT` — the shared
 		reference both `toBiomePainting` and `HubMesh.buildColumn` mount a
 		painting from, so a trigger position always matches where it's
-		actually rendered. Public so `HubMesh` can share it.
+		actually rendered. Already the painting's own *bottom* edge (see
+		`PAINTING_HEIGHT`'s own doc), so every caller passes `baseHeight = 0`
+		to `PaintingModel.centerOf`/`buildQuad`, not a further offset on top.
+		Public so `HubMesh` can share it.
 		@param faceIndex which of the column's `COLUMN_SIDES` faces to use.
 		@param left the face's left edge if true, right edge if false.
 	**/
@@ -153,13 +167,15 @@ class HubModel {
 		boundary rather than a flat wall: that boundary — not
 		`toBiomeFaceEdge` itself, which isn't even a point on this sphere —
 		is what actually limits how close the player can already stand to
-		the painting. Confirmed numerically: right at the boundary, the true
-		distance to the painting's own trigger center is already inside
-		`PAINTING_TRIGGER_DISTANCE` (6) — about 4.3 — so spawning there
-		would immediately re-trigger it and bounce the player straight back
-		out; this offset clears it by a comfortable margin (~8.3).
+		the painting. Re-derived alongside `PAINTING_TRIGGER_DISTANCE`'s own
+		bump (a scratch script, not hand algebra — see `PAINTING_HEIGHT`'s
+		own doc): confirmed numerically that right at the boundary, the true
+		distance to the painting's own trigger center is now deep inside
+		`PAINTING_TRIGGER_DISTANCE` (20) — about 8.5 — so spawning there
+		would immediately re-trigger it; this offset clears it by a
+		comfortable margin (~4.6).
 	**/
-	static inline final RETURN_SPAWN_ARC_OFFSET:Float = 6;
+	static inline final RETURN_SPAWN_ARC_OFFSET:Float = 24;
 
 	/**
 		The polar angle nearest the column a player can actually stand at —

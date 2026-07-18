@@ -95,7 +95,12 @@ class HubMesh {
 			var mid = PaintingModel.midpointOf(left, right);
 			var outward = new h3d.Vector(mid.x, 0, mid.z).normalized();
 			var outwardRef = mid.add(outward.scaled(HubModel.COLUMN_RADIUS));
-			PaintingModel.buildQuad(parent, left, right, outwardRef, painting.texture, new h3d.Vector(0, 1, 0));
+			// imageUpMatchesUp=false: (0,1,0) keeps the quad flush with the
+			// column's own vertical face panel, but a player standing near
+			// enough to read this (near the sphere's own pole) has their own
+			// up pointing close to the opposite direction - see
+			// PaintingModel.buildQuad's own doc.
+			PaintingModel.buildQuad(parent, left, right, outwardRef, painting.texture, 0, HubModel.PAINTING_HEIGHT_SPAN, new h3d.Vector(0, 1, 0), false);
 		}
 	}
 

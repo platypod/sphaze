@@ -82,7 +82,8 @@ class TowerBiome implements Biome {
 	static function wallPainting(layer:Int):PaintingModel {
 		var left = TowerModel.paintingWallEdge(layer, true);
 		var right = TowerModel.paintingWallEdge(layer, false);
-		return new PaintingModel(PaintingModel.centerOf(left, right, new h3d.Vector(0, 1, 0)), HubBiome.ID);
+		var size = PaintingModel.fillWall(TowerModel.LAYER_HEIGHT - TowerModel.TILE_THICKNESS);
+		return new PaintingModel(PaintingModel.centerOf(left, right, size.baseHeight, size.height, new h3d.Vector(0, 1, 0)), HubBiome.ID);
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {

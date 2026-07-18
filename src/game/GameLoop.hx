@@ -226,22 +226,29 @@ class GameLoop {
 	}
 
 	public function fixedUpdate(dt:Float):Void {
+		// currentBiome.tick runs on the real, unscaled dt - it's what
+		// actually advances the hub's own hourglass (see biomes.common.Biome.tick's
+		// own doc) - before timeScale() is read for this same tick, so a
+		// tilt change this tick already applies to this tick's own movement.
+		currentBiome.tick(player, dt);
+		var scaledDt = dt * currentBiome.timeScale();
+
 		// Reading keys and calling PlayerModel methods directly here is a
 		// placeholder — fine for one input source and one entity, but a
 		// dedicated input/controller system is the right home for this once
 		// there's more than a single player to drive.
 		if (hxd.Key.isDown(Keybinds.TURN_LEFT)) {
-			player.turn(-TURN_SPEED * dt);
+			player.turn(-TURN_SPEED * scaledDt);
 		}
 		if (hxd.Key.isDown(Keybinds.TURN_RIGHT)) {
-			player.turn(TURN_SPEED * dt);
+			player.turn(TURN_SPEED * scaledDt);
 		}
 		var speed = hxd.Key.isDown(Keybinds.SPRINT) ? WALK_SPEED * SPRINT_MULTIPLIER : WALK_SPEED;
 		if (hxd.Key.isDown(Keybinds.MOVE_FORWARD) || PhysicalKeys.isDown(Keybinds.MOVE_FORWARD_ALT)) {
-			tryMove(player.forward, speed * dt);
+			tryMove(player.forward, speed * scaledDt);
 		}
 		if (hxd.Key.isDown(Keybinds.MOVE_BACKWARD) || PhysicalKeys.isDown(Keybinds.MOVE_BACKWARD_ALT)) {
-			tryMove(player.forward, -speed * dt);
+			tryMove(player.forward, -speed * scaledDt);
 		}
 		// Q/D strafe sideways rather than turn — the player's body moves
 		// without them choosing to face that way, same as forward/backward.
@@ -254,15 +261,18 @@ class GameLoop {
 		// (flipping it there would flip which way lookUp tilts); the
 		// correction lives here instead.
 		if (PhysicalKeys.isDown(Keybinds.STRAFE_LEFT)) {
-			tryMove(player.rightVector(), speed * dt);
+			tryMove(player.rightVector(), speed * scaledDt);
 		}
 		if (PhysicalKeys.isDown(Keybinds.STRAFE_RIGHT)) {
-			tryMove(player.rightVector(), -speed * dt);
+			tryMove(player.rightVector(), -speed * scaledDt);
 		}
 		if (hxd.Key.isPressed(Keybinds.JUMP)) {
+			// Not scaled: an impulse is a rate, not a distance - its effect
+			// over subsequent ticks already scales via scaledDt through
+			// applyGravity's own integration below.
 			player.jump(JUMP_IMPULSE);
 		}
-		currentBiome.applyGravity(player, dt);
+		currentBiome.applyGravity(player, scaledDt);
 
 		checkPaintingTrigger();
 

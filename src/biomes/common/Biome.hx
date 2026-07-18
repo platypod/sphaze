@@ -75,6 +75,33 @@ interface Biome {
 	function applyGravity(player:PlayerModel, dt:Float):Void;
 
 	/**
+		Advances any per-tick state this biome owns beyond movement/gravity —
+		today, only the hub's own hourglass (`biomes.hub.HourglassModel`).
+		Called unconditionally every fixed step, real (unscaled) `dt`
+		regardless of `timeScale()` — see `HourglassModel`'s own class doc
+		for why a self-referential scale would be a feedback loop. A biome
+		with nothing of the sort is a no-op, same discipline as `serialize`
+		for a biome with nothing to save.
+		@param player the current player — read-only here (e.g. for proximity to some ambient object); nothing today mutates it.
+		@param dt fixed timestep duration, in seconds — real time, not scaled by `timeScale()`.
+	**/
+	function tick(player:PlayerModel, dt:Float):Void;
+
+	/**
+		The game-speed multiplier this biome currently wants applied to
+		movement/gravity — `1` for every biome except the hub, whose own
+		hourglass can push it up or down (see `biomes.hub.HourglassModel`).
+		Part of the contract (like `gravity()`) rather than a downcast in
+		`GameLoop`, per this interface's own class doc ("never by biome type
+		name"). Scoped to whichever biome is *current*: walking out of the
+		hub while its own hourglass is tilted resets the player to `1`
+		immediately, not a deliberate design call yet, just the smallest
+		thing that matches the ask (see `HourglassModel`'s own class doc).
+		@return the current game-speed multiplier.
+	**/
+	function timeScale():Float;
+
+	/**
 		This biome's own state as a JSON string, for `GameLoop`'s E (export) dev
 		tool — part of the contract rather than something `GameLoop` reaches for
 		via a type-specific downcast, so a future stateful biome doesn't need

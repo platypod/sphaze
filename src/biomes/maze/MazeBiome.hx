@@ -122,6 +122,14 @@ class MazeBiome implements Biome {
 		Gravity.fallToSurface(player, GRAVITY, dt);
 	}
 
+	/** Nothing here ticks on its own — see `biomes.common.Biome.tick`'s own doc. **/
+	public function tick(player:PlayerModel, dt:Float):Void {}
+
+	/** No game-speed control here — see `biomes.common.Biome.timeScale`'s own doc. **/
+	public function timeScale():Float {
+		return 1;
+	}
+
 	public function serialize():String {
 		return MazeGenerator.serialize(maze);
 	}

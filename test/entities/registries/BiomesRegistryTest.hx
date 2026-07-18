@@ -84,6 +84,12 @@ private class StubBiome implements Biome {
 
 	public function applyGravity(player:PlayerModel, dt:Float):Void {}
 
+	public function tick(player:PlayerModel, dt:Float):Void {}
+
+	public function timeScale():Float {
+		return 1;
+	}
+
 	public function serialize():String {
 		return "{}";
 	}

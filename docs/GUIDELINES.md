@@ -82,10 +82,14 @@ project/
 │   │   ├── registries/                # bookkeeping for what exists where: BiomesRegistry, NpcsRegistry, CreaturesRegistry
 │   │   └── CreatureSpawnTable(+Entry)  # config: which creature types can spawn where — not a registry
 │   └── biomes/                    # one subpackage per biome, plus what's genuinely shared across all of them
-│       ├── common/                   # Biome contract; grid/ (GridModel/GridGeometry/GridMesh/GridCollision, shared
-│       │                             #   by any grid-based biome); space/ (Space contract, sphere/ SphereSpace+SphereMath)
+│       ├── common/                   # Biome contract, Gravity (shared "fall to a floor that's always there" rule);
+│       │                             #   grid/ (GridModel/GridGeometry/GridMesh/GridCollision, shared by any grid-based
+│       │                             #   biome); space/ (Space contract, sphere/ SphereSpace+SphereMath, flat/ FlatSpace
+│       │                             #   — the first non-spherical topology, for the tower's vertical shaft)
 │       ├── maze/                     # MazeBiome, MazeGenerator (the spanning-tree layout — what makes it a *maze*), MazeExitWall
-│       └── hub/                      # HubBiome, HubModel (state/queries), HubMesh (scene-graph build), HubCollision
+│       ├── hub/                      # HubBiome, HubModel (state/queries), HubMesh (scene-graph build), HubCollision
+│       └── tower/                    # TowerBiome, TowerModel/TowerGenerator (concentric-ring layers, real free-fall),
+│                                     #   TowerMesh, TowerCollision
 ├── build.hxml (+ per-target hxml, see §6.1)
 ├── Makefile           # fmt/lint/check/test/build targets, see §5
 ├── .githooks/         # versioned pre-commit hook, see §5.2

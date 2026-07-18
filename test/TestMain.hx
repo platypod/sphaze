@@ -4,6 +4,7 @@ import biomes.common.GravityTest;
 import biomes.common.grid.GridCollisionTest;
 import biomes.common.grid.GridMeshTest;
 import biomes.common.grid.GridModelTest;
+import biomes.common.space.flat.FlatSpaceTest;
 import biomes.common.space.sphere.SphereMathTest;
 import biomes.hub.HubModelTest;
 import biomes.maze.MazeExitWallTest;
@@ -40,6 +41,7 @@ class TestMain {
 		runner.addCase(new NpcsRegistryTest());
 		runner.addCase(new CreaturesRegistryTest());
 		runner.addCase(new GravityTest());
+		runner.addCase(new FlatSpaceTest());
 		Report.create(runner);
 		runner.run();
 	}

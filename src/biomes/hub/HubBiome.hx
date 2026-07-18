@@ -75,7 +75,8 @@ class HubBiome implements Biome {
 
 	public function exitPaintings():Array<PaintingModel> {
 		return [
-			for (destination in DESTINATIONS) HubModel.toBiomePainting(destination.faceIndex, destination.biomeId)
+			for (destination in DESTINATIONS)
+				HubModel.toBiomePainting(destination.faceIndex, destination.biomeId)
 		];
 	}
 

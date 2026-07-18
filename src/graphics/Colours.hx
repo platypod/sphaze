@@ -14,8 +14,8 @@ class Colours {
 	/** `GridMesh`'s flat floor fill. **/
 	public static inline final GRID_FLOOR:Int = 0xFF444444;
 
-	/** Checkerboard colors for the hub's outer shell — a solid flat fill gave the room's curvature and the player's own distance from anything no visual cues at all; alternating cells fix that without needing a texture asset. **/
-	public static inline final HUB_FLOOR_A:Int = 0xFF3A3A44;
+	/** `GrassMesh`'s blade gradient — darker at the root, lighter/yellower at the tip. **/
+	public static inline final GRASS_BASE:Int = 0xFF2E5C2E;
 
-	public static inline final HUB_FLOOR_B:Int = 0xFF4A4A58;
+	public static inline final GRASS_TIP:Int = 0xFF7AA648;
 }

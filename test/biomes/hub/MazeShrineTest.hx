@@ -52,4 +52,13 @@ class MazeShrineTest extends Test {
 		var player = MazeShrine.returnSpawn(BASIS, RADIUS);
 		Assert.isFalse(painting.triggeredBy(player.pos));
 	}
+
+	function testReturnSpawnFacesAwayFromTheShrineNotBackTowardIt():Void {
+		// Walking into the maze's own painting to get here is itself a walk
+		// further into the spiral - facing that same way again on arrival
+		// would retrace those steps rather than continuing out into the hub.
+		var player = MazeShrine.returnSpawn(BASIS, RADIUS);
+		var outward = player.pos.sub(BASIS.origin).normalized();
+		Assert.isTrue(player.forward.dot(outward) > 0);
+	}
 }

@@ -255,10 +255,20 @@ class TowerReplica {
 
 	/**
 		A `PlayerModel` standing `RETURN_SPAWN_OFFSET` past the spire's own
-		wall, at the painting's own angle, facing back in toward it — where
-		the player reappears coming back out of the tower. Re-projected onto
-		the hub's true sphere, same correction `MazeShrine.returnSpawn`
-		already makes for the same reason.
+		wall, at the painting's own angle, facing away from it — where the
+		player reappears coming back out of the tower. Faces *away*
+		(outward, radially past `PAINTING_ANGLE`'s own edge), not back
+		toward the spire: walking into the tower's own painting to get
+		here is itself a walk *toward* the spire, so facing that same way
+		again on arrival would have the player immediately retracing their
+		own steps back the way they came, rather than emerging into the
+		open hub the way walking through an ordinary doorway keeps you
+		moving forward on the other side (hooman: "when we enter through a
+		painting, I'd like to face the opposite direction when exiting the
+		other painting").
+
+		Re-projected onto the hub's true sphere, same correction
+		`MazeShrine.returnSpawn` already makes for the same reason.
 		@param basis the spire's own local frame.
 		@param radius the hub's own sphere radius.
 		@return the spawned player.
@@ -268,9 +278,9 @@ class TowerReplica {
 		var tentativePos = ringPoint(basis, spawnDistance, PAINTING_ANGLE, 0);
 		var pos = tentativePos.normalized().scaled(radius);
 
-		var intoSpire = basis.uAxis.scaled(-Math.cos(PAINTING_ANGLE)).add(basis.vAxis.scaled(-Math.sin(PAINTING_ANGLE)));
+		var outOfSpire = basis.uAxis.scaled(Math.cos(PAINTING_ANGLE)).add(basis.vAxis.scaled(Math.sin(PAINTING_ANGLE)));
 		var posDir = pos.normalized();
-		var forward = intoSpire.sub(posDir.scaled(intoSpire.dot(posDir))).normalized();
+		var forward = outOfSpire.sub(posDir.scaled(outOfSpire.dot(posDir))).normalized();
 		return new PlayerModel(pos, forward);
 	}
 }

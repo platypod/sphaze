@@ -243,12 +243,23 @@ class MazeShrine {
 
 	/**
 		A `PlayerModel` standing `RETURN_SPAWN_OFFSET` past wall 7's own
-		tip, facing back in along the spiral — where the player reappears
-		coming back out of the maze. Re-projected onto the hub's true
-		sphere (`normalized().scaled(radius)`) since `HubStructure`'s own
-		flat local frame is only an approximation away from the anchor
-		itself — same correction `biomes.maze.MazeBiome.playerInFrontOfExitWall`
-		already makes for the same reason.
+		tip, facing away from the spiral — where the player reappears
+		coming back out of the maze. Faces *away* (continuing outward,
+		the same direction `outDir` already points), not back toward the
+		shrine: walking into the maze's own painting to get here is itself
+		a walk *further into* the spiral, so facing that same way again on
+		arrival would have the player immediately retracing their own
+		steps back the way they came, rather than emerging into the open
+		hub the way walking through an ordinary doorway keeps you moving
+		forward on the other side (hooman: "when we enter through a
+		painting, I'd like to face the opposite direction when exiting the
+		other painting").
+
+		Re-projected onto the hub's true sphere (`normalized().scaled(radius)`)
+		since `HubStructure`'s own flat local frame is only an
+		approximation away from the anchor itself — same correction
+		`biomes.maze.MazeBiome.playerInFrontOfExitWall` already makes for
+		the same reason.
 		@param basis the shrine's own local frame.
 		@param radius the hub's own sphere radius.
 		@return the spawned player.
@@ -264,9 +275,9 @@ class MazeShrine {
 		var tentativePos = HubStructure.worldPoint(basis, spawnU, spawnV, 0);
 		var pos = tentativePos.normalized().scaled(radius);
 
-		var intoSpiral = basis.uAxis.scaled(-outDir.u).add(basis.vAxis.scaled(-outDir.v));
+		var outOfSpiral = basis.uAxis.scaled(outDir.u).add(basis.vAxis.scaled(outDir.v));
 		var posDir = pos.normalized();
-		var forward = intoSpiral.sub(posDir.scaled(intoSpiral.dot(posDir))).normalized();
+		var forward = outOfSpiral.sub(posDir.scaled(outOfSpiral.dot(posDir))).normalized();
 		return new PlayerModel(pos, forward);
 	}
 }

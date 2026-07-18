@@ -52,4 +52,13 @@ class TowerReplicaTest extends Test {
 		var player = TowerReplica.returnSpawn(BASIS, RADIUS);
 		Assert.isFalse(painting.triggeredBy(player.pos));
 	}
+
+	function testReturnSpawnFacesAwayFromTheSpireNotBackTowardIt():Void {
+		// Walking into the tower's own painting to get here is itself a walk
+		// toward the spire - facing that same way again on arrival would
+		// retrace those steps rather than continuing out into the hub.
+		var player = TowerReplica.returnSpawn(BASIS, RADIUS);
+		var outward = player.pos.sub(BASIS.origin).normalized();
+		Assert.isTrue(player.forward.dot(outward) > 0);
+	}
 }

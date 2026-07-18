@@ -120,11 +120,19 @@ class Hub {
 
 	public static final SPAWN_PHI:Float = Math.PI / COLUMN_SIDES;
 
-	/** The hub's one painting back to the existing biome, mounted on `TO_BIOME_FACE_INDEX` at `PAINTING_HEIGHT` — matches exactly where `buildColumn` renders it. **/
-	public static function toBiomePainting():Painting {
+	/**
+		The hub's one painting back to a biome, mounted on `TO_BIOME_FACE_INDEX`
+		at `PAINTING_HEIGHT` — matches exactly where `buildColumn` renders it.
+		Takes the destination biome's id rather than hardcoding one so `Hub`
+		itself stays biome-agnostic — see `biomes.HubBiome`, which is what
+		actually knows which biome that is.
+		@param destinationBiomeId the `game.Biome.id()` this painting leads to.
+		@return the hub's exit painting.
+	**/
+	public static function toBiomePainting(destinationBiomeId:String):Painting {
 		var left = toBiomeFaceEdge(true);
 		var right = toBiomeFaceEdge(false);
-		return new Painting(Painting.centerOf(left, right, new h3d.Vector(0, 1, 0)), ToBiome, PAINTING_TRIGGER_DISTANCE);
+		return new Painting(Painting.centerOf(left, right, new h3d.Vector(0, 1, 0)), destinationBiomeId, PAINTING_TRIGGER_DISTANCE);
 	}
 
 	/** `TO_BIOME_FACE_INDEX`'s left or right edge, at `PAINTING_HEIGHT` — the shared reference both `toBiomePainting` and `buildColumn` mount the painting from, so the trigger position always matches where it's actually rendered. **/

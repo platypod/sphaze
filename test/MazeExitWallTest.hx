@@ -4,20 +4,18 @@ import maze.Maze;
 import maze.Maze.MazeData;
 import maze.Maze.MazeNode;
 import maze.MazeMesh;
-import hub.BiomePainting;
-import hub.Painting;
+import biomes.MazeExitWall;
 
-/** Covers BiomePainting's placement scan — a deterministic, hand-built MazeData, not a random generated one. **/
-class BiomePaintingTest extends Test {
+/** Covers MazeExitWall's placement scan — a deterministic, hand-built MazeData, not a random generated one. **/
+class MazeExitWallTest extends Test {
 	function testFindsRow1Col0sWestWallWhenNothingIsOpenAnywhere():Void {
 		var maze:MazeData = {openEdges: new haxe.ds.StringMap()}; // nothing open -> row 1 col 0's west edge is the first closed one found
 
-		var painting = BiomePainting.findReturnPainting(maze);
+		var wall = MazeExitWall.find(maze);
 
 		var inner = MazeMesh.innerCornersOf(1, 0);
-		var expected = Painting.midpointOf(inner.nw, inner.sw);
-		assertVectorEquals(expected, painting.position);
-		Assert.equals(ToHub, painting.destination);
+		assertVectorEquals(inner.nw, wall.a);
+		assertVectorEquals(inner.sw, wall.b);
 	}
 
 	function testSkipsOpenEdgesUntilItFindsAClosedOne():Void {
@@ -31,11 +29,11 @@ class BiomePaintingTest extends Test {
 			maze.openEdges.set(edgeKeyForTest(here, east), true);
 		}
 
-		var painting = BiomePainting.findReturnPainting(maze);
+		var wall = MazeExitWall.find(maze);
 
 		var inner = MazeMesh.innerCornersOf(2, 0);
-		var expected = Painting.midpointOf(inner.nw, inner.sw);
-		assertVectorEquals(expected, painting.position);
+		assertVectorEquals(inner.nw, wall.a);
+		assertVectorEquals(inner.sw, wall.b);
 	}
 
 	function testUsesTheEastWallWhenWestIsOpenButEastIsClosed():Void {
@@ -45,11 +43,11 @@ class BiomePaintingTest extends Test {
 		// side (also closed, since nothing else is open) before moving on.
 		maze.openEdges.set(edgeKeyForTest(RingNode(1, 0), RingNode(1, cols - 1)), true);
 
-		var painting = BiomePainting.findReturnPainting(maze);
+		var wall = MazeExitWall.find(maze);
 
 		var inner = MazeMesh.innerCornersOf(1, 0);
-		var expected = Painting.midpointOf(inner.ne, inner.se);
-		assertVectorEquals(expected, painting.position);
+		assertVectorEquals(inner.ne, wall.a);
+		assertVectorEquals(inner.se, wall.b);
 	}
 
 	function assertVectorEquals(expected:h3d.Vector, actual:h3d.Vector):Void {

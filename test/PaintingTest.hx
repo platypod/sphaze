@@ -17,14 +17,14 @@ class PaintingTest extends Test {
 
 	function testTriggeredByIsTrueExactlyAtItsOwnPosition():Void {
 		var position = new h3d.Vector(3, 4, 0);
-		var painting = new Painting(position, ToBiome);
+		var painting = new Painting(position, "maze");
 
 		Assert.isTrue(painting.triggeredBy(position));
 	}
 
 	function testTriggeredByIsTrueJustInsideTheTriggerDistance():Void {
 		var position = new h3d.Vector(0, 0, 0);
-		var painting = new Painting(position, ToHub);
+		var painting = new Painting(position, "hub");
 
 		var justInside = new h3d.Vector(Painting.TRIGGER_DISTANCE - 0.1, 0, 0);
 
@@ -33,7 +33,7 @@ class PaintingTest extends Test {
 
 	function testTriggeredByIsFalseJustOutsideTheTriggerDistance():Void {
 		var position = new h3d.Vector(0, 0, 0);
-		var painting = new Painting(position, ToHub);
+		var painting = new Painting(position, "hub");
 
 		var justOutside = new h3d.Vector(Painting.TRIGGER_DISTANCE + 0.1, 0, 0);
 
@@ -42,7 +42,7 @@ class PaintingTest extends Test {
 
 	function testTriggeredByMeasuresStraightLineDistanceRegardlessOfDirection():Void {
 		var position = new h3d.Vector(10, 10, 10);
-		var painting = new Painting(position, ToBiome);
+		var painting = new Painting(position, "maze");
 
 		// 3-4-5-ish diagonal offset, well past TRIGGER_DISTANCE.
 		var far = new h3d.Vector(10 + 30, 10 + 40, 10);

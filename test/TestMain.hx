@@ -14,7 +14,7 @@ class TestMain {
 		runner.addCase(new MazeMeshTest());
 		runner.addCase(new CollisionTest());
 		runner.addCase(new PaintingTest());
-		runner.addCase(new BiomePaintingTest());
+		runner.addCase(new MazeExitWallTest());
 		Report.create(runner);
 		runner.run();
 	}

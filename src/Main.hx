@@ -1,16 +1,9 @@
+import biomes.HubBiome;
+import biomes.MazeBiome;
 import entities.Player;
-import game.Collision;
+import game.Biome;
 import hub.Painting;
 import maze.Maze;
-import maze.Maze.MazeData;
-import maze.MazeGeometry;
-import maze.MazeMesh;
-
-/** Which space the player is currently walking around in — a biome maze, or the diegetic hub (see docs/PROJECT_LOG.md's 2026-07-17 entry). **/
-enum SceneKind {
-	Biome;
-	Hub;
-}
 
 /**
 	Entry point. Owns the fixed-timestep accumulator (CLAUDE.md "Architecture")
@@ -35,42 +28,18 @@ class Main extends hxd.App {
 	**/
 	static inline final SPACE_TILT_RELEASE_AFTER:Float = 1;
 
-	/**
-		Fixed spawn spherical coordinates — chosen to sit well clear of
-		row 5's own boundaries (its cell's center theta), not just
-		"somewhere in the maze": the old `SPAWN_THETA` (1.3) landed only
-		~2.53 units from the row 5/6 boundary, just barely outside the
-		`MazeGeometry.WALL_THICKNESS + MazeGeometry.COLLISION_CLEARANCE`
-		(2.5) zone `Maze.wallZoneNeighbor` otherwise guarantees a player can
-		never get closer than — a margin of about 0.03 units, i.e. nothing.
-		Whenever a generated maze happened to close that specific edge
-		(about half the time, since it's an ordinary edge with no special
-		bias), the player spawned with the camera almost flush against —
-		sometimes clipped just past — that wall's actual face, reading as
-		"missing texture, see through it" (reported directly, with
-		screenshots, since normal movement never lets the collision-enforced
-		clearance get this thin). This only ever bit spawning specifically:
-		`Player.spawnAt` places the player directly, without going through
-		`Collision`'s own clearance check the way every other move does.
-		Centering on row 5 instead gives every direction a comfortable
-		margin (smallest is ~5.95 units, still well over double what's
-		required) rather than relying on which edges a maze happens to open.
-		`Math.PI * 5 / (Maze.ROWS - 1)` — row 5's own center theta — spelled
-		out as a literal since a `static inline final` can't initialize from
-		another class's constant.
-	**/
-	static inline final SPAWN_THETA:Float = 1.2083048667653051;
-
-	static inline final SPAWN_PHI:Float = 0.6;
-	static inline final SPAWN_FACING:Float = 0.4;
-
 	var accumulator:Float = 0;
 	var player:Player;
-	var maze:MazeData;
-	var mazeGroup:h3d.scene.Object;
-	var sceneKind:SceneKind = Biome;
 
-	/** Whichever painting this scene has — the biome's to the hub, or the hub's to the biome — checked each tick against `player.pos`. **/
+	/** Every biome that exists, keyed by `Biome.id()` — see `game.Biome`'s own class doc for why the hub is one of these too, not a special case. **/
+	var biomes:Map<String, Biome>;
+
+	/** Whichever biome the player is currently in. **/
+	var currentBiome:Biome;
+
+	var mazeGroup:h3d.scene.Object;
+
+	/** The current biome's own exit painting — checked each tick against `player.pos`. **/
 	var activePainting:Painting;
 
 	var spaceHoldTime:Float = 0;
@@ -89,7 +58,8 @@ class Main extends hxd.App {
 		s3d.camera.fovY = CAMERA_FOV_Y;
 
 		mazeGroup = new h3d.scene.Object(s3d);
-		enterBiome(Maze.generate());
+		biomes = [MazeBiome.ID => new MazeBiome(Maze.generate()), HubBiome.ID => new HubBiome()];
+		enterBiome(MazeBiome.ID, false);
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,
 		// perf stats. Hidden by default; toggled in fixedUpdate.
@@ -119,145 +89,69 @@ class Main extends hxd.App {
 	}
 
 	/**
-		How far in front of the return-to-hub painting the player reappears
-		when coming back out of the hub — must clear `Painting.TRIGGER_DISTANCE`
-		(4), or they'd step right back into the painting's trigger radius and
-		immediately bounce back into the hub. Well short of any cell's own
-		half-width (the reduced grid's narrowest is ~8 units, per
-		`docs/PROJECT_LOG.md`'s reduced-grid entry), so this never overshoots
-		into the cell's far wall.
+		(Re)builds `id`'s meshes under `mazeGroup`, places its exit painting,
+		and spawns the player at its entry point — used at startup, when
+		importing a previously exported maze (see `exportMaze`/
+		`onMazeFileChosen`), and whenever a painting warps the player into
+		another biome (see `checkPaintingTrigger`).
+		@param id the `Biome.id()` to enter.
+		@param returning whether the player is coming back into a biome they already visited rather than a fresh arrival — see `Biome.spawnPlayer`.
 	**/
-	static inline final RETURN_SPAWN_OFFSET:Float = 6;
-
-	/**
-		(Re)builds `data`'s floor/wall meshes under `mazeGroup` and places
-		its return-to-hub painting (see `hub.BiomePainting`) — used at
-		startup (a fresh random maze), when importing a previously exported
-		one (see `exportMaze`/`onMazeFileChosen`), and when coming back out
-		of the hub into the *same* biome the player just left.
-
-		`resumeAtReturnWall` picks how the player spawns: at the fixed
-		`SPAWN_THETA`/`SPAWN_PHI`/`SPAWN_FACING` (a fresh maze, or an
-		imported one — there's no meaningful "where they left off" for
-		either), or a few units in front of the return-to-hub painting,
-		facing into the room, coming back out of the hub into the maze they
-		were already in. `data` is `maze` itself in that second case — the
-		hub visit never touches `maze`, so it's still exactly the biome the
-		player left — not a fresh `Maze.generate()`, which is what silently
-		sent them back to the maze's fixed start point instead of where
-		they'd actually been standing.
-		@param data the maze to enter.
-		@param resumeAtReturnWall spawn in front of the return-to-hub painting instead of the fixed start point.
-	**/
-	function enterBiome(data:MazeData, resumeAtReturnWall:Bool = false):Void {
-		sceneKind = Biome;
-		maze = data;
-		mazeGroup.removeChildren();
-		MazeMesh.build(maze, mazeGroup);
-
-		var wall = hub.BiomePainting.findReturnWall(maze);
-		Painting.buildQuad(mazeGroup, wall.a, wall.b, wall.cellCenter, Painting.TO_HUB_COLOR);
-		activePainting = new Painting(Painting.midpointOf(wall.a, wall.b), ToHub);
-
-		if (resumeAtReturnWall) {
-			player = playerInFrontOfWall(wall);
-		} else {
-			player = Player.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, MazeGeometry.RADIUS);
+	function enterBiome(id:String, returning:Bool):Void {
+		var biome = biomes.get(id);
+		if (biome == null) {
+			throw 'unreachable: no biome registered for id "$id"';
 		}
-		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
-	}
 
-	/**
-		A `Player` standing `RETURN_SPAWN_OFFSET` units in front of `wall`'s
-		midpoint, facing into the room — where the player reappears coming
-		back out of the hub. `wall.cellCenter.sub(mid)` isn't exactly tangent
-		to the sphere at `mid` (two points on a curved surface never are,
-		strictly), so `forward` gets re-projected onto the tangent plane at
-		the final spawn position — the same approximation `Painting`'s own
-		wall-mounting math already relies on, just also re-tangented here
-		since `Player` depends on `forward` actually being one.
-		@param wall the return-to-hub wall to spawn in front of.
-		@return the spawned player.
-	**/
-	function playerInFrontOfWall(wall:hub.BiomePainting.FoundWall):Player {
-		var mid = Painting.midpointOf(wall.a, wall.b);
-		var intoRoom = wall.cellCenter.sub(mid).normalized();
-		var pos = mid.add(intoRoom.scaled(RETURN_SPAWN_OFFSET)).normalized().scaled(MazeGeometry.RADIUS);
-
-		var posDir = pos.normalized();
-		var forward = intoRoom.sub(posDir.scaled(intoRoom.dot(posDir))).normalized();
-		return new Player(pos, forward);
-	}
-
-	/**
-		(Re)builds the hub's room + its one painting under `mazeGroup` and
-		spawns the player at its equator — the diegetic menu space (see
-		`hub.Hub`'s own class doc and `docs/PROJECT_LOG.md`'s 2026-07-17
-		entry, and its later entry for the bigger sphere-plus-column
-		redesign). Reached by walking into a biome's return-to-hub painting;
-		see `checkPaintingTrigger`. Its own sphere is a different size than
-		a biome's, so every call touching it uses `hub.Hub.RADIUS`, not
-		`MazeGeometry.RADIUS`.
-	**/
-	function enterHub():Void {
-		sceneKind = Hub;
+		currentBiome = biome;
 		mazeGroup.removeChildren();
-		hub.Hub.build(mazeGroup);
-		activePainting = hub.Hub.toBiomePainting();
+		biome.build(mazeGroup);
+		activePainting = biome.exitPainting();
 
-		player = Player.spawnAt(hub.Hub.SPAWN_THETA, hub.Hub.SPAWN_PHI, 0, hub.Hub.RADIUS);
-		player.applyToCamera(s3d.camera, hub.Hub.RADIUS);
+		player = biome.spawnPlayer(returning);
+		player.applyToCamera(s3d.camera, biome.radius());
 	}
 
 	/**
 		Attempts to move `player` by `distance` along `direction`, through
-		whichever scene's own collision currently applies — `game.Collision`
-		against the maze graph in a biome, `hub.HubCollision`'s simpler
-		convex-hexagon check in the hub.
+		whichever biome's own collision currently applies (see `Biome.tryMove`).
 		@param direction unit tangent at `player.pos` to move along.
 		@param distance arc length to move; negative moves the opposite way.
 	**/
 	function tryMove(direction:h3d.Vector, distance:Float):Void {
-		switch sceneKind {
-			case Biome:
-				Collision.tryMove(player, direction, distance, MazeGeometry.RADIUS, maze);
-			case Hub:
-				hub.HubCollision.tryMove(player, direction, distance);
-		}
+		currentBiome.tryMove(player, direction, distance);
 	}
 
 	/**
 		Walking into `activePainting` warps to wherever it leads — no
-		interact-key confirmation, on purpose (see `hub.Painting`'s own
-		class doc). A biome's painting always leads to the hub; the hub's
-		always leads back into the *same* biome the player left (the hub
-		visit never touches `maze`), resuming in front of its own
-		return-to-hub painting rather than the maze's fixed start point —
-		this pass still doesn't track "discovered biomes" (see
-		`docs/PROJECT_LOG.md`'s 2026-07-17 entry), so there's only ever the
-		one biome to send it back to.
+		interact-key confirmation, on purpose (see `hub.Painting`'s own class
+		doc). Uniform for every biome, hub included: there's no "which kind
+		of destination is this" branch, just "enter whichever biome id this
+		painting names."
 	**/
 	function checkPaintingTrigger():Void {
 		if (!activePainting.triggeredBy(player.pos)) {
 			return;
 		}
 
-		switch activePainting.destination {
-			case ToHub:
-				enterHub();
-			case ToBiome:
-				enterBiome(maze, true);
-		}
+		enterBiome(activePainting.destinationBiomeId, true);
 	}
 
 	/**
-		Downloads the current maze as a JSON file (E) — pairs with L
-		(`promptImportMaze`) to make a maze a specific bug showed up in
-		something that can actually be saved and handed back, instead of
+		Downloads the current maze biome's data as a JSON file (E) — pairs
+		with L (`promptImportMaze`) to make a maze a specific bug showed up
+		in something that can actually be saved and handed back, instead of
 		lost the moment the page reloads (see `Maze.serialize`'s own doc).
+		No-ops outside a `MazeBiome` (e.g. while in the hub) — there's
+		nothing to export there.
 	**/
 	function exportMaze():Void {
-		var json = Maze.serialize(maze);
+		var mazeBiome = Std.downcast(currentBiome, MazeBiome);
+		if (mazeBiome == null) {
+			return;
+		}
+
+		var json = Maze.serialize(mazeBiome.data());
 		var blob = new js.html.Blob([json], {type: "application/json"});
 		var url:String = js.Syntax.code("URL.createObjectURL({0})", blob);
 		var anchor:js.html.AnchorElement = cast js.Browser.document.createElement("a");
@@ -273,7 +167,13 @@ class Main extends hxd.App {
 		mazeFileInput.click();
 	}
 
-	/** `mazeFileInput`'s change handler: reads the chosen file and loads it as a maze. **/
+	/**
+		`mazeFileInput`'s change handler: reads the chosen file and loads it
+		into the maze biome, re-entering it fresh (not `returning`, same as a
+		newly generated maze — there's no meaningful "where they left off"
+		for an imported maze either). No-ops outside a `MazeBiome`, same as
+		`exportMaze`.
+	**/
 	function onMazeFileChosen(e:js.html.Event):Void {
 		var file = mazeFileInput.files[0];
 		if (file == null) {
@@ -281,7 +181,14 @@ class Main extends hxd.App {
 		}
 
 		var reader = new js.html.FileReader();
-		reader.onload = (_) -> enterBiome(Maze.deserialize(reader.result));
+		reader.onload = (_) -> {
+			var mazeBiome = Std.downcast(currentBiome, MazeBiome);
+			if (mazeBiome == null) {
+				return;
+			}
+			mazeBiome.reload(Maze.deserialize(reader.result));
+			enterBiome(MazeBiome.ID, false);
+		};
 		reader.readAsText(file);
 	}
 
@@ -359,7 +266,7 @@ class Main extends hxd.App {
 		checkPaintingTrigger();
 		updateSpaceTilt(dt);
 
-		player.applyToCamera(s3d.camera, MazeGeometry.RADIUS);
+		player.applyToCamera(s3d.camera, currentBiome.radius());
 
 		if (hxd.Key.isPressed(hxd.Key.F3)) {
 			debugOverlayVisible = !debugOverlayVisible;
@@ -369,9 +276,9 @@ class Main extends hxd.App {
 			updateDebugOverlay();
 		}
 
-		// Export/import only make sense against a biome maze — the hub
-		// isn't a Maze/MazeData at all (see hub.Hub's own class doc).
-		if (sceneKind == Biome) {
+		// Export/import only make sense against a maze biome — no-ops
+		// elsewhere (see exportMaze/onMazeFileChosen's own docs).
+		if (Std.downcast(currentBiome, MazeBiome) != null) {
 			if (hxd.Key.isPressed(hxd.Key.E)) {
 				exportMaze();
 			}
@@ -385,13 +292,15 @@ class Main extends hxd.App {
 		Refreshes the F3 overlay's text — only called while it's visible, so
 		the string-building cost disappears entirely once it's toggled off.
 		Block 1: maze position (node, theta, phi) — the readout used to track
-		down wall-mesh bug reports. Block 2: camera angle (facing around the
-		local "up" axis, relative to `thetaTangentAt`'s own zero, same
-		convention `Player.spawnAt`'s `facing` parameter uses; pitch as
-		stored). Block 3: whatever perf info this target can actually offer
-		— `hxd.Timer.fps()` always; heap size only where the browser exposes
-		the non-standard `performance.memory` (kept out of the layout
-		entirely, not shown as "n/a", when it isn't available).
+		down wall-mesh bug reports (meaningless while in the hub, since it
+		isn't on the maze grid at all, but harmless there too). Block 2:
+		camera angle (facing around the local "up" axis, relative to
+		`thetaTangentAt`'s own zero, same convention `Player.spawnAt`'s
+		`facing` parameter uses; pitch as stored). Block 3: whatever perf
+		info this target can actually offer — `hxd.Timer.fps()` always; heap
+		size only where the browser exposes the non-standard
+		`performance.memory` (kept out of the layout entirely, not shown as
+		"n/a", when it isn't available).
 	**/
 	function updateDebugOverlay():Void {
 		var theta = game.SphereMath.thetaOf(player.pos);

@@ -1,11 +1,11 @@
-package hub;
+package biomes;
 
 import maze.Maze;
 import maze.Maze.MazeData;
 import maze.Maze.MazeNode;
 import maze.MazeMesh;
 
-/** The wall segment `BiomePainting.findReturnWall` found, plus enough context to render a painting flush against it. **/
+/** The wall segment `MazeExitWall.find` found, plus enough context to render a painting flush against it. **/
 typedef FoundWall = {
 	a:h3d.Vector,
 	b:h3d.Vector,
@@ -13,12 +13,12 @@ typedef FoundWall = {
 }
 
 /**
-	Places the return-to-hub painting in whatever biome maze was just
-	generated or imported — same functions either way (`Main` calls these
-	after both `Maze.generate()` and `Maze.deserialize()`), so an imported
-	maze always gets one too, not a special case.
+	Finds a spot on a maze biome's own grid to mount its exit painting —
+	moved out of the old hub-specific `BiomePainting`: picking a wall for
+	this is the maze biome's own concern (see `MazeBiome`), not something
+	specific to wherever the painting happens to lead.
 **/
-class BiomePainting {
+class MazeExitWall {
 	/**
 		Scans cells in row-major order, checking each one's west then east
 		side, for the first closed edge — using `MazeMesh.innerCornersOf`'s
@@ -37,7 +37,7 @@ class BiomePainting {
 		@param maze the maze to find a wall in.
 		@return the found wall segment.
 	**/
-	public static function findReturnWall(maze:MazeData):FoundWall {
+	public static function find(maze:MazeData):FoundWall {
 		for (row in 1...(Maze.ROWS - 1)) {
 			var cols = Maze.colsForRow(row);
 			for (col in 0...cols) {
@@ -55,17 +55,6 @@ class BiomePainting {
 			}
 		}
 		throw "unreachable: a generated/imported maze is a spanning tree, so some west/east edge is always closed somewhere";
-	}
-
-	/**
-		The return-to-hub `Painting` for whatever wall `findReturnWall`
-		finds in `maze`.
-		@param maze the maze to place the painting in.
-		@return the placed painting.
-	**/
-	public static function findReturnPainting(maze:MazeData):Painting {
-		var wall = findReturnWall(maze);
-		return new Painting(Painting.midpointOf(wall.a, wall.b), ToHub);
 	}
 
 	/** A ring cell's center point — same theta/phi formula `MazeMesh.cornersOf`/`innerCornersOf` use internally. **/

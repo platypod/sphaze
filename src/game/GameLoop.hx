@@ -229,17 +229,17 @@ class GameLoop {
 		// placeholder — fine for one input source and one entity, but a
 		// dedicated input/controller system is the right home for this once
 		// there's more than a single player to drive.
-		if (hxd.Key.isDown(hxd.Key.LEFT)) {
+		if (hxd.Key.isDown(Keybinds.TURN_LEFT)) {
 			player.turn(-TURN_SPEED * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.RIGHT)) {
+		if (hxd.Key.isDown(Keybinds.TURN_RIGHT)) {
 			player.turn(TURN_SPEED * dt);
 		}
-		var speed = hxd.Key.isDown(hxd.Key.SHIFT) ? WALK_SPEED * SPRINT_MULTIPLIER : WALK_SPEED;
-		if (hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z)) {
+		var speed = hxd.Key.isDown(Keybinds.SPRINT) ? WALK_SPEED * SPRINT_MULTIPLIER : WALK_SPEED;
+		if (hxd.Key.isDown(Keybinds.MOVE_FORWARD) || hxd.Key.isDown(Keybinds.MOVE_FORWARD_ALT)) {
 			tryMove(player.forward, speed * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S)) {
+		if (hxd.Key.isDown(Keybinds.MOVE_BACKWARD) || hxd.Key.isDown(Keybinds.MOVE_BACKWARD_ALT)) {
 			tryMove(player.forward, -speed * dt);
 		}
 		// Q/D strafe sideways rather than turn — the player's body moves
@@ -252,10 +252,10 @@ class GameLoop {
 		// itself stays as-is since applyToCamera's pitch axis needs it
 		// (flipping it there would flip which way lookUp tilts); the
 		// correction lives here instead.
-		if (hxd.Key.isDown(hxd.Key.Q)) {
+		if (hxd.Key.isDown(Keybinds.STRAFE_LEFT)) {
 			tryMove(player.rightVector(), speed * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.D)) {
+		if (hxd.Key.isDown(Keybinds.STRAFE_RIGHT)) {
 			tryMove(player.rightVector(), -speed * dt);
 		}
 
@@ -264,7 +264,7 @@ class GameLoop {
 
 		Camera.applyTo(s3d.camera, player, currentBiome.radius());
 
-		if (hxd.Key.isPressed(hxd.Key.F3)) {
+		if (hxd.Key.isPressed(Keybinds.TOGGLE_DEBUG_OVERLAY)) {
 			debugOverlayVisible = !debugOverlayVisible;
 			debugOverlay.visible = debugOverlayVisible;
 		}
@@ -274,10 +274,10 @@ class GameLoop {
 
 		// E/L now work uniformly for whichever biome is current (see
 		// exportMaze/onMazeFileChosen's own docs) — no biome-specific gate.
-		if (hxd.Key.isPressed(hxd.Key.E)) {
+		if (hxd.Key.isPressed(Keybinds.EXPORT_MAZE)) {
 			exportMaze();
 		}
-		if (hxd.Key.isPressed(hxd.Key.L)) {
+		if (hxd.Key.isPressed(Keybinds.IMPORT_MAZE)) {
 			promptImportMaze();
 		}
 	}
@@ -332,8 +332,12 @@ class GameLoop {
 	}
 
 	function isMoveKeyDown():Bool {
-		return hxd.Key.isDown(hxd.Key.UP) || hxd.Key.isDown(hxd.Key.Z) || hxd.Key.isDown(hxd.Key.DOWN) || hxd.Key.isDown(hxd.Key.S)
-			|| hxd.Key.isDown(hxd.Key.Q) || hxd.Key.isDown(hxd.Key.D);
+		return hxd.Key.isDown(Keybinds.MOVE_FORWARD)
+			|| hxd.Key.isDown(Keybinds.MOVE_FORWARD_ALT)
+			|| hxd.Key.isDown(Keybinds.MOVE_BACKWARD)
+			|| hxd.Key.isDown(Keybinds.MOVE_BACKWARD_ALT)
+			|| hxd.Key.isDown(Keybinds.STRAFE_LEFT)
+			|| hxd.Key.isDown(Keybinds.STRAFE_RIGHT);
 	}
 
 	/**
@@ -345,7 +349,7 @@ class GameLoop {
 		not re-armed until SPACE is released and pressed again.
 	**/
 	function updateSpaceTilt(dt:Float):Void {
-		if (!hxd.Key.isDown(hxd.Key.SPACE)) {
+		if (!hxd.Key.isDown(Keybinds.TILT_UP)) {
 			spaceHoldTime = 0;
 			spaceTiltReleased = false;
 			return;

@@ -10,10 +10,10 @@ import graphics.Colours;
 	per layer (the always-solid center disk, plus whichever ring tiles
 	`TowerGenerator` made solid), and one continuous cylindrical outer wall
 	spanning the whole shaft. Flat-colored placeholders (`h3d.shader.FixedColor`,
-	no lights, double-sided) — same "flat-shaded placeholder" discipline
-	`entities.painting.PaintingModel`'s own quads and `graphics.Colours`
-	already establish, rather than the textured floors/walls
-	`biomes.common.grid.GridMesh`/`biomes.hub.HubMesh` build.
+	no lights, double-sided, per `graphics.Colours`) — the floor/walls
+	themselves aren't textured yet, unlike `biomes.common.grid.GridMesh`/
+	`biomes.hub.HubMesh`; the return painting mounted here, however, *is*
+	real art (see `entities.painting.PaintingModel.buildQuad`).
 
 	Each ring tile is a single flat quad spanning its own inner/outer radius
 	and start/end angle — a straight-edged approximation of its true arc,
@@ -59,7 +59,7 @@ class TowerMesh {
 		var left = TowerModel.returnPaintingWallEdge(true);
 		var right = TowerModel.returnPaintingWallEdge(false);
 		var roomCenter = new h3d.Vector(0, left.y, 0);
-		PaintingModel.buildQuad(parent, left, right, roomCenter, Colours.TO_HUB, new h3d.Vector(0, 1, 0));
+		PaintingModel.buildQuad(parent, left, right, roomCenter, PaintingModel.toHubTexture(), new h3d.Vector(0, 1, 0));
 	}
 
 	/** Every layer's own center disk plus whichever ring tiles are solid there. **/

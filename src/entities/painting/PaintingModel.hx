@@ -2,6 +2,9 @@ package entities.painting;
 
 import biomes.common.space.sphere.SphereMath;
 import entities.Entity;
+import game.MeshBuilder;
+import graphics.Colours;
+import graphics.shaders.UnlitTexture;
 
 /**
 	A painting mounted on a wall — the diegetic warp mechanism: walking
@@ -26,8 +29,14 @@ class PaintingModel extends Entity {
 	/** How close the player needs to walk for this painting to trigger. **/
 	public static inline final TRIGGER_DISTANCE:Float = 4;
 
-	/** How far up from the floor a painting's bottom edge sits. **/
-	static inline final BASE_HEIGHT:Float = 3;
+	/**
+		How far up from the floor a painting's bottom edge sits. `3` read as
+		sitting right on the ground from a standing player's eye line
+		(`entities.player.Camera.EYE_HEIGHT` is `6`, so the old bottom edge
+		was only half an eye-height up) — raised so the whole piece reads as
+		mounted at a normal wall height instead.
+	**/
+	static inline final BASE_HEIGHT:Float = 4.5;
 
 	/** A painting's height, floor-clearance to top edge. **/
 	static inline final HEIGHT:Float = 6;
@@ -47,6 +56,25 @@ class PaintingModel extends Entity {
 		magnitude, not direction, was the actual remaining cause).
 	**/
 	static inline final SURFACE_INSET:Float = 0.4;
+
+	/**
+		How far beyond the painting's own edge `buildFrame`'s moulding
+		extends, as a fraction of that edge's own span — not a fixed world
+		distance, so the border reads the same relative thickness whether
+		it's mounted on a narrow wall or spans a wide one, instead of
+		looking razor-thin against a wide painting and oversized against a
+		narrow one.
+	**/
+	static inline final FRAME_BORDER_FRACTION:Float = 0.07;
+
+	/**
+		How far past the painting's own surface the frame's inner edge sits
+		— the whole reason it reads as raised trim instead of a flat
+		painted border. Added on top of `SURFACE_INSET`, same reasoning:
+		this is depth *beyond* the painting's own surface, not from the
+		wall.
+	**/
+	static inline final FRAME_DEPTH:Float = 0.35;
 
 	public final position:h3d.Vector;
 
@@ -108,12 +136,11 @@ class PaintingModel extends Entity {
 	}
 
 	/**
-		Builds a painting's placeholder visual: a single flat, solid-colored
-		quad (no frame/art yet — matches the project's existing "flat-
-		shaded placeholder" aesthetic, same reasoning `wall_stone.png` was
-		procedurally generated for) centered on the wall segment's midpoint,
-		inset slightly off the wall's own face so it doesn't z-fight with
-		the wall texture directly behind it.
+		Builds a painting's actual visible quad — textured with `texture`
+		(the destination biome's own artwork, see `res/sprites/`) centered
+		on the wall segment's midpoint, inset slightly off the wall's own
+		face so it doesn't z-fight with the wall texture directly behind
+		it.
 
 		The inset direction is `along.cross(upDir)` — perpendicular to both
 		the wall's own length and height axes by construction, i.e. the
@@ -132,10 +159,11 @@ class PaintingModel extends Entity {
 		@param wallA one end of the wall segment this painting is mounted on.
 		@param wallB the other end.
 		@param roomCenter a point on the room's own side of the wall — only used to pick which way the face normal points, not for exact positioning.
-		@param color the placeholder's flat fill color.
+		@param texture the destination biome's own artwork, shown flat across the quad's face.
 		@param up which way "up the wall" is — defaults to radially inward (`SphereMath.upVectorAt`), correct for a wall on a sphere's surface; pass an explicit direction (e.g. `(0,1,0)`) for a wall whose own "up" isn't radial, like a straight column's side face.
 	**/
-	public static function buildQuad(parent:h3d.scene.Object, wallA:h3d.Vector, wallB:h3d.Vector, roomCenter:h3d.Vector, color:Int, ?up:h3d.Vector):Void {
+	public static function buildQuad(parent:h3d.scene.Object, wallA:h3d.Vector, wallB:h3d.Vector, roomCenter:h3d.Vector, texture:h3d.mat.Texture,
+			?up:h3d.Vector):Void {
 		var mid = midpointOf(wallA, wallB);
 		var upDir = up != null ? up : SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
 		var along = wallB.sub(wallA).normalized();
@@ -162,8 +190,87 @@ class PaintingModel extends Entity {
 		idx.push(2);
 		idx.push(3);
 
-		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
-		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(color));
+		var prim = new h3d.prim.Polygon(points, idx);
+		// Matches points' own bottomA/bottomB/topB/topA order — bottom edge
+		// at v=1, top edge at v=0. Loaded images come in row-0-at-top, and
+		// unlike `HubMesh.buildColumn`'s own wall UVs (top=v-max, bottom=0
+		// — never actually noticed as backwards since a tileable stone
+		// texture doesn't have an "up"), a painting's own artwork very
+		// visibly does: v=0 has to land on the texture's own top row.
+		prim.uvs = [
+			new h3d.prim.UV(0, 1),
+			new h3d.prim.UV(1, 1),
+			new h3d.prim.UV(1, 0),
+			new h3d.prim.UV(0, 0)
+		];
+
+		var mesh = new h3d.scene.Mesh(prim, parent);
+		mesh.material.mainPass.addShader(new UnlitTexture(texture));
 		mesh.material.mainPass.culling = None;
+
+		buildFrame(parent, mid, along, upDir, faceNormal, halfWidth);
+	}
+
+	/**
+		Builds the raised frame "moulding" around a painting's quad: a
+		single sloped band running all the way around, flush with the
+		wall's own `SURFACE_INSET` depth (matching `buildQuad`'s own quad)
+		on its outer edge, and proud of it by `FRAME_DEPTH` on its inner
+		edge — right where it meets the painting — so it reads as trim
+		standing off the wall rather than a flat painted border. Just four
+		quads (`culling = None`, so winding order doesn't matter for
+		visibility, and `FixedColor` ignores normals entirely, so it doesn't
+		matter for shading either).
+		@param parent the scene object to attach the mesh under.
+		@param mid the painting's own wall-segment midpoint (`midpointOf`).
+		@param along the wall's own length axis — normalized.
+		@param upDir the wall's own height axis — normalized.
+		@param faceNormal the wall's own outward face normal — normalized, pointing into the room.
+		@param halfWidth half the painting's own width, along `along`.
+	**/
+	static function buildFrame(parent:h3d.scene.Object, mid:h3d.Vector, along:h3d.Vector, upDir:h3d.Vector, faceNormal:h3d.Vector, halfWidth:Float):Void {
+		// Each axis' own border is a fraction of that axis' own span — see
+		// `FRAME_BORDER_FRACTION`'s own doc for why not a fixed distance.
+		var horizontalBorder = 2 * halfWidth * FRAME_BORDER_FRACTION;
+		var verticalBorder = HEIGHT * FRAME_BORDER_FRACTION;
+		var outerHalfWidth = halfWidth + horizontalBorder;
+		var outerBottom = BASE_HEIGHT - verticalBorder;
+		var outerTop = BASE_HEIGHT + HEIGHT + verticalBorder;
+		var wallInset = faceNormal.scaled(SURFACE_INSET);
+		var peakInset = faceNormal.scaled(SURFACE_INSET + FRAME_DEPTH);
+
+		var outerBottomA = mid.add(along.scaled(-outerHalfWidth)).add(upDir.scaled(outerBottom)).add(wallInset);
+		var outerBottomB = mid.add(along.scaled(outerHalfWidth)).add(upDir.scaled(outerBottom)).add(wallInset);
+		var outerTopA = mid.add(along.scaled(-outerHalfWidth)).add(upDir.scaled(outerTop)).add(wallInset);
+		var outerTopB = mid.add(along.scaled(outerHalfWidth)).add(upDir.scaled(outerTop)).add(wallInset);
+
+		var peakBottomA = mid.add(along.scaled(-halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(peakInset);
+		var peakBottomB = mid.add(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT)).add(peakInset);
+		var peakTopA = mid.add(along.scaled(-halfWidth)).add(upDir.scaled(BASE_HEIGHT + HEIGHT)).add(peakInset);
+		var peakTopB = mid.add(along.scaled(halfWidth)).add(upDir.scaled(BASE_HEIGHT + HEIGHT)).add(peakInset);
+
+		var points:Array<h3d.Vector> = [];
+		var idx = new hxd.IndexBuffer();
+		MeshBuilder.addQuad(points, idx, outerBottomA, outerBottomB, peakBottomB, peakBottomA);
+		MeshBuilder.addQuad(points, idx, outerBottomB, outerTopB, peakTopB, peakBottomB);
+		MeshBuilder.addQuad(points, idx, outerTopB, outerTopA, peakTopA, peakTopB);
+		MeshBuilder.addQuad(points, idx, outerTopA, outerBottomA, peakBottomA, peakTopA);
+
+		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
+		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(Colours.PAINTING_FRAME));
+		mesh.material.mainPass.culling = None;
+	}
+
+	/**
+		`res/sprites/painting--biome-hub-*.png`'s own newest variant —
+		every non-hub biome's own return/exit painting shows this, since
+		they all lead to the same place (the hub's own to-biome paintings
+		instead pick their own biome-specific art; see
+		`biomes.hub.HubBiome.DESTINATIONS`). Picked manually — bump the
+		suffix here when a newer hub variant is added.
+		@return the hub's own painting texture.
+	**/
+	public static function toHubTexture():h3d.mat.Texture {
+		return hxd.Res.sprites.painting__biome_hub_03.toTexture();
 	}
 }

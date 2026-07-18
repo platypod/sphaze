@@ -49,7 +49,29 @@ class HubBiome implements Biome {
 	}
 
 	public function build(parent:h3d.scene.Object):Void {
-		HubMesh.build(parent, [for (destination in DESTINATIONS) destination.faceIndex]);
+		HubMesh.build(parent, [
+			for (destination in DESTINATIONS)
+				{faceIndex: destination.faceIndex, texture: spriteFor(destination.biomeId).toTexture()}
+		]);
+	}
+
+	/**
+		The newest `res/sprites/painting--biome-<id>-*.png` variant for
+		`biomeId` — resolved lazily here (not baked into `DESTINATIONS`
+		itself) since `hxd.Res` isn't initialized until `Main.init` calls
+		`hxd.Res.initEmbed()`, well after any `static final` field
+		initializer would run; a `sprite` field on `DESTINATIONS` eagerly
+		evaluated at class-load time and crashed with "Resource loader not
+		initialized" before the app ever started.
+		@param biomeId the `Biome.id()` to look up.
+		@return that biome's own painting texture, as an unresolved image resource.
+	**/
+	static function spriteFor(biomeId:String):hxd.res.Image {
+		return switch (biomeId) {
+			case MazeBiome.ID: hxd.Res.sprites.painting__biome_maze_01;
+			case TowerBiome.ID: hxd.Res.sprites.painting__biome_tower_01;
+			default: throw 'unreachable: no painting art registered for biome "$biomeId"';
+		}
 	}
 
 	/**

@@ -4,6 +4,7 @@ import biomes.common.grid.GridCollisionTest;
 import biomes.common.grid.GridMeshTest;
 import biomes.common.grid.GridModelTest;
 import biomes.common.space.sphere.SphereMathTest;
+import biomes.hub.HubModelTest;
 import biomes.maze.MazeExitWallTest;
 import biomes.maze.MazeGeneratorTest;
 import entities.CreatureSpawnTableTest;
@@ -31,6 +32,7 @@ class TestMain {
 		runner.addCase(new GridCollisionTest());
 		runner.addCase(new PaintingModelTest());
 		runner.addCase(new MazeExitWallTest());
+		runner.addCase(new HubModelTest());
 		runner.addCase(new BiomesRegistryTest());
 		runner.addCase(new ProcessTest());
 		runner.addCase(new CreatureSpawnTableTest());

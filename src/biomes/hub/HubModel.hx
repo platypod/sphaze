@@ -137,6 +137,60 @@ class HubModel {
 	}
 
 	/**
+		How far past the walkable boundary nearest the column (see
+		`isInside`) the player reappears, arc-length along this sphere, when
+		a biome's own exit painting warps them back into the hub — plays the
+		same role `biomes.maze.MazeBiome.RETURN_SPAWN_OFFSET` does for the
+		trip the other way, just measured from the column's own collision
+		boundary rather than a flat wall: that boundary — not
+		`toBiomeFaceEdge` itself, which isn't even a point on this sphere —
+		is what actually limits how close the player can already stand to
+		the painting. Confirmed numerically: right at the boundary, the true
+		distance to the painting's own trigger center is already inside
+		`PAINTING_TRIGGER_DISTANCE` (6) — about 4.3 — so spawning there
+		would immediately re-trigger it and bounce the player straight back
+		out; this offset clears it by a comfortable margin (~8.3).
+	**/
+	static inline final RETURN_SPAWN_ARC_OFFSET:Float = 6;
+
+	/**
+		The polar angle nearest the column a player can actually stand at —
+		`isInside`'s own boundary distance-from-axis (`COLUMN_RADIUS +
+		COLLISION_CLEARANCE`), expressed as theta so `returnSpawnTheta` can
+		build on it directly.
+		@return theta at the walkable boundary nearest the column.
+	**/
+	static function walkableBoundaryTheta():Float {
+		return Math.asin((COLUMN_RADIUS + COLLISION_CLEARANCE) / RADIUS);
+	}
+
+	/**
+		Where the player reappears on this sphere after warping back into
+		the hub through a biome's own exit painting: `RETURN_SPAWN_ARC_OFFSET`
+		past the walkable boundary nearest the to-biome painting's own
+		column face — close enough to read as standing in front of the
+		painting, not clear across the room at `SPAWN_THETA` (only used for
+		a genuinely fresh arrival — see `HubBiome.spawnPlayer`).
+		@return theta for `PlayerModel.spawnAt`.
+	**/
+	public static function returnSpawnTheta():Float {
+		return walkableBoundaryTheta() + RETURN_SPAWN_ARC_OFFSET / RADIUS;
+	}
+
+	/**
+		The to-biome painting's own azimuth around the column's axis — the
+		`phi` its return spawn point shares, so the player reappears facing
+		away from the column at the same angle the painting itself sits at,
+		derived from `toBiomeFaceEdge`'s own points rather than duplicating
+		them.
+		@return azimuth around Y, in radians.
+	**/
+	public static function toBiomeFaceAzimuth():Float {
+		var mid = PaintingModel.midpointOf(toBiomeFaceEdge(true), toBiomeFaceEdge(false));
+		return SphereMath.phiOf(mid);
+	}
+
+	/**
 		Whether `pos` is still on the walkable side of the column, a
 		`COLLISION_CLEARANCE` margin short of its actual rendered face —
 		checked via distance from the column's own axis (the Y axis), which

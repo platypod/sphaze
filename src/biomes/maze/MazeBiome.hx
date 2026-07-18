@@ -83,7 +83,7 @@ class MazeBiome implements Biome {
 		// stretching across the sphere read as more exposed than the hub's
 		// small enclosed room, and a sparser hub floor already reads as
 		// "the calm room" by contrast — the maze is where the weather is.
-		GrassMesh.build(parent, GridGeometry.RADIUS, isWalkable, GrassModel.DEFAULT_TUFT_COUNT * 20, GrassWind.DEFAULT_SWAY_AMPLITUDE * 1.8,
+		GrassMesh.build(parent, GridGeometry.RADIUS, isWalkable, GrassModel.DEFAULT_TUFT_COUNT * 40, GrassWind.DEFAULT_SWAY_AMPLITUDE * 1.8,
 			GrassWind.DEFAULT_SWAY_FREQUENCY * 1.2);
 	}
 

@@ -7,8 +7,14 @@ import entities.painting.PaintingModel;
 
 /**
 	The hub — a peer `Biome` like any other (see `biomes.common.Biome`'s own
-	class doc), just one that never changes shape and always spawns at the
-	same fixed point rather than resuming wherever the player left it.
+	class doc), just one that never changes shape and never resumes wherever
+	the player left it — a fresh arrival always spawns at the same fixed
+	point (see `spawnPlayer`), same as any biome's own non-returning spawn.
+	Coming back in through a biome's own exit painting is different: the
+	player reappears in front of the hub's own to-biome painting, back
+	turned to it, mirroring how a biome's own return spawn (e.g.
+	`biomes.maze.MazeBiome.playerInFrontOfExitWall`) puts them in front of
+	*its* exit painting rather than back at its own fixed entry point.
 **/
 class HubBiome implements Biome {
 	public static inline final ID:String = "hub";
@@ -27,8 +33,19 @@ class HubBiome implements Biome {
 		HubMesh.build(parent);
 	}
 
+	/**
+		A fresh arrival spawns at the hub's own fixed point
+		(`HubModel.SPAWN_THETA`/`SPAWN_PHI`). Returning — walking into a
+		biome's own exit painting — instead spawns in front of the hub's own
+		to-biome painting, facing away from the column (`facing = 0` is
+		already "away from the pole/column" — see `PlayerModel.spawnAt`'s
+		own doc on `thetaTangentAt`), so the player's back is turned to the
+		painting they just stepped out of rather than reappearing clear
+		across the room.
+	**/
 	public function spawnPlayer(returning:Bool):PlayerModel {
-		return PlayerModel.spawnAt(HubModel.SPAWN_THETA, HubModel.SPAWN_PHI, 0, HubModel.RADIUS);
+		return returning ? PlayerModel.spawnAt(HubModel.returnSpawnTheta(), HubModel.toBiomeFaceAzimuth(), 0,
+			HubModel.RADIUS) : PlayerModel.spawnAt(HubModel.SPAWN_THETA, HubModel.SPAWN_PHI, 0, HubModel.RADIUS);
 	}
 
 	public function exitPainting():PaintingModel {

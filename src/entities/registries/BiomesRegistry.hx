@@ -37,7 +37,7 @@ class BiomesRegistry {
 
 	/**
 		Marks `id` as discovered — called whenever the player actually enters
-		a biome (see `Main.enterBiome`), not at registration time, so a
+		a biome (see `GameLoop.enterBiome`), not at registration time, so a
 		freshly-registered biome (other than the hub) starts undiscovered.
 		@param id the biome id to mark discovered.
 	**/

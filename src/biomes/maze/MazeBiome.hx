@@ -15,7 +15,7 @@ import graphics.Colours;
 	`GridMesh`/`GridCollision` behind the `Biome` contract, plus its own
 	`MazeGenerator` for the spanning-tree layout that's specifically what
 	makes this a *maze*. Its own maze data can be swapped out via `reload`
-	(see `Main`'s E/L export/import dev tooling) without losing its place in
+	(see `GameLoop`'s E/L export/import dev tooling) without losing its place in
 	whichever biome-id slot it's registered under.
 **/
 class MazeBiome implements Biome {

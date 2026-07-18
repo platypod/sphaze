@@ -68,7 +68,7 @@ class GridCollisionTest extends Test {
 
 	function testTryMoveAlongAnArbitraryDirectionRespectsWallThickness():Void {
 		// Exercises tryMove's general form directly — moving along a
-		// direction that isn't player.forward at all, same shape as Main's
+		// direction that isn't player.forward at all, same shape as GameLoop's
 		// Q/D strafing via PlayerModel.rightVector(). Same wall-zone setup as
 		// testMoveIntoWallThicknessIsBlockedShortOfTheOldNodeBoundary
 		// (placed just inside the zone, a small step rather than a large
@@ -295,7 +295,7 @@ class GridCollisionTest extends Test {
 		var forward = SphereMath.phiTangentAt(centerPhi); // due east, straight at the wall, square-on
 		var player = new PlayerModel(pos0, forward);
 
-		var step = 15.0 / 60; // Main.WALK_SPEED * FIXED_DT, the real per-tick distance
+		var step = 15.0 / 60; // GameLoop.WALK_SPEED * FIXED_DT, the real per-tick distance
 		for (_ in 0...20) {
 			GridCollision.tryMoveForward(player, step, RADIUS, maze); // walk into the wall until pressed against it
 		}

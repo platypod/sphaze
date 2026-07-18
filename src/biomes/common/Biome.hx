@@ -4,7 +4,7 @@ import entities.player.PlayerModel;
 import entities.painting.PaintingModel;
 
 /**
-	Contract every biome instance implements — the hub included. `Main`
+	Contract every biome instance implements — the hub included. `GameLoop`
 	talks to whichever biome is current only through this interface, never
 	by biome type name: the hub used to be a special-cased second scene kind
 	alongside "the maze," even though it already had everything a biome has
@@ -33,7 +33,7 @@ interface Biome {
 	**/
 	function spawnPlayer(returning:Bool):PlayerModel;
 
-	/** This biome's own exit painting, checked each tick against the player's position (see `Main.checkPaintingTrigger`). **/
+	/** This biome's own exit painting, checked each tick against the player's position (see `GameLoop.checkPaintingTrigger`). **/
 	function exitPainting():PaintingModel;
 
 	/**
@@ -45,8 +45,8 @@ interface Biome {
 	function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void;
 
 	/**
-		This biome's own state as a JSON string, for `Main`'s E (export) dev
-		tool — part of the contract rather than something `Main` reaches for
+		This biome's own state as a JSON string, for `GameLoop`'s E (export) dev
+		tool — part of the contract rather than something `GameLoop` reaches for
 		via a type-specific downcast, so a future stateful biome doesn't need
 		its own special case there. A biome with nothing worth saving (e.g.
 		the hub) can just return `"{}"`.
@@ -56,7 +56,7 @@ interface Biome {
 
 	/**
 		Restores this biome's state from JSON produced by `serialize` — the
-		inverse, used by `Main`'s L (import) dev tool. A no-op for a biome
+		inverse, used by `GameLoop`'s L (import) dev tool. A no-op for a biome
 		with nothing worth restoring.
 		@param json a JSON string produced by `serialize`.
 	**/

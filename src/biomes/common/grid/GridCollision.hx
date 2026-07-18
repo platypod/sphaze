@@ -21,7 +21,7 @@ import entities.player.PlayerModel;
 	`GridModel.wallZoneNeighbor` — this is the common case now that walls have
 	real thickness, not the zero-width planes they started as), or, as a
 	fallback for a step large enough to skip clean over that check, landing
-	directly in a different, non-open node. At `Main.WALK_SPEED` versus the
+	directly in a different, non-open node. At `GameLoop.WALK_SPEED` versus the
 	grid's cell size the fallback essentially never fires in practice.
 **/
 class GridCollision {

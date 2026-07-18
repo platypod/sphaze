@@ -169,6 +169,27 @@ class TowerModel {
 		return layer;
 	}
 
+	/** Fixed world angle the return painting mounts at, on the outer wall of the bottom-most (goal) layer — arbitrary, just needs to be a real point on the wall. **/
+	static inline final RETURN_PAINTING_ANGLE:Float = 0;
+
+	/** Half the return painting's own angular width on the outer wall. **/
+	static inline final RETURN_PAINTING_HALF_ANGLE:Float = 0.15;
+
+	/**
+		One edge of the return painting's own mounting segment, on the outer
+		wall at the goal layer's own height — the shared reference both
+		`TowerMesh` (rendering) and `TowerBiome` (the trigger position) mount
+		it from, same role `biomes.hub.HubModel.toBiomeFaceEdge` plays for
+		the hub's own column faces.
+		@param left the segment's left edge if true, right edge if false.
+		@return that edge's world position.
+	**/
+	public static function returnPaintingWallEdge(left:Bool):h3d.Vector {
+		var angle = RETURN_PAINTING_ANGLE + (left ? -RETURN_PAINTING_HALF_ANGLE : RETURN_PAINTING_HALF_ANGLE);
+		var y = layerY(GOAL_LEVELS - 1);
+		return new h3d.Vector(OUTER_RADIUS * Math.cos(angle), y, OUTER_RADIUS * Math.sin(angle));
+	}
+
 	static inline function clampInt(v:Int, lo:Int, hi:Int):Int {
 		return v < lo ? lo : (v > hi ? hi : v);
 	}

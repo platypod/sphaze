@@ -1,4 +1,4 @@
-package world;
+package entities.registries;
 
 /** Where a traveling NPC currently is — which biome, and where within it. **/
 typedef NpcLocation = {
@@ -15,7 +15,7 @@ typedef NpcLocation = {
 	when this restructuring was planned (see the plan discussed with
 	hooman).
 **/
-class NpcRegistry {
+class NpcsRegistry {
 	final locations:Map<String, NpcLocation> = [];
 
 	public function new() {}

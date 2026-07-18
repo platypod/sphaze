@@ -6,7 +6,7 @@ import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
 import entities.player.Camera;
 import entities.player.PlayerModel;
-import world.BiomeRegistry;
+import entities.registries.BiomesRegistry;
 import world.Painting;
 
 /**
@@ -35,8 +35,8 @@ class Main extends hxd.App {
 	var accumulator:Float = 0;
 	var player:PlayerModel;
 
-	/** Every biome that exists, plus which ones the player has discovered so far — see `game.Biome`'s own class doc for why the hub is one of these too, not a special case. **/
-	var biomeRegistry:BiomeRegistry;
+	/** Every biome that exists, plus which ones the player has discovered so far — see `biomes.common.Biome`'s own class doc for why the hub is one of these too, not a special case. **/
+	var biomeRegistry:BiomesRegistry;
 
 	/** Whichever biome the player is currently in. **/
 	var currentBiome:Biome;
@@ -62,7 +62,7 @@ class Main extends hxd.App {
 		s3d.camera.fovY = CAMERA_FOV_Y;
 
 		mazeGroup = new h3d.scene.Object(s3d);
-		biomeRegistry = new BiomeRegistry();
+		biomeRegistry = new BiomesRegistry();
 		biomeRegistry.register(new HubBiome(), true); // always known - it's home, not something to stumble into
 		biomeRegistry.register(new MazeBiome(MazeGenerator.generate()));
 		enterBiome(MazeBiome.ID, false);

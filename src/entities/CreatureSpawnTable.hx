@@ -1,11 +1,11 @@
-package world;
+package entities;
 
 /**
 	Parses a biome's own creature spawn table — which creature types spawn
 	there, and how many of each (see docs/GUIDELINES.md §1.4: gameplay
 	content lives in external data, not hardcoded in classes). Engine-
 	agnostic — a plain JSON string in, parsed entries out, same shape as
-	`maze.Maze.serialize`/`deserialize` — so it stays testable without
+	`biomes.maze.MazeGenerator.serialize`/`deserialize` — so it stays testable without
 	`hxd.Res` or a scene graph.
 
 	Deliberately not wired into any biome's `build()` yet: there's no actual

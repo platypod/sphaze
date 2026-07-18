@@ -1,4 +1,4 @@
-package world;
+package entities;
 
 /** One creature type's spawn count within a single biome. **/
 typedef CreatureSpawnEntry = {

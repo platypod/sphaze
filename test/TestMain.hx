@@ -17,10 +17,11 @@ class TestMain {
 		runner.addCase(new GridCollisionTest());
 		runner.addCase(new PaintingTest());
 		runner.addCase(new MazeExitWallTest());
-		runner.addCase(new BiomeRegistryTest());
+		runner.addCase(new BiomesRegistryTest());
 		runner.addCase(new ProcessTest());
 		runner.addCase(new CreatureSpawnTableTest());
-		runner.addCase(new NpcRegistryTest());
+		runner.addCase(new NpcsRegistryTest());
+		runner.addCase(new CreaturesRegistryTest());
 		Report.create(runner);
 		runner.run();
 	}

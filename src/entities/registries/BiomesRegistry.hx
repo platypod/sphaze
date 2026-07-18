@@ -1,4 +1,4 @@
-package world;
+package entities.registries;
 
 import biomes.common.Biome;
 
@@ -10,7 +10,7 @@ import biomes.common.Biome;
 	exactly one hub, one maze, etc., not a regenerated-per-visitor copy (see
 	the restructuring plan discussed with hooman).
 **/
-class BiomeRegistry {
+class BiomesRegistry {
 	final biomes:Map<String, Biome> = [];
 	final discovered:Map<String, Bool> = [];
 

@@ -1,17 +1,17 @@
 import utest.Test;
 import utest.Assert;
-import world.NpcRegistry;
+import entities.registries.NpcsRegistry;
 
-/** Covers NpcRegistry's location bookkeeping — no scene graph or real NPC content involved. **/
-class NpcRegistryTest extends Test {
+/** Covers NpcsRegistry's location bookkeeping — no scene graph or real NPC content involved. **/
+class NpcsRegistryTest extends Test {
 	function testLocationOfIsNullForAnNpcNeverPlaced():Void {
-		var registry = new NpcRegistry();
+		var registry = new NpcsRegistry();
 
 		Assert.isNull(registry.locationOf("raven"));
 	}
 
 	function testMoveToPlacesAnNpcAtABiomeAndPosition():Void {
-		var registry = new NpcRegistry();
+		var registry = new NpcsRegistry();
 		var pos = new h3d.Vector(1, 2, 3);
 
 		registry.moveTo("raven", "hub", pos);
@@ -23,7 +23,7 @@ class NpcRegistryTest extends Test {
 	}
 
 	function testMoveToAgainReplacesThePreviousLocation():Void {
-		var registry = new NpcRegistry();
+		var registry = new NpcsRegistry();
 		registry.moveTo("raven", "hub", new h3d.Vector(0, 0, 0));
 
 		registry.moveTo("raven", "maze", new h3d.Vector(1, 1, 1));
@@ -32,7 +32,7 @@ class NpcRegistryTest extends Test {
 	}
 
 	function testNpcsInReturnsOnlyNpcsCurrentlyInThatBiome():Void {
-		var registry = new NpcRegistry();
+		var registry = new NpcsRegistry();
 		registry.moveTo("raven", "hub", new h3d.Vector(0, 0, 0));
 		registry.moveTo("cat", "maze", new h3d.Vector(0, 0, 0));
 
@@ -43,7 +43,7 @@ class NpcRegistryTest extends Test {
 	}
 
 	function testNpcsInReturnsEmptyForABiomeWithNoNpcs():Void {
-		var registry = new NpcRegistry();
+		var registry = new NpcsRegistry();
 
 		Assert.equals(0, registry.npcsIn("hub").length);
 	}

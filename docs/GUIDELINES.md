@@ -69,20 +69,22 @@ Comment *why*, not *what* — comments restating the code rot as the code change
 ```
 project/
 ├── res/
-│   ├── data/        # JSON gameplay data (see 1.4)
-│   ├── models/       # FBX source + baked .hmd
-│   ├── sprites/, sound/, ...
+│   ├── data/        # JSON gameplay data (see 1.4) — not populated yet, see world.CreatureSpawnTable's own doc
+│   ├── textures/, models/, sound/, ...
 ├── src/
-│   ├── Main.hx
-│   ├── game/         # Process tree, Entity, states
-│   ├── entities/      # entity subclasses + components
-│   ├── data/          # data-loading/parsing code
-│   └── ui/
+│   ├── Main.hx        # entry point; drives whichever Biome is current through game.Biome, never by type name
+│   ├── game/           # Process tree, Entity/Biome/Space contracts, Collision, SphereMath/SphereSpace
+│   ├── entities/        # Entity base + Player
+│   ├── biomes/          # concrete Biome implementations (MazeBiome, HubBiome) and their own helpers
+│   ├── maze/             # the maze biome's own grid: topology, geometry, generation, mesh
+│   ├── hub/               # the hub biome's own room/column mesh + collision
+│   └── world/              # cross-biome concerns: BiomeRegistry, Painting, NpcRegistry, CreatureSpawnTable
 ├── build.hxml (+ per-target hxml, see §6.1)
 ├── Makefile           # fmt/lint/check/test/build targets, see §5
 ├── .githooks/         # versioned pre-commit hook, see §5.2
 └── .vscode/
 ```
+Reshaped from the original single-biome sketch once a second biome (the hub) needed to become a peer rather than a special case — see `docs/PROJECT_LOG.md`'s multi-biome restructuring entry.
 Subject to revision once real code exists — treat as a starting point, not dogma.
 
 ### 3.2 `hxd.Res`

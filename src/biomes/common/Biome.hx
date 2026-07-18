@@ -1,6 +1,6 @@
 package biomes.common;
 
-import entities.Player;
+import entities.player.PlayerModel;
 import world.Painting;
 
 /**
@@ -24,14 +24,14 @@ interface Biome {
 	function build(parent:h3d.scene.Object):Void;
 
 	/**
-		A Player standing at this biome's own entry point.
+		A PlayerModel standing at this biome's own entry point.
 		@param returning true if the player is coming back into a biome they
 		already visited (e.g. from the hub) rather than a fresh visit — a
 		biome may resume near wherever they left, or ignore this and always
 		use a fixed spawn (see `biomes.HubBiome`).
 		@return the spawned player.
 	**/
-	function spawnPlayer(returning:Bool):Player;
+	function spawnPlayer(returning:Bool):PlayerModel;
 
 	/** This biome's own exit painting, checked each tick against the player's position (see `Main.checkPaintingTrigger`). **/
 	function exitPainting():Painting;
@@ -42,7 +42,7 @@ interface Biome {
 		@param direction unit tangent at `player.pos` to move along.
 		@param distance arc length to move; negative moves the opposite way.
 	**/
-	function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void;
+	function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void;
 
 	/**
 		This biome's own state as a JSON string, for `Main`'s E (export) dev

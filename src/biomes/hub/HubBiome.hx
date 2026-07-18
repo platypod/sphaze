@@ -2,7 +2,7 @@ package biomes.hub;
 
 import biomes.common.Biome;
 import biomes.maze.MazeBiome;
-import entities.Player;
+import entities.player.PlayerModel;
 import world.Painting;
 
 /**
@@ -27,15 +27,15 @@ class HubBiome implements Biome {
 		HubMesh.build(parent);
 	}
 
-	public function spawnPlayer(returning:Bool):Player {
-		return Player.spawnAt(HubModel.SPAWN_THETA, HubModel.SPAWN_PHI, 0, HubModel.RADIUS);
+	public function spawnPlayer(returning:Bool):PlayerModel {
+		return PlayerModel.spawnAt(HubModel.SPAWN_THETA, HubModel.SPAWN_PHI, 0, HubModel.RADIUS);
 	}
 
 	public function exitPainting():Painting {
 		return HubModel.toBiomePainting(MazeBiome.ID);
 	}
 
-	public function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {
+	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {
 		HubCollision.tryMove(player, direction, distance);
 	}
 

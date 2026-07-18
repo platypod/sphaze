@@ -4,7 +4,8 @@ import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
 import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
-import entities.Player;
+import entities.player.Camera;
+import entities.player.PlayerModel;
 import world.BiomeRegistry;
 import world.Painting;
 
@@ -32,7 +33,7 @@ class Main extends hxd.App {
 	static inline final SPACE_TILT_RELEASE_AFTER:Float = 1;
 
 	var accumulator:Float = 0;
-	var player:Player;
+	var player:PlayerModel;
 
 	/** Every biome that exists, plus which ones the player has discovered so far — see `game.Biome`'s own class doc for why the hub is one of these too, not a special case. **/
 	var biomeRegistry:BiomeRegistry;
@@ -115,7 +116,7 @@ class Main extends hxd.App {
 		activePainting = biome.exitPainting();
 
 		player = biome.spawnPlayer(returning);
-		player.applyToCamera(s3d.camera, biome.radius());
+		Camera.applyTo(s3d.camera, player, biome.radius());
 	}
 
 	/**
@@ -225,7 +226,7 @@ class Main extends hxd.App {
 	}
 
 	function fixedUpdate(dt:Float):Void {
-		// Reading keys and calling Player methods directly here is a
+		// Reading keys and calling PlayerModel methods directly here is a
 		// placeholder — fine for one input source and one entity, but a
 		// dedicated input/controller system is the right home for this once
 		// there's more than a single player to drive.
@@ -262,7 +263,7 @@ class Main extends hxd.App {
 		checkPaintingTrigger();
 		updateSpaceTilt(dt);
 
-		player.applyToCamera(s3d.camera, currentBiome.radius());
+		Camera.applyTo(s3d.camera, player, currentBiome.radius());
 
 		if (hxd.Key.isPressed(hxd.Key.F3)) {
 			debugOverlayVisible = !debugOverlayVisible;
@@ -289,7 +290,7 @@ class Main extends hxd.App {
 		down wall-mesh bug reports (meaningless while in the hub, since it
 		isn't on the maze grid at all, but harmless there too). Block 2:
 		camera angle (facing around the local "up" axis, relative to
-		`thetaTangentAt`'s own zero, same convention `Player.spawnAt`'s
+		`thetaTangentAt`'s own zero, same convention `PlayerModel.spawnAt`'s
 		`facing` parameter uses; pitch as stored). Block 3: whatever perf
 		info this target can actually offer — `hxd.Timer.fps()` always; heap
 		size only where the browser exposes the non-standard

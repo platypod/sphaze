@@ -1,6 +1,6 @@
 package biomes.hub;
 
-import entities.Player;
+import entities.player.PlayerModel;
 
 /**
 	Movement/collision for the hub room. Doesn't reuse `biomes.common.grid.GridCollision`/
@@ -20,7 +20,7 @@ class HubCollision {
 		@param direction unit tangent at `player.pos` to move along.
 		@param distance arc length to move; negative moves the opposite way.
 	**/
-	public static function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {
+	public static function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 		player.moveAlong(direction, distance, HubModel.RADIUS);

@@ -8,7 +8,7 @@ import biomes.common.grid.GridModel.GridNode;
 import biomes.common.grid.GridModel.RowBoundaryNeighbor;
 import biomes.common.space.sphere.SphereMath;
 import biomes.maze.MazeGenerator;
-import entities.Player;
+import entities.player.PlayerModel;
 import MazeGeneratorTest.SeededRandom;
 
 /**
@@ -28,7 +28,7 @@ class GridCollisionTest extends Test {
 		// round to either side).
 		var theta = Math.PI * 5 / (GridModel.ROWS - 1);
 		var phi = 2 * Math.PI * 10.5 / GridModel.COLS; // column phi is boundary-anchored — the center is at col+0.5
-		var player = Player.spawnAt(theta, phi, 0, RADIUS);
+		var player = PlayerModel.spawnAt(theta, phi, 0, RADIUS);
 
 		var moved = GridCollision.tryMoveForward(player, 0.01, RADIUS, maze); // far short of a cell boundary
 
@@ -60,7 +60,7 @@ class GridCollisionTest extends Test {
 
 		Assert.isTrue(GridModel.nodeKey(GridModel.nodeAt(centerTheta, phi)) == GridModel.nodeKey(here));
 
-		var player = new Player(pos0, forward);
+		var player = new PlayerModel(pos0, forward);
 		var moved = GridCollision.tryMoveForward(player, 0.1, RADIUS, maze); // tiny step, nowhere near nodeAt's own boundary
 
 		Assert.isFalse(moved);
@@ -69,7 +69,7 @@ class GridCollisionTest extends Test {
 	function testTryMoveAlongAnArbitraryDirectionRespectsWallThickness():Void {
 		// Exercises tryMove's general form directly — moving along a
 		// direction that isn't player.forward at all, same shape as Main's
-		// Q/D strafing via Player.rightVector(). Same wall-zone setup as
+		// Q/D strafing via PlayerModel.rightVector(). Same wall-zone setup as
 		// testMoveIntoWallThicknessIsBlockedShortOfTheOldNodeBoundary
 		// (placed just inside the zone, a small step rather than a large
 		// one — a large single step drifts off constant theta away from the
@@ -88,7 +88,7 @@ class GridCollisionTest extends Test {
 		var phi = centerPhi + (halfPhi - insetPhi / 2);
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, phi);
 		var forward = SphereMath.thetaTangentAt(centerTheta, phi); // not the strafe direction
-		var player = new Player(pos0, forward);
+		var player = new PlayerModel(pos0, forward);
 		var strafeDirection = SphereMath.phiTangentAt(phi); // due east, straight at the wall
 
 		var moved = GridCollision.tryMove(player, strafeDirection, 0.1, RADIUS, maze);
@@ -149,7 +149,7 @@ class GridCollisionTest extends Test {
 		var phiTangent = SphereMath.phiTangentAt(phi);
 		var angle = 15 * Math.PI / 180;
 		var forward = thetaTangent.scaled(Math.cos(angle)).add(phiTangent.scaled(Math.sin(angle))).normalized();
-		var player = new Player(pos0, forward);
+		var player = new PlayerModel(pos0, forward);
 
 		var stepDistance = 0.1;
 		var ticks = 80;
@@ -209,7 +209,7 @@ class GridCollisionTest extends Test {
 		var phiTangent = SphereMath.phiTangentAt(centerPhi);
 		var angle = 15 * Math.PI / 180;
 		var forward = phiTangent.scaled(Math.cos(angle)).add(thetaTangent.scaled(Math.sin(angle))).normalized();
-		var player = new Player(pos0, forward);
+		var player = new PlayerModel(pos0, forward);
 
 		// Fewer ticks/smaller step than the same-row analog: this sub-entry
 		// is half the width of a full boundary segment, so there's less
@@ -293,7 +293,7 @@ class GridCollisionTest extends Test {
 		var centerPhi = 2 * Math.PI * (col + 0.5) / GridModel.COLS; // column phi is boundary-anchored
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, centerPhi);
 		var forward = SphereMath.phiTangentAt(centerPhi); // due east, straight at the wall, square-on
-		var player = new Player(pos0, forward);
+		var player = new PlayerModel(pos0, forward);
 
 		var step = 15.0 / 60; // Main.WALK_SPEED * FIXED_DT, the real per-tick distance
 		for (_ in 0...20) {
@@ -333,7 +333,7 @@ class GridCollisionTest extends Test {
 			var centerPhi = 2 * Math.PI * (col + 0.5) / cols;
 			var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, centerPhi);
 			var forward = SphereMath.phiTangentAt(centerPhi); // due east, straight at the wall, square-on
-			var player = new Player(pos0, forward);
+			var player = new PlayerModel(pos0, forward);
 
 			var step = 15.0 / 60;
 			for (_ in 0...20) {
@@ -381,7 +381,7 @@ class GridCollisionTest extends Test {
 		// and then retreat fully, same as any other square-on wall hit.
 		var closedPhi = (closedChild.phiStart + closedChild.phiEnd) / 2;
 		var pos0 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, closedPhi);
-		var player = new Player(pos0, SphereMath.thetaTangentAt(centerTheta, closedPhi));
+		var player = new PlayerModel(pos0, SphereMath.thetaTangentAt(centerTheta, closedPhi));
 		for (_ in 0...20) {
 			GridCollision.tryMoveForward(player, step, RADIUS, maze);
 		}
@@ -391,7 +391,7 @@ class GridCollisionTest extends Test {
 		// all — it should cross cleanly into row 2.
 		var openPhi = (openChild.phiStart + openChild.phiEnd) / 2;
 		var pos1 = SphereMath.sphericalToCartesian(RADIUS, centerTheta, openPhi);
-		var player2 = new Player(pos1, SphereMath.thetaTangentAt(centerTheta, openPhi));
+		var player2 = new PlayerModel(pos1, SphereMath.thetaTangentAt(centerTheta, openPhi));
 		for (_ in 0...40) {
 			GridCollision.tryMoveForward(player2, step, RADIUS, maze);
 		}
@@ -488,14 +488,14 @@ class GridCollisionTest extends Test {
 		var forward = intoWall.add(wallTangent).normalized();
 		var distance = 0.5; // comfortably covers the small remaining gap even split diagonally
 
-		var player = new Player(pos0, forward);
+		var player = new PlayerModel(pos0, forward);
 		var moved = GridCollision.tryMoveForward(player, distance, RADIUS, maze);
 
 		Assert.isTrue(moved);
 		Assert.isTrue(player.pos.sub(pos0).length() > 0.01); // actually slid, not just stopped
 		Assert.floatEquals(RADIUS, player.pos.length(), 1e-6); // stayed on the sphere
 		// forward is parallel-transported along with pos during a slide (see
-		// Player.moveAlong) rather than left untouched, so it stays a valid
+		// PlayerModel.moveAlong) rather than left untouched, so it stays a valid
 		// tangent at the new position instead of drifting — not "unchanged".
 		Assert.floatEquals(1, player.forward.length(), 1e-6);
 		Assert.floatEquals(0, player.pos.normalized().dot(player.forward), 1e-6);
@@ -524,7 +524,7 @@ class GridCollisionTest extends Test {
 		var forward = axis.cross(pos0.normalized()).normalized();
 		var distance = Math.acos(hxd.Math.clamp(pos0.normalized().dot(posTarget.normalized()), -1, 1)) * RADIUS;
 
-		var player = new Player(pos0, forward);
+		var player = new PlayerModel(pos0, forward);
 		var moved = GridCollision.tryMoveForward(player, distance, RADIUS, maze);
 
 		Assert.equals(wantOpen, moved);

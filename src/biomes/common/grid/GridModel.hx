@@ -227,7 +227,7 @@ class GridModel {
 		converges on the same single node there. Without this, a column
 		index computed right at a pole would be meaningless (circles of
 		latitude shrink to zero circumference there — the same instability
-		`entities.Player`'s class doc describes for orientation).
+		`entities.player.PlayerModel`'s class doc describes for orientation).
 
 		Column classification is boundary-anchored, not center-anchored:
 		column `col` owns `[2*pi*col/colsForRow(row), 2*pi*(col+1)/
@@ -263,7 +263,7 @@ class GridModel {
 		A node's nominal position in spherical coordinates — the same
 		theta/phi `GridMesh` derives a cell's corners around. For a pole this
 		is theta=0/pi at an arbitrary phi (meaningless there — the point
-		itself is what matters, see `entities.Player`'s class doc on the
+		itself is what matters, see `entities.player.PlayerModel`'s class doc on the
 		phi singularity at the poles).
 
 		Column `col`'s phi is boundary-anchored: `col` spans

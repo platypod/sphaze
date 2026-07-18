@@ -11,7 +11,8 @@ class TestMain {
 		runner.addCase(new SphereMathTest());
 		runner.addCase(new GridModelTest());
 		runner.addCase(new MazeGeneratorTest());
-		runner.addCase(new PlayerTest());
+		runner.addCase(new PlayerModelTest());
+		runner.addCase(new CameraTest());
 		runner.addCase(new GridMeshTest());
 		runner.addCase(new GridCollisionTest());
 		runner.addCase(new PaintingTest());

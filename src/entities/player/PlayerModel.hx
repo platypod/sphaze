@@ -1,8 +1,9 @@
-package entities;
+package entities.player;
 
 import biomes.common.space.common.Space;
 import biomes.common.space.sphere.SphereMath;
 import biomes.common.space.sphere.SphereSpace;
+import entities.Entity;
 
 /**
 	The player's position and facing direction on the maze sphere's interior
@@ -34,15 +35,19 @@ import biomes.common.space.sphere.SphereSpace;
 	delegated through `space:Space` rather than hardcoded here — every method
 	below still reads as sphere math today because `SphereSpace` is the only
 	implementation, but a future biome with a different topology would spawn
-	its `Player` with its own `Space` instead of this class needing to know
-	about it.
+	its `PlayerModel` with its own `Space` instead of this class needing to
+	know about it.
+
+	Camera placement (`applyToCamera`, `EYE_HEIGHT`) lives on `Camera`, not
+	here — this class is the player's own state and movement, not how a
+	camera gets derived from it.
 
 	Doesn't re-orthogonalize `pos`/`forward` against accumulated floating-
 	point drift over many small rotations — each rotation preserves their
 	relationship exactly in theory, and this hasn't shown up as a problem in
 	practice. Revisit (e.g. a periodic Gram-Schmidt pass) if it ever does.
 **/
-class Player extends Entity {
+class PlayerModel extends Entity {
 	/**
 		Clamped just short of pi/2: at exactly pi/2 the view direction would
 		be exactly parallel to the camera's up vector, which is a degenerate
@@ -50,18 +55,6 @@ class Player extends Entity {
 		true 90 degrees.
 	**/
 	public static inline final MAX_PITCH:Float = 1.55; // ~88.8 degrees
-
-	/**
-		Camera height above the floor shell, toward the sphere's center.
-		Without this the camera sits exactly on the floor mesh — looking up
-		then grazes along/through the very floor it's embedded in instead of
-		clearing it, which is what made the far side unreachable in practice
-		even after the up-vector fix above (caught by comparing screenshots
-		at different pitches once that fix alone didn't change the picture:
-		still a flat, undifferentiated fill, at every pitch above ~0).
-		Kept below WALL_HEIGHT (see MazeMesh) so walls still read as walls.
-	**/
-	public static inline final EYE_HEIGHT:Float = 6;
 
 	/** Position on the sphere's interior surface. **/
 	public var pos:h3d.Vector;
@@ -76,8 +69,8 @@ class Player extends Entity {
 		Which biome's topology `pos`/`forward` live in — defaults to
 		`SphereSpace`, the only implementation that exists today, so every
 		existing call site (spawning, tests) is unaffected by this field's
-		presence. A future non-spherical biome would spawn its own `Player`
-		with its own `Space` instead.
+		presence. A future non-spherical biome would spawn its own
+		`PlayerModel` with its own `Space` instead.
 	**/
 	public final space:Space;
 
@@ -90,54 +83,28 @@ class Player extends Entity {
 	}
 
 	/**
-		Builds a Player standing at a spherical (theta, phi) position,
+		Builds a PlayerModel standing at a spherical (theta, phi) position,
 		facing `facing` radians around from thetaTangentAt (0 = toward
 		increasing theta). Only ever used once, at spawn — see the class
-		doc for why Player's own state afterward is plain 3D vectors,
+		doc for why PlayerModel's own state afterward is plain 3D vectors,
 		never theta/phi again.
 		@param theta polar angle from +Y, in radians.
 		@param phi azimuth around Y, in radians.
 		@param facing initial look direction, in radians from thetaTangentAt.
-		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
-		@return a Player at that position and facing.
+		@param radius sphere radius — must match the biome's physical sphere (see GridGeometry.RADIUS).
+		@return a PlayerModel at that position and facing.
 	**/
-	public static function spawnAt(theta:Float, phi:Float, facing:Float, radius:Float):Player {
+	public static function spawnAt(theta:Float, phi:Float, facing:Float, radius:Float):PlayerModel {
 		var spawnPos = SphereMath.sphericalToCartesian(radius, theta, phi);
 		var up = SphereMath.upVectorAt(spawnPos, new h3d.Vector(0, 0, 0));
 		var spawnForward = SphereMath.rotateAroundAxis(SphereMath.thetaTangentAt(theta, phi), up, facing);
-		return new Player(spawnPos, spawnForward);
-	}
-
-	/**
-		Positions and orients a camera at this player's location: standing on
-		the sphere's interior, looking along `forward` tilted by `pitch`
-		toward the sphere's center. The camera's up vector tilts by the same
-		pitch (rotated around the same axis as the view direction) rather
-		than staying fixed at the sphere-relative "up" — keeping it fixed
-		would let it drift toward parallel with the view direction as pitch
-		increases, collapsing the camera's effective horizontal FOV toward
-		zero well before reaching the pitch clamp (caught by comparing
-		rendered screenshots at a few different pitches: the view was
-		visibly squeezed to a sliver long before anything looked "wrong").
-		@param camera the camera to position.
-		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
-	**/
-	public function applyToCamera(camera:h3d.Camera, radius:Float):Void {
-		var up = space.upAt(pos);
-		var eyePos = pos.add(up.scaled(EYE_HEIGHT));
-		var right = rightVector();
-		var viewForward = SphereMath.rotateAroundAxis(forward, right, pitch);
-		var viewUp = SphereMath.rotateAroundAxis(up, right, pitch);
-
-		camera.pos.load(eyePos);
-		camera.up.load(viewUp);
-		camera.target.load(eyePos.add(viewForward));
+		return new PlayerModel(spawnPos, spawnForward);
 	}
 
 	/**
 		Unit tangent to the right of `forward`, ignoring pitch — the same
-		computation `applyToCamera` already needs for its own pitch-rotation
-		axis, exposed here too for strafing (see `game.Collision`), which
+		computation `Camera.applyTo` already needs for its own pitch-rotation
+		axis, exposed here too for strafing (see `GridCollision`), which
 		moves sideways without turning to face that direction.
 		@return unit tangent at `pos`, perpendicular to `forward`, pointing right.
 	**/
@@ -155,7 +122,7 @@ class Player extends Entity {
 		and tangent to it by construction — including straight through a
 		pole, since this never touches theta/phi.
 		@param distance arc length to walk; negative walks backward.
-		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
+		@param radius sphere radius — must match the biome's physical sphere (see GridGeometry.RADIUS).
 	**/
 	public function moveForward(distance:Float, radius:Float):Void {
 		var result = space.moveAlong(pos, forward, forward, distance, radius);
@@ -166,14 +133,14 @@ class Player extends Entity {
 	/**
 		Translates `pos` by `distance` along `direction` — a unit tangent at
 		`pos`, not necessarily `forward`. For sliding along a wall (see
-		`game.Collision`), where the player's body gets redirected without
+		`GridCollision`), where the player's body gets redirected without
 		them actively choosing to turn.
 
 		`forward` is parallel-transported by the same rotation as `pos`
 		(exactly like `moveForward` does for its own direction), *not* left
 		untouched: `forward` staying a valid unit tangent at `pos` is a hard
 		invariant every other method here relies on (`SphereSpace.moveAlong`'s
-		own `axis = posDir.cross(direction)`, `applyToCamera`'s `right =
+		own `axis = posDir.cross(direction)`, `Camera.applyTo`'s `right =
 		forward.cross(up)`, ...). An earlier version skipped this to keep the
 		view from "snapping" during a slide — reasonable-sounding, but it let
 		`forward` drift out of the tangent plane over repeated slides, since
@@ -186,7 +153,7 @@ class Player extends Entity {
 		re-orientation toward the wall, just what staying tangent costs.
 		@param direction unit tangent at `pos` to move along.
 		@param distance arc length to move; negative moves the opposite way.
-		@param radius sphere radius — must match the maze's physical sphere (see MazeGeometry.RADIUS).
+		@param radius sphere radius — must match the biome's physical sphere (see GridGeometry.RADIUS).
 	**/
 	public function moveAlong(direction:h3d.Vector, distance:Float, radius:Float):Void {
 		var result = space.moveAlong(pos, forward, direction, distance, radius);

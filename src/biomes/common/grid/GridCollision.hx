@@ -4,13 +4,13 @@ import biomes.common.grid.GridModel.GridData;
 import biomes.common.grid.GridModel.GridNode;
 import biomes.common.grid.GridModel.RowBoundaryNeighbor;
 import biomes.common.space.sphere.SphereMath;
-import entities.Player;
+import entities.player.PlayerModel;
 
 /**
-	Blocks `Player` from crossing a closed grid edge, sliding along it
+	Blocks `PlayerModel` from crossing a closed grid edge, sliding along it
 	instead of stopping dead when it's hit at an angle. Kept as a thin
-	wrapper around `Player` rather than teaching `Player` about `GridModel` —
-	`Player` is otherwise fully grid-agnostic (see its class doc), and the
+	wrapper around `PlayerModel` rather than teaching `PlayerModel` about `GridModel` —
+	`PlayerModel` is otherwise fully grid-agnostic (see its class doc), and the
 	only thing collision needs is the node the player was in versus whatever
 	blocks the step.
 
@@ -34,7 +34,7 @@ class GridCollision {
 		@param maze the layout whose closed edges block movement.
 		@return true if any movement was applied (a full step or a slide), false if a wall stopped the player outright.
 	**/
-	public static function tryMoveForward(player:Player, distance:Float, radius:Float, maze:GridData):Bool {
+	public static function tryMoveForward(player:PlayerModel, distance:Float, radius:Float, maze:GridData):Bool {
 		return tryMove(player, player.forward, distance, radius, maze);
 	}
 
@@ -53,7 +53,7 @@ class GridCollision {
 		@param maze the layout whose closed edges block movement.
 		@return true if any movement was applied (a full step or a slide), false if a wall stopped the player outright.
 	**/
-	public static function tryMove(player:Player, direction:h3d.Vector, distance:Float, radius:Float, maze:GridData):Bool {
+	public static function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float, radius:Float, maze:GridData):Bool {
 		var fromTheta = SphereMath.thetaOf(player.pos);
 		var fromPhi = SphereMath.phiOf(player.pos);
 		var fromNode = GridModel.nodeAt(fromTheta, fromPhi);
@@ -106,7 +106,7 @@ class GridCollision {
 		keeping the component of `attemptedDirection` that runs along the
 		wall and dropping the component that runs into it — the same
 		projection any FPS wall-slide uses. `player.forward` still gets
-		parallel-transported by `Player.moveAlong` (not left untouched — see
+		parallel-transported by `PlayerModel.moveAlong` (not left untouched — see
 		its doc comment for why), so both `pos` and `forward` are
 		snapshotted here and restored together if the slide itself turns out
 		to be blocked too.
@@ -132,7 +132,7 @@ class GridCollision {
 		@param maze the layout whose closed edges block movement.
 		@return true if the slide moved the player at all.
 	**/
-	static function slideAlong(player:Player, fromNode:GridNode, blockedNode:GridNode, attemptedDirection:h3d.Vector, distance:Float, radius:Float,
+	static function slideAlong(player:PlayerModel, fromNode:GridNode, blockedNode:GridNode, attemptedDirection:h3d.Vector, distance:Float, radius:Float,
 			maze:GridData):Bool {
 		var oldPos = player.pos;
 		var oldForward = player.forward;

@@ -6,7 +6,7 @@ import biomes.common.grid.GridMesh;
 import biomes.common.grid.GridModel.GridData;
 import biomes.common.Biome;
 import biomes.hub.HubBiome;
-import entities.Player;
+import entities.player.PlayerModel;
 import world.Painting;
 
 /**
@@ -75,15 +75,15 @@ class MazeBiome implements Biome {
 		Painting.buildQuad(parent, exitWall.a, exitWall.b, exitWall.cellCenter, Painting.TO_HUB_COLOR);
 	}
 
-	public function spawnPlayer(returning:Bool):Player {
-		return returning ? playerInFrontOfExitWall() : Player.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, GridGeometry.RADIUS);
+	public function spawnPlayer(returning:Bool):PlayerModel {
+		return returning ? playerInFrontOfExitWall() : PlayerModel.spawnAt(SPAWN_THETA, SPAWN_PHI, SPAWN_FACING, GridGeometry.RADIUS);
 	}
 
 	public function exitPainting():Painting {
 		return new Painting(Painting.midpointOf(exitWall.a, exitWall.b), HubBiome.ID);
 	}
 
-	public function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {
+	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {
 		GridCollision.tryMove(player, direction, distance, GridGeometry.RADIUS, maze);
 	}
 
@@ -96,24 +96,24 @@ class MazeBiome implements Biome {
 	}
 
 	/**
-		A `Player` standing `RETURN_SPAWN_OFFSET` units in front of the exit
+		A `PlayerModel` standing `RETURN_SPAWN_OFFSET` units in front of the exit
 		wall's midpoint, facing into the room — where the player reappears
 		coming back out of the hub. `exitWall.cellCenter.sub(mid)` isn't
 		exactly tangent to the sphere at `mid` (two points on a curved
 		surface never are, strictly), so `forward` gets re-projected onto the
 		tangent plane at the final spawn position — the same approximation
 		`Painting`'s own wall-mounting math already relies on, just also
-		re-tangented here since `Player` depends on `forward` actually being
+		re-tangented here since `PlayerModel` depends on `forward` actually being
 		one.
 		@return the spawned player.
 	**/
-	function playerInFrontOfExitWall():Player {
+	function playerInFrontOfExitWall():PlayerModel {
 		var mid = Painting.midpointOf(exitWall.a, exitWall.b);
 		var intoRoom = exitWall.cellCenter.sub(mid).normalized();
 		var pos = mid.add(intoRoom.scaled(RETURN_SPAWN_OFFSET)).normalized().scaled(GridGeometry.RADIUS);
 
 		var posDir = pos.normalized();
 		var forward = intoRoom.sub(posDir.scaled(intoRoom.dot(posDir))).normalized();
-		return new Player(pos, forward);
+		return new PlayerModel(pos, forward);
 	}
 }

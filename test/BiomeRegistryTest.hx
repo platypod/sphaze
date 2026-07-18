@@ -2,7 +2,7 @@ import utest.Test;
 import utest.Assert;
 import world.BiomeRegistry;
 import world.Painting;
-import entities.Player;
+import entities.player.PlayerModel;
 import biomes.common.Biome;
 
 /** Covers BiomeRegistry's lookup/discovery bookkeeping — a stub Biome, not a real one, since none of this depends on rendering/collision. **/
@@ -71,15 +71,15 @@ private class StubBiome implements Biome {
 
 	public function build(parent:h3d.scene.Object):Void {}
 
-	public function spawnPlayer(returning:Bool):Player {
-		return Player.spawnAt(0, 0, 0, 1);
+	public function spawnPlayer(returning:Bool):PlayerModel {
+		return PlayerModel.spawnAt(0, 0, 0, 1);
 	}
 
 	public function exitPainting():Painting {
 		return new Painting(new h3d.Vector(0, 0, 0), "nowhere");
 	}
 
-	public function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {}
+	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {}
 
 	public function serialize():String {
 		return "{}";

@@ -65,6 +65,24 @@ class TowerCollision {
 		fast enough to hit a solid layer from below on the way up; revisit
 		this if a much stronger jump or a taller layer gap ever makes that
 		reachable.
+
+		The landing scan only ever runs while `newY <= oldY` (actually
+		falling, or resting exactly in place) — skipped outright while
+		rising (e.g. the tick right after `PlayerModel.jump`), since there's
+		nothing to "land on" while moving away from the floor. Without this,
+		a jump from the topmost layer could never leave the ground at all:
+		`TowerModel.layerAt` clamps to layer 0, so the layer scanned after
+		rising off it was still layer 0 itself, immediately re-detected as
+		solid and snapping the player straight back down.
+
+		Within that scan, a layer already strictly below `oldY` (its own
+		floor already fallen through in an earlier step) is never
+		re-checked either — solidity is re-verified only for layers at or
+		below the one `oldY` currently rests on. Without this, drifting
+		sideways while falling past a solid tile's own underside (tiles
+		have real relief/thickness now, not a zero-thickness plane) read as
+		"landing" on top of that tile and snapped the player back up
+		through it, rather than just continuing to fall past its side.
 		@param player the player to update.
 		@param gravity this biome's own gravity strength, in world units/s².
 		@param layout the tower's own generated layout.
@@ -75,16 +93,19 @@ class TowerCollision {
 		var oldY = player.pos.y;
 		player.verticalVelocity -= gravity * dt;
 		var newY = oldY + player.verticalVelocity * dt;
-
-		var fromLayer = TowerModel.layerAt(oldY);
 		var toLayer = TowerModel.layerAt(newY);
 
-		for (layer in fromLayer...(toLayer + 1)) {
-			if (TowerModel.isSolid(layout, layer, player.pos.x, player.pos.z)) {
-				player.pos.y = TowerModel.layerY(layer);
-				player.verticalVelocity = 0;
-				player.grounded = true;
-				return layer;
+		if (newY <= oldY) {
+			var fromLayer = TowerModel.layerAt(oldY);
+			var firstCandidate = oldY < TowerModel.layerY(fromLayer) ? fromLayer + 1 : fromLayer;
+
+			for (layer in firstCandidate...(toLayer + 1)) {
+				if (TowerModel.isSolid(layout, layer, player.pos.x, player.pos.z)) {
+					player.pos.y = TowerModel.layerY(layer);
+					player.verticalVelocity = 0;
+					player.grounded = true;
+					return layer;
+				}
 			}
 		}
 

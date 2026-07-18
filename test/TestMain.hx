@@ -18,6 +18,7 @@ class TestMain {
 		runner.addCase(new BiomeRegistryTest());
 		runner.addCase(new ProcessTest());
 		runner.addCase(new CreatureSpawnTableTest());
+		runner.addCase(new NpcRegistryTest());
 		Report.create(runner);
 		runner.run();
 	}

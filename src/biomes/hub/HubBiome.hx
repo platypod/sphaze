@@ -2,6 +2,7 @@ package biomes.hub;
 
 import biomes.common.Biome;
 import biomes.common.Gravity;
+import biomes.hub.HubStructure.StructureBasis;
 import biomes.maze.MazeBiome;
 import biomes.tower.TowerBiome;
 import entities.player.PlayerModel;
@@ -11,12 +12,19 @@ import entities.painting.PaintingModel;
 	The hub — a peer `Biome` like any other (see `biomes.common.Biome`'s own
 	class doc), just one that never changes shape and never resumes wherever
 	the player left it — a fresh arrival always spawns at the same fixed
-	point (see `spawnPlayer`), same as any biome's own non-returning spawn.
-	Coming back in through a biome's own exit painting is different: the
-	player reappears in front of the hub's own to-biome painting, back
-	turned to it, mirroring how a biome's own return spawn (e.g.
+	point (see `spawnPlayer`). Coming back in through a biome's own exit
+	painting is different: the player reappears just outside that biome's
+	own landmark structure (`MazeShrine`/`TowerReplica`), facing back toward
+	its painting, mirroring how a biome's own return spawn (e.g.
 	`biomes.maze.MazeBiome.playerInFrontOfExitWall`) puts them in front of
 	*its* exit painting rather than back at its own fixed entry point.
+
+	Each structure is anchored at its own fixed `(theta, phi)` — evenly
+	spaced around the equator from each other and from `HubModel.SPAWN_PHI`
+	(120 degrees apart) so none crowd each other or the player's own fixed
+	arrival point; unlike the hub's former central column, neither anchor
+	needs any pole-adjacency at all (see `HubModel`'s own class doc), so
+	"anywhere reasonably separated" is the whole placement requirement.
 **/
 class HubBiome implements Biome {
 	public static inline final ID:String = "hub";
@@ -29,16 +37,17 @@ class HubBiome implements Biome {
 	**/
 	static inline final GRAVITY:Float = 60;
 
-	/**
-		Every biome reachable from the hub, and which of the column's own
-		faces each one mounts its painting on — the one place that actually
-		knows which face leads where; `HubModel`/`HubMesh` just take a face
-		index or a list of them, staying biome-agnostic (see their own
-		class docs). Face indices are arbitrary, just distinct.
-	**/
-	static final DESTINATIONS:Array<{faceIndex:Int, biomeId:String}> = [{faceIndex: 0, biomeId: MazeBiome.ID}, {faceIndex: 2, biomeId: TowerBiome.ID}];
+	static final MAZE_SHRINE_PHI:Float = 2 * Math.PI / 3;
 
-	public function new() {}
+	static final TOWER_REPLICA_PHI:Float = -2 * Math.PI / 3;
+
+	final mazeShrineBasis:StructureBasis;
+	final towerReplicaBasis:StructureBasis;
+
+	public function new() {
+		mazeShrineBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, MAZE_SHRINE_PHI, HubModel.RADIUS);
+		towerReplicaBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, TOWER_REPLICA_PHI, HubModel.RADIUS);
+	}
 
 	public function id():String {
 		return ID;
@@ -49,76 +58,42 @@ class HubBiome implements Biome {
 	}
 
 	public function build(parent:h3d.scene.Object):Void {
-		HubMesh.build(parent, [
-			for (destination in DESTINATIONS)
-				{faceIndex: destination.faceIndex, texture: spriteFor(destination.biomeId).toTexture()}
-		]);
+		HubMesh.build(parent, isWalkable);
+		MazeShrine.build(parent, mazeShrineBasis, hxd.Res.sprites.painting__biome_maze_01.toTexture());
+		TowerReplica.build(parent, towerReplicaBasis, hxd.Res.sprites.painting__biome_tower_01.toTexture());
 	}
 
-	/**
-		The newest `res/sprites/painting--biome-<id>-*.png` variant for
-		`biomeId` — resolved lazily here (not baked into `DESTINATIONS`
-		itself) since `hxd.Res` isn't initialized until `Main.init` calls
-		`hxd.Res.initEmbed()`, well after any `static final` field
-		initializer would run; a `sprite` field on `DESTINATIONS` eagerly
-		evaluated at class-load time and crashed with "Resource loader not
-		initialized" before the app ever started.
-		@param biomeId the `Biome.id()` to look up.
-		@return that biome's own painting texture, as an unresolved image resource.
-	**/
-	static function spriteFor(biomeId:String):hxd.res.Image {
-		return switch (biomeId) {
-			case MazeBiome.ID: hxd.Res.sprites.painting__biome_maze_01;
-			case TowerBiome.ID: hxd.Res.sprites.painting__biome_tower_01;
-			default: throw 'unreachable: no painting art registered for biome "$biomeId"';
-		}
+	/** Whether `pos` is clear of both landmark structures — for `HubMesh`'s own grass scatter, so tufts don't grow inside either one. **/
+	function isWalkable(pos:h3d.Vector):Bool {
+		return !MazeShrine.blocksMovement(mazeShrineBasis, pos) && !TowerReplica.blocksMovement(towerReplicaBasis, pos);
 	}
 
 	/**
 		A fresh arrival spawns at the hub's own fixed point
 		(`HubModel.SPAWN_THETA`/`SPAWN_PHI`). Returning — walking into a
-		biome's own exit painting — instead spawns in front of *that*
-		biome's own face on the column (`fromBiomeId` picks which one via
-		`DESTINATIONS`), facing away from the column (`facing = 0` is already
-		"away from the pole/column" — see `PlayerModel.spawnAt`'s own doc on
-		`thetaTangentAt`), so the player's back is turned to the painting
-		they just stepped out of rather than reappearing clear across the
-		room.
+		biome's own exit painting — instead spawns just outside that biome's
+		own structure, facing back toward its painting.
 	**/
 	public function spawnPlayer(returning:Bool, fromBiomeId:Null<String>):PlayerModel {
 		if (!returning) {
 			return PlayerModel.spawnAt(HubModel.SPAWN_THETA, HubModel.SPAWN_PHI, 0, HubModel.RADIUS);
 		}
-		if (fromBiomeId == null) {
-			throw "unreachable: fromBiomeId is always non-null when returning is true (see Biome.spawnPlayer's own doc)";
+		return switch (fromBiomeId) {
+			case MazeBiome.ID: MazeShrine.returnSpawn(mazeShrineBasis, HubModel.RADIUS);
+			case TowerBiome.ID: TowerReplica.returnSpawn(towerReplicaBasis, HubModel.RADIUS);
+			default: throw 'unreachable: no hub structure registered for biome "$fromBiomeId"';
 		}
-		var faceIndex = faceIndexFor(fromBiomeId);
-		return PlayerModel.spawnAt(HubModel.returnSpawnTheta(), HubModel.toBiomeFaceAzimuth(faceIndex), 0, HubModel.RADIUS);
 	}
 
 	public function exitPaintings():Array<PaintingModel> {
 		return [
-			for (destination in DESTINATIONS)
-				HubModel.toBiomePainting(destination.faceIndex, destination.biomeId)
+			MazeShrine.exitPainting(mazeShrineBasis, MazeBiome.ID),
+			TowerReplica.exitPainting(towerReplicaBasis, TowerBiome.ID)
 		];
 	}
 
-	/**
-		Which column face `biomeId` mounts its painting on, per `DESTINATIONS`.
-		@param biomeId the `Biome.id()` to look up.
-		@return that biome's own face index.
-	**/
-	static function faceIndexFor(biomeId:String):Int {
-		for (destination in DESTINATIONS) {
-			if (destination.biomeId == biomeId) {
-				return destination.faceIndex;
-			}
-		}
-		throw 'unreachable: no hub face registered for biome "$biomeId"';
-	}
-
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {
-		HubCollision.tryMove(player, direction, distance);
+		HubCollision.tryMove(player, direction, distance, mazeShrineBasis, towerReplicaBasis);
 	}
 
 	public function applyGravity(player:PlayerModel, dt:Float):Void {

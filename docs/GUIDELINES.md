@@ -183,6 +183,8 @@ The hook runs `make fmt lint check test` and blocks the commit on any failure �
 ### 5.4 Testing
 `utest`. Coverage target is game logic — state machines (1.5), inventory/interaction logic, save/load, data parsing (1.4) — not rendering/scene code, which isn't practically unit-testable.
 
+`test/` mirrors `src/`'s package structure: each `FooTest.hx` declares the same package as (and sits at the same relative path as) the `Foo` it covers — e.g. `entities.player.PlayerModel` is tested by `test/entities/player/PlayerModelTest.hx`, package `entities.player`. `TestMain.hx` stays at `test/`'s own root with no package, mirroring `Main.hx`'s position at `src/`'s root.
+
 ### 5.5 CI
 GitHub Actions, hand-written (no off-the-shelf Haxe+Heaps template exists). On every push: install Haxe, `make check` (compile), `make test`. Treat a red run as blocking, same as any other project. See §6.3 for the release/deploy workflow.
 

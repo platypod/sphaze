@@ -68,42 +68,46 @@ class TowerReplica {
 	static inline final PAINTING_ANGLE:Float = 0;
 
 	/**
-		Half the painting's own mounting arc's angular width. Bounded by the
-		wall's own curvature, not just a "how wide should the painting look"
-		choice: `paintingWallEdge`'s two points sit on the true circle, but
-		`PaintingModel.buildQuad` mounts a *flat* quad, inset `SURFACE_INSET`
-		off that flat chord — between the two edges, the actual curved wall
-		bulges toward the chord by the arc's own sagitta,
-		`OUTER_RADIUS * (1 - cos(PAINTING_HALF_ANGLE))`. History of this
-		constant is really a history of `OUTER_RADIUS` changing under it:
-		an original `0.47` (at `OUTER_RADIUS = 5.5`) put the bulge past
-		`SURFACE_INSET` (`0.4`) entirely — two slivers of artwork with
-		solid wall between them, reported directly. `0.2` (at `7.5`), then
-		`0.14` (at a since-shrunk-back-down `22.5`), each re-derived rather
-		than reused for the same reason: the sagitta scales with
-		`OUTER_RADIUS * angle`, not with the structure's own size alone, so
-		carrying an old angle over to a new radius unpredictably over- or
-		under-shoots the safe margin. Re-derived again for the current `10`:
-		`0.2` keeps the sagitta (`0.20`) comfortably under `SURFACE_INSET`.
+		Half the painting's own mounting arc's angular width.
 
-		This constraint stopped actually binding once `buildPainting` moved
-		to `PaintingModel.buildArcQuad` (hooman: "can we make the tower
+		Used to be bounded by the wall's own curvature, back when
+		`buildPainting` mounted a *flat* `PaintingModel.buildQuad` on this
+		curved wall: inset off a flat chord, the actual curved wall bulges
+		toward it by the arc's own sagitta, `OUTER_RADIUS * (1 -
+		cos(PAINTING_HALF_ANGLE))` — wide enough and that bulge pokes
+		through the recessed painting. History of this constant through
+		`0.47`/`0.2`/`0.14` (at radii `5.5`/`7.5`/`22.5` respectively) was a
+		history of re-deriving it downward each time `OUTER_RADIUS` changed,
+		purely to keep that bulge under `SURFACE_INSET`.
+
+		That constraint disappeared entirely once `buildPainting` moved to
+		`PaintingModel.buildArcQuad` (hooman: "can we make the tower
 		painting in the hub keep the same resolution, but bend along the
-		tower?") — a painting that follows the wall's own curve instead of
-		cutting a flat chord across it has no sagitta to manage at all.
-		Left at `0.2` anyway: changing it now would resize the painting,
-		which wasn't part of that ask ("keep the same resolution").
+		tower?") — a painting that follows the wall's own curve has no
+		sagitta to manage at all. Left at the old sagitta-safe `0.2` anyway
+		in that same change, on the reasoning that widening it wasn't part
+		of that particular ask — wrong in hindsight: with `PaintingModel.WIDTH_FRACTION`
+		applied to a fixed, narrow angle rather than a wall's own actual
+		width, the resulting painting came out far narrower than its own
+		height (`fillWall(FLOOR_HEIGHT)`, unaffected by any of this) — a
+		visibly wrong aspect ratio, reported directly as "height looks
+		fine, but width is much too small." `0.45` targets a painting
+		roughly as wide as it is tall (a normal picture, not a slit),
+		re-derived the same way every other size on this structure has
+		been: by the actual current numbers, not by copying the previous
+		value forward.
 	**/
-	static inline final PAINTING_HALF_ANGLE:Float = 0.2;
+	static inline final PAINTING_HALF_ANGLE:Float = 0.45;
 
 	/**
 		How many flat facets `PaintingModel.buildArcQuad` sweeps the
-		painting's own arc across. Small on purpose: at `PAINTING_HALF_ANGLE`'s
-		own narrow span, even a handful of facets reads as smoothly curved —
-		this is about the painting *following* the wall's curvature, not
-		matching its `WALL_SEGMENTS`-level tessellation facet-for-facet.
+		painting's own arc across. Scaled up alongside `PAINTING_HALF_ANGLE`'s
+		own widening so each facet still spans a similarly small angle —
+		this is about the painting *following* the wall's curvature
+		smoothly at whatever width it actually is, not a fixed facet count
+		regardless of span.
 	**/
-	static inline final PAINTING_ARC_SEGMENTS:Int = 8;
+	static inline final PAINTING_ARC_SEGMENTS:Int = 12;
 
 	/**
 		How far beyond `OUTER_RADIUS` collision blocks the player — the

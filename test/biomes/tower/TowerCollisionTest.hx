@@ -105,6 +105,36 @@ class TowerCollisionTest extends Test {
 		Assert.isTrue(player.pos.y < midFallY);
 	}
 
+	function testApplyGravityKeepsAPlayerGroundedWithinClearanceOfATileEdge():Void {
+		var layout = allHolesExceptBottomLayer();
+		layout.solidTiles[2][0][5] = true; // ring 0, tile 5 - spans up to angle 0, abutting tile 0's own start
+		var r = TowerModel.CENTER_DISK_RADIUS + 3; // well inside ring 0, clear of the center disk
+		var angle = 0.3 / r; // just past the tile 5/tile 0 boundary, well within COLLISION_CLEARANCE (1) of it
+		var player = flatPlayer(r * Math.cos(angle), TowerModel.layerY(2), r * Math.sin(angle));
+		player.grounded = true;
+		player.verticalVelocity = 0;
+
+		var landedLayer = TowerCollision.applyGravity(player, 60, layout, 1 / 60);
+
+		Assert.equals(2, landedLayer);
+		Assert.floatEquals(TowerModel.layerY(2), player.pos.y);
+		Assert.isTrue(player.grounded);
+	}
+
+	function testApplyGravityLetsAPlayerFallOnceClearlyPastATileEdge():Void {
+		var layout = allHolesExceptBottomLayer();
+		layout.solidTiles[2][0][5] = true; // ring 0, tile 5 - spans up to angle 0, abutting tile 0's own start
+		var r = TowerModel.CENTER_DISK_RADIUS + 3; // well inside ring 0, clear of the center disk
+		var angle = 3 / r; // well past COLLISION_CLEARANCE (1) beyond the tile 5/tile 0 boundary
+		var player = flatPlayer(r * Math.cos(angle), TowerModel.layerY(2), r * Math.sin(angle));
+		player.grounded = true;
+		player.verticalVelocity = 0;
+
+		TowerCollision.applyGravity(player, 60, layout, 1 / 60);
+
+		Assert.isFalse(player.grounded);
+	}
+
 	function testApplyGravityDoesNotCancelAJumpFromTheTopmostLayer():Void {
 		var layout = allHolesExceptBottomLayer();
 		// On the always-solid center disk at layer 0 - the topmost layer,

@@ -25,6 +25,9 @@ class TowerCollision {
 	/** How far short of the outer wall's true rendered face a player is stopped — same role as `biomes.common.grid.GridGeometry.COLLISION_CLEARANCE`. **/
 	public static inline final COLLISION_CLEARANCE:Float = 1;
 
+	/** How many directions `isSupported` samples around its check point — cheap approximation of a small disk rather than exact edge-distance math against the tile grid's own curved/sheared boundaries. **/
+	static inline final SUPPORT_SAMPLES:Int = 8;
+
 	/**
 		Attempts to move `player` by `distance` along `direction` — blocks
 		the whole step (no wall-slide, same reasoning
@@ -100,7 +103,7 @@ class TowerCollision {
 			var firstCandidate = oldY < TowerModel.layerY(fromLayer) ? fromLayer + 1 : fromLayer;
 
 			for (layer in firstCandidate...(toLayer + 1)) {
-				if (TowerModel.isSolid(layout, layer, player.pos.x, player.pos.z)) {
+				if (isSupported(layout, layer, player.pos.x, player.pos.z)) {
 					player.pos.y = TowerModel.layerY(layer);
 					player.verticalVelocity = 0;
 					player.grounded = true;
@@ -112,5 +115,53 @@ class TowerCollision {
 		player.pos.y = newY;
 		player.grounded = false;
 		return toLayer;
+	}
+
+	/**
+		Whether `(x, z)` counts as supported at `layer` — solid there itself,
+		or within `COLLISION_CLEARANCE` of a solid *ring tile*. A bare
+		`TowerModel.isSolid` point check has no margin at all, so the fixed
+		step that carries the player's own collision point a hair's width
+		past a solid tile's edge (horizontal movement runs before gravity
+		within the same tick — see `game.GameLoop.fixedUpdate`) read as
+		falling through the tile's own side rather than off its edge:
+		reported directly as "feels like we fall through their sides." Same
+		"give the player real clearance past a hard boundary" reasoning
+		`COLLISION_CLEARANCE` already gives the outer wall
+		(`isWithinOuterWall`), now covering the tower's interior tile edges
+		too — sampled around the point rather than computed exactly, since
+		the tile grid's edges are a mix of arcs and radial lines sheared per
+		ring (see `TowerModel`'s own class doc), not one simple boundary
+		shape an exact distance check could target directly.
+
+		Samples landing within the always-solid center disk (`TowerModel.ringAt`
+		returning `-1`) are excluded, not just checked via `TowerModel.isSolid`
+		like every other sample: the disk is solid everywhere regardless of
+		layout, so without this exclusion, *any* hole tile within
+		`COLLISION_CLEARANCE` of the disk's own rim would read as
+		"supported" by way of the disk rather than by anything actually
+		underfoot — standing on a genuine hole immediately next to the disk
+		would never fall. Caught by `TowerCollisionTest`'s own pre-existing
+		free-fall cases, which all start players at `CENTER_DISK_RADIUS + 1`
+		specifically to be off the disk, over an actual hole.
+		@param layout the tower's own generated layout.
+		@param layer the layer index to check.
+		@param x horizontal position, relative to the shaft's own central axis.
+		@param z horizontal position, relative to the shaft's own central axis.
+		@return true if `(x, z)` is solid, or close enough to a solid ring tile to still count as supported.
+	**/
+	static function isSupported(layout:TowerData, layer:Int, x:Float, z:Float):Bool {
+		if (TowerModel.isSolid(layout, layer, x, z)) {
+			return true;
+		}
+		for (i in 0...SUPPORT_SAMPLES) {
+			var angle = i * (2 * Math.PI / SUPPORT_SAMPLES);
+			var sampleX = x + COLLISION_CLEARANCE * Math.cos(angle);
+			var sampleZ = z + COLLISION_CLEARANCE * Math.sin(angle);
+			if (TowerModel.ringAt(sampleX, sampleZ) >= 0 && TowerModel.isSolid(layout, layer, sampleX, sampleZ)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

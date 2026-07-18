@@ -72,6 +72,14 @@ Not implemented yet — parked here until we get to them.
   Wilds*).
 - **Moebius stairs**: we could add another dimensional factor, perhaps like
   stairs that lead from one side of the sphere to the other or such.
+- **Secret one-time painting swap (tower)**: if the player goes back up
+  through the tower's own *entrance* painting (the one they fell in
+  through) instead of descending to the goal and using the return
+  painting, that could trigger something secret — e.g. the hub's
+  to-tower painting gets swapped for a special one-time-use variant,
+  available only that one time the player is back in the hub, and reset
+  (back to the normal tower painting) the moment they leave through any
+  other biome's painting instead.
 
 ### Narrative & characters
 

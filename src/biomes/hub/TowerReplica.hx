@@ -23,23 +23,23 @@ import graphics.shaders.UnlitTexture;
 	local `(u, v)` frame instead of the shaft's own world-space axis.
 **/
 class TowerReplica {
-	/** The spire's own outer wall radius — small next to the real tower's `biomes.tower.TowerModel.OUTER_RADIUS` (40), on purpose: a landmark, not an enterable space. **/
-	static inline final OUTER_RADIUS:Float = 7.5;
+	/** The spire's own outer wall radius — small next to the real tower's `biomes.tower.TowerModel.OUTER_RADIUS` (40), on purpose: a landmark, not an enterable space. Tripled from an initial `7.5` (hooman: "still much too small... make them thrice bigger"). **/
+	static inline final OUTER_RADIUS:Float = 22.5;
 
 	/** How many cosmetic floor divisions the spire reads as — "3 or 4" per the ask. **/
 	static inline final FLOORS:Int = 4;
 
-	/** Vertical span of one cosmetic floor — unlike the real tower's own `LAYER_HEIGHT`, this never gates anything; it's just how tall each division reads. **/
-	static inline final FLOOR_HEIGHT:Float = 3.5;
+	/** Vertical span of one cosmetic floor — unlike the real tower's own `LAYER_HEIGHT`, this never gates anything; it's just how tall each division reads. Tripled alongside `OUTER_RADIUS` to keep the spire's own proportions. **/
+	static inline final FLOOR_HEIGHT:Float = 10.5;
 
 	/** Segments the spire's circular cross-section is built from — smaller than `biomes.tower.TowerMesh.WALL_SEGMENTS` (32), since this structure's own radius is a fraction of the real shaft's. **/
 	static inline final WALL_SEGMENTS:Int = 24;
 
-	/** How far a floor-division ledge steps out from the main wall, before stepping back in — what actually reads as a belt course rather than a texture seam alone. **/
-	static inline final LEDGE_PROTRUSION:Float = 0.4;
+	/** How far a floor-division ledge steps out from the main wall, before stepping back in — what actually reads as a belt course rather than a texture seam alone. Tripled alongside `OUTER_RADIUS` to keep the spire's own proportions. **/
+	static inline final LEDGE_PROTRUSION:Float = 1.2;
 
-	/** How tall a ledge's own outward-stepped band is. **/
-	static inline final LEDGE_HEIGHT:Float = 0.3;
+	/** How tall a ledge's own outward-stepped band is. Tripled alongside `OUTER_RADIUS` to keep the spire's own proportions. **/
+	static inline final LEDGE_HEIGHT:Float = 0.9;
 
 	/** Fixed local angle the painting mounts at, same role `biomes.tower.TowerModel.PAINTING_ANGLE` plays on the real shaft. **/
 	static inline final PAINTING_ANGLE:Float = 0;
@@ -52,16 +52,28 @@ class TowerReplica {
 		off that flat chord — between the two edges, the actual curved wall
 		bulges toward the chord by the arc's own sagitta,
 		`OUTER_RADIUS * (1 - cos(PAINTING_HALF_ANGLE))`. An earlier `0.47`
-		put that bulge (`0.6`) past `SURFACE_INSET` (`0.4`) entirely: the
-		curved wall poked out in front of the recessed painting partway
-		along its own width, occluding it in a visible vertical strip
-		(reported directly as the painting reading as two separate slivers
-		with solid wall between them) — much more visible here than on the
-		real tower's own much larger `OUTER_RADIUS`, where the same-order
-		absolute bulge is a tiny fraction of the wall's own scale. `0.2`
-		keeps the sagitta (`0.15`) comfortably under `SURFACE_INSET`.
+		(at a since-tripled, smaller `OUTER_RADIUS`) put that bulge (`0.6`)
+		past `SURFACE_INSET` (`0.4`) entirely: the curved wall poked out in
+		front of the recessed painting partway along its own width,
+		occluding it in a visible vertical strip (reported directly as the
+		painting reading as two separate slivers with solid wall between
+		them) — much more visible here than on the real tower's own much
+		larger `OUTER_RADIUS`, where the same-order absolute bulge is a tiny
+		fraction of the wall's own scale.
+
+		Not simply tripled alongside `OUTER_RADIUS`: the sagitta scales with
+		`OUTER_RADIUS * angle`, not with the structure's own size alone, so
+		naively keeping the previous `0.2` here would have re-widened the
+		bulge past `SURFACE_INSET` right back out (`22.5 * (1 - cos(0.2))
+		= 0.45`) — the same bug, reintroduced by the tripling itself.
+		Re-derived for the new radius instead: `0.14` keeps the sagitta
+		(`0.22`) comfortably under `SURFACE_INSET`, trading some of the
+		original `7.5`-radius fix's own safety margin (`0.25` to spare
+		there vs. `0.18` here) for a wider, better-proportioned painting on
+		the now much bigger spire — still a healthy margin, just not as
+		conservative as the first fix needed to be.
 	**/
-	static inline final PAINTING_HALF_ANGLE:Float = 0.2;
+	static inline final PAINTING_HALF_ANGLE:Float = 0.14;
 
 	/** How far beyond `OUTER_RADIUS` collision blocks the player — the spire is solid all the way through, so unlike `MazeShrine`'s per-wall check this is a single circular boundary. **/
 	static inline final COLLISION_CLEARANCE:Float = 1.5;

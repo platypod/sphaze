@@ -26,8 +26,8 @@ import graphics.shaders.UnlitTexture;
 	mounts on the inner face — matching "the second from the center."
 **/
 class MazeShrine {
-	/** How much longer each successive wall is than the last — also the spiral's own radial growth per arm. **/
-	static inline final ARM_UNIT:Float = 2.4;
+	/** How much longer each successive wall is than the last — also the spiral's own radial growth per arm. Tripled from an initial `2.4` (hooman: "still much too small... make them thrice bigger") — the wall height/texture stay matched to the real maze regardless (`GridMesh.WALL_HEIGHT`), only the spiral's own footprint scales. **/
+	static inline final ARM_UNIT:Float = 7.2;
 
 	/** Half the wall's own thickness, plus clearance — collision blocks within this distance of any wall segment's own centerline, since the walls themselves are built as flat (zero-thickness) quads. **/
 	static inline final WALL_CLEARANCE:Float = 1.2;

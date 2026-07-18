@@ -69,25 +69,29 @@ Comment *why*, not *what* — comments restating the code rot as the code change
 ```
 project/
 ├── res/
-│   ├── data/        # JSON gameplay data (see 1.4) — not populated yet, see world.CreatureSpawnTable's own doc
+│   ├── data/        # JSON gameplay data (see 1.4) — not populated yet, see entities.CreatureSpawnTable's own doc
 │   ├── textures/, models/, sound/, ...
 ├── src/
-│   ├── Main.hx          # entry point; drives whichever Biome is current through game.Biome, never by type name
-│   ├── game/             # truly generic, topology-independent: Process, Entity contracts (Biome, Space),
-│   │                     #   SphereMath/SphereSpace, MeshBuilder, shaders
-│   ├── grid/              # generic lat/long-grid substrate shared by any grid-based biome: Grid (topology/
-│   │                      #   queries), GridGeometry, GridMesh, GridCollision — not owned by any one biome
-│   ├── entities/           # Entity base + Player
-│   ├── biomes/              # one subpackage per biome: its own Biome-contract adapter plus its own content
-│   │   ├── maze/              # MazeBiome, MazeGenerator (the spanning-tree layout — what makes it a *maze*), MazeExitWall
-│   │   └── hub/                # HubBiome, Hub (room/column mesh), HubCollision
-│   └── world/                # cross-biome concerns: BiomeRegistry, Painting, NpcRegistry, CreatureSpawnTable
+│   ├── Main.hx                  # entry point: bare hxd.App shell + fixed-timestep accumulator, drives game.GameLoop
+│   ├── game/                     # truly generic, topology-independent: GameLoop (everything Main used to do
+│   │                             #   directly), Process, MeshBuilder
+│   ├── graphics/                  # Colours (consolidated placeholder palette), shaders/ (UnlitChecker, UnlitTexture)
+│   ├── entities/                   # Entity base + cross-biome entities, by kind:
+│   │   ├── player/                   # PlayerModel (state/movement), Camera (stateless, derives view from PlayerModel)
+│   │   ├── painting/                 # PaintingModel — the warp mechanism, an Entity
+│   │   ├── registries/                # bookkeeping for what exists where: BiomesRegistry, NpcsRegistry, CreaturesRegistry
+│   │   └── CreatureSpawnTable(+Entry)  # config: which creature types can spawn where — not a registry
+│   └── biomes/                    # one subpackage per biome, plus what's genuinely shared across all of them
+│       ├── common/                   # Biome contract; grid/ (GridModel/GridGeometry/GridMesh/GridCollision, shared
+│       │                             #   by any grid-based biome); space/ (Space contract, sphere/ SphereSpace+SphereMath)
+│       ├── maze/                     # MazeBiome, MazeGenerator (the spanning-tree layout — what makes it a *maze*), MazeExitWall
+│       └── hub/                      # HubBiome, HubModel (state/queries), HubMesh (scene-graph build), HubCollision
 ├── build.hxml (+ per-target hxml, see §6.1)
 ├── Makefile           # fmt/lint/check/test/build targets, see §5
 ├── .githooks/         # versioned pre-commit hook, see §5.2
 └── .vscode/
 ```
-Reshaped from the original single-biome sketch once a second biome (the hub) needed to become a peer rather than a special case, and once the maze's own grid/collision math needed separating from its biome-specific generation algorithm — see `docs/PROJECT_LOG.md`'s multi-biome restructuring entry.
+MVC-*flavored naming* (Model/Mesh/Collision/Biome suffixes), not MVC-*flavored folders*: a biome's model, rendering, and collision are coupled by construction (`GridMesh`/`GridCollision` must agree on wall geometry pixel-for-pixel), so splitting them into distant `model/`/`view/`/`controller/` trees would scatter exactly what belongs physically together. Reshaped from the original single-biome sketch once a second biome (the hub) needed to become a peer rather than a special case, once the maze's own grid/collision math needed separating from its biome-specific generation algorithm, and once a full-tree pass settled on this MVC-naming/`biomes.common` structure — see `docs/PROJECT_LOG.md`'s multi-biome restructuring entry.
 Subject to revision once real code exists — treat as a starting point, not dogma.
 
 ### 3.2 `hxd.Res`

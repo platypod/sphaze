@@ -47,14 +47,14 @@ class Painting {
 
 	public final position:h3d.Vector;
 
-	/** The `game.Biome.id()` of whichever biome walking into this painting leads to. **/
+	/** The `biomes.common.Biome.id()` of whichever biome walking into this painting leads to. **/
 	public final destinationBiomeId:String;
 
 	final triggerDistance:Float;
 
 	/**
 		@param position where this painting sits.
-		@param destinationBiomeId the `game.Biome.id()` walking into this painting leads to.
+		@param destinationBiomeId the `biomes.common.Biome.id()` walking into this painting leads to.
 		@param triggerDistance how close the player needs to walk for it to trigger — defaults to `TRIGGER_DISTANCE`; a larger scene (e.g. a bigger hub) may need its own, since how close a player can physically get to a given mounting point scales with the room, not with this constant.
 	**/
 	public function new(position:h3d.Vector, destinationBiomeId:String, ?triggerDistance:Float) {

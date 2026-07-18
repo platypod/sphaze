@@ -4,9 +4,9 @@ import biomes.common.grid.GridCollision;
 import biomes.common.grid.GridGeometry;
 import biomes.common.grid.GridMesh;
 import biomes.common.grid.GridModel.GridData;
+import biomes.common.Biome;
 import biomes.hub.HubBiome;
 import entities.Player;
-import game.Biome;
 import world.Painting;
 
 /**
@@ -53,19 +53,13 @@ class MazeBiome implements Biome {
 	}
 
 	/**
-		Swaps this biome's own maze data — used by `Main`'s L (import) dev
-		tool. Re-derives the exit wall since a different maze closes
-		different edges.
+		Swaps this biome's own maze data — the guts of `restore`. Re-derives
+		the exit wall since a different maze closes different edges.
 		@param maze the maze data to adopt.
 	**/
-	public function reload(maze:GridData):Void {
+	function reload(maze:GridData):Void {
 		this.maze = maze;
 		this.exitWall = MazeExitWall.find(maze);
-	}
-
-	/** This biome's own current maze data — exposed for `Main`'s E (export) dev tool. **/
-	public function data():GridData {
-		return maze;
 	}
 
 	public function id():String {
@@ -91,6 +85,14 @@ class MazeBiome implements Biome {
 
 	public function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {
 		GridCollision.tryMove(player, direction, distance, GridGeometry.RADIUS, maze);
+	}
+
+	public function serialize():String {
+		return MazeGenerator.serialize(maze);
+	}
+
+	public function restore(json:String):Void {
+		reload(MazeGenerator.deserialize(json));
 	}
 
 	/**

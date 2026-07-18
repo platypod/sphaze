@@ -1,6 +1,6 @@
 package world;
 
-import game.Biome;
+import biomes.common.Biome;
 
 /**
 	Every biome that exists, keyed by `Biome.id()`, plus whether the player

@@ -1,14 +1,14 @@
 package biomes.hub;
 
+import biomes.common.Biome;
 import biomes.maze.MazeBiome;
 import entities.Player;
-import game.Biome;
 import world.Painting;
 
 /**
-	The hub — a peer `Biome` like any other (see `game.Biome`'s own class
-	doc), just one that never changes shape and always spawns at the same
-	fixed point rather than resuming wherever the player left it.
+	The hub — a peer `Biome` like any other (see `biomes.common.Biome`'s own
+	class doc), just one that never changes shape and always spawns at the
+	same fixed point rather than resuming wherever the player left it.
 **/
 class HubBiome implements Biome {
 	public static inline final ID:String = "hub";
@@ -38,4 +38,12 @@ class HubBiome implements Biome {
 	public function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {
 		HubCollision.tryMove(player, direction, distance);
 	}
+
+	/** Nothing worth saving — the hub never changes shape. **/
+	public function serialize():String {
+		return "{}";
+	}
+
+	/** No-op — see `serialize`. **/
+	public function restore(json:String):Void {}
 }

@@ -1,4 +1,4 @@
-package game;
+package biomes.common;
 
 import entities.Player;
 import world.Painting;
@@ -43,4 +43,22 @@ interface Biome {
 		@param distance arc length to move; negative moves the opposite way.
 	**/
 	function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void;
+
+	/**
+		This biome's own state as a JSON string, for `Main`'s E (export) dev
+		tool — part of the contract rather than something `Main` reaches for
+		via a type-specific downcast, so a future stateful biome doesn't need
+		its own special case there. A biome with nothing worth saving (e.g.
+		the hub) can just return `"{}"`.
+		@return this biome's state as JSON.
+	**/
+	function serialize():String;
+
+	/**
+		Restores this biome's state from JSON produced by `serialize` — the
+		inverse, used by `Main`'s L (import) dev tool. A no-op for a biome
+		with nothing worth restoring.
+		@param json a JSON string produced by `serialize`.
+	**/
+	function restore(json:String):Void;
 }

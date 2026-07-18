@@ -1,10 +1,10 @@
+import biomes.common.Biome;
 import biomes.common.grid.GridModel;
 import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
 import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
 import entities.Player;
-import game.Biome;
 import world.BiomeRegistry;
 import world.Painting;
 
@@ -144,25 +144,20 @@ class Main extends hxd.App {
 	}
 
 	/**
-		Downloads the current maze biome's data as a JSON file (E) — pairs
+		Downloads the current biome's own state as a JSON file (E) — pairs
 		with L (`promptImportMaze`) to make a maze a specific bug showed up
 		in something that can actually be saved and handed back, instead of
-		lost the moment the page reloads (see `MazeGenerator.serialize`'s own doc).
-		No-ops outside a `MazeBiome` (e.g. while in the hub) — there's
-		nothing to export there.
+		lost the moment the page reloads. Works uniformly for whichever biome
+		is current (see `Biome.serialize`) — no biome-specific special case;
+		a stateless biome like the hub just downloads a trivial `"{}"`.
 	**/
 	function exportMaze():Void {
-		var mazeBiome = Std.downcast(currentBiome, MazeBiome);
-		if (mazeBiome == null) {
-			return;
-		}
-
-		var json = MazeGenerator.serialize(mazeBiome.data());
+		var json = currentBiome.serialize();
 		var blob = new js.html.Blob([json], {type: "application/json"});
 		var url:String = js.Syntax.code("URL.createObjectURL({0})", blob);
 		var anchor:js.html.AnchorElement = cast js.Browser.document.createElement("a");
 		anchor.href = url;
-		anchor.download = "sphaze-maze.json";
+		anchor.download = 'sphaze-${currentBiome.id()}.json';
 		anchor.click();
 		js.Syntax.code("URL.revokeObjectURL({0})", url);
 	}
@@ -174,11 +169,10 @@ class Main extends hxd.App {
 	}
 
 	/**
-		`mazeFileInput`'s change handler: reads the chosen file and loads it
-		into the maze biome, re-entering it fresh (not `returning`, same as a
-		newly generated maze — there's no meaningful "where they left off"
-		for an imported maze either). No-ops outside a `MazeBiome`, same as
-		`exportMaze`.
+		`mazeFileInput`'s change handler: restores the chosen file into
+		whichever biome is current (see `Biome.restore`), re-entering it
+		fresh (not `returning` — there's no meaningful "where they left off"
+		for an imported state).
 	**/
 	function onMazeFileChosen(e:js.html.Event):Void {
 		var file = mazeFileInput.files[0];
@@ -188,12 +182,8 @@ class Main extends hxd.App {
 
 		var reader = new js.html.FileReader();
 		reader.onload = (_) -> {
-			var mazeBiome = Std.downcast(currentBiome, MazeBiome);
-			if (mazeBiome == null) {
-				return;
-			}
-			mazeBiome.reload(MazeGenerator.deserialize(reader.result));
-			enterBiome(MazeBiome.ID, false);
+			currentBiome.restore(reader.result);
+			enterBiome(currentBiome.id(), false);
 		};
 		reader.readAsText(file);
 	}
@@ -282,15 +272,13 @@ class Main extends hxd.App {
 			updateDebugOverlay();
 		}
 
-		// Export/import only make sense against a maze biome — no-ops
-		// elsewhere (see exportMaze/onMazeFileChosen's own docs).
-		if (Std.downcast(currentBiome, MazeBiome) != null) {
-			if (hxd.Key.isPressed(hxd.Key.E)) {
-				exportMaze();
-			}
-			if (hxd.Key.isPressed(hxd.Key.L)) {
-				promptImportMaze();
-			}
+		// E/L now work uniformly for whichever biome is current (see
+		// exportMaze/onMazeFileChosen's own docs) — no biome-specific gate.
+		if (hxd.Key.isPressed(hxd.Key.E)) {
+			exportMaze();
+		}
+		if (hxd.Key.isPressed(hxd.Key.L)) {
+			promptImportMaze();
 		}
 	}
 

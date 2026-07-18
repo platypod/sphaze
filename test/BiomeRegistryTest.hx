@@ -3,7 +3,7 @@ import utest.Assert;
 import world.BiomeRegistry;
 import world.Painting;
 import entities.Player;
-import game.Biome;
+import biomes.common.Biome;
 
 /** Covers BiomeRegistry's lookup/discovery bookkeeping — a stub Biome, not a real one, since none of this depends on rendering/collision. **/
 class BiomeRegistryTest extends Test {
@@ -80,4 +80,10 @@ private class StubBiome implements Biome {
 	}
 
 	public function tryMove(player:Player, direction:h3d.Vector, distance:Float):Void {}
+
+	public function serialize():String {
+		return "{}";
+	}
+
+	public function restore(json:String):Void {}
 }

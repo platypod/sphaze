@@ -128,7 +128,7 @@ class Hub {
 		Takes the destination biome's id rather than hardcoding one so `Hub`
 		itself stays biome-agnostic — see `biomes.HubBiome`, which is what
 		actually knows which biome that is.
-		@param destinationBiomeId the `game.Biome.id()` this painting leads to.
+		@param destinationBiomeId the `biomes.common.Biome.id()` this painting leads to.
 		@return the hub's exit painting.
 	**/
 	public static function toBiomePainting(destinationBiomeId:String):Painting {

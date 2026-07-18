@@ -23,7 +23,6 @@ class Keybinds {
 
 	public static inline final STRAFE_RIGHT:Int = hxd.Key.D;
 
-	public static inline final TILT_UP:Int = hxd.Key.SPACE;
 	public static inline final TOGGLE_DEBUG_OVERLAY:Int = hxd.Key.F3;
 	public static inline final EXPORT_MAZE:Int = hxd.Key.E;
 	public static inline final IMPORT_MAZE:Int = hxd.Key.L;

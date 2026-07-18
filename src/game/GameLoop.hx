@@ -24,17 +24,7 @@ class GameLoop {
 	static inline final WALK_SPEED:Float = 15;
 	static inline final SPRINT_MULTIPLIER:Float = 1.8;
 	static inline final TURN_SPEED:Float = 2.5;
-	static inline final PITCH_SPEED:Float = 1.5;
 	static inline final MOUSE_SENSITIVITY:Float = 0.0025;
-
-	/**
-		How long holding SPACE tilts the camera up before it's released back
-		to level — but only if the player is also moving (see
-		`updateSpaceTilt`); held while standing still, it isn't forced back,
-		so a stationary player can linger on the far side view as long as
-		they like.
-	**/
-	static inline final SPACE_TILT_RELEASE_AFTER:Float = 1;
 
 	final s3d:h3d.scene.Scene;
 
@@ -51,8 +41,6 @@ class GameLoop {
 	/** The current biome's own exit painting — checked each tick against `player.pos`. **/
 	var activePainting:PaintingModel;
 
-	var spaceHoldTime:Float = 0;
-	var spaceTiltReleased:Bool = false;
 	var debugOverlay:h2d.Text;
 	var debugOverlayVisible:Bool = false;
 	var mazeFileInput:js.html.InputElement;
@@ -260,7 +248,6 @@ class GameLoop {
 		}
 
 		checkPaintingTrigger();
-		updateSpaceTilt(dt);
 
 		Camera.applyTo(s3d.camera, player, currentBiome.radius());
 
@@ -329,41 +316,5 @@ class GameLoop {
 
 	static inline function radToDeg(radians:Float):Float {
 		return radians * 180 / Math.PI;
-	}
-
-	function isMoveKeyDown():Bool {
-		return hxd.Key.isDown(Keybinds.MOVE_FORWARD)
-			|| hxd.Key.isDown(Keybinds.MOVE_FORWARD_ALT)
-			|| hxd.Key.isDown(Keybinds.MOVE_BACKWARD)
-			|| hxd.Key.isDown(Keybinds.MOVE_BACKWARD_ALT)
-			|| hxd.Key.isDown(Keybinds.STRAFE_LEFT)
-			|| hxd.Key.isDown(Keybinds.STRAFE_RIGHT);
-	}
-
-	/**
-		Raise your view toward the sphere's center — the "see the far side"
-		mechanic. Holding SPACE tilts up continuously, same as the old
-		PGUP; the twist is the auto-release once held a full second while
-		still moving, snapping back to level so walking blind doesn't
-		linger — checked once, at the moment the hold crosses that mark,
-		not re-armed until SPACE is released and pressed again.
-	**/
-	function updateSpaceTilt(dt:Float):Void {
-		if (!hxd.Key.isDown(Keybinds.TILT_UP)) {
-			spaceHoldTime = 0;
-			spaceTiltReleased = false;
-			return;
-		}
-
-		spaceHoldTime += dt;
-		if (spaceTiltReleased) {
-			return;
-		}
-
-		player.lookUp(PITCH_SPEED * dt);
-		if (spaceHoldTime >= SPACE_TILT_RELEASE_AFTER && isMoveKeyDown()) {
-			player.pitch = 0;
-			spaceTiltReleased = true;
-		}
 	}
 }

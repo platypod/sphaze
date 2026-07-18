@@ -11,11 +11,6 @@ class Colours {
 
 	public static inline final GRASS_TIP:Int = 0xFF7AA648;
 
-	/** `TowerMesh`'s own floor tiles and outer wall — flat-colored like every other not-yet-textured surface, distinct from the grass/stone biomes so the tower reads as its own place. **/
-	public static inline final TOWER_FLOOR:Int = 0xFF6B5344;
-
-	public static inline final TOWER_WALL:Int = 0xFF3A3A42;
-
 	/** `entities.painting.PaintingModel.buildFrame`'s own moulding — a plain wood-brown placeholder, no real art for it yet either. **/
 	public static inline final PAINTING_FRAME:Int = 0xFF7A5C3E;
 }

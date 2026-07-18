@@ -61,21 +61,28 @@ class TowerBiome implements Biome {
 	}
 
 	/**
-		Nothing to warp back to until the player has actually reached the
-		bottom — the return painting is physically mounted there (see
-		`TowerMesh`), so this gate mostly just documents the rule directly
-		rather than leaving it as an emergent side effect of the painting
-		being otherwise unreachable.
+		An always-available entrance painting at the top (an escape hatch
+		near spawn — giving up partway down shouldn't strand the player
+		until they reach the bottom), plus the goal painting once the
+		player has actually reached it — a running max
+		(`deepestLayerReached`), not the latest tick's own layer, so
+		jumping back upward mid-fall never un-gates it once it's been
+		earned. Both lead back to the hub; see `TowerMesh` for where
+		they're actually mounted.
 	**/
 	public function exitPaintings():Array<PaintingModel> {
-		if (deepestLayerReached < TowerModel.GOAL_LEVELS - 1) {
-			return [];
+		var paintings = [wallPainting(0)];
+		if (deepestLayerReached >= TowerModel.GOAL_LEVELS - 1) {
+			paintings.push(wallPainting(TowerModel.GOAL_LEVELS - 1));
 		}
-		var left = TowerModel.returnPaintingWallEdge(true);
-		var right = TowerModel.returnPaintingWallEdge(false);
-		return [
-			new PaintingModel(PaintingModel.centerOf(left, right, new h3d.Vector(0, 1, 0)), HubBiome.ID)
-		];
+		return paintings;
+	}
+
+	/** The hub-bound painting mounted on the outer wall at `layer`'s own height — see `TowerModel.paintingWallEdge`. **/
+	static function wallPainting(layer:Int):PaintingModel {
+		var left = TowerModel.paintingWallEdge(layer, true);
+		var right = TowerModel.paintingWallEdge(layer, false);
+		return new PaintingModel(PaintingModel.centerOf(left, right, new h3d.Vector(0, 1, 0)), HubBiome.ID);
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {

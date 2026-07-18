@@ -54,14 +54,39 @@ class TowerModelTest extends Test {
 	}
 
 	function testTileAtDiffersAcrossRingsAtTheSameAngleDueToTheAngleOffset():Void {
-		// RING_ANGLE_STEP shears each ring's own tile boundaries - the same
+		// ringAngleOffset shears each ring's own tile boundaries - the same
 		// world angle should land in a different tile index (relative to
 		// its own ring's zero) once the offset is large enough to cross a
-		// boundary. Ring 1's own offset is exactly RING_ANGLE_STEP.
-		var x = Math.cos(TowerModel.RING_ANGLE_STEP / 2);
-		var z = Math.sin(TowerModel.RING_ANGLE_STEP / 2);
+		// boundary. Ring 1's own offset is exactly ringAngleOffset(1).
+		var halfOffset = TowerModel.ringAngleOffset(1) / 2;
+		var x = Math.cos(halfOffset);
+		var z = Math.sin(halfOffset);
 		Assert.equals(0, TowerModel.tileAt(0, x, z));
 		Assert.equals(TowerModel.tilesForRing(1) - 1, TowerModel.tileAt(1, x, z));
+	}
+
+	function testAngularSegmentsIsDivisibleByEveryRingsOwnTileCount():Void {
+		// The actual invariant TowerMesh relies on to make ring boundaries
+		// (and the center disk's own rim) line up with no seam - see
+		// ANGULAR_SEGMENTS's own doc. Guards against a future
+		// BASE_TILES_PER_RING/RINGS_PER_LAYER change silently breaking it.
+		for (ring in 0...TowerModel.RINGS_PER_LAYER) {
+			Assert.equals(0, TowerModel.ANGULAR_SEGMENTS % TowerModel.tilesForRing(ring));
+		}
+	}
+
+	function testTileIndexAtSlotMatchesTileAtForTheSameAngle():Void {
+		for (ring in 0...TowerModel.RINGS_PER_LAYER) {
+			var slot = 5;
+			var angle = slot * TowerModel.SLOT_ANGLE + 0.001; // just past the slot's own start, still inside it
+			var x = Math.cos(angle);
+			var z = Math.sin(angle);
+			Assert.equals(TowerModel.tileAt(ring, x, z), TowerModel.tileIndexAtSlot(ring, slot));
+		}
+	}
+
+	function testTileIndexAtSlotWrapsAroundTheSharedGrid():Void {
+		Assert.equals(TowerModel.tileIndexAtSlot(0, 3), TowerModel.tileIndexAtSlot(0, 3 + TowerModel.ANGULAR_SEGMENTS));
 	}
 
 	function testIsSolidIsAlwaysTrueWithinTheCenterDiskRegardlessOfLayout():Void {

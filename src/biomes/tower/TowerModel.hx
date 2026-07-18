@@ -47,8 +47,40 @@ class TowerModel {
 	/** Tile count of the innermost ring (ring 0) — later rings scale up from this (see `tilesForRing`) so a tile's own physical width stays roughly consistent despite each ring's larger circumference. **/
 	public static inline final BASE_TILES_PER_RING:Int = 6;
 
-	/** Angular shear applied per ring, on top of the previous ring's own tile boundaries — what actually gives the cross-section its "aperture blades" look rather than plain radial spokes straight through every ring. **/
-	public static inline final RING_ANGLE_STEP:Float = 0.35;
+	/**
+		The whole cross-section's shared angular resolution: every ring
+		boundary (and the center disk's own rim) samples exactly these
+		`ANGULAR_SEGMENTS` angles, regardless of that ring's own tile count
+		— what actually makes rings fit together with no seam (see
+		`TowerMesh`), since two rings with *different* tile counts would
+		otherwise each approximate the same shared boundary circle with a
+		different-sided polygon, leaving a gap/overlap between them (the
+		same class of bug `biomes.common.grid.GridMesh`'s own history
+		already found and fixed, there for a row-boundary resolution change
+		rather than a ring one).
+
+		Must be evenly divisible by every ring's own `tilesForRing` (today:
+		6, 12, 18, 24 — their LCM is exactly 72) so each ring's own tile
+		boundaries always land exactly on the shared grid too, not just the
+		ring's radial boundary itself. Revisit this value if
+		`BASE_TILES_PER_RING`/`RINGS_PER_LAYER` ever change in a way that
+		breaks that (see `TowerModelTest`'s own divisibility check).
+	**/
+	public static inline final ANGULAR_SEGMENTS:Int = 72;
+
+	/** One shared grid slot's own angular width — `TowerMesh` samples every ring boundary at multiples of this. **/
+	public static final SLOT_ANGLE:Float = 2 * Math.PI / ANGULAR_SEGMENTS;
+
+	/**
+		Angular shear applied per ring, on top of the previous ring's own
+		tile boundaries — what actually gives the cross-section its
+		"aperture blades" look rather than plain radial spokes straight
+		through every ring. In whole shared-grid slots (see
+		`ANGULAR_SEGMENTS`), not a raw angle, so a ring's own tile
+		boundaries stay exactly on that shared grid no matter how much
+		shear is applied.
+	**/
+	public static inline final RING_ANGLE_STEP_SLOTS:Int = 3;
 
 	/** Fraction of a ring's tiles solid at the topmost layer (level 0). **/
 	public static inline final FLOOR_DENSITY_START:Float = 0.65;
@@ -96,9 +128,53 @@ class TowerModel {
 		return BASE_TILES_PER_RING * (ring + 1);
 	}
 
-	/** The angular offset `ring`'s own tile boundaries start at, relative to ring 0's — see `RING_ANGLE_STEP`'s own doc. **/
+	/** The angular offset `ring`'s own tile boundaries start at, relative to ring 0's — see `RING_ANGLE_STEP_SLOTS`'s own doc. **/
 	public static inline function ringAngleOffset(ring:Int):Float {
-		return ring * RING_ANGLE_STEP;
+		return ringOffsetSlots(ring) * SLOT_ANGLE;
+	}
+
+	/** `ringAngleOffset`, in whole shared-grid slots rather than radians — see `ANGULAR_SEGMENTS`'s own doc. **/
+	public static inline function ringOffsetSlots(ring:Int):Int {
+		return ring * RING_ANGLE_STEP_SLOTS;
+	}
+
+	/**
+		How many shared grid slots (see `ANGULAR_SEGMENTS`) make up one of
+		`ring`'s own tiles — always a whole number by construction (see
+		`ANGULAR_SEGMENTS`'s own doc).
+		@param ring the ring index (0 to `RINGS_PER_LAYER - 1`).
+		@return that ring's own slots-per-tile.
+	**/
+	public static inline function slotsPerTile(ring:Int):Int {
+		return Std.int(ANGULAR_SEGMENTS / tilesForRing(ring));
+	}
+
+	/**
+		Which shared grid slot (see `ANGULAR_SEGMENTS`) a world angle around
+		the shaft's own axis falls within.
+		@param x horizontal position, relative to the shaft's own central axis.
+		@param z horizontal position, relative to the shaft's own central axis.
+		@return the slot index (0 to `ANGULAR_SEGMENTS - 1`).
+	**/
+	public static function slotAt(x:Float, z:Float):Int {
+		var angle = Math.atan2(z, x);
+		var normalized = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+		return Std.int(normalized / SLOT_ANGLE) % ANGULAR_SEGMENTS;
+	}
+
+	/**
+		Which of `ring`'s own tiles a shared grid slot falls within — the
+		same mapping `tileAt` uses for a world position, exposed directly by
+		slot so `TowerMesh` can walk the shared grid itself (e.g. to check a
+		neighboring ring's solidity at the same slot) without going back
+		through world coordinates.
+		@param ring the ring index — see `ringAt`; never called with `-1` (the center disk has no tiles).
+		@param absoluteSlot a slot index, measured from angle 0 — not necessarily already within `ring`'s own offset or `0...ANGULAR_SEGMENTS`.
+		@return the tile index within that ring.
+	**/
+	public static function tileIndexAtSlot(ring:Int, absoluteSlot:Int):Int {
+		var relative = ((absoluteSlot - ringOffsetSlots(ring)) % ANGULAR_SEGMENTS + ANGULAR_SEGMENTS) % ANGULAR_SEGMENTS;
+		return Std.int(relative / slotsPerTile(ring));
 	}
 
 	/**
@@ -119,18 +195,17 @@ class TowerModel {
 	}
 
 	/**
-		Which of `ring`'s own tiles `(x, z)` falls within.
+		Which of `ring`'s own tiles `(x, z)` falls within — via `slotAt`/
+		`tileIndexAtSlot`, the same shared-grid mapping `TowerMesh` walks
+		directly by slot, so collision and rendering can never disagree
+		about where one tile ends and the next begins.
 		@param ring the ring index — see `ringAt`; never called with `-1` (the center disk has no tiles).
 		@param x horizontal position, relative to the shaft's own central axis.
 		@param z horizontal position, relative to the shaft's own central axis.
 		@return the tile index within that ring.
 	**/
 	public static function tileAt(ring:Int, x:Float, z:Float):Int {
-		var tileCount = tilesForRing(ring);
-		var tileWidth = 2 * Math.PI / tileCount;
-		var angle = Math.atan2(z, x) - ringAngleOffset(ring);
-		var normalized = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-		return clampInt(Math.floor(normalized / tileWidth), 0, tileCount - 1);
+		return tileIndexAtSlot(ring, slotAt(x, z));
 	}
 
 	/**
@@ -169,24 +244,27 @@ class TowerModel {
 		return layer;
 	}
 
-	/** Fixed world angle the return painting mounts at, on the outer wall of the bottom-most (goal) layer — arbitrary, just needs to be a real point on the wall. **/
-	static inline final RETURN_PAINTING_ANGLE:Float = 0;
+	/** Fixed world angle every hub-bound painting mounts at, on the outer wall — arbitrary, just needs to be a real point on the wall; same angle at every layer is fine since they're never at the same height. **/
+	static inline final PAINTING_ANGLE:Float = 0;
 
-	/** Half the return painting's own angular width on the outer wall. **/
-	static inline final RETURN_PAINTING_HALF_ANGLE:Float = 0.15;
+	/** Half a hub-bound painting's own angular width on the outer wall. **/
+	static inline final PAINTING_HALF_ANGLE:Float = 0.15;
 
 	/**
-		One edge of the return painting's own mounting segment, on the outer
-		wall at the goal layer's own height — the shared reference both
+		One edge of a hub-bound painting's own mounting segment on the outer
+		wall, at `layer`'s own height — the shared reference both
 		`TowerMesh` (rendering) and `TowerBiome` (the trigger position) mount
 		it from, same role `biomes.hub.HubModel.toBiomeFaceEdge` plays for
-		the hub's own column faces.
+		the hub's own column faces. Used for both the entrance painting
+		(layer 0, always available) and the goal painting (the bottom-most
+		layer, gated behind actually reaching it — see `TowerBiome`).
+		@param layer which layer's own height to mount at.
 		@param left the segment's left edge if true, right edge if false.
 		@return that edge's world position.
 	**/
-	public static function returnPaintingWallEdge(left:Bool):h3d.Vector {
-		var angle = RETURN_PAINTING_ANGLE + (left ? -RETURN_PAINTING_HALF_ANGLE : RETURN_PAINTING_HALF_ANGLE);
-		var y = layerY(GOAL_LEVELS - 1);
+	public static function paintingWallEdge(layer:Int, left:Bool):h3d.Vector {
+		var angle = PAINTING_ANGLE + (left ? -PAINTING_HALF_ANGLE : PAINTING_HALF_ANGLE);
+		var y = layerY(layer);
 		return new h3d.Vector(OUTER_RADIUS * Math.cos(angle), y, OUTER_RADIUS * Math.sin(angle));
 	}
 

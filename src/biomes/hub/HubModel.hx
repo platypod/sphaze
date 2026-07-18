@@ -111,21 +111,32 @@ class HubModel {
 		   margin doubled from `0.3` to `0.5` on both the floor and cap
 		   side, accounting for `buildFrame`'s own border this time (the
 		   frame's own outer edge, not the inner painting, is what actually
-		   has to clear both). `60.544`/`PAINTING_HEIGHT_SPAN` below are
-		   what that search found — a noticeably smaller painting than the
-		   `61`/`9.0199` attempt, and deliberately so: for this one
-		   mounting spot, "doesn't sink, doesn't overshoot, doesn't grab
-		   the player from far away" won out over "as big as possible."
+		   has to clear both). `60.544`/`9.0199` — still felt like it
+		   pulled the player in from too far away.
+		4. The real fix for the pull distance turned out to be a different
+		   bug entirely: `toBiomePainting` was triggering off the painting's
+		   own elevated visual center, not a floor-level point like every
+		   other painting in this project — so part of `PAINTING_TRIGGER_DISTANCE`'s
+		   own budget was always being spent just absorbing that vertical
+		   offset rather than actual walking distance. Switched to
+		   `midpointOf` (see its own doc) and re-ran the bisection with
+		   *that* as the reference: `PAINTING_TRIGGER_DISTANCE` could come
+		   down to `10` (nowhere near `16`) while keeping the same `0.5`
+		   safety margin on both the floor and the cap. `63.457`/
+		   `PAINTING_HEIGHT_SPAN` below are what that search found —
+		   smaller again than the `16`-attempt's numbers, the direct cost
+		   of the smaller trigger radius: less room opens up between the
+		   floor and the cap the closer a player can get before triggering.
 
 		Re-run that search (not hand algebra; see `docs/PROJECT_LOG.md`'s
 		own entries on why the naive version of this kept predicting the
 		wrong direction) whenever `RADIUS`/`COLUMN_RADIUS`/
 		`PAINTING_TRIGGER_DISTANCE` change.
 	**/
-	static inline final PAINTING_HEIGHT:Float = 60.544;
+	static inline final PAINTING_HEIGHT:Float = 63.457;
 
 	/** A face painting's own total height, floor-clearance to top edge — see `PAINTING_HEIGHT`'s own doc for how this was derived alongside it. Public so `HubMesh` can share it (see `toBiomeFaceEdge`'s own doc on why `baseHeight` is always `0` here). **/
-	public static inline final PAINTING_HEIGHT_SPAN:Float = 5.357;
+	public static inline final PAINTING_HEIGHT_SPAN:Float = 2.634;
 
 	/**
 		How close the player needs to walk to trigger the to-biome painting
@@ -134,14 +145,16 @@ class HubModel {
 		physically get to a mounted painting at all (see `PAINTING_HEIGHT`'s
 		own doc): raised past the minimum needed just to avoid an instant
 		re-trigger, to push the closest reachable approach further from the
-		pole where there's real vertical room — but *not* raised as far as
-		it could go, since a wide trigger radius has its own real cost
-		(the painting activating well before the player meant to walk into
-		it, reported directly as feeling like it "pulls you from a
-		kilometer away" at `20`). `16` is a deliberate compromise, not the
-		value that maximizes available room.
+		pole where there's real vertical room. Still felt like it "pulls
+		you from a kilometer away" at `16` (and, separately, at `20` before
+		that) — pulled back to `10`, once `toBiomePainting` switched to
+		triggering off `midpointOf` (floor-level) rather than the
+		painting's own elevated visual center: that switch is what made a
+		smaller value here viable at all, since the elevated reference
+		needed a wide trigger radius just to absorb its own vertical
+		offset from where the player actually stands.
 	**/
-	static inline final PAINTING_TRIGGER_DISTANCE:Float = 16;
+	static inline final PAINTING_TRIGGER_DISTANCE:Float = 10;
 
 	/** Where the player spawns entering the hub: the equator — the room's widest, most open point, not particularly close to the column (see `PAINTING_HEIGHT`'s own doc for why that's the *least* reachable latitude, not the most). **/
 	public static final SPAWN_THETA:Float = Math.PI / 2;
@@ -159,21 +172,27 @@ class HubModel {
 		@param destinationBiomeId the `biomes.common.Biome.id()` this painting leads to.
 		@return the hub's exit painting for that destination.
 	**/
+	/**
+		Triggers off `midpointOf` (the wall's own floor-level reference,
+		matching `toBiomeFaceEdge`'s own point exactly), not the painting's
+		actually-rendered, wall-mounted-height center: `pos` is a
+		*feet*-level point, so comparing it against an elevated center
+		needlessly ate into the trigger radius's own budget just absorbing
+		that vertical offset — every other painting in this project already
+		triggers this way (see `biomes.maze.MazeBiome.exitPaintings`).
+	**/
 	public static function toBiomePainting(faceIndex:Int, destinationBiomeId:String):PaintingModel {
 		var left = toBiomeFaceEdge(faceIndex, true);
 		var right = toBiomeFaceEdge(faceIndex, false);
-		var center = PaintingModel.centerOf(left, right, 0, PAINTING_HEIGHT_SPAN, new h3d.Vector(0, 1, 0));
-		return new PaintingModel(center, destinationBiomeId, PAINTING_TRIGGER_DISTANCE);
+		return new PaintingModel(PaintingModel.midpointOf(left, right), destinationBiomeId, PAINTING_TRIGGER_DISTANCE);
 	}
 
 	/**
 		`faceIndex`'s left or right edge, at `PAINTING_HEIGHT` — the shared
-		reference both `toBiomePainting` and `HubMesh.buildColumn` mount a
-		painting from, so a trigger position always matches where it's
-		actually rendered. Already the painting's own *bottom* edge (see
-		`PAINTING_HEIGHT`'s own doc), so every caller passes `baseHeight = 0`
-		to `PaintingModel.centerOf`/`buildQuad`, not a further offset on top.
-		Public so `HubMesh` can share it.
+		reference both `toBiomePainting` (the trigger position) and
+		`HubMesh.buildColumn` (the rendered quad's own `baseHeight = 0`
+		floor) mount a painting from, so the two always agree on where the
+		wall itself starts. Public so `HubMesh` can share it.
 		@param faceIndex which of the column's `COLUMN_SIDES` faces to use.
 		@param left the face's left edge if true, right edge if false.
 	**/
@@ -195,11 +214,11 @@ class HubModel {
 		bump (a scratch script, not hand algebra — see `PAINTING_HEIGHT`'s
 		own doc): confirmed numerically that right at the boundary, the true
 		distance to the painting's own trigger center is now deep inside
-		`PAINTING_TRIGGER_DISTANCE` (16) — so spawning there would
+		`PAINTING_TRIGGER_DISTANCE` (10) — so spawning there would
 		immediately re-trigger it; this offset clears it by a comfortable
-		margin (~4.3).
+		margin (~3.7).
 	**/
-	static inline final RETURN_SPAWN_ARC_OFFSET:Float = 19;
+	static inline final RETURN_SPAWN_ARC_OFFSET:Float = 12;
 
 	/**
 		The polar angle nearest the column a player can actually stand at —

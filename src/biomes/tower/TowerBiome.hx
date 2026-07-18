@@ -78,12 +78,21 @@ class TowerBiome implements Biome {
 		return paintings;
 	}
 
-	/** The hub-bound painting mounted on the outer wall at `layer`'s own height — see `TowerModel.paintingWallEdge`. **/
+	/**
+		The hub-bound painting mounted on the outer wall at `layer`'s own
+		height — see `TowerModel.paintingWallEdge`. Triggers off
+		`midpointOf` (the wall's own floor-level reference), not the
+		painting's actually-rendered, wall-mounted-height center: `pos` is
+		a *feet*-level point, so comparing it against an elevated center
+		left the vertical gap alone bigger than `PaintingModel.TRIGGER_DISTANCE`
+		— the painting was only reachable by jumping to briefly close it
+		(reported directly), never by walking straight up to it the way
+		every other painting in this project already works.
+	**/
 	static function wallPainting(layer:Int):PaintingModel {
 		var left = TowerModel.paintingWallEdge(layer, true);
 		var right = TowerModel.paintingWallEdge(layer, false);
-		var size = PaintingModel.fillWall(TowerModel.LAYER_HEIGHT - TowerModel.TILE_THICKNESS);
-		return new PaintingModel(PaintingModel.centerOf(left, right, size.baseHeight, size.height, new h3d.Vector(0, 1, 0)), HubBiome.ID);
+		return new PaintingModel(PaintingModel.midpointOf(left, right), HubBiome.ID);
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {

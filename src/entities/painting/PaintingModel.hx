@@ -148,12 +148,12 @@ class PaintingModel extends Entity {
 		wall's own total clear vertical span, floor to ceiling/whatever
 		obstruction bounds it above — leaving only `MARGIN_FRACTION` as
 		margin, split evenly top and bottom. What most callers pass to
-		`centerOf`/`buildQuad`; the hub's own column-face paintings are the
-		one exception (see `biomes.hub.HubModel`'s own doc), since a
+		`buildQuad`; the hub's own column-face paintings are the one
+		exception (see `biomes.hub.HubModel`'s own doc), since a
 		column-mounted painting doesn't have a simple floor-to-ceiling span
 		to fill in the first place.
 		@param availableHeight the wall's own total clear vertical span.
-		@return `baseHeight`/`height` to pass to `centerOf`/`buildQuad`.
+		@return `baseHeight`/`height` to pass to `buildQuad`.
 	**/
 	public static function fillWall(availableHeight:Float):{baseHeight:Float, height:Float} {
 		var margin = availableHeight * MARGIN_FRACTION / 2;
@@ -167,26 +167,6 @@ class PaintingModel extends Entity {
 		var height = (availableHeight - margin * 2) / (1 + 2 * FRAME_BORDER_FRACTION);
 		var frameBorder = height * FRAME_BORDER_FRACTION;
 		return {baseHeight: margin + frameBorder, height: height};
-	}
-
-	/**
-		The actual center of the quad `buildQuad` renders for this wall
-		segment — unlike `midpointOf` alone, this accounts for
-		`baseHeight`/`height`, so a painting's trigger position (which
-		should use this, not `midpointOf`) actually lines up with where the
-		painting visually is instead of the wall's own floor-level
-		reference point, well below it.
-		@param wallA one end of the wall segment.
-		@param wallB the other end.
-		@param baseHeight how far up from `wallA`/`wallB` the painting's own bottom edge sits — see `fillWall`.
-		@param height the painting's own height, floor-clearance to top edge — see `fillWall`.
-		@param up which way "up the wall" is (see `buildQuad`'s own doc) — defaults to radially inward.
-		@return the quad's true center point.
-	**/
-	public static function centerOf(wallA:h3d.Vector, wallB:h3d.Vector, baseHeight:Float, height:Float, ?up:h3d.Vector):h3d.Vector {
-		var mid = midpointOf(wallA, wallB);
-		var upDir = up != null ? up : SphereMath.upVectorAt(mid, new h3d.Vector(0, 0, 0));
-		return mid.add(upDir.scaled(baseHeight + height / 2));
 	}
 
 	/**

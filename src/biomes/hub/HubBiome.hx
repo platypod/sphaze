@@ -4,6 +4,7 @@ import biomes.common.Biome;
 import biomes.common.Gravity;
 import biomes.hub.HubStructure.StructureBasis;
 import biomes.maze.MazeBiome;
+import biomes.mobius.MobiusBiome;
 import biomes.tower.TowerBiome;
 import entities.hourglass.Hourglass;
 import entities.hourglass.HourglassModel;
@@ -49,6 +50,9 @@ class HubBiome implements Biome {
 
 	static final TOWER_REPLICA_PHI:Float = -2 * Math.PI / 3;
 
+	/** Directly opposite `HubModel.SPAWN_PHI` around the equator — exactly between `MAZE_SHRINE_PHI`/`TOWER_REPLICA_PHI`, the one remaining evenly-spaced gap. **/
+	static final MOBIUS_WAYPOINT_PHI:Float = Math.PI;
+
 	/**
 		Directly ahead of the fixed spawn point (same `phi`, further along
 		increasing `theta` — the direction a fresh arrival's own default
@@ -65,6 +69,7 @@ class HubBiome implements Biome {
 
 	final mazeShrineBasis:StructureBasis;
 	final towerReplicaBasis:StructureBasis;
+	final mobiusWaypointBasis:StructureBasis;
 	final hourglassBasis:StructureBasis;
 
 	/** Shared with `biomes.tower.TowerBiome`, which only reads `unlocked` off it — see that class's own doc for why the tower cares. Injected rather than owned outright so neither biome has to reach into the other's own instance (see `biomes.common.Biome`'s own class doc). **/
@@ -76,6 +81,7 @@ class HubBiome implements Biome {
 	public function new(hourglassModel:HourglassModel) {
 		mazeShrineBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, MAZE_SHRINE_PHI, HubModel.RADIUS);
 		towerReplicaBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, TOWER_REPLICA_PHI, HubModel.RADIUS);
+		mobiusWaypointBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, MOBIUS_WAYPOINT_PHI, HubModel.RADIUS);
 		hourglassBasis = HubStructure.anchorAt(HOURGLASS_THETA, HubModel.SPAWN_PHI, HubModel.RADIUS);
 		this.hourglassModel = hourglassModel;
 	}
@@ -92,6 +98,7 @@ class HubBiome implements Biome {
 		HubMesh.build(parent, isWalkable);
 		MazeShrine.build(parent, mazeShrineBasis, hxd.Res.sprites.painting__biome_maze_01.toTexture());
 		TowerReplica.build(parent, towerReplicaBasis, hxd.Res.sprites.painting__biome_tower_01.toTexture());
+		MobiusWaypoint.build(parent, mobiusWaypointBasis);
 
 		Hourglass.build(parent, hourglassBasis);
 		hourglassContainer = new h3d.scene.Object(parent);
@@ -118,6 +125,7 @@ class HubBiome implements Biome {
 		return switch (fromBiomeId) {
 			case MazeBiome.ID: MazeShrine.returnSpawn(mazeShrineBasis, HubModel.RADIUS);
 			case TowerBiome.ID: TowerReplica.returnSpawn(towerReplicaBasis, HubModel.RADIUS);
+			case MobiusBiome.ID: MobiusWaypoint.returnSpawn(mobiusWaypointBasis, HubModel.RADIUS);
 			default: throw 'unreachable: no hub structure registered for biome "$fromBiomeId"';
 		}
 	}
@@ -125,7 +133,8 @@ class HubBiome implements Biome {
 	public function exitPaintings():Array<PaintingModel> {
 		return [
 			MazeShrine.exitPainting(mazeShrineBasis, MazeBiome.ID),
-			TowerReplica.exitPainting(towerReplicaBasis, TowerBiome.ID)
+			TowerReplica.exitPainting(towerReplicaBasis, TowerBiome.ID),
+			MobiusWaypoint.exitPainting(mobiusWaypointBasis, MobiusBiome.ID)
 		];
 	}
 

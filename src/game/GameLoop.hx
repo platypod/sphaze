@@ -6,6 +6,7 @@ import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
 import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
+import biomes.mobius.MobiusBiome;
 import biomes.tower.TowerBiome;
 import biomes.tower.TowerGenerator;
 import entities.hourglass.HourglassModel;
@@ -74,6 +75,7 @@ class GameLoop {
 		biomeRegistry.register(new HubBiome(hourglassModel), true); // always known - it's home, not something to stumble into
 		biomeRegistry.register(new MazeBiome(MazeGenerator.generate()));
 		biomeRegistry.register(new TowerBiome(TowerGenerator.generate(), hourglassModel));
+		biomeRegistry.register(new MobiusBiome());
 		enterBiome(HubBiome.ID, false);
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,

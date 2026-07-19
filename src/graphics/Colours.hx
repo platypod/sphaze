@@ -50,4 +50,10 @@ class Colours {
 
 	/** `biomes.tower.TowerMesh`'s own floor glow once `entities.hourglass.HourglassModel.unlocked` — the hourglass secret's own payoff bleeding into the tower, same gold as `HOURGLASS_SAND_GOLD_GLOW` rather than a second, unrelated gold. **/
 	public static inline final TOWER_SECRET_GLOW:Int = HOURGLASS_SAND_GOLD_GLOW;
+
+	/** `biomes.mobius.MobiusMesh`'s own alternating across-width color bands — a placeholder pair chosen purely so the ribbon's own twist(s) read clearly as you walk it (no real art for this biome yet either). **/
+	public static inline final MOBIUS_BAND_A:Int = 0xFFB0473C;
+
+	/** See `MOBIUS_BAND_A`. **/
+	public static inline final MOBIUS_BAND_B:Int = 0xFF3C6EB0;
 }

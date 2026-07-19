@@ -91,8 +91,6 @@ Not implemented yet — parked here until we get to them.
 - **Biomes links**: perhaps you need to get a key, or a piece of information
   from a biome to be able to progress in another (kind of like *Outer
   Wilds*).
-- **Moebius stairs**: we could add another dimensional factor, perhaps like
-  stairs that lead from one side of the sphere to the other or such.
 - **Secret one-time painting swap (tower)**: if the player goes back up
   through the tower's own *entrance* painting (the one they fell in
   through) instead of descending to the goal and using the return

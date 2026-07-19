@@ -52,14 +52,43 @@ class BiomesRegistryTest extends Test {
 
 		Assert.isFalse(registry.isDiscovered("nope"));
 	}
+
+	function testGlobalTimeScaleIsOneWithNothingRegistered():Void {
+		var registry = new BiomesRegistry();
+
+		Assert.floatEquals(1, registry.globalTimeScale(), 1e-9);
+	}
+
+	function testGlobalTimeScaleIsOneWhenEveryRegisteredBiomeReturnsOne():Void {
+		var registry = new BiomesRegistry();
+		registry.register(new StubBiome("a"));
+		registry.register(new StubBiome("b"));
+
+		Assert.floatEquals(1, registry.globalTimeScale(), 1e-9);
+	}
+
+	function testGlobalTimeScaleMultipliesEveryRegisteredBiomesOwnValue():Void {
+		// Not just whichever biome is current - see BiomesRegistry.globalTimeScale's
+		// own doc: the hub's own hourglass effect is meant to apply
+		// everywhere, not only while standing in the hub itself.
+		var registry = new BiomesRegistry();
+		registry.register(new StubBiome("hub", 1.5));
+		registry.register(new StubBiome("maze", 1));
+		registry.register(new StubBiome("tower", 1));
+
+		Assert.floatEquals(1.5, registry.globalTimeScale(), 1e-9);
+	}
 }
 
 /** Minimal Biome stand-in — BiomesRegistry only cares about id()/storage, never the scene/collision methods. **/
 private class StubBiome implements Biome {
 	final biomeId:String;
 
-	public function new(biomeId:String) {
+	final ownTimeScale:Float;
+
+	public function new(biomeId:String, ownTimeScale:Float = 1) {
 		this.biomeId = biomeId;
+		this.ownTimeScale = ownTimeScale;
 	}
 
 	public function id():String {
@@ -87,7 +116,7 @@ private class StubBiome implements Biome {
 	public function tick(player:PlayerModel, dt:Float):Void {}
 
 	public function timeScale():Float {
-		return 1;
+		return ownTimeScale;
 	}
 
 	public function serialize():String {

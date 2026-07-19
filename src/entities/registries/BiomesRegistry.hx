@@ -53,4 +53,28 @@ class BiomesRegistry {
 	public function isDiscovered(id:String):Bool {
 		return discovered.get(id) == true;
 	}
+
+	/**
+		The combined game-speed multiplier across *every* registered
+		biome — the product of each one's own `Biome.timeScale()`, not just
+		whichever biome is current. Only the hub's own hourglass ever
+		returns anything but `1` today, so in practice this is "wherever
+		the hourglass is currently tilted, applied everywhere" — per a
+		direct ask that its effect on the game's overall speed apply
+		globally, not only while the player happens to be standing in the
+		hub. Multiplying every registered biome's own value (rather than,
+		say, `GameLoop` reaching for the hub specifically) keeps this
+		working the same way `GameLoop` already talks to biomes elsewhere —
+		through the `Biome` interface alone, never a specific type or id —
+		and generalizes cleanly if a second biome ever contributes its own
+		multiplier too.
+		@return the combined game-speed multiplier.
+	**/
+	public function globalTimeScale():Float {
+		var scale = 1.0;
+		for (biome in biomes) {
+			scale *= biome.timeScale();
+		}
+		return scale;
+	}
 }

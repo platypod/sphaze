@@ -230,8 +230,13 @@ class GameLoop {
 		// actually advances the hub's own hourglass (see biomes.common.Biome.tick's
 		// own doc) - before timeScale() is read for this same tick, so a
 		// tilt change this tick already applies to this tick's own movement.
+		// The multiplier itself is read globally (biomeRegistry.globalTimeScale,
+		// not currentBiome.timeScale) - the hourglass's own effect on game
+		// speed applies everywhere, per direct ask, not only while standing
+		// in the hub; only the hourglass's own tilt/trigger detection stays
+		// scoped to actually being there (currentBiome.tick, above).
 		currentBiome.tick(player, dt);
-		var scaledDt = dt * currentBiome.timeScale();
+		var scaledDt = dt * biomeRegistry.globalTimeScale();
 
 		// Reading keys and calling PlayerModel methods directly here is a
 		// placeholder — fine for one input source and one entity, but a

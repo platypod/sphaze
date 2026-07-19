@@ -88,16 +88,20 @@ interface Biome {
 	function tick(player:PlayerModel, dt:Float):Void;
 
 	/**
-		The game-speed multiplier this biome currently wants applied to
-		movement/gravity — `1` for every biome except the hub, whose own
+		This biome's own contribution to the game's overall game-speed
+		multiplier — `1` for every biome except the hub, whose own
 		hourglass can push it up or down (see `entities.hourglass.HourglassModel`).
 		Part of the contract (like `gravity()`) rather than a downcast in
 		`GameLoop`, per this interface's own class doc ("never by biome type
-		name"). Scoped to whichever biome is *current*: walking out of the
-		hub while its own hourglass is tilted resets the player to `1`
-		immediately, not a deliberate design call yet, just the smallest
-		thing that matches the ask (see `HourglassModel`'s own class doc).
-		@return the current game-speed multiplier.
+		name"). Combined across *every* registered biome, not just
+		whichever is current — see `entities.registries.BiomesRegistry.globalTimeScale`,
+		which is what `GameLoop` actually reads — so the hub's own hourglass
+		keeps affecting the game's speed even after the player has walked
+		out of the hub, per direct ask ("the speed [e]ffect should be
+		global"). Only the hourglass's own tilt/trigger detection stays
+		scoped to physically standing in the hub (see `HubBiome.tick`); this
+		method's own *value*, once set, applies everywhere.
+		@return this biome's own contribution to the current game-speed multiplier.
 	**/
 	function timeScale():Float;
 

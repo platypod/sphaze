@@ -16,20 +16,18 @@ class MobiusModel {
 	/** First twist count to actually look at — odd, so the ribbon stays one-sided (a real Möbius strip); try other values by constructing `biomes.mobius.MobiusBiome` with a different one. **/
 	public static inline final DEFAULT_TWISTS:Int = 3;
 
-	/**
-		The loop's own centerline radius — same order of magnitude as
-		`biomes.tower.TowerModel.OUTER_RADIUS`. First-pass value, retune by
-		feel once walkable.
-	**/
-	public static inline final RADIUS:Float = 40;
+	/** The loop's own centerline radius — 10x the original first-pass value ("make it 10 times bigger in every direction"). **/
+	public static inline final RADIUS:Float = 400;
 
 	/**
-		Half the ribbon's own width, across `v`. Kept well under `RADIUS`
-		(a ratio of 1:6.7) — the precondition `MobiusMath`'s own class doc
-		requires so the ribbon never approaches self-intersecting, with
-		plenty of margin to spare for up to a handful of twists.
+		Half the ribbon's own width, across `v` — length kept the same,
+		width tripled again on top of the earlier 10x pass ("same length,
+		but thrice the width"). `MobiusMath`'s own precondition only ever
+		strictly required `HALF_WIDTH < RADIUS` (so `radius + v*cos(theta)`
+		never reaches 0) — a real requirement, not just a safety margin —
+		and this ratio (~1:2.2) still clears it with plenty of room.
 	**/
-	public static inline final HALF_WIDTH:Float = 6;
+	public static inline final HALF_WIDTH:Float = 180;
 
 	/** How far short of the ribbon's true edge a player is stopped — same role as `biomes.tower.TowerCollision.COLLISION_CLEARANCE`. **/
 	public static inline final COLLISION_CLEARANCE:Float = 1;

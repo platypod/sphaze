@@ -28,10 +28,12 @@ package biomes.common.space.mobius;
 	Möbius strip) — not the intended use here, but the formula handles it
 	the same way.
 
-	Precondition every caller relies on: `halfWidth` well under `radius`, so
-	`radius + v*cos(theta)` never approaches 0 for any reachable `v` — both
-	what keeps `paramsAt`'s own inversion well-defined and what keeps the
-	ribbon from self-intersecting.
+	Precondition every caller relies on: `halfWidth < radius` (strictly), so
+	`radius + v*cos(theta)` never reaches 0 for any reachable `v` — this
+	alone is what keeps `paramsAt`'s own inversion well-defined, and (since
+	distinct `u` mod `2*PI` always land at distinct azimuths around the loop
+	whenever this holds) is also already sufficient to keep the ribbon from
+	self-intersecting, not merely a safety margin toward it.
 **/
 class MobiusMath {
 	/**

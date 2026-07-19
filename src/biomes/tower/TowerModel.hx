@@ -17,20 +17,45 @@ typedef TowerData = {
 	ring cut into tiles at an angle that shears further per ring — successive
 	rings' tile boundaries don't line up radially, giving the whole cross-
 	section the look of a camera aperture's overlapping blades rather than a
-	plain pie chart. `GOAL_LEVELS` such layers stack directly below each
-	other, `LAYER_HEIGHT` apart; the bottom-most layer is always fully solid
-	(see `TowerGenerator.generate`) so a fall always eventually lands
-	somewhere, never past the tower's own floor.
+	plain pie chart. `TOTAL_LEVELS` such layers stack, `LAYER_HEIGHT` apart;
+	the bottom-most layer is always fully solid (see `TowerGenerator.generate`)
+	so a fall always eventually lands somewhere, never past the tower's own
+	floor.
 
 	Pure topology/queries only, same split `biomes.common.grid.GridModel`
 	keeps from its own generation algorithm — first-pass numbers below,
 	expected to be retuned by feel once this is actually playable (same
 	discipline `biomes.common.grid.GridGeometry`'s own constants went
 	through; see docs/PROJECT_LOG.md).
+
+	`layer` throughout this class is a *physical* layer index, `0` (the
+	topmost layer in the whole shaft) to `TOTAL_LEVELS - 1` (the bottom,
+	always solid). The player's own entrance sits partway down that span,
+	at `SPAWN_LAYER` — not `0` — so there's real shaft both above spawn
+	(`ABOVE_SPAWN_LEVELS` layers, not yet tied to anything reachable — "for
+	something or other" later) and below it (`GOAL_LEVELS` layers, the
+	descent itself, unchanged in meaning from before this split, just
+	doubled in depth).
 **/
 class TowerModel {
-	/** How many layers make up the tower — reaching the bottom is the descent's own goal. **/
-	public static inline final GOAL_LEVELS:Int = 20;
+	/**
+		How many extra layers exist above the player's own entrance
+		(`SPAWN_LAYER`) — a handful of real shaft above spawn, generated and
+		built the same as every other layer, but not yet reachable by any
+		normal means (falling only goes down, and `JUMP_IMPULSE` can't
+		clear a full `LAYER_HEIGHT`); left for a later mechanic to actually
+		reach.
+	**/
+	public static inline final ABOVE_SPAWN_LEVELS:Int = 4;
+
+	/** How many layers make up the descent proper, spawn to goal — reaching the bottom is the descent's own goal. Doubled from the original `20`: "increase its size downwards by as much as it is already." **/
+	public static inline final GOAL_LEVELS:Int = 40;
+
+	/** Every physical layer in the shaft, `ABOVE_SPAWN_LEVELS` above spawn plus `GOAL_LEVELS` from spawn down to the goal — the array length `TowerGenerator`'s own layout actually has. **/
+	public static inline final TOTAL_LEVELS:Int = ABOVE_SPAWN_LEVELS + GOAL_LEVELS;
+
+	/** The physical layer index the player's own entrance sits at — `ABOVE_SPAWN_LEVELS` layers below the shaft's own topmost layer, so exactly that many remain above it. **/
+	public static inline final SPAWN_LAYER:Int = ABOVE_SPAWN_LEVELS;
 
 	/** Vertical gap between consecutive layers. **/
 	public static inline final LAYER_HEIGHT:Float = 12;
@@ -103,25 +128,27 @@ class TowerModel {
 	public static inline final FLOOR_DENSITY_END:Float = 0.4;
 
 	/**
-		The world height a given layer's own floor sits at — layer 0 (the
-		spawn layer) at `0`, decreasing (more negative) with each layer down,
+		The world height a given layer's own floor sits at — `SPAWN_LAYER`
+		(where the player actually arrives) at `0`, decreasing (more
+		negative) with each layer down toward the goal and increasing
+		(more positive) with each layer up toward the shaft's own top,
 		matching how `PlayerModel.pos.y` decreases while falling.
-		@param layer the layer index (0 to `GOAL_LEVELS - 1`).
+		@param layer the physical layer index (0 to `TOTAL_LEVELS - 1`).
 		@return that layer's own floor height.
 	**/
 	public static inline function layerY(layer:Int):Float {
-		return -layer * LAYER_HEIGHT;
+		return (SPAWN_LAYER - layer) * LAYER_HEIGHT;
 	}
 
 	/**
 		Which layer a given world height falls within — the inverse of
 		`layerY`, clamped to a real layer index at either end of the shaft.
 		@param y world height.
-		@return the layer index at or containing `y`.
+		@return the physical layer index at or containing `y`.
 	**/
 	public static function layerAt(y:Float):Int {
-		var layer = Math.floor(-y / LAYER_HEIGHT);
-		return clampInt(layer, 0, GOAL_LEVELS - 1);
+		var layer = SPAWN_LAYER + Math.floor(-y / LAYER_HEIGHT);
+		return clampInt(layer, 0, TOTAL_LEVELS - 1);
 	}
 
 	/** Each ring's own uniform radial width, dividing the space between the center disk and the outer wall evenly. **/
@@ -242,7 +269,7 @@ class TowerModel {
 
 	/**
 		The first layer at or below `fromLayer` with a floor under `(x, z)`
-		— always terminates at or before `GOAL_LEVELS - 1`, which
+		— always terminates at or before `TOTAL_LEVELS - 1`, which
 		`TowerGenerator.generate` always makes fully solid.
 		@param layout the tower's own generated layout.
 		@param fromLayer the layer to start scanning downward from.
@@ -251,8 +278,8 @@ class TowerModel {
 		@return the first solid layer at or below `fromLayer`.
 	**/
 	public static function floorLayerBelow(layout:TowerData, fromLayer:Int, x:Float, z:Float):Int {
-		var layer = clampInt(fromLayer, 0, GOAL_LEVELS - 1);
-		while (layer < GOAL_LEVELS - 1 && !isSolid(layout, layer, x, z)) {
+		var layer = clampInt(fromLayer, 0, TOTAL_LEVELS - 1);
+		while (layer < TOTAL_LEVELS - 1 && !isSolid(layout, layer, x, z)) {
 			layer++;
 		}
 		return layer;
@@ -282,7 +309,91 @@ class TowerModel {
 		return new h3d.Vector(OUTER_RADIUS * Math.cos(angle), y, OUTER_RADIUS * Math.sin(angle));
 	}
 
+	/** Ring the entrance painting's own mounting tile sits in, at `SPAWN_LAYER` — always the outermost ring, since the painting mounts on the outer wall itself. **/
+	public static inline function entranceTileRing():Int {
+		return RINGS_PER_LAYER - 1;
+	}
+
+	/**
+		Tile index within `entranceTileRing()`, at `SPAWN_LAYER`, that sits
+		right behind the entrance painting — `TowerGenerator.generate` forces
+		this one tile solid there (see its own doc) so arriving through the
+		painting always has real footing right at the doorway, not the
+		always-solid center disk arbitrarily far across the shaft (reported
+		directly: spawning at the center disk left a fresh arrival walking
+		blind toward the wall, no guarantee anything solid was underfoot
+		until they got there).
+		@return the tile index `TowerGenerator` forces solid at `SPAWN_LAYER`.
+	**/
+	public static inline function entranceTileIndex():Int {
+		var slot = slotAt(OUTER_RADIUS * Math.cos(PAINTING_ANGLE), OUTER_RADIUS * Math.sin(PAINTING_ANGLE));
+		return tileIndexAtSlot(entranceTileRing(), slot);
+	}
+
+	/** The world angle `entranceTileIndex()`'s own tile is centered on — shared by `entranceSpawnPosition` and `entranceSpawnForward` so both agree on exactly the same point. **/
+	static inline function entranceTileCenterAngle():Float {
+		var ring = entranceTileRing();
+		var startSlot = ringOffsetSlots(ring) + entranceTileIndex() * slotsPerTile(ring);
+		return (startSlot + slotsPerTile(ring) / 2) * SLOT_ANGLE;
+	}
+
+	/**
+		Where `TowerBiome.spawnPlayer` stands the player on arrival — the
+		middle of the entrance tile (`entranceTileIndex()`), at `SPAWN_LAYER`'s
+		height.
+		@return the entrance spawn position.
+	**/
+	public static function entranceSpawnPosition():h3d.Vector {
+		var ring = entranceTileRing();
+		var angle = entranceTileCenterAngle();
+		var innerR = CENTER_DISK_RADIUS + ring * ringWidth();
+		var radius = innerR + ringWidth() / 2;
+		return new h3d.Vector(radius * Math.cos(angle), layerY(SPAWN_LAYER), radius * Math.sin(angle));
+	}
+
+	/**
+		Which way `TowerBiome.spawnPlayer` faces the player on arrival —
+		inward, away from the entrance wall, not back toward the painting
+		just walked through: same "keep moving forward through the doorway"
+		reasoning `biomes.hub.TowerReplica.returnSpawn`'s own doc lays out
+		for the opposite direction (hub-side arrival, facing away from the
+		tower). Facing back at the wall here would have a fresh arrival
+		immediately staring at the painting they just stepped out of.
+		@return a unit tangent pointing from the entrance tile toward the shaft's own center.
+	**/
+	public static function entranceSpawnForward():h3d.Vector {
+		var angle = entranceTileCenterAngle();
+		return new h3d.Vector(-Math.cos(angle), 0, -Math.sin(angle));
+	}
+
 	static inline function clampInt(v:Int, lo:Int, hi:Int):Int {
 		return v < lo ? lo : (v > hi ? hi : v);
+	}
+
+	/**
+		How strongly the tower's own floor/wall glow (see `TowerMesh`'s tint
+		params, `TowerBiome`'s own fall counter) should read as `fallCount`
+		climbs — `0` at zero falls counted, `1` once every layer in the
+		descent has been stepped on at least once.
+
+		Squared against the touched percentage, not linear against it: "the
+		glow gains in intensity too fast, too bright too fast" — a straight
+		`fallCount / GOAL_LEVELS` reaches, say, `0.2` after only 4 of 20
+		floors, which alone is already enough to fully saturate the floor's
+		innermost ring boundary (`graphics.shaders.TileRingGlow`'s own
+		`reach = intensity * 5.0` maxes that first boundary out at
+		`intensity >= 0.2`) — noticeably bright well before the player's
+		actually covered much of the descent. Squaring keeps the same `0`
+		(nothing touched) and `1` (everything touched) endpoints but pushes
+		the middle of the curve down hard (`0.2` → `0.04`, `0.5` → `0.25`),
+		so most of the glow's own visible growth is now backloaded toward
+		the player having touched nearly every floor, rather than front-
+		loaded onto the first few.
+		@param fallCount how many distinct layers have been stepped on so far this visit.
+		@return a glow mix amount from 0 (none) to 1 (full).
+	**/
+	public static inline function fallGlowIntensity(fallCount:Int):Float {
+		var touched = hxd.Math.clamp(fallCount / GOAL_LEVELS, 0, 1);
+		return touched * touched;
 	}
 }

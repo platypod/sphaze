@@ -8,6 +8,7 @@ import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
 import biomes.tower.TowerBiome;
 import biomes.tower.TowerGenerator;
+import entities.hourglass.HourglassModel;
 import entities.player.Camera;
 import entities.player.PlayerModel;
 import entities.registries.BiomesRegistry;
@@ -66,9 +67,13 @@ class GameLoop {
 
 		mazeGroup = new h3d.scene.Object(s3d);
 		biomeRegistry = new BiomesRegistry();
-		biomeRegistry.register(new HubBiome(), true); // always known - it's home, not something to stumble into
+		// One shared instance, not one per biome - the hub ticks it, the
+		// tower only reads its own unlocked flag (see TowerBiome's own class
+		// doc for why that's a shared model rather than a lookup).
+		var hourglassModel = new HourglassModel();
+		biomeRegistry.register(new HubBiome(hourglassModel), true); // always known - it's home, not something to stumble into
 		biomeRegistry.register(new MazeBiome(MazeGenerator.generate()));
-		biomeRegistry.register(new TowerBiome(TowerGenerator.generate()));
+		biomeRegistry.register(new TowerBiome(TowerGenerator.generate(), hourglassModel));
 		enterBiome(HubBiome.ID, false);
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,

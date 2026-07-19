@@ -82,8 +82,8 @@ class TowerCollisionTest extends Test {
 
 		var landedLayer = TowerCollision.applyGravity(player, 60, layout, 1);
 
-		Assert.equals(TowerModel.GOAL_LEVELS - 1, landedLayer);
-		Assert.floatEquals(TowerModel.layerY(TowerModel.GOAL_LEVELS - 1), player.pos.y);
+		Assert.equals(TowerModel.TOTAL_LEVELS - 1, landedLayer);
+		Assert.floatEquals(TowerModel.layerY(TowerModel.TOTAL_LEVELS - 1), player.pos.y);
 	}
 
 	function testApplyGravityDoesNotSnapUpwardWhenDriftingBeneathASolidTileAlreadyFallenPast():Void {
@@ -155,12 +155,12 @@ class TowerCollisionTest extends Test {
 
 	static function allHolesExceptBottomLayer():TowerData {
 		var layers:Array<Array<Array<Bool>>> = [];
-		for (layer in 0...TowerModel.GOAL_LEVELS) {
+		for (layer in 0...TowerModel.TOTAL_LEVELS) {
 			var rings:Array<Array<Bool>> = [];
 			for (ring in 0...TowerModel.RINGS_PER_LAYER) {
 				var tiles:Array<Bool> = [];
 				for (_ in 0...TowerModel.tilesForRing(ring)) {
-					tiles.push(layer == TowerModel.GOAL_LEVELS - 1);
+					tiles.push(layer == TowerModel.TOTAL_LEVELS - 1);
 				}
 				rings.push(tiles);
 			}

@@ -66,15 +66,18 @@ class HubBiome implements Biome {
 	final mazeShrineBasis:StructureBasis;
 	final towerReplicaBasis:StructureBasis;
 	final hourglassBasis:StructureBasis;
-	final hourglassModel:HourglassModel = new HourglassModel();
+
+	/** Shared with `biomes.tower.TowerBiome`, which only reads `unlocked` off it — see that class's own doc for why the tower cares. Injected rather than owned outright so neither biome has to reach into the other's own instance (see `biomes.common.Biome`'s own class doc). **/
+	final hourglassModel:HourglassModel;
 
 	/** Rebuilt every tick by `tick` — see `Hourglass`'s own class doc for why everything above the pedestal rebuilds fresh each time rather than animating in place. **/
 	var hourglassContainer:h3d.scene.Object;
 
-	public function new() {
+	public function new(hourglassModel:HourglassModel) {
 		mazeShrineBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, MAZE_SHRINE_PHI, HubModel.RADIUS);
 		towerReplicaBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, TOWER_REPLICA_PHI, HubModel.RADIUS);
 		hourglassBasis = HubStructure.anchorAt(HOURGLASS_THETA, HubModel.SPAWN_PHI, HubModel.RADIUS);
+		this.hourglassModel = hourglassModel;
 	}
 
 	public function id():String {

@@ -15,6 +15,15 @@ package graphics.shaders;
 	than baked-in tiling the way `HubMesh.buildColumn`'s own manually-built
 	UVs already are. Default to 1 (no-op) so existing single-repeat callers
 	don't need to change.
+
+	Kept deliberately plain — every mesh in the project shares this shader
+	(`HubMesh`, `Hourglass`, `PaintingModel`, `GridMesh`, …), so a one-off
+	effect for a single biome (see `biomes.tower.TowerMesh`'s own fall-counter
+	glow, `graphics.shaders.TileRingGlow`) belongs in its own shader, added
+	only to the meshes that actually want it, not folded in here where a bug
+	in it could show up anywhere `UnlitTexture` is used at all — which is
+	exactly what happened the first time a version of that glow was tried
+	directly in here (see `docs/PROJECT_LOG.md`'s own entry on it).
 **/
 class UnlitTexture extends hxsl.Shader {
 	static var SRC = {

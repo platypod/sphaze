@@ -13,7 +13,10 @@ class TowerGenerator {
 		Generates a full tower: each layer's own ring tiles come out solid
 		independently at random, at that layer's own interpolated density
 		(see `densityAt`) — except the bottom-most layer, always fully solid
-		so a fall always eventually lands somewhere real.
+		so a fall always eventually lands somewhere real, and layer 0's own
+		`TowerModel.entranceTileIndex()`, always forced solid too so a fresh
+		arrival through the entrance painting always has real footing right
+		at the doorway (see that method's own doc).
 		@param random source of randomness in [0, 1); defaults to `Math.random`.
 		@return the generated tower's layout.
 	**/
@@ -21,14 +24,14 @@ class TowerGenerator {
 		var rng = random != null ? random : Math.random;
 		var solidTiles:Array<Array<Array<Bool>>> = [];
 
-		for (layer in 0...TowerModel.GOAL_LEVELS) {
+		for (layer in 0...TowerModel.TOTAL_LEVELS) {
 			var density = densityAt(layer);
 			var rings:Array<Array<Bool>> = [];
 
 			for (ring in 0...TowerModel.RINGS_PER_LAYER) {
 				var tiles:Array<Bool> = [];
-				for (_ in 0...TowerModel.tilesForRing(ring)) {
-					tiles.push(layer == TowerModel.GOAL_LEVELS - 1 ? true : rng() < density);
+				for (tile in 0...TowerModel.tilesForRing(ring)) {
+					tiles.push(isForcedSolid(layer, ring, tile) ? true : rng() < density);
 				}
 				rings.push(tiles);
 			}
@@ -39,20 +42,37 @@ class TowerGenerator {
 		return {solidTiles: solidTiles};
 	}
 
+	/** Whether `(layer, ring, tile)` is solid regardless of the random roll — see `generate`'s own doc for why the bottom layer and `SPAWN_LAYER`'s entrance tile both are. **/
+	static inline function isForcedSolid(layer:Int, ring:Int, tile:Int):Bool {
+		if (layer == TowerModel.TOTAL_LEVELS - 1) {
+			return true;
+		}
+		return layer == TowerModel.SPAWN_LAYER && ring == TowerModel.entranceTileRing() && tile == TowerModel.entranceTileIndex();
+	}
+
 	/**
 		The fraction of a ring's tiles that should come out solid at `layer`
-		— linearly interpolated from `TowerModel.FLOOR_DENSITY_START` (level
-		0) to `TowerModel.FLOOR_DENSITY_END` (the goal level), so the descent
-		reads as getting harder the deeper the player goes. The one knob to
-		retune if that pacing needs to grow, shrink, or flatten out instead.
-		@param layer the layer index (0 to `TowerModel.GOAL_LEVELS - 1`).
+		— linearly interpolated from `TowerModel.FLOOR_DENSITY_START` (at
+		`SPAWN_LAYER`) to `TowerModel.FLOOR_DENSITY_END` (the goal level), so
+		the descent reads as getting harder the deeper the player goes.
+		Layers above `SPAWN_LAYER` (`TowerModel.ABOVE_SPAWN_LEVELS`) aren't
+		part of that descent at all — they read at the same, easiest density
+		as the entrance itself, same as `SPAWN_LAYER` would if the curve
+		were extrapolated backward past its own start. The one knob to
+		retune if the descent's own pacing needs to grow, shrink, or flatten
+		out instead.
+		@param layer the physical layer index (0 to `TowerModel.TOTAL_LEVELS - 1`).
 		@return that layer's own floor density, in [0, 1).
 	**/
 	public static function densityAt(layer:Int):Float {
 		if (TowerModel.GOAL_LEVELS <= 1) {
 			return TowerModel.FLOOR_DENSITY_START;
 		}
-		var t = layer / (TowerModel.GOAL_LEVELS - 1);
+		var descentLayer = layer - TowerModel.SPAWN_LAYER;
+		if (descentLayer < 0) {
+			descentLayer = 0;
+		}
+		var t = descentLayer / (TowerModel.GOAL_LEVELS - 1);
 		return TowerModel.FLOOR_DENSITY_START + (TowerModel.FLOOR_DENSITY_END - TowerModel.FLOOR_DENSITY_START) * t;
 	}
 

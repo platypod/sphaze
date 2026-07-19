@@ -47,4 +47,7 @@ class Colours {
 
 	/** The gold sand's own additive glow overlay — a warmer tint than the plain `HOURGLASS_SAND_GLOW`, so the glow itself reads as gold too rather than washing the gold fill back toward white. **/
 	public static inline final HOURGLASS_SAND_GOLD_GLOW:Int = 0xFFFFE9A8;
+
+	/** `biomes.tower.TowerMesh`'s own floor glow once `entities.hourglass.HourglassModel.unlocked` — the hourglass secret's own payoff bleeding into the tower, same gold as `HOURGLASS_SAND_GOLD_GLOW` rather than a second, unrelated gold. **/
+	public static inline final TOWER_SECRET_GLOW:Int = HOURGLASS_SAND_GOLD_GLOW;
 }

@@ -6,16 +6,20 @@ import biomes.tower.TowerModel.TowerData;
 
 /** Covers TowerModel's pure topology/queries — see TowerGeneratorTest for the RNG-driven content those queries read. **/
 class TowerModelTest extends Test {
-	function testLayerYAtZeroIsZero():Void {
-		Assert.floatEquals(0, TowerModel.layerY(0));
+	function testLayerYAtSpawnLayerIsZero():Void {
+		Assert.floatEquals(0, TowerModel.layerY(TowerModel.SPAWN_LAYER));
 	}
 
-	function testLayerYDecreasesByLayerHeightPerLayer():Void {
-		Assert.floatEquals(-TowerModel.LAYER_HEIGHT * 3, TowerModel.layerY(3));
+	function testLayerYDecreasesByLayerHeightPerLayerBelowSpawn():Void {
+		Assert.floatEquals(-TowerModel.LAYER_HEIGHT * 3, TowerModel.layerY(TowerModel.SPAWN_LAYER + 3));
+	}
+
+	function testLayerYIncreasesByLayerHeightPerLayerAboveSpawn():Void {
+		Assert.floatEquals(TowerModel.LAYER_HEIGHT * 3, TowerModel.layerY(TowerModel.SPAWN_LAYER - 3));
 	}
 
 	function testLayerAtIsInverseOfLayerYWithinRange():Void {
-		for (layer in 0...TowerModel.GOAL_LEVELS) {
+		for (layer in 0...TowerModel.TOTAL_LEVELS) {
 			Assert.equals(layer, TowerModel.layerAt(TowerModel.layerY(layer)));
 		}
 	}
@@ -25,7 +29,7 @@ class TowerModelTest extends Test {
 	}
 
 	function testLayerAtClampsBelowTheBottom():Void {
-		Assert.equals(TowerModel.GOAL_LEVELS - 1, TowerModel.layerAt(-1000000));
+		Assert.equals(TowerModel.TOTAL_LEVELS - 1, TowerModel.layerAt(-1000000));
 	}
 
 	function testRingAtIsMinusOneWithinTheCenterDisk():Void {
@@ -124,16 +128,39 @@ class TowerModelTest extends Test {
 		// Every ring tile empty everywhere - the bottom layer's own
 		// guaranteed-solid floor (TowerGenerator.generate) is what real
 		// layouts rely on; this just confirms the scan itself terminates
-		// there rather than running past GOAL_LEVELS.
+		// there rather than running past TOTAL_LEVELS.
 		var layout:TowerData = {solidTiles: emptyLayout()};
 		var x = TowerModel.CENTER_DISK_RADIUS + 1;
 
-		Assert.equals(TowerModel.GOAL_LEVELS - 1, TowerModel.floorLayerBelow(layout, 0, x, 0));
+		Assert.equals(TowerModel.TOTAL_LEVELS - 1, TowerModel.floorLayerBelow(layout, 0, x, 0));
+	}
+
+	function testEntranceTileIndexIsWithinBoundsOfItsOwnRing():Void {
+		var index = TowerModel.entranceTileIndex();
+		Assert.isTrue(index >= 0);
+		Assert.isTrue(index < TowerModel.tilesForRing(TowerModel.entranceTileRing()));
+	}
+
+	function testEntranceSpawnPositionSitsWithinTheEntranceTileAtTheSpawnLayer():Void {
+		var pos = TowerModel.entranceSpawnPosition();
+
+		Assert.floatEquals(TowerModel.layerY(TowerModel.SPAWN_LAYER), pos.y);
+		Assert.equals(TowerModel.entranceTileRing(), TowerModel.ringAt(pos.x, pos.z));
+		Assert.equals(TowerModel.entranceTileIndex(), TowerModel.tileAt(TowerModel.entranceTileRing(), pos.x, pos.z));
+	}
+
+	function testEntranceSpawnForwardIsAUnitVectorPointingInwardFromTheWall():Void {
+		var forward = TowerModel.entranceSpawnForward();
+		var pos = TowerModel.entranceSpawnPosition();
+		var outward = new h3d.Vector(pos.x, 0, pos.z).normalized();
+
+		Assert.floatEquals(1, forward.length());
+		Assert.isTrue(forward.dot(outward) < 0);
 	}
 
 	static function emptyLayout():Array<Array<Array<Bool>>> {
 		var layers:Array<Array<Array<Bool>>> = [];
-		for (layer in 0...TowerModel.GOAL_LEVELS) {
+		for (layer in 0...TowerModel.TOTAL_LEVELS) {
 			var rings:Array<Array<Bool>> = [];
 			for (ring in 0...TowerModel.RINGS_PER_LAYER) {
 				var tiles:Array<Bool> = [];

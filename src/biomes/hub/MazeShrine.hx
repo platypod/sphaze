@@ -1,7 +1,6 @@
 package biomes.hub;
 
 import biomes.common.grid.GridGeometry;
-import biomes.common.grid.GridMesh;
 import biomes.hub.HubStructure.StructureBasis;
 import entities.painting.PaintingModel;
 import entities.player.PlayerModel;
@@ -10,13 +9,12 @@ import graphics.shaders.UnlitTexture;
 
 /**
 	A small landmark reminding the player of the maze, standing wherever
-	`HubBiome` anchors it: seven straight `wall_stone` walls, the same
-	`biomes.common.grid.GridMesh.WALL_HEIGHT` as the real thing, laid out as
-	a single continuous square spiral (each wall longer than the last,
-	turning the same way every time) rather than the maze's own lat/long
-	grid — that grid exists to wrap a whole biome around a sphere; a
-	decorative structure this size doesn't need it, just something that
-	reads as "a maze" at a glance.
+	`HubBiome` anchors it: seven straight `wall_stone` walls, laid out as a
+	single continuous square spiral (each wall longer than the last, turning
+	the same way every time) rather than the maze's own lat/long grid — that
+	grid exists to wrap a whole biome around a sphere; a decorative structure
+	this size doesn't need it, just something that reads as "a maze" at a
+	glance.
 
 	Built and collided against entirely in `HubStructure`'s own local
 	`(u, v)` frame — see its class doc for why that's a reasonable
@@ -25,12 +23,49 @@ import graphics.shaders.UnlitTexture;
 	further out. The player walks in from the wide-open end of wall 7 and
 	follows the spiral inward to wall 2, where the maze's own painting
 	mounts on the inner face — matching "the second from the center."
+
+	Its own walls have real, standable-on-top collision (`blocksMovement`'s
+	own `playerHeight` parameter, `wallTopHeightAt`) — hooman, directly:
+	"make sure the top part of the wall has a hitbox too, so the player can
+	jump and walk on a wall."
 **/
 class MazeShrine {
-	/** How much longer each successive wall is than the last — also the spiral's own radial growth per arm. Tripled from an initial `2.4` (hooman: "still much too small... make them thrice bigger") — the wall height/texture stay matched to the real maze regardless (`GridMesh.WALL_HEIGHT`), only the spiral's own footprint scales. **/
+	/**
+		Deliberately its own value, not `biomes.common.grid.GridMesh.WALL_HEIGHT`
+		(12, what this landmark's walls used to match) — tall and imposing.
+		Went `2` (a previous round, specifically so a jump could reach the
+		top) → `5` ("nearly as tall as the camera is high," `entities.player.Camera.EYE_HEIGHT`
+		`6`) → `10` ("make it twice as high," directly) → `12` ("20% higher
+		again," directly). The jump-and-stand-on-top collision itself
+		(`blocksMovement`'s own `playerHeight` parameter, `wallTopHeightAt`)
+		stays regardless of how unreachable this makes it — a jump only
+		clears `game.GameLoop.JUMP_IMPULSE`/hub `GRAVITY`'s own
+		`impulse² / (2 × gravity) ≈ 2.7` — kept on purpose, not an oversight:
+		"leave the jump mechanic even if it becomes unreachable. It might be
+		useful later."
+	**/
+	static inline final WALL_HEIGHT:Float = 12;
+
+	/**
+		How far a world point's own `HubStructure.localUV`-reported `height`
+		can be from this structure's local ground before a query treats it
+		as nowhere near the shrine at all, regardless of what its `(u, v)`
+		happens to read — the guard against the antipodal-collapse bug
+		`localUV`'s own class doc describes (a point diametrically opposite
+		`basis.origin` projects to local `(u, v) = (0, 0)`, indistinguishable
+		from standing right on top of the shrine, unless something also
+		checks `height`). Comfortably bigger than anything about this small
+		structure (`WALL_HEIGHT` plus the tallest reachable jump) ever needs,
+		comfortably smaller than `2 * HubModel.RADIUS` (the antipodal
+		point's own `height`) — not a tuned value, just "obviously one, not
+		the other."
+	**/
+	static inline final HEIGHT_SANITY_BOUND:Float = 30;
+
+	/** How much longer each successive wall is than the last — also the spiral's own radial growth per arm. Tripled from an initial `2.4` (hooman: "still much too small... make them thrice bigger") — the wall's own footprint scales with this; height (`WALL_HEIGHT`) is unrelated and doesn't. **/
 	static inline final ARM_UNIT:Float = 7.2;
 
-	/** Half a wall's own real thickness (`GridGeometry.WALL_THICKNESS`, matching the real maze's own walls), plus `GridGeometry.COLLISION_CLEARANCE` beyond that face — collision blocks within this distance of any wall segment's own centerline, mirroring `biomes.common.grid.GridModel.wallZoneNeighbor`'s own "thickness plus clearance past the visible face" reasoning. **/
+	/** Half a wall's own real thickness (`GridGeometry.WALL_THICKNESS`, matching the real maze's own walls), plus `GridGeometry.COLLISION_CLEARANCE` beyond that face — collision blocks within this distance of any wall segment's own centerline, mirroring `biomes.common.grid.GridModel.wallZoneNeighbor`'s own "thickness plus clearance past the visible face" reasoning. Also doubles as the top surface's own half-width (`wallTopHeightAt`) — the same footprint, just queried from above instead of the side. **/
 	static inline final WALL_CLEARANCE:Float = GridGeometry.WALL_THICKNESS / 2 + GridGeometry.COLLISION_CLEARANCE;
 
 	/** How far past wall 7's own tip the player reappears when returning from the maze, arc-length in the spiral's own local frame — mirrors `biomes.maze.MazeBiome.RETURN_SPAWN_OFFSET`'s own role. **/
@@ -142,13 +177,13 @@ class MazeShrine {
 		var innerA = HubStructure.worldPoint(basis, extAU - perpU * half, extAV - perpV * half, 0);
 		var innerB = HubStructure.worldPoint(basis, extBU - perpU * half, extBV - perpV * half, 0);
 
-		var outerATop = outerA.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
-		var outerBTop = outerB.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
-		var innerATop = innerA.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
-		var innerBTop = innerB.add(basis.up.scaled(GridMesh.WALL_HEIGHT));
+		var outerATop = outerA.add(basis.up.scaled(WALL_HEIGHT));
+		var outerBTop = outerB.add(basis.up.scaled(WALL_HEIGHT));
+		var innerATop = innerA.add(basis.up.scaled(WALL_HEIGHT));
+		var innerBTop = innerB.add(basis.up.scaled(WALL_HEIGHT));
 
 		var uRepeat = length / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
-		var vRepeat = GridMesh.WALL_HEIGHT / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
+		var vRepeat = WALL_HEIGHT / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
 		var tRepeat = GridGeometry.WALL_THICKNESS / MeshBuilder.WALL_TEXTURE_TILE_SIZE;
 
 		addTexturedQuad(points, idx, uvs, innerA, innerB, innerBTop, innerATop, uRepeat, vRepeat);
@@ -204,27 +239,66 @@ class MazeShrine {
 	static function buildPainting(parent:h3d.scene.Object, basis:StructureBasis, texture:h3d.mat.Texture):Void {
 		var edge = wall2InnerFaceEdge(basis);
 		var roomCenter = basis.origin;
-		var size = PaintingModel.fillWall(GridMesh.WALL_HEIGHT);
+		var size = PaintingModel.fillWall(WALL_HEIGHT);
 		PaintingModel.buildQuad(parent, edge.a, edge.b, roomCenter, texture, size.baseHeight, size.height, basis.up);
 	}
 
 	/**
-		Whether `worldPos` is too close to any of the shrine's own 7 walls
-		to be walked into — a flat clearance check per segment
-		(`HubStructure.distanceToSegment`), same discipline
-		`biomes.hub.HubCollision` already uses for the (now-removed) column.
+		Whether a position `playerHeight` above `worldPos`'s own local ground
+		is too close to any of the shrine's own 7 walls to be walked into —
+		a flat clearance check per segment (`HubStructure.distanceToSegment`),
+		same discipline `biomes.hub.HubCollision` already uses for the
+		(now-removed) column, now also bounded to `[0, WALL_HEIGHT]` so a
+		player standing at or above the walls' own top (having actually
+		climbed up there) is never blocked sideways by a wall they're now
+		standing on rather than walking into — see `wallTopHeightAt` for the
+		matching landing surface that makes getting up there possible.
 		@param basis the shrine's own local frame.
 		@param worldPos the position to check — typically the player's own tentative new position.
-		@return true if `worldPos` is blocked by a wall.
+		@param playerHeight how far above `worldPos`'s own local ground the player currently stands — typically `PlayerModel.airborneHeight`.
+		@return true if this position is blocked by a wall.
 	**/
-	public static function blocksMovement(basis:StructureBasis, worldPos:h3d.Vector):Bool {
-		var uv = HubStructure.localUV(basis, worldPos);
+	public static function blocksMovement(basis:StructureBasis, worldPos:h3d.Vector, playerHeight:Float):Bool {
+		var local = HubStructure.localUV(basis, worldPos);
+		if (Math.abs(local.height) > HEIGHT_SANITY_BOUND) {
+			return false; // nowhere near the shrine at all - see localUV's own doc for why (u, v) alone can't tell
+		}
+		var effectiveHeight = local.height + playerHeight;
+		if (effectiveHeight < 0 || effectiveHeight > WALL_HEIGHT) {
+			return false;
+		}
 		for (segment in wallSegments()) {
-			if (HubStructure.distanceToSegment(uv.u, uv.v, segment.aU, segment.aV, segment.bU, segment.bV) < WALL_CLEARANCE) {
+			if (HubStructure.distanceToSegment(local.u, local.v, segment.aU, segment.aV, segment.bU, segment.bV) < WALL_CLEARANCE) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/**
+		The standable ground height at `worldPos`, if it sits over any of
+		the shrine's own 7 walls (their top surface, `WALL_HEIGHT` above the
+		shrine's own local ground) — `null` if it's clear of every wall, so
+		`biomes.hub.HubBiome.applyGravity` falls back to the hub's own bare
+		floor (height `0`) instead. Purely horizontal (the same footprint
+		`blocksMovement` blocks sideways within `[0, WALL_HEIGHT]`), since
+		this is computing a height, not comparing against one the caller
+		already has.
+		@param basis the shrine's own local frame.
+		@param worldPos the position to check — typically the player's own current position.
+		@return the wall-top height standable there, or `null` if clear of every wall.
+	**/
+	public static function wallTopHeightAt(basis:StructureBasis, worldPos:h3d.Vector):Null<Float> {
+		var local = HubStructure.localUV(basis, worldPos);
+		if (Math.abs(local.height) > HEIGHT_SANITY_BOUND) {
+			return null; // nowhere near the shrine at all - see localUV's own doc for why (u, v) alone can't tell
+		}
+		for (segment in wallSegments()) {
+			if (HubStructure.distanceToSegment(local.u, local.v, segment.aU, segment.aV, segment.bU, segment.bV) < WALL_CLEARANCE) {
+				return WALL_HEIGHT;
+			}
+		}
+		return null;
 	}
 
 	/**

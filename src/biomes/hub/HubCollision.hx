@@ -30,7 +30,7 @@ class HubCollision {
 		var oldPos = player.pos;
 		var oldForward = player.forward;
 		player.moveAlong(direction, distance, HubModel.RADIUS);
-		if (MazeShrine.blocksMovement(mazeShrineBasis, player.pos)
+		if (MazeShrine.blocksMovement(mazeShrineBasis, player.pos, player.airborneHeight)
 			|| TowerReplica.blocksMovement(towerReplicaBasis, player.pos)
 			|| Hourglass.blocksMovement(hourglassBasis, player.pos)) {
 			player.pos = oldPos;

@@ -95,9 +95,9 @@ class HubBiome implements Biome {
 		Hourglass.buildDynamic(hourglassContainer, hourglassBasis, hourglassModel);
 	}
 
-	/** Whether `pos` is clear of all three landmark structures — for `HubMesh`'s own grass scatter, so tufts don't grow inside any of them. **/
+	/** Whether `pos` is clear of all three landmark structures — for `HubMesh`'s own grass scatter, so tufts don't grow inside any of them. Checked at ground level (`playerHeight = 0`): grass grows on the bare floor, never up on a wall's own top. **/
 	function isWalkable(pos:h3d.Vector):Bool {
-		return !MazeShrine.blocksMovement(mazeShrineBasis, pos)
+		return !MazeShrine.blocksMovement(mazeShrineBasis, pos, 0)
 			&& !TowerReplica.blocksMovement(towerReplicaBasis, pos)
 			&& !Hourglass.blocksMovement(hourglassBasis, pos);
 	}
@@ -130,8 +130,19 @@ class HubBiome implements Biome {
 		HubCollision.tryMove(player, direction, distance, mazeShrineBasis, towerReplicaBasis, hourglassBasis);
 	}
 
+	/**
+		Falls toward whatever's directly below `player` — the hub's own bare
+		floor (height `0`) everywhere except over one of `MazeShrine`'s own
+		walls, where it's that wall's own top (`MazeShrine.wallTopHeightAt`)
+		instead, so a player who's jumped up there actually lands and stands
+		rather than falling straight through to the floor below. Recomputed
+		fresh every tick from `player.pos` alone (not cached), since which
+		wall (if any) is underfoot can change tick to tick as the player
+		walks around on top of one, off its edge, or never near one at all.
+	**/
 	public function applyGravity(player:PlayerModel, dt:Float):Void {
-		Gravity.fallToSurface(player, GRAVITY, dt);
+		var wallTop = MazeShrine.wallTopHeightAt(mazeShrineBasis, player.pos);
+		Gravity.fallToSurface(player, GRAVITY, dt, wallTop != null ? wallTop : 0);
 	}
 
 	/**

@@ -38,4 +38,28 @@ class GravityTest extends Test {
 		Assert.isTrue(player.airborneHeight > 0);
 		Assert.isFalse(player.grounded);
 	}
+
+	function testFallToSurfaceClampsToAGroundHeightAboveZero():Void {
+		var player = PlayerModel.spawnAt(1, 0, 0, 1);
+		player.airborneHeight = 2.5;
+		player.jump(1); // a tiny hop, guaranteed to land within one step at this gravity
+		player.grounded = false;
+
+		Gravity.fallToSurface(player, 60, 1, 2);
+
+		Assert.floatEquals(2, player.airborneHeight);
+		Assert.floatEquals(0, player.verticalVelocity);
+		Assert.isTrue(player.grounded);
+	}
+
+	function testFallToSurfaceKeepsFallingPastAGroundHeightAboveZeroIfNotThereYet():Void {
+		var player = PlayerModel.spawnAt(1, 0, 0, 1);
+		player.airborneHeight = 10;
+		player.grounded = false;
+
+		Gravity.fallToSurface(player, 60, 0.01, 2);
+
+		Assert.isTrue(player.airborneHeight > 2);
+		Assert.isFalse(player.grounded);
+	}
 }

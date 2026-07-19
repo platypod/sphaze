@@ -52,23 +52,26 @@ Not implemented yet — parked here until we get to them.
   ball, a burst of colored gas, whatever reads well — to reveal a bit of the
   path ahead before the player commits to walking it themselves.
 - **Reverse-time mechanic, hung off the hub hourglass**: the hub's own
-  tiltable hourglass (`biomes.hub.HourglassModel`/`Hourglass`, implemented)
-  already forces itself back to neutral — sand visibly draining backward —
-  if tilted too far left (too slow) for too long; that reversal is currently
-  just a self-correcting safety valve with no gameplay behind it. The idea:
-  read a fully-reversed hourglass as "time is flowing backward" and hang a
-  real mechanic off that somewhere (undo a hazard, rewind an obstacle,
-  replay the player's own last few seconds of movement — unproven which).
-  Prototype the cheapest version of whatever that mechanic is before
-  wiring it into any biome design, same discipline as every other backlog
-  entry here.
-- **Falls counter**: in the tower, every level we step foot on will be counted
-  (once). The objective, at some point, will be to reach the lowest floor with
-  the smallest count to unlock something. A visual indicator of sort (the walls
-  or floors glowing lightly in a color which will become increasingly negative
-  as the counter grows, for instance) will cue the player towards the idea of 
-  trying to dodge the floors. The goal is not speed, but precision. Reducing 
-  the game speed with the hourglass could make it easier.
+  tiltable hourglass (`entities.hourglass.HourglassModel`/`Hourglass`, implemented)
+  now has a real trigger for this, not just the safety valve this entry used
+  to describe — walk it all the way to its minus floor and keep trying to
+  push past it (`HourglassModel.overdraftCount`/`OVERDRAFT_UNLOCK_COUNT`)
+  and it snaps back to neutral and sets `unlocked` permanently, represented
+  today by the sand turning gold. Still exactly as open as this entry always
+  said: nothing else in the game reacts to `unlocked` yet. The idea remains
+  to hang a real mechanic off it somewhere (undo a hazard, rewind an
+  obstacle, replay the player's own last few seconds of movement —
+  unproven which). Prototype the cheapest version of whatever that
+  mechanic is before wiring it into any biome design, same discipline as
+  every other backlog entry here.
+- **Falls counter: unlock something for a low count**: the counter itself and
+  its floor ring-glow cue are implemented (`biomes.tower.TowerBiome.fallCount`,
+  `graphics.shaders.TileRingGlow` — see `docs/PROJECT_LOG.md`), nudging the
+  player toward precision over speed. Still open: the actual objectives hung
+  off it. Three scenarios, each meant to unlock something different (nothing
+  built yet for any of them): touching only the top and bottom floors (the
+  minimum possible), touching every single floor, and anything in between
+  (no unlock). What each unlock actually is remains undecided/unproven.
 
 ### Levels & biomes
 

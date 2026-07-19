@@ -707,3 +707,11 @@ hooman's own framing: a walkable band closed into a loop like a Möbius strip, b
 **Hub side**: new `biomes.hub.MobiusWaypoint` — a single `PaintingModel.buildQuad` anchored via `HubStructure.anchorAt` at a fourth evenly-spaced equator slot (`Math.PI`, directly opposite spawn, exactly between the maze/tower anchors), no wall or spire behind it, so nothing blocks movement through its own footprint. No art asset for the painting either — `h3d.mat.Texture.fromColor` generates a flat placeholder in code instead of adding a new sprite file. `HubBiome` wired the same way as the other two landmarks (`build`/`exitPaintings`/`spawnPlayer`'s `switch`), registered in `GameLoop` as `new MobiusBiome()`.
 
 New `MobiusMathTest` (flip identity, round-trip inversion, frame orthonormality, even-twist no-flip sanity) and `MobiusSpaceTest` (arc distance, forward stays unit/tangent, continuity and the v-flip across the loop seam) — both added to `TestMain`. `make fmt`/`lint`/`check`/`test` all clean (4908 assertions). Not verified in-browser: hit the same canvas-sizing issue every round on the hourglass object already ran into (canvas latched at a tiny fallback size, unresponsive to any resize signal) — asked hooman to check the shape and the walk-around feel directly.
+
+## 2026-07-19 — Möbius ribbon, twice retuned in size
+
+Two direct follow-ups after the first look. "Make it 10 times bigger in every direction": `MobiusModel.RADIUS` 40 → 400, `HALF_WIDTH` 6 → 60, same ratio — everything else (collision clearance, mesh resolution, spawn point, the hub-side entry) derives from those two constants, so nothing else needed to change.
+
+"Same length, but thrice the width": `RADIUS` stayed at 400, `HALF_WIDTH` 60 → 180. Re-derived `MobiusMath`'s own precondition while making this change rather than just trusting the old "well under radius" framing: the actual requirement is just `HALF_WIDTH < RADIUS` (strictly, so `radius + v*cos(theta)` never reaches 0) — distinct `u` mod `2*PI` always land at distinct azimuths around the loop whenever that holds, which is already sufficient on its own to keep the ribbon from self-intersecting, not merely a safety margin toward it. Corrected the doc comment accordingly.
+
+`make fmt`/`lint`/`check`/`test` all clean (4908 assertions, unchanged — pure constant/doc changes).

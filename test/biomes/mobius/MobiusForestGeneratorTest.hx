@@ -74,6 +74,42 @@ class MobiusForestGeneratorTest extends Test {
 		}
 	}
 
+	function testGenerateOnlyEverRollsAKnownSpecies():Void {
+		var layout = MobiusForestGenerator.generate(3, seededRandom(7), 150);
+
+		for (t in layout.trees) {
+			Assert.isTrue(t.species == MobiusForestGenerator.SPECIES_CONIFER
+				|| t.species == MobiusForestGenerator.SPECIES_ROUND
+				|| t.species == MobiusForestGenerator.SPECIES_DEAD);
+		}
+	}
+
+	function testGenerateProducesAllThreeSpeciesAtDefaultChances():Void {
+		// Not a statistical proof, just a sanity check that every species is
+		// actually reachable - 150 trees at 15%-plus chance each is
+		// astronomically unlikely to miss any of them by chance alone.
+		var layout = MobiusForestGenerator.generate(3, seededRandom(8), 150);
+		var seenConifer = false;
+		var seenRound = false;
+		var seenDead = false;
+		for (t in layout.trees) {
+			seenConifer = seenConifer || t.species == MobiusForestGenerator.SPECIES_CONIFER;
+			seenRound = seenRound || t.species == MobiusForestGenerator.SPECIES_ROUND;
+			seenDead = seenDead || t.species == MobiusForestGenerator.SPECIES_DEAD;
+		}
+		Assert.isTrue(seenConifer);
+		Assert.isTrue(seenRound);
+		Assert.isTrue(seenDead);
+	}
+
+	function testGenerateKeepsRotationWithinAFullTurn():Void {
+		var layout = MobiusForestGenerator.generate(3, seededRandom(9), 150);
+
+		for (t in layout.trees) {
+			Assert.isTrue(t.rotation >= 0 && t.rotation < 2 * Math.PI);
+		}
+	}
+
 	function testGenerateVariesTrunkAndFoliageSizeWithinTheirOwnRanges():Void {
 		var layout = MobiusForestGenerator.generate(3, seededRandom(5), 150);
 

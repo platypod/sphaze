@@ -13,6 +13,15 @@ import biomes.common.space.mobius.MobiusMath;
 	check, which would mean re-running `MobiusMath.pointAt`'s own trig for
 	every tree, every fixed step (`biomes.mobius.MobiusCollision.tryMove`
 	runs at 60Hz) — cheap for one tree, not free at `MobiusModel.TARGET_TREE_COUNT`-many.
+
+	`species` is one of `MobiusForestGenerator.SPECIES_CONIFER`/`_ROUND`/`_DEAD`
+	— a plain `Int`, not a real Haxe enum, so this stays a flat, directly
+	JSON-serializable structure (an enum instance isn't). `rotation` spins
+	a tree's own `tangent`/`right` basis around `up` before
+	`biomes.common.tree.TreeMesh` builds anything from it — without it,
+	every tree's own faceted seams (and every dead tree's own branches)
+	would line up identically, reading as stamped copies rather than a
+	natural forest.
 **/
 typedef PlacedTree = {
 	var u:Float;
@@ -20,6 +29,8 @@ typedef PlacedTree = {
 	var x:Float;
 	var y:Float;
 	var z:Float;
+	var species:Int;
+	var rotation:Float;
 	var trunkHeight:Float;
 	var trunkRadius:Float;
 	var foliageRadius:Float;
@@ -59,6 +70,21 @@ typedef ForestLayout = {
 	doc).
 **/
 class MobiusForestGenerator {
+	/** A layered-conifer silhouette (`biomes.common.tree.TreeMesh.addConiferFoliage`) — the most common species. **/
+	public static inline final SPECIES_CONIFER:Int = 0;
+
+	/** A round-canopy silhouette (`biomes.common.tree.TreeMesh.addRoundFoliage`). **/
+	public static inline final SPECIES_ROUND:Int = 1;
+
+	/** A bare trunk with a few stub branches, no foliage (`biomes.common.tree.TreeMesh.addDeadBranches`) — an accent, not the norm. **/
+	public static inline final SPECIES_DEAD:Int = 2;
+
+	/** Chance a given tree rolls `SPECIES_CONIFER` — checked first, so this is its own share of the total. **/
+	static inline final CONIFER_CHANCE:Float = 0.5;
+
+	/** Chance a given tree rolls `SPECIES_ROUND`, checked after `SPECIES_CONIFER` — the remaining `1 - CONIFER_CHANCE - ROUND_CHANCE` falls through to `SPECIES_DEAD`. **/
+	static inline final ROUND_CHANCE:Float = 0.35;
+
 	/**
 		Scatters `count` trees (or however many fit before
 		`MobiusModel.TREE_SCATTER_MAX_ATTEMPTS` runs out) across the
@@ -88,12 +114,17 @@ class MobiusForestGenerator {
 				continue;
 			}
 
+			var speciesRoll = rng();
+			var species = speciesRoll < CONIFER_CHANCE ? SPECIES_CONIFER : (speciesRoll < CONIFER_CHANCE + ROUND_CHANCE ? SPECIES_ROUND : SPECIES_DEAD);
+
 			trees.push({
 				u: u,
 				v: v,
 				x: pos.x,
 				y: pos.y,
 				z: pos.z,
+				species: species,
+				rotation: rng() * 2 * Math.PI,
 				trunkHeight: MobiusModel.TRUNK_HEIGHT_MIN + rng() * (MobiusModel.TRUNK_HEIGHT_MAX - MobiusModel.TRUNK_HEIGHT_MIN),
 				trunkRadius: MobiusModel.TRUNK_RADIUS_MIN + rng() * (MobiusModel.TRUNK_RADIUS_MAX - MobiusModel.TRUNK_RADIUS_MIN),
 				foliageRadius: MobiusModel.FOLIAGE_RADIUS_MIN + rng() * (MobiusModel.FOLIAGE_RADIUS_MAX - MobiusModel.FOLIAGE_RADIUS_MIN),

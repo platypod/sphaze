@@ -57,9 +57,15 @@ class Colours {
 	/** See `MOBIUS_BAND_A`. **/
 	public static inline final MOBIUS_BAND_B:Int = 0xFF3C6EB0;
 
-	/** `biomes.common.tree.TreeMesh`'s own trunks — a plain bark-brown placeholder, no real art yet either. **/
-	public static inline final TREE_TRUNK:Int = 0xFF5C4530;
+	/** `biomes.common.tree.TreeMesh`'s own trunks, at the root (`graphics.shaders.HeightGradient`'s own base color) — a plain bark-brown placeholder, no real art yet either. **/
+	public static inline final TREE_TRUNK_BASE:Int = 0xFF3E2E20;
 
-	/** `biomes.common.tree.TreeMesh`'s own foliage — a deep conifer green, distinct from `GRASS_BASE`/`GRASS_TIP` so a forest's canopy reads apart from the ground cover beneath it. **/
-	public static inline final TREE_FOLIAGE:Int = 0xFF1F4D2E;
+	/** `biomes.common.tree.TreeMesh`'s own trunks, at the top (`graphics.shaders.HeightGradient`'s own tip color) — lighter than `TREE_TRUNK_BASE`, so the trunk reads with some depth instead of one flat fill. **/
+	public static inline final TREE_TRUNK_TIP:Int = 0xFF6B4E36;
+
+	/** `biomes.common.tree.TreeMesh`'s own foliage, at the trunk-top collar (`graphics.shaders.HeightGradient`'s own base color) — a deep conifer green, distinct from `GRASS_BASE`/`GRASS_TIP` so a forest's canopy reads apart from the ground cover beneath it. **/
+	public static inline final TREE_FOLIAGE_BASE:Int = 0xFF16351F;
+
+	/** `biomes.common.tree.TreeMesh`'s own foliage, at the very tip (`graphics.shaders.HeightGradient`'s own tip color) — lighter/yellower than `TREE_FOLIAGE_BASE`, catching more light at the canopy's own top. **/
+	public static inline final TREE_FOLIAGE_TIP:Int = 0xFF3D7A45;
 }

@@ -29,12 +29,18 @@ import graphics.Colours;
 	looks right.
 
 	Also builds the forest `biomes.mobius.MobiusForestGenerator` scattered
-	across the ribbon (`buildForest`) — each tree's own trunk/foliage
-	geometry comes from the topology-agnostic `biomes.common.tree.TreeMesh`,
-	oriented per tree via `MobiusMath.localFrameAt` at that tree's own
-	`(u, v)` (`tu`/`tv`/`normal` slot directly into `TreeMesh`'s own
-	`tangent`/`right`/`up` parameters, being exactly that orthonormal
-	triple already).
+	across the ribbon (`buildForest`) — each tree's own trunk plus one of
+	three species-specific foliage/branch treatments comes from the
+	topology-agnostic `biomes.common.tree.TreeMesh`, oriented per tree via
+	`MobiusMath.localFrameAt` at that tree's own `(u, v)` (`tu`/`tv`/`normal`
+	slot directly into `TreeMesh`'s own `tangent`/`right`/`up` parameters,
+	being exactly that orthonormal triple already) then further spun around
+	`normal` by the tree's own `PlacedTree.rotation` so trees don't all read
+	as stamped copies of each other. Shaded with `graphics.shaders.HeightGradient`
+	(a flat base-to-tip gradient) rather than the ribbon's own plain
+	`h3d.shader.FixedColor` — a single flat fill read plasticky at this
+	project's usual scale for a solid volumetric shape like a trunk or
+	canopy, in a way it never did for the ribbon's own thin surface.
 **/
 class MobiusMesh {
 	/** Samples around the loop — fine enough to read as smoothly curved through several twists. **/
@@ -100,20 +106,42 @@ class MobiusMesh {
 	static function buildForestChunk(parent:h3d.scene.Object, twists:Int, forest:ForestLayout, fromIndex:Int, toIndex:Int):Void {
 		var trunkPoints:Array<h3d.Vector> = [];
 		var trunkIdx = new hxd.IndexBuffer();
+		var trunkUvs:Array<h3d.prim.UV> = [];
 		var foliagePoints:Array<h3d.Vector> = [];
 		var foliageIdx = new hxd.IndexBuffer();
+		var foliageUvs:Array<h3d.prim.UV> = [];
 
 		for (i in fromIndex...toIndex) {
 			var tree = forest.trees[i];
 			var frame = MobiusMath.localFrameAt(tree.u, tree.v, twists, MobiusModel.RADIUS);
 			var base = new h3d.Vector(tree.x, tree.y, tree.z).add(frame.normal.scaled(MobiusModel.TREE_ROOT_LIFT));
 
-			TreeMesh.addTrunk(trunkPoints, trunkIdx, base, frame.normal, frame.tu, frame.tv, tree.trunkHeight, tree.trunkRadius);
-			TreeMesh.addFoliage(foliagePoints, foliageIdx, base, frame.normal, frame.tu, frame.tv, tree.trunkHeight, tree.foliageRadius, tree.foliageHeight);
+			// Rotate the ring basis around "up" by this tree's own rotation -
+			// without it, every tree's own faceted seams (and every dead
+			// tree's own branches) line up identically, reading as stamped
+			// copies rather than a natural forest (see PlacedTree's own doc).
+			var cos = Math.cos(tree.rotation);
+			var sin = Math.sin(tree.rotation);
+			var tangent = frame.tu.scaled(cos).add(frame.tv.scaled(sin));
+			var right = frame.tu.scaled(-sin).add(frame.tv.scaled(cos));
+
+			TreeMesh.addTrunk(trunkPoints, trunkIdx, trunkUvs, base, frame.normal, tangent, right, tree.trunkHeight, tree.trunkRadius);
+
+			switch (tree.species) {
+				case MobiusForestGenerator.SPECIES_CONIFER:
+					TreeMesh.addConiferFoliage(foliagePoints, foliageIdx, foliageUvs, base, frame.normal, tangent, right, tree.trunkHeight, tree.trunkRadius,
+						tree.foliageRadius, tree.foliageHeight);
+				case MobiusForestGenerator.SPECIES_ROUND:
+					TreeMesh.addRoundFoliage(foliagePoints, foliageIdx, foliageUvs, base, frame.normal, tangent, right, tree.trunkHeight, tree.trunkRadius,
+						tree.foliageRadius, tree.foliageHeight);
+				default:
+					TreeMesh.addDeadBranches(trunkPoints, trunkIdx, trunkUvs, base, frame.normal, tangent, right, tree.trunkHeight, tree.trunkRadius,
+						tree.rotation);
+			}
 		}
 
-		buildColoredMesh(parent, trunkPoints, trunkIdx, Colours.TREE_TRUNK);
-		buildColoredMesh(parent, foliagePoints, foliageIdx, Colours.TREE_FOLIAGE);
+		buildGradientMesh(parent, trunkPoints, trunkIdx, trunkUvs, Colours.TREE_TRUNK_BASE, Colours.TREE_TRUNK_TIP);
+		buildGradientMesh(parent, foliagePoints, foliageIdx, foliageUvs, Colours.TREE_FOLIAGE_BASE, Colours.TREE_FOLIAGE_TIP);
 	}
 
 	/** One across-width band's own quad strip, `v` fixed to `vLo`/`vHi`, `u` swept the whole way around `[0, 2*PI]` — see class doc for why that alone is enough to close the loop. **/
@@ -134,6 +162,16 @@ class MobiusMesh {
 	static function buildColoredMesh(parent:h3d.scene.Object, points:Array<h3d.Vector>, idx:hxd.IndexBuffer, color:Int):Void {
 		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
 		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(color));
+		mesh.material.mainPass.culling = None;
+	}
+
+	/** One base-to-tip gradient-shaded mesh (`graphics.shaders.HeightGradient`) — trunks/foliage, per `TreeMesh`'s own UV convention. Same `culling = None` reasoning `buildColoredMesh` already gives. **/
+	static function buildGradientMesh(parent:h3d.scene.Object, points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, colorBase:Int,
+			colorTip:Int):Void {
+		var prim = new h3d.prim.Polygon(points, idx);
+		prim.uvs = uvs;
+		var mesh = new h3d.scene.Mesh(prim, parent);
+		mesh.material.mainPass.addShader(new graphics.shaders.HeightGradient(colorBase, colorTip));
 		mesh.material.mainPass.culling = None;
 	}
 }

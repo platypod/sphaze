@@ -76,7 +76,7 @@ interface Biome {
 
 	/**
 		Advances any per-tick state this biome owns beyond movement/gravity —
-		today, only the hub's own hourglass (`biomes.hub.HourglassModel`).
+		today, only the hub's own hourglass (`entities.hourglass.HourglassModel`).
 		Called unconditionally every fixed step, real (unscaled) `dt`
 		regardless of `timeScale()` — see `HourglassModel`'s own class doc
 		for why a self-referential scale would be a feedback loop. A biome
@@ -90,7 +90,7 @@ interface Biome {
 	/**
 		The game-speed multiplier this biome currently wants applied to
 		movement/gravity — `1` for every biome except the hub, whose own
-		hourglass can push it up or down (see `biomes.hub.HourglassModel`).
+		hourglass can push it up or down (see `entities.hourglass.HourglassModel`).
 		Part of the contract (like `gravity()`) rather than a downcast in
 		`GameLoop`, per this interface's own class doc ("never by biome type
 		name"). Scoped to whichever biome is *current*: walking out of the

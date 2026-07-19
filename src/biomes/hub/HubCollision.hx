@@ -1,6 +1,7 @@
 package biomes.hub;
 
 import biomes.hub.HubStructure.StructureBasis;
+import entities.hourglass.Hourglass;
 import entities.player.PlayerModel;
 
 /**

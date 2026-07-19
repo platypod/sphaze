@@ -5,6 +5,8 @@ import biomes.common.Gravity;
 import biomes.hub.HubStructure.StructureBasis;
 import biomes.maze.MazeBiome;
 import biomes.tower.TowerBiome;
+import entities.hourglass.Hourglass;
+import entities.hourglass.HourglassModel;
 import entities.player.PlayerModel;
 import entities.painting.PaintingModel;
 
@@ -66,7 +68,7 @@ class HubBiome implements Biome {
 	final hourglassBasis:StructureBasis;
 	final hourglassModel:HourglassModel = new HourglassModel();
 
-	/** Rebuilt every tick by `tick` — see `Hourglass`'s own class doc for why the frame/sand rebuild fresh each time rather than animating in place. **/
+	/** Rebuilt every tick by `tick` — see `Hourglass`'s own class doc for why everything above the pedestal rebuilds fresh each time rather than animating in place. **/
 	var hourglassContainer:h3d.scene.Object;
 
 	public function new() {
@@ -135,12 +137,12 @@ class HubBiome implements Biome {
 	/**
 		Advances the hourglass by one real (unscaled) tick — see
 		`biomes.common.Biome.tick`'s own doc for why `dt` here is never
-		scaled by `timeScale()` — then rebuilds its frame/sand mesh to match
-		(see `Hourglass`'s own class doc for why that's a fresh rebuild each
+		scaled by `timeScale()` — then rebuilds its mesh to match (see
+		`Hourglass`'s own class doc for why that's a fresh rebuild each
 		tick rather than an animated transform).
 	**/
 	public function tick(player:PlayerModel, dt:Float):Void {
-		hourglassModel.tick(dt, Hourglass.lean(hourglassBasis, player.pos));
+		hourglassModel.tick(dt, Hourglass.triggerSide(hourglassBasis, player.pos));
 		hourglassContainer.removeChildren();
 		Hourglass.buildDynamic(hourglassContainer, hourglassBasis, hourglassModel);
 	}

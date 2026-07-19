@@ -69,7 +69,7 @@ class GameLoop {
 		biomeRegistry.register(new HubBiome(), true); // always known - it's home, not something to stumble into
 		biomeRegistry.register(new MazeBiome(MazeGenerator.generate()));
 		biomeRegistry.register(new TowerBiome(TowerGenerator.generate()));
-		enterBiome(MazeBiome.ID, false);
+		enterBiome(HubBiome.ID, false);
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,
 		// perf stats. Hidden by default; toggled in fixedUpdate.

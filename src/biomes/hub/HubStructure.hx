@@ -64,17 +64,32 @@ class HubStructure {
 
 	/**
 		The local `(u, v)` of a world point, projected onto `basis`'s own
-		tangent plane — the inverse of `worldPoint` (ignoring height), used
-		to test the player's own current position against locally-defined
-		geometry (walls, a structure's own footprint) without needing
-		sphere-relative math at every call site.
+		tangent plane (the inverse of `worldPoint`'s own `u`/`v`), plus that
+		same point's own `height` along `basis.up` — *not* ignored the way
+		`worldPoint`'s doc used to describe, and not a player's jump height
+		either: purely how far `worldPos` itself sits off `basis`'s flat
+		tangent plane. For any point actually near the structure this is
+		negligible (the same "curvature is negligible at this scale"
+		approximation `HubStructure`'s own class doc already leans on), but
+		it grows large fast moving away — the point diametrically opposite
+		`basis.origin` on the real sphere projects to local `(u, v) = (0, 0)`
+		*exactly*, regardless of the structure's own position (its
+		displacement from the anchor is purely radial, and radial is exactly
+		what `uAxis`/`vAxis` are perpendicular to by construction) while its
+		`height` comes out to `2 * radius`. A caller that only ever checked
+		`(u, v)` against a small local footprint (see `MazeShrine.blocksMovement`'s
+		own history) read that antipodal point as sitting right on top of the
+		structure — reported directly as "on the opposite side of the sphere,
+		you still get blocked by the wall's hitbox" — so any such caller
+		needs to also bound `height` to reject points this far from its own
+		local ground, not just check `(u, v)`.
 		@param basis the structure's own local frame.
 		@param worldPos the world point to project.
-		@return that point's local `(u, v)`.
+		@return that point's local `(u, v, height)`.
 	**/
-	public static function localUV(basis:StructureBasis, worldPos:h3d.Vector):{u:Float, v:Float} {
+	public static function localUV(basis:StructureBasis, worldPos:h3d.Vector):{u:Float, v:Float, height:Float} {
 		var relative = worldPos.sub(basis.origin);
-		return {u: relative.dot(basis.uAxis), v: relative.dot(basis.vAxis)};
+		return {u: relative.dot(basis.uAxis), v: relative.dot(basis.vAxis), height: relative.dot(basis.up)};
 	}
 
 	/**

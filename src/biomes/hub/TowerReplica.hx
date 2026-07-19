@@ -252,6 +252,21 @@ class TowerReplica {
 	}
 
 	/**
+		How far a world point's own `HubStructure.localUV`-reported `height`
+		can be from this structure's local ground before a query treats it as
+		nowhere near the spire at all, regardless of what its `(u, v)`
+		happens to read — see `localUV`'s own class doc for the
+		antipodal-collapse bug this guards against (a point diametrically
+		opposite `basis.origin` projects to local `(u, v) = (0, 0)`,
+		indistinguishable from standing right on top of the spire, unless
+		something also checks `height`), and `MazeShrine.HEIGHT_SANITY_BOUND`'s
+		own doc for why this needs no more precision than "obviously one, not
+		the other." Bigger than `MazeShrine`'s own bound since this structure
+		itself is taller (`FLOORS * FLOOR_HEIGHT`).
+	**/
+	static inline final HEIGHT_SANITY_BOUND:Float = 100;
+
+	/**
 		Whether `worldPos` is too close to the spire — a single circular
 		boundary (unlike `MazeShrine`'s per-wall segments), since the spire
 		is solid all the way through: there's no wall to walk alongside,
@@ -261,8 +276,11 @@ class TowerReplica {
 		@return true if `worldPos` is blocked by the spire.
 	**/
 	public static function blocksMovement(basis:StructureBasis, worldPos:h3d.Vector):Bool {
-		var uv = HubStructure.localUV(basis, worldPos);
-		return Math.sqrt(uv.u * uv.u + uv.v * uv.v) < OUTER_RADIUS + COLLISION_CLEARANCE;
+		var local = HubStructure.localUV(basis, worldPos);
+		if (Math.abs(local.height) > HEIGHT_SANITY_BOUND) {
+			return false; // nowhere near the spire at all - see HEIGHT_SANITY_BOUND's own doc for why (u, v) alone can't tell
+		}
+		return Math.sqrt(local.u * local.u + local.v * local.v) < OUTER_RADIUS + COLLISION_CLEARANCE;
 	}
 
 	/**

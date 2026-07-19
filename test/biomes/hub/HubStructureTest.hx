@@ -49,6 +49,26 @@ class HubStructureTest extends Test {
 		Assert.floatEquals(-2, uv.v, 1e-9);
 	}
 
+	function testLocalUVsHeightFieldReportsThatSameRaisedOffset():Void {
+		var basis = HubStructure.anchorAt(THETA, PHI, RADIUS);
+		var p = HubStructure.worldPoint(basis, 3, -2, 8);
+		var uv = HubStructure.localUV(basis, p);
+		Assert.floatEquals(8, uv.height, 1e-9);
+	}
+
+	function testLocalUVsHeightFieldIsTwiceTheRadiusAtTheAntipodalPoint():Void {
+		// The point diametrically opposite the anchor: its displacement from
+		// the anchor is purely radial, so it projects to local (u, v) = (0, 0)
+		// - height is the only thing that gives away it's nowhere near this
+		// structure at all (see this method's own class doc).
+		var basis = HubStructure.anchorAt(THETA, PHI, RADIUS);
+		var antipode = SphereMath.sphericalToCartesian(RADIUS, Math.PI - THETA, PHI + Math.PI);
+		var uv = HubStructure.localUV(basis, antipode);
+		Assert.floatEquals(0, uv.u, 1e-6);
+		Assert.floatEquals(0, uv.v, 1e-6);
+		Assert.floatEquals(2 * RADIUS, uv.height, 1e-6);
+	}
+
 	function testDistanceToSegmentIsZeroAtItsOwnMidpoint():Void {
 		var d = HubStructure.distanceToSegment(5, 0, 0, 0, 10, 0);
 		Assert.floatEquals(0, d, 1e-9);

@@ -61,3 +61,7 @@ Before considering any non-trivial change done:
 **Pre-commit hook (local, blocking):** `.githooks/pre-commit` (wired via `git config core.hooksPath .githooks`) runs `make fmt lint check test` before every commit — the same targets CI runs. A failing pre-commit blocks the commit; use `git commit --no-verify` only for genuinely exceptional cases.
 
 When touching multiple files or anything architectural, check `docs/GUIDELINES.md` first — don't improvise a pattern that contradicts it. If a task seems to require breaking one of the rules above (especially the macro rule), stop and ask rather than proceeding.
+
+## Manual/interactive verification
+
+Claude cannot reliably drive the game itself in this project's browser preview: keyboard input (movement, turning, jump) does not consistently reach the canvas in that automated environment, so "walk over there and check" attempts burn time without producing a trustworthy result (hooman, directly: "You are inefficient for those tasks"). When a change needs to be exercised interactively (movement, collision, triggers, camera/look behavior) rather than just observed from a fixed spawn/screenshot, ask hooman to drive it and report back, rather than attempting to reproduce it live. Static verification (compile, formatter, linter, `utest`, reading a screenshot from a fixed vantage point) remains fine to do directly.

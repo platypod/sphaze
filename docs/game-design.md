@@ -72,6 +72,25 @@ Not implemented yet — parked here until we get to them.
   built yet for any of them): touching only the top and bottom floors (the
   minimum possible), touching every single floor, and anything in between
   (no unlock). What each unlock actually is remains undecided/unproven.
+- **Real tree growth over time (Möbius forest)**: the Möbius biome's forest
+  (`biomes.mobius.MobiusForestGenerator`, implemented) is a one-time
+  procedural scatter today — trees are placed fully-grown, once, at
+  `game.GameLoop` startup, same as every other biome's own generated layout.
+  hooman: we might want real growth later instead — saplings that visibly
+  grow into full trees over time — but explicitly deferred for now in favor
+  of the cheaper static version. If this gets built, it should hang off the
+  hourglass's own time-scale mechanism (`entities.hourglass.HourglassModel.timeScale`/
+  `entities.registries.BiomesRegistry.globalTimeScale`, already global —
+  see `docs/PROJECT_LOG.md`'s "hourglass's own speed effect goes global"
+  entry) rather than inventing a second, separate clock: growth would speed
+  up, slow down, or (at the hourglass's own extreme tilt) stop dead in
+  place along with everything else time-scaled already does, "a mechanism
+  with the time stop" per the ask. Needs its own persistent per-tree state
+  (a growth stage or planted-at timestamp in `MobiusForestGenerator.PlacedTree`,
+  serialized/restored same as the rest of the layout) and a rebuild-on-tick
+  or interpolated-scale approach for the actual visual growth — unproven
+  which, prototype the cheapest version before committing, same discipline
+  as every other backlog entry here.
 
 ### Levels & biomes
 

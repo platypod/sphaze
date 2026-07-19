@@ -13,6 +13,8 @@ import biomes.hub.MazeShrineTest;
 import biomes.hub.TowerReplicaTest;
 import biomes.maze.MazeExitWallTest;
 import biomes.maze.MazeGeneratorTest;
+import biomes.mobius.MobiusCollisionTest;
+import biomes.mobius.MobiusForestGeneratorTest;
 import biomes.tower.TowerCollisionTest;
 import biomes.tower.TowerGeneratorTest;
 import biomes.tower.TowerModelTest;
@@ -43,6 +45,8 @@ class TestMain {
 		runner.addCase(new GridCollisionTest());
 		runner.addCase(new PaintingModelTest());
 		runner.addCase(new MazeExitWallTest());
+		runner.addCase(new MobiusForestGeneratorTest());
+		runner.addCase(new MobiusCollisionTest());
 		runner.addCase(new HubStructureTest());
 		runner.addCase(new MazeShrineTest());
 		runner.addCase(new TowerReplicaTest());

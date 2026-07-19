@@ -1,6 +1,8 @@
 package biomes.mobius;
 
 import biomes.common.space.mobius.MobiusMath;
+import biomes.common.tree.TreeMesh;
+import biomes.mobius.MobiusForestGenerator.ForestLayout;
 import game.MeshBuilder;
 import graphics.Colours;
 
@@ -25,6 +27,14 @@ import graphics.Colours;
 	first pass is for: a colored band visibly spiraling as you walk around
 	the loop is the plainest possible read on whether a given twist count
 	looks right.
+
+	Also builds the forest `biomes.mobius.MobiusForestGenerator` scattered
+	across the ribbon (`buildForest`) — each tree's own trunk/foliage
+	geometry comes from the topology-agnostic `biomes.common.tree.TreeMesh`,
+	oriented per tree via `MobiusMath.localFrameAt` at that tree's own
+	`(u, v)` (`tu`/`tv`/`normal` slot directly into `TreeMesh`'s own
+	`tangent`/`right`/`up` parameters, being exactly that orthonormal
+	triple already).
 **/
 class MobiusMesh {
 	/** Samples around the loop — fine enough to read as smoothly curved through several twists. **/
@@ -34,10 +44,26 @@ class MobiusMesh {
 	static inline final V_SEGMENTS:Int = 4;
 
 	/**
+		How many trees' worth of geometry go into one trunk/foliage mesh —
+		`addQuad`/`addTriangle` never share or reuse a vertex, so a single
+		mesh spanning the whole forest could rack up more distinct vertices
+		than `hxd.IndexBuffer` can actually index (an `Array<UInt16>` under
+		the hood, silently wrapping indices past `65536` back to `0` instead
+		of erroring — the exact bug `biomes.tower.TowerMesh.LAYERS_PER_CHUNK`'s
+		own doc already ran into once). Foliage is the worse case per tree
+		(two cones, `TreeMesh.FOLIAGE_SIDES` triangles each, 3 new vertices
+		per triangle): `500 * 2 * 8 * 3 = 24000`, comfortably clear of the
+		limit regardless of how many trees `biomes.mobius.MobiusForestGenerator`
+		actually manages to place.
+	**/
+	static inline final TREES_PER_CHUNK:Int = 500;
+
+	/**
 		@param parent the scene object to attach the meshes under.
 		@param twists half-twists over one full lap around the loop.
+		@param forest the generated forest to render alongside the ribbon itself.
 	**/
-	public static function build(parent:h3d.scene.Object, twists:Int):Void {
+	public static function build(parent:h3d.scene.Object, twists:Int, forest:ForestLayout):Void {
 		var pointsA:Array<h3d.Vector> = [];
 		var idxA = new hxd.IndexBuffer();
 		var pointsB:Array<h3d.Vector> = [];
@@ -56,6 +82,38 @@ class MobiusMesh {
 
 		buildColoredMesh(parent, pointsA, idxA, Colours.MOBIUS_BAND_A);
 		buildColoredMesh(parent, pointsB, idxB, Colours.MOBIUS_BAND_B);
+
+		buildForest(parent, twists, forest);
+	}
+
+	/** The whole forest's own trunks and foliage, chunked (see `TREES_PER_CHUNK`'s own doc) into as few draw calls as the index-buffer limit allows. **/
+	static function buildForest(parent:h3d.scene.Object, twists:Int, forest:ForestLayout):Void {
+		var fromIndex = 0;
+		while (fromIndex < forest.trees.length) {
+			var toIndex = hxd.Math.imin(fromIndex + TREES_PER_CHUNK, forest.trees.length);
+			buildForestChunk(parent, twists, forest, fromIndex, toIndex);
+			fromIndex = toIndex;
+		}
+	}
+
+	/** One forest chunk's own trunk and foliage meshes, covering trees `fromIndex` (inclusive) to `toIndex` (exclusive). **/
+	static function buildForestChunk(parent:h3d.scene.Object, twists:Int, forest:ForestLayout, fromIndex:Int, toIndex:Int):Void {
+		var trunkPoints:Array<h3d.Vector> = [];
+		var trunkIdx = new hxd.IndexBuffer();
+		var foliagePoints:Array<h3d.Vector> = [];
+		var foliageIdx = new hxd.IndexBuffer();
+
+		for (i in fromIndex...toIndex) {
+			var tree = forest.trees[i];
+			var frame = MobiusMath.localFrameAt(tree.u, tree.v, twists, MobiusModel.RADIUS);
+			var base = new h3d.Vector(tree.x, tree.y, tree.z).add(frame.normal.scaled(MobiusModel.TREE_ROOT_LIFT));
+
+			TreeMesh.addTrunk(trunkPoints, trunkIdx, base, frame.normal, frame.tu, frame.tv, tree.trunkHeight, tree.trunkRadius);
+			TreeMesh.addFoliage(foliagePoints, foliageIdx, base, frame.normal, frame.tu, frame.tv, tree.trunkHeight, tree.foliageRadius, tree.foliageHeight);
+		}
+
+		buildColoredMesh(parent, trunkPoints, trunkIdx, Colours.TREE_TRUNK);
+		buildColoredMesh(parent, foliagePoints, foliageIdx, Colours.TREE_FOLIAGE);
 	}
 
 	/** One across-width band's own quad strip, `v` fixed to `vLo`/`vHi`, `u` swept the whole way around `[0, 2*PI]` — see class doc for why that alone is enough to close the loop. **/

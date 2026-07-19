@@ -5,23 +5,34 @@ import biomes.common.Gravity;
 import biomes.common.space.mobius.MobiusMath;
 import biomes.common.space.mobius.MobiusSpace;
 import biomes.hub.HubBiome;
+import biomes.mobius.MobiusForestGenerator.ForestLayout;
 import entities.painting.PaintingModel;
 import entities.player.PlayerModel;
 
 /**
-	A bare walkable Möbius ribbon — `twists` half-twists over one full lap
-	(3 by construction the first time this is tried, per the ask; any odd
-	value keeps it one-sided). Deliberately just the twisted surface itself
-	(see `MobiusModel`'s own class doc): no maze/walls/gaps yet, only the
-	ribbon's own edges, so the twist count's own visual/spatial feel can be
-	evaluated in isolation before any obstacle layout gets designed on top
-	of it (`docs/game-design.md`'s "prototype unproven mechanics before
-	committing" pillar).
+	A walkable Möbius ribbon — `twists` half-twists over one full lap (3 by
+	construction the first time this was tried, per the ask; any odd value
+	keeps it one-sided), grown into a proper forest (hooman: "make a forest
+	out of the Moëbius Strip Biome... sow and grow lots of them"). Started
+	as a bare ribbon (see `MobiusModel`'s own class doc) purely to evaluate
+	the twist count's own visual/spatial feel in isolation first, per
+	`docs/game-design.md`'s "prototype unproven mechanics before
+	committing" pillar — the forest is the first obstacle layout built on
+	top of that.
+
+	`forest` is generated once by `MobiusForestGenerator` and handed in
+	(constructor-injected from `game.GameLoop`, same "generate once, reuse
+	for the whole session" shape `biomes.tower.TowerBiome`/`biomes.maze.MazeBiome`
+	already use for their own layouts) rather than a bare ribbon — a
+	tree's own trunk has a real hitbox now (`biomes.mobius.MobiusCollision`),
+	so re-rolling it fresh on every visit would mean a path that was clear
+	one visit could be blocked the next.
 
 	Gravity uses `biomes.common.Gravity.fallToSurface` (a floor always
 	directly underfoot along `space.upAt`), same as `biomes.hub.HubBiome`/
 	`biomes.maze.MazeBiome` — not the tower's own real free-fall, since
-	there's nothing to fall through here yet.
+	there's nothing to fall *through* here, trees included (a trunk blocks
+	sideways, not underfoot).
 **/
 class MobiusBiome implements Biome {
 	public static inline final ID:String = "mobius";
@@ -45,7 +56,11 @@ class MobiusBiome implements Biome {
 
 	final space:MobiusSpace;
 
-	public function new(twists:Int = MobiusModel.DEFAULT_TWISTS) {
+	/** The generated forest this visit walks through — see class doc for why it's handed in rather than rolled fresh each visit. Replaced wholesale by `restore`, never mutated tree-by-tree. **/
+	var forest:ForestLayout;
+
+	public function new(forest:ForestLayout, twists:Int = MobiusModel.DEFAULT_TWISTS) {
+		this.forest = forest;
 		this.twists = twists;
 		this.space = new MobiusSpace(twists, MobiusModel.RADIUS);
 	}
@@ -59,7 +74,7 @@ class MobiusBiome implements Biome {
 	}
 
 	public function build(parent:h3d.scene.Object):Void {
-		MobiusMesh.build(parent, twists);
+		MobiusMesh.build(parent, twists, forest);
 	}
 
 	/** Always the loop's own `u = 0`, dead center across the width — see `MobiusModel.spawnPosition`/`spawnForward`. **/
@@ -73,7 +88,7 @@ class MobiusBiome implements Biome {
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {
-		MobiusCollision.tryMove(player, direction, distance, twists, MobiusModel.RADIUS);
+		MobiusCollision.tryMove(player, direction, distance, twists, MobiusModel.RADIUS, forest);
 	}
 
 	public function applyGravity(player:PlayerModel, dt:Float):Void {
@@ -88,11 +103,11 @@ class MobiusBiome implements Biome {
 		return 1;
 	}
 
-	/** Nothing generated to persist — see class doc's "bare ribbon" scope. **/
 	public function serialize():String {
-		return "{}";
+		return MobiusForestGenerator.serialize(forest);
 	}
 
-	/** No-op — see `serialize`. **/
-	public function restore(json:String):Void {}
+	public function restore(json:String):Void {
+		forest = MobiusForestGenerator.deserialize(json);
+	}
 }

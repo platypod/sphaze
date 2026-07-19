@@ -56,4 +56,10 @@ class Colours {
 
 	/** See `MOBIUS_BAND_A`. **/
 	public static inline final MOBIUS_BAND_B:Int = 0xFF3C6EB0;
+
+	/** `biomes.common.tree.TreeMesh`'s own trunks — a plain bark-brown placeholder, no real art yet either. **/
+	public static inline final TREE_TRUNK:Int = 0xFF5C4530;
+
+	/** `biomes.common.tree.TreeMesh`'s own foliage — a deep conifer green, distinct from `GRASS_BASE`/`GRASS_TIP` so a forest's canopy reads apart from the ground cover beneath it. **/
+	public static inline final TREE_FOLIAGE:Int = 0xFF1F4D2E;
 }

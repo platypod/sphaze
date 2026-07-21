@@ -8,6 +8,7 @@ import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
 import biomes.mobius.MobiusBiome;
 import biomes.mobius.MobiusForestGenerator;
+import biomes.mobius.MobiusMesh;
 import biomes.tower.TowerBiome;
 import biomes.tower.TowerGenerator;
 import entities.hourglass.HourglassModel;
@@ -42,6 +43,8 @@ class GameLoop {
 
 	final s3d:h3d.scene.Scene;
 
+	final engine:h3d.Engine;
+
 	var player:PlayerModel;
 
 	/** Every biome that exists, plus which ones the player has discovered so far — see `biomes.common.Biome`'s own class doc for why the hub is one of these too, not a special case. **/
@@ -63,6 +66,7 @@ class GameLoop {
 	**/
 	public function new(s3d:h3d.scene.Scene, s2d:h2d.Scene, engine:h3d.Engine) {
 		this.s3d = s3d;
+		this.engine = engine;
 
 		engine.backgroundColor = BACKGROUND_COLOR;
 		s3d.camera.fovY = CAMERA_FOV_Y;
@@ -77,7 +81,7 @@ class GameLoop {
 		biomeRegistry.register(new MazeBiome(MazeGenerator.generate()));
 		biomeRegistry.register(new TowerBiome(TowerGenerator.generate(), hourglassModel));
 		biomeRegistry.register(new MobiusBiome(MobiusForestGenerator.generate()));
-		enterBiome(HubBiome.ID, false);
+		enterBiome(MobiusBiome.ID, false);
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,
 		// perf stats. Hidden by default; toggled in fixedUpdate.
@@ -124,6 +128,7 @@ class GameLoop {
 		biomeRegistry.markDiscovered(id);
 
 		currentBiome = biome;
+		engine.backgroundColor = biome.backgroundColor();
 		mazeGroup.removeChildren();
 		biome.build(mazeGroup);
 
@@ -295,6 +300,20 @@ class GameLoop {
 			debugOverlayVisible = !debugOverlayVisible;
 			debugOverlay.visible = debugOverlayVisible;
 		}
+		if (currentBiome.id() == MobiusBiome.ID) {
+			var mobiusBiome = Std.downcast(currentBiome, MobiusBiome);
+			if (mobiusBiome != null) {
+				var rotateDirection = hxd.Key.isDown(Keybinds.SPRINT) ? -1 : 1;
+				if (hxd.Key.isPressed(Keybinds.MOBIUS_TREE2_ROTATE_X))
+					mobiusBiome.rotateTreeAlignment(0, rotateDirection);
+				if (hxd.Key.isPressed(Keybinds.MOBIUS_TREE2_ROTATE_Y))
+					mobiusBiome.rotateTreeAlignment(1, rotateDirection);
+				if (hxd.Key.isPressed(Keybinds.MOBIUS_TREE2_ROTATE_Z))
+					mobiusBiome.rotateTreeAlignment(2, rotateDirection);
+				if (hxd.Key.isPressed(Keybinds.MOBIUS_TREE2_OFFSET))
+					mobiusBiome.adjustTreeGroundBias(rotateDirection);
+			}
+		}
 		if (debugOverlayVisible) {
 			updateDebugOverlay();
 		}
@@ -342,6 +361,11 @@ class GameLoop {
 			'',
 			'fps=' + hxd.Math.fmt(hxd.Timer.fps()),
 		];
+		if (currentBiome.id() == MobiusBiome.ID) {
+			lines.push(MobiusMesh.importedTreeDebugLabel());
+			lines.push("tree align: T/Y/U (+15°), Shift+T/Y/U (-15°)");
+			lines.push("tree offset: I (+), Shift+I (-)");
+		}
 
 		// performance.memory is a non-standard, Chromium-only API — absent
 		// (Firefox/Safari, or newer Chrome with the feature restricted)

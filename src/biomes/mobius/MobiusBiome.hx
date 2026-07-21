@@ -52,12 +52,27 @@ class MobiusBiome implements Biome {
 	**/
 	static inline final EXIT_ARC_OFFSET:Float = 8;
 
+	/**
+		How close the forest's own Möbius branch cut is allowed to drift
+		toward the player before the forest gets rebuilt with that cut moved
+		back opposite them. A quarter-lap safety margin keeps nearby trees on
+		the player's own visible lift while avoiding a rebuild every small
+		step.
+	**/
+	static inline final FOREST_CUT_MIN_SEPARATION:Float = 1.5707963267948966;
+
 	final twists:Int;
 
 	final space:MobiusSpace;
 
 	/** The generated forest this visit walks through — see class doc for why it's handed in rather than rolled fresh each visit. Replaced wholesale by `restore`, never mutated tree-by-tree. **/
 	var forest:ForestLayout;
+
+	var forestContainer:Null<h3d.scene.Object>;
+
+	var currentForestCutU:Float = MobiusModel.TREE_FRAME_CUT_U;
+
+	var currentForestFlipped:Bool = false;
 
 	public function new(forest:ForestLayout, twists:Int = MobiusModel.DEFAULT_TWISTS) {
 		this.forest = forest;
@@ -73,8 +88,14 @@ class MobiusBiome implements Biome {
 		return GRAVITY;
 	}
 
+	public function backgroundColor():Int {
+		return 0x04060C;
+	}
+
 	public function build(parent:h3d.scene.Object):Void {
-		MobiusMesh.build(parent, twists, forest);
+		MobiusMesh.buildStatic(parent, twists);
+		forestContainer = new h3d.scene.Object(parent);
+		MobiusMesh.buildForest(forestContainer, twists, forest, currentForestCutU, currentForestFlipped);
 	}
 
 	/** Always the loop's own `u = 0`, dead center across the width — see `MobiusModel.spawnPosition`/`spawnForward`. **/
@@ -95,8 +116,25 @@ class MobiusBiome implements Biome {
 		Gravity.fallToSurface(player, GRAVITY, dt);
 	}
 
-	/** Nothing here ticks on its own — see `biomes.common.Biome.tick`'s own doc. **/
-	public function tick(player:PlayerModel, dt:Float):Void {}
+	/**
+		Nothing here has gameplay state of its own, but the forest's rendered
+		Möbius chart needs to keep its branch cut away from the player so
+		nearby colliding trees stay visible instead of slipping onto the
+		other lift of the strip.
+	**/
+	public function tick(player:PlayerModel, dt:Float):Void {
+		var params = MobiusMath.paramsAt(player.pos, twists, MobiusModel.RADIUS);
+		var playerFrame = MobiusMath.localFrameWithCutAndOrientationAt(params.u, params.v, twists, MobiusModel.RADIUS, currentForestCutU, currentForestFlipped);
+		var needsFlip = playerFrame.normal.dot(player.surfaceUp) < 0;
+		if (!needsFlip && angularSeparation(params.u, currentForestCutU) >= FOREST_CUT_MIN_SEPARATION) {
+			return;
+		}
+		if (needsFlip) {
+			currentForestFlipped = !currentForestFlipped;
+		}
+		currentForestCutU = wrapAngle(params.u + Math.PI);
+		rebuildForest();
+	}
 
 	/** No game-speed control here — see `biomes.common.Biome.timeScale`'s own doc. **/
 	public function timeScale():Float {
@@ -109,5 +147,34 @@ class MobiusBiome implements Biome {
 
 	public function restore(json:String):Void {
 		forest = MobiusForestGenerator.deserialize(json);
+		rebuildForest();
+	}
+
+	public function rotateTreeAlignment(axis:Int, direction:Int = 1):Void {
+		MobiusMesh.rotateImportedTreeAlignment(axis, direction);
+		rebuildForest();
+	}
+
+	public function adjustTreeGroundBias(direction:Int = 1):Void {
+		MobiusMesh.adjustImportedTreeGroundBias(direction);
+		rebuildForest();
+	}
+
+	function rebuildForest():Void {
+		if (forestContainer == null) {
+			return;
+		}
+		forestContainer.removeChildren();
+		MobiusMesh.buildForest(forestContainer, twists, forest, currentForestCutU, currentForestFlipped);
+	}
+
+	static function wrapAngle(u:Float):Float {
+		var wrapped = u % (2 * Math.PI);
+		return wrapped < 0 ? wrapped + 2 * Math.PI : wrapped;
+	}
+
+	static function angularSeparation(a:Float, b:Float):Float {
+		var delta = Math.abs(a - b) % (2 * Math.PI);
+		return delta > Math.PI ? 2 * Math.PI - delta : delta;
 	}
 }

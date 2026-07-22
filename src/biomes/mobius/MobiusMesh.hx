@@ -81,11 +81,10 @@ class MobiusMesh {
 
 	static final IMPORTED_TREE_FOLIAGE_COLOR = 0xFF2E6B2E;
 
-	// `setDirection` aligns local +X to the surface normal; all Quaternius models
-	// share the same up-axis convention, so one shared alignment covers all variants.
+	// `setDirection` aligns local +X to the surface normal; Quaternius trees use one shared pre-rotation.
 	static inline final HALF_PI:Float = 1.5707963267948966;
-	static inline final ROTATION_STEP:Float = 0.2617993877991494; // 15°
-	static inline final GROUND_BIAS_STEP:Float = 0.05;
+	static final IMPORTED_TREE_ALIGNMENT:{rx:Float, ry:Float, rz:Float} = {rx: 0.0, ry: HALF_PI, rz: 0.0};
+	static inline final IMPORTED_TREE_GROUND_BIAS:Float = 0.0;
 
 	static final importedTreeModelCache = new h3d.prim.ModelCache();
 
@@ -94,12 +93,6 @@ class MobiusMesh {
 	static var importedTreePivots:Array<h3d.Vector> = [];
 
 	static var importedTreePrototypes:Array<Null<h3d.scene.Object>> = [];
-
-	/** Shared alignment for all Quaternius models — T/Y/U keys tune it live. **/
-	static var importedTreeAlignmentRot:{rx:Float, ry:Float, rz:Float} = {rx: 0.0, ry: HALF_PI, rz: 0.0};
-
-	/** Extra downward offset applied at placement time for all variants — I key tunes it live. **/
-	static var importedTreeGroundBias:Float = 0.0;
 
 	/**
 		@param parent the scene object to attach the meshes under.
@@ -189,62 +182,16 @@ class MobiusMesh {
 		holder.setScale((tree.trunkHeight + tree.foliageHeight) / importedTreeHeights[variantIndex]);
 
 		var aligner = new h3d.scene.Object(holder);
-		aligner.setRotation(importedTreeAlignmentRot.rx, importedTreeAlignmentRot.ry, importedTreeAlignmentRot.rz);
+		aligner.setRotation(IMPORTED_TREE_ALIGNMENT.rx, IMPORTED_TREE_ALIGNMENT.ry, IMPORTED_TREE_ALIGNMENT.rz);
 
 		var model = getImportedTreePrototype(variantIndex).clone();
 		var pivot = importedTreePivots[variantIndex];
-		model.setPosition(-pivot.x, -pivot.y, -pivot.z - importedTreeGroundBias);
+		model.setPosition(-pivot.x, -pivot.y, -pivot.z - IMPORTED_TREE_GROUND_BIAS);
 		aligner.addChild(model);
 	}
 
 	static inline function importedTreeVariantIndex(treeIndex:Int):Int {
 		return treeIndex % IMPORTED_TREE_MODEL_PATHS.length;
-	}
-
-	/** Rotate the shared alignment on one axis (0=X, 1=Y, 2=Z). Invalidates all prototypes. **/
-	public static function rotateImportedTreeAlignment(axis:Int, direction:Int = 1):Void {
-		var delta = ROTATION_STEP * (direction < 0 ? -1.0 : 1.0);
-		switch (axis) {
-			case 0:
-				importedTreeAlignmentRot.rx = normalizeAngle(importedTreeAlignmentRot.rx + delta);
-			case 1:
-				importedTreeAlignmentRot.ry = normalizeAngle(importedTreeAlignmentRot.ry + delta);
-			case 2:
-				importedTreeAlignmentRot.rz = normalizeAngle(importedTreeAlignmentRot.rz + delta);
-			default:
-				return;
-		}
-		invalidateAllImportedTreePrototypes();
-	}
-
-	/** Nudge the shared ground offset up/down. No prototype invalidation needed — applied at placement time. **/
-	public static function adjustImportedTreeGroundBias(direction:Int = 1):Void {
-		importedTreeGroundBias = hxd.Math.clamp(importedTreeGroundBias + GROUND_BIAS_STEP * (direction < 0 ? -1.0 : 1.0), -1.0, 6.0);
-	}
-
-	public static function importedTreeDebugLabel():String {
-		return
-			'trees alignment (rx=${angleDegreesLabel(importedTreeAlignmentRot.rx)}, ry=${angleDegreesLabel(importedTreeAlignmentRot.ry)}, rz=${angleDegreesLabel(importedTreeAlignmentRot.rz)}, offset=${hxd.Math.fmt(importedTreeGroundBias)})';
-	}
-
-	static inline function angleDegreesLabel(radians:Float):String {
-		return Std.string(Math.round(radians * 180 / Math.PI));
-	}
-
-	static function normalizeAngle(radians:Float):Float {
-		var wrapped = radians % (2 * Math.PI);
-		if (wrapped > Math.PI) {
-			wrapped -= 2 * Math.PI;
-		} else if (wrapped < -Math.PI) {
-			wrapped += 2 * Math.PI;
-		}
-		return wrapped;
-	}
-
-	static function invalidateAllImportedTreePrototypes():Void {
-		importedTreePrototypes = [];
-		importedTreeHeights = [];
-		importedTreePivots = [];
 	}
 
 	static function getImportedTreePrototype(variantIndex:Int):h3d.scene.Object {
@@ -272,13 +219,13 @@ class MobiusMesh {
 		})) {
 			mesh.material.mainPass.culling = None;
 		}
-		applyImportedTreeMaterials(found, modelName);
+		applyImportedTreeMaterials(found);
 		importedTreePrototypes[variantIndex] = found.clone();
 		return importedTreePrototypes[variantIndex];
 	}
 
 	static function importedTreeMetrics(bounds:h3d.col.Bounds, found:h3d.scene.Object):{height:Float, pivot:h3d.Vector} {
-		var alignment = importedTreeAlignmentRot;
+		var alignment = IMPORTED_TREE_ALIGNMENT;
 		var q = new h3d.Quat();
 		q.initRotation(alignment.rx, alignment.ry, alignment.rz);
 		var alignMatrix = q.toMatrix();
@@ -332,27 +279,28 @@ class MobiusMesh {
 		};
 	}
 
-	static function applyImportedTreeMaterials(object:h3d.scene.Object, modelName:String):Void {
+	static function applyImportedTreeMaterials(object:h3d.scene.Object):Void {
 		for (mesh in object.findAll(function(o:h3d.scene.Object):Null<h3d.scene.Mesh> {
 			return Std.downcast(o, h3d.scene.Mesh);
 		})) {
 			var multi = Std.downcast(mesh, h3d.scene.MultiMaterial);
 			if (multi != null) {
 				for (i in 0...multi.materials.length) {
-					multi.materials[i] = makeImportedTreeMaterial(multi.materials[i], modelName, i, multi.materials.length);
+					multi.materials[i] = makeImportedTreeMaterial(multi.materials[i], mesh.name, i, multi.materials.length);
 				}
 				multi.material = multi.materials[0];
 			} else {
-				mesh.material = makeImportedTreeMaterial(mesh.material, modelName, 0, 1);
+				mesh.material = makeImportedTreeMaterial(mesh.material, mesh.name, 0, 1);
 			}
 		}
 	}
 
-	static function makeImportedTreeMaterial(original:h3d.mat.Material, modelName:String, materialIndex:Int, materialCount:Int):h3d.mat.Material {
+	static function makeImportedTreeMaterial(original:h3d.mat.Material, meshName:String, materialIndex:Int, materialCount:Int):h3d.mat.Material {
 		if (original == null) {
 			return null;
 		}
-		var color = isImportedTreeFoliageMaterial(original.name, materialIndex, materialCount) ? IMPORTED_TREE_FOLIAGE_COLOR : IMPORTED_TREE_BARK_COLOR;
+		var color = isImportedTreeFoliageMaterial(meshName, original.name, materialIndex,
+			materialCount) ? IMPORTED_TREE_FOLIAGE_COLOR : IMPORTED_TREE_BARK_COLOR;
 		var material = h3d.mat.Material.create();
 		material.name = original.name;
 		var props:Dynamic = material.getDefaultProps();
@@ -368,11 +316,17 @@ class MobiusMesh {
 		return material;
 	}
 
-	static function isImportedTreeFoliageMaterial(name:String, materialIndex:Int, materialCount:Int):Bool {
-		var lowered = name.toLowerCase();
-		return lowered.indexOf("leaf") >= 0
-			|| lowered.indexOf("leaves") >= 0
-			|| lowered.indexOf("foliage") >= 0
+	static function isImportedTreeFoliageMaterial(meshName:String, materialName:String, materialIndex:Int, materialCount:Int):Bool {
+		var loweredMesh = meshName == null ? "" : meshName.toLowerCase();
+		var loweredMaterial = materialName == null ? "" : materialName.toLowerCase();
+		return loweredMesh.indexOf("leaf") >= 0
+			|| loweredMesh.indexOf("leaves") >= 0
+			|| loweredMesh.indexOf("foliage") >= 0
+			|| loweredMesh.indexOf("canopy") >= 0
+			|| loweredMaterial.indexOf("leaf") >= 0
+			|| loweredMaterial.indexOf("leaves") >= 0
+			|| loweredMaterial.indexOf("foliage") >= 0
+			|| loweredMaterial.indexOf("canopy") >= 0
 			|| (materialCount == 2 && materialIndex == 1);
 	}
 

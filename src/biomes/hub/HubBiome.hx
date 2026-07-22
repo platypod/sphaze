@@ -94,6 +94,10 @@ class HubBiome implements Biome {
 		return GRAVITY;
 	}
 
+	public function backgroundColor():Int {
+		return 0x202020;
+	}
+
 	public function build(parent:h3d.scene.Object):Void {
 		HubMesh.build(parent, isWalkable);
 		MazeShrine.build(parent, mazeShrineBasis, hxd.Res.sprites.painting__biome_maze_01.toTexture());

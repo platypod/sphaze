@@ -69,4 +69,21 @@ class MobiusSpaceTest extends Test {
 
 		Assert.floatEquals(-2.0, newParams.v, 0.05);
 	}
+
+	function testMoveAlongPreservesForwardHandednessAcrossTheLoopSeam():Void {
+		var space = new MobiusSpace(3, RADIUS);
+		var beforeU = 2 * Math.PI - 0.02;
+		var startV = 10.0;
+		var pos = MobiusMath.pointAt(beforeU, startV, 3, RADIUS);
+		var frame = MobiusMath.localFrameAt(beforeU, startV, 3, RADIUS);
+		var yaw = 0.35;
+		var forward = frame.tu.scaled(Math.cos(yaw)).add(frame.tv.scaled(Math.sin(yaw))).normalized();
+
+		var result = space.moveAlong(pos, forward, frame.tu, 1, RADIUS);
+		var expectedU = beforeU + 1 / frame.tuLength;
+		var expectedFrame = MobiusMath.localFrameAt(expectedU, startV, 3, RADIUS);
+		var expectedForward = expectedFrame.tu.scaled(Math.cos(yaw)).add(expectedFrame.tv.scaled(Math.sin(yaw))).normalized();
+
+		Assert.isTrue(result.forward.dot(expectedForward) > 0.999999);
+	}
 }

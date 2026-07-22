@@ -68,11 +68,17 @@ class MobiusSpace implements Space {
 		var params = MobiusMath.paramsAt(pos, twists, this.radius);
 		var frame = MobiusMath.localFrameAt(params.u, params.v, twists, this.radius);
 
-		// forward's own components against the OLD frame - carried through
-		// to the NEW frame unchanged, the discrete parallel-transport this
-		// class doc describes. Includes the (normally ~0) normal component
-		// too, purely as numerical slack against forward ever drifting
-		// slightly out of the tangent plane.
+		// forward's own components against the OLD frame. Usually these carry
+		// straight through to the NEW frame unchanged, but an odd-twist seam
+		// wrap swaps to the equivalent `(u ± 2*PI, -v)` parameter branch,
+		// whose own `tv` and `normal` axes are negated. Preserving the same
+		// *world* forward vector across that relabeling therefore needs those
+		// two coefficients to flip sign as well; otherwise the across-width
+		// component mirrors, which is exactly what made a +pitch/+yaw offset
+		// read back as the matching negative after crossing the seam.
+		// Includes the (normally ~0) normal component too, purely as
+		// numerical slack against forward ever drifting slightly out of the
+		// tangent plane.
 		var forwardU = forward.dot(frame.tu);
 		var forwardV = forward.dot(frame.tv);
 		var forwardN = forward.dot(frame.normal);
@@ -89,12 +95,16 @@ class MobiusSpace implements Space {
 			newU -= 2 * Math.PI;
 			if (twists % 2 != 0) {
 				newV = -newV;
+				forwardV = -forwardV;
+				forwardN = -forwardN;
 			}
 		}
 		while (newU < 0) {
 			newU += 2 * Math.PI;
 			if (twists % 2 != 0) {
 				newV = -newV;
+				forwardV = -forwardV;
+				forwardN = -forwardN;
 			}
 		}
 

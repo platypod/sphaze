@@ -150,16 +150,6 @@ class MobiusBiome implements Biome {
 		rebuildForest();
 	}
 
-	public function rotateTreeAlignment(axis:Int, direction:Int = 1):Void {
-		MobiusMesh.rotateImportedTreeAlignment(axis, direction);
-		rebuildForest();
-	}
-
-	public function adjustTreeGroundBias(direction:Int = 1):Void {
-		MobiusMesh.adjustImportedTreeGroundBias(direction);
-		rebuildForest();
-	}
-
 	function rebuildForest():Void {
 		if (forestContainer == null) {
 			return;

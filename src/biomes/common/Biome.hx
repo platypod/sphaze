@@ -25,6 +25,14 @@ interface Biome {
 	**/
 	function gravity():Float;
 
+	/**
+		This biome's own clear color, used by `GameLoop` when entering it.
+		Most biomes keep the default neutral gray; the Möbius strip uses a
+		darker space backdrop instead.
+		@return this biome's background color as `0xRRGGBB`.
+	**/
+	function backgroundColor():Int;
+
 	/** (Re)builds this biome's meshes under `parent`. Called each time the biome is entered. **/
 	function build(parent:h3d.scene.Object):Void;
 

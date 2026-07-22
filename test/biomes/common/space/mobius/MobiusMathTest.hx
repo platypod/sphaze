@@ -69,4 +69,32 @@ class MobiusMathTest extends Test {
 		Assert.floatEquals(0, frame.normal.z, 1e-9);
 		Assert.floatEquals(RADIUS, frame.tuLength, 1e-9);
 	}
+
+	function testLocalFrameWithCutAtCanMoveTheBranchCutAwayFromTheWrapSeam():Void {
+		var cutU = Math.PI;
+		var left = MobiusMath.localFrameWithCutAt(2 * Math.PI - 0.001, 30, 3, RADIUS, cutU);
+		var right = MobiusMath.localFrameWithCutAt(0.001, -30, 3, RADIUS, cutU);
+
+		Assert.isTrue(left.tv.dot(right.tv) > 0.999);
+		Assert.isTrue(left.normal.dot(right.normal) > 0.999);
+	}
+
+	function testLocalFrameWithCutAtIntroducesTheFlipAtTheRequestedCutInstead():Void {
+		var cutU = Math.PI;
+		var left = MobiusMath.localFrameWithCutAt(cutU - 0.001, 30, 3, RADIUS, cutU);
+		var right = MobiusMath.localFrameWithCutAt(cutU + 0.001, 30, 3, RADIUS, cutU);
+
+		Assert.isTrue(left.tv.dot(right.tv) < -0.999);
+		Assert.isTrue(left.normal.dot(right.normal) < -0.999);
+	}
+
+	function testLocalFrameWithCutAndOrientationAtCanFlipTheWholeChartBranch():Void {
+		var cutU = Math.PI;
+		var base = MobiusMath.localFrameWithCutAndOrientationAt(0.7, 4.0, 3, RADIUS, cutU, false);
+		var flipped = MobiusMath.localFrameWithCutAndOrientationAt(0.7, 4.0, 3, RADIUS, cutU, true);
+
+		Assert.isTrue(base.tu.dot(flipped.tu) > 0.999999);
+		Assert.isTrue(base.tv.dot(flipped.tv) < -0.999999);
+		Assert.isTrue(base.normal.dot(flipped.normal) < -0.999999);
+	}
 }

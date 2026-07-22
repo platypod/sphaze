@@ -80,25 +80,29 @@ class MobiusForestGeneratorTest extends Test {
 		for (t in layout.trees) {
 			Assert.isTrue(t.species == MobiusForestGenerator.SPECIES_CONIFER
 				|| t.species == MobiusForestGenerator.SPECIES_ROUND
+				|| t.species == MobiusForestGenerator.SPECIES_SUMMER
 				|| t.species == MobiusForestGenerator.SPECIES_DEAD);
 		}
 	}
 
-	function testGenerateProducesAllThreeSpeciesAtDefaultChances():Void {
+	function testGenerateProducesAllFourSpeciesAtDefaultChances():Void {
 		// Not a statistical proof, just a sanity check that every species is
-		// actually reachable - 150 trees at 15%-plus chance each is
-		// astronomically unlikely to miss any of them by chance alone.
-		var layout = MobiusForestGenerator.generate(3, seededRandom(8), 150);
+		// actually reachable - 250 trees at 8%-plus chance each is still
+		// overwhelmingly unlikely to miss any of them by chance alone.
+		var layout = MobiusForestGenerator.generate(3, seededRandom(8), 250);
 		var seenConifer = false;
 		var seenRound = false;
+		var seenSummer = false;
 		var seenDead = false;
 		for (t in layout.trees) {
 			seenConifer = seenConifer || t.species == MobiusForestGenerator.SPECIES_CONIFER;
 			seenRound = seenRound || t.species == MobiusForestGenerator.SPECIES_ROUND;
+			seenSummer = seenSummer || t.species == MobiusForestGenerator.SPECIES_SUMMER;
 			seenDead = seenDead || t.species == MobiusForestGenerator.SPECIES_DEAD;
 		}
 		Assert.isTrue(seenConifer);
 		Assert.isTrue(seenRound);
+		Assert.isTrue(seenSummer);
 		Assert.isTrue(seenDead);
 	}
 

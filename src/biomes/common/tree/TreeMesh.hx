@@ -71,8 +71,20 @@ class TreeMesh {
 	/** The upper tier's own base radius, as a fraction of the full foliage radius — narrower, so the silhouette actually tapers going up through both tiers rather than just the very top point. **/
 	static inline final CONIFER_UPPER_TIER_RADIUS_FRACTION:Float = 0.55;
 
-	/** How far up the whole foliage height `addRoundFoliage`'s own widest point (the "equator") sits — just past the middle, same "bulges slightly low, tapers longer above" shape a real round canopy reads as. **/
-	static inline final ROUND_EQUATOR_FRACTION:Float = 0.4;
+	/** First widening point for the broad summer-canopy silhouette (`addRoundFoliage`) — low enough that the foliage reads squat and chunky rather than a tall teardrop. **/
+	static inline final SUMMER_LOWER_BULGE_FRACTION:Float = 0.22;
+
+	/** Widest shoulder of the summer canopy — later than the first flare, so the silhouette keeps a broad midsection for a while. **/
+	static inline final SUMMER_MAIN_BULGE_FRACTION:Float = 0.58;
+
+	/** Where the canopy starts tapering decisively toward the tip. **/
+	static inline final SUMMER_UPPER_TAPER_FRACTION:Float = 0.82;
+
+	/** Radius at the lower flare, as a fraction of the full canopy width. **/
+	static inline final SUMMER_LOWER_RADIUS_FRACTION:Float = 0.82;
+
+	/** Radius near the top, still fairly broad before the final tip. **/
+	static inline final SUMMER_UPPER_RADIUS_FRACTION:Float = 0.62;
 
 	/** How many stub branches `addDeadBranches` adds. **/
 	static inline final BRANCH_COUNT:Int = 3;
@@ -144,10 +156,11 @@ class TreeMesh {
 	}
 
 	/**
-		Appends a round-canopy foliage treatment on top of a trunk of
-		`trunkRadius`/`trunkHeight` (see `addTrunk`) — one continuous bulge
-		from the trunk's own radius out to `foliageRadius` at the canopy's
-		own equator, then back in to a point at the tip.
+		Appends a broad low-poly summer-canopy treatment on top of a trunk of
+		`trunkRadius`/`trunkHeight` (see `addTrunk`) — widening in two steps
+		into a chunky crown, holding that width through the middle, then
+		tapering back to a point. More like a stylized authored "summer tree"
+		silhouette than the previous simple teardrop.
 		@param points vertex buffer to append to.
 		@param idx index buffer to append to.
 		@param uvs UV buffer to append to.
@@ -162,11 +175,19 @@ class TreeMesh {
 	public static function addRoundFoliage(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, base:h3d.Vector, up:h3d.Vector,
 			tangent:h3d.Vector, right:h3d.Vector, trunkHeight:Float, trunkRadius:Float, foliageRadius:Float, foliageHeight:Float):Void {
 		var totalHeight = trunkHeight + foliageHeight;
-		var equatorY = trunkHeight + foliageHeight * ROUND_EQUATOR_FRACTION;
+		var lowerY = trunkHeight + foliageHeight * SUMMER_LOWER_BULGE_FRACTION;
+		var mainY = trunkHeight + foliageHeight * SUMMER_MAIN_BULGE_FRACTION;
+		var upperY = trunkHeight + foliageHeight * SUMMER_UPPER_TAPER_FRACTION;
+		var lowerRadius = foliageRadius * SUMMER_LOWER_RADIUS_FRACTION;
+		var upperRadius = foliageRadius * SUMMER_UPPER_RADIUS_FRACTION;
 
-		addRing(points, idx, uvs, base, up, tangent, right, trunkRadius, trunkHeight, heightFraction(trunkHeight, totalHeight), foliageRadius, equatorY,
-			heightFraction(equatorY, totalHeight), FOLIAGE_SIDES);
-		addRing(points, idx, uvs, base, up, tangent, right, foliageRadius, equatorY, heightFraction(equatorY, totalHeight), 0, totalHeight, 1, FOLIAGE_SIDES);
+		addRing(points, idx, uvs, base, up, tangent, right, trunkRadius, trunkHeight, heightFraction(trunkHeight, totalHeight), lowerRadius, lowerY,
+			heightFraction(lowerY, totalHeight), FOLIAGE_SIDES);
+		addRing(points, idx, uvs, base, up, tangent, right, lowerRadius, lowerY, heightFraction(lowerY, totalHeight), foliageRadius, mainY,
+			heightFraction(mainY, totalHeight), FOLIAGE_SIDES);
+		addRing(points, idx, uvs, base, up, tangent, right, foliageRadius, mainY, heightFraction(mainY, totalHeight), upperRadius, upperY,
+			heightFraction(upperY, totalHeight), FOLIAGE_SIDES);
+		addRing(points, idx, uvs, base, up, tangent, right, upperRadius, upperY, heightFraction(upperY, totalHeight), 0, totalHeight, 1, FOLIAGE_SIDES);
 	}
 
 	/**

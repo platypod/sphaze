@@ -35,11 +35,13 @@ class MobiusCollision {
 	public static function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float, twists:Int, radius:Float, forest:ForestLayout):Void {
 		var oldPos = player.pos;
 		var oldForward = player.forward;
+		var oldSurfaceUp = player.surfaceUp;
 		player.moveAlong(direction, distance, radius);
 		var params = MobiusMath.paramsAt(player.pos, twists, radius);
 		if (!MobiusModel.isWithinEdge(params.v) || isBlockedByATrunk(player.pos, forest)) {
 			player.pos = oldPos;
 			player.forward = oldForward;
+			player.surfaceUp = oldSurfaceUp;
 		}
 	}
 

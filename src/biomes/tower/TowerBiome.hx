@@ -85,6 +85,10 @@ class TowerBiome implements Biome {
 		return GRAVITY;
 	}
 
+	public function backgroundColor():Int {
+		return 0x202020;
+	}
+
 	/**
 		Builds the shaft's own meshes, then — if the hourglass secret was
 		already triggered on some earlier hub visit before this entry —

@@ -38,7 +38,7 @@ class Camera {
 		@param player the player to position it at.
 	**/
 	public static function applyTo(camera:h3d.Camera, player:PlayerModel):Void {
-		var up = player.space.upAt(player.pos);
+		var up = player.surfaceUp;
 		var eyePos = player.pos.add(up.scaled(EYE_HEIGHT + player.airborneHeight));
 		var right = player.rightVector();
 		var viewForward = SphereMath.rotateAroundAxis(player.forward, right, player.pitch);

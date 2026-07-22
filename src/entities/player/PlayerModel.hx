@@ -75,6 +75,18 @@ class PlayerModel extends Entity {
 	public final space:Space;
 
 	/**
+		A continuous choice of local "up" at `pos`, used for camera roll,
+		turning, and strafing. `space.upAt(pos)` alone is enough on orientable
+		surfaces (sphere, plane), but not on the Möbius strip: there, the same
+		physical point has two equally valid opposite normals, and
+		`MobiusSpace.upAt` necessarily picks one branch discontinuously at the
+		seam. Keeping the branch closest to the previous tick's own choice
+		preserves a stable local frame while the player walks through that
+		wrap.
+	**/
+	public var surfaceUp:h3d.Vector;
+
+	/**
 		Current vertical speed — positive moves away from the ground,
 		negative toward it. Shared physics state that any biome's own
 		`biomes.common.Biome.applyGravity` integrates every fixed step;
@@ -110,6 +122,7 @@ class PlayerModel extends Entity {
 		this.forward = forward;
 		this.pitch = clampPitch(pitch);
 		this.space = space != null ? space : SphereSpace.INSTANCE;
+		this.surfaceUp = this.space.upAt(pos);
 	}
 
 	/**
@@ -139,8 +152,7 @@ class PlayerModel extends Entity {
 		@return unit tangent at `pos`, perpendicular to `forward`, pointing right.
 	**/
 	public function rightVector():h3d.Vector {
-		var up = space.upAt(pos);
-		return forward.cross(up).normalized();
+		return forward.cross(surfaceUp).normalized();
 	}
 
 	/**
@@ -155,9 +167,7 @@ class PlayerModel extends Entity {
 		@param radius sphere radius — must match the biome's physical sphere (see GridGeometry.RADIUS).
 	**/
 	public function moveForward(distance:Float, radius:Float):Void {
-		var result = space.moveAlong(pos, forward, forward, distance, radius);
-		pos = result.pos;
-		forward = result.forward;
+		applyMoveResult(space.moveAlong(pos, forward, forward, distance, radius));
 	}
 
 	/**
@@ -186,9 +196,7 @@ class PlayerModel extends Entity {
 		@param radius sphere radius — must match the biome's physical sphere (see GridGeometry.RADIUS).
 	**/
 	public function moveAlong(direction:h3d.Vector, distance:Float, radius:Float):Void {
-		var result = space.moveAlong(pos, forward, direction, distance, radius);
-		pos = result.pos;
-		forward = result.forward;
+		applyMoveResult(space.moveAlong(pos, forward, direction, distance, radius));
 	}
 
 	/**
@@ -197,8 +205,7 @@ class PlayerModel extends Entity {
 		@param deltaAngle angle to turn by, in radians.
 	**/
 	public function turn(deltaAngle:Float):Void {
-		var up = space.upAt(pos);
-		forward = SphereMath.rotateAroundAxis(forward, up, deltaAngle);
+		forward = SphereMath.rotateAroundAxis(forward, surfaceUp, deltaAngle);
 	}
 
 	/**
@@ -223,6 +230,18 @@ class PlayerModel extends Entity {
 		}
 		verticalVelocity = impulse;
 		grounded = false;
+	}
+
+	function applyMoveResult(result:{pos:h3d.Vector, forward:h3d.Vector}):Void {
+		var previousUp = surfaceUp;
+		pos = result.pos;
+		forward = result.forward;
+
+		var newUp = space.upAt(pos);
+		if (newUp.dot(previousUp) < 0) {
+			newUp = newUp.scaled(-1);
+		}
+		surfaceUp = newUp;
 	}
 
 	static function clampPitch(p:Float):Float {

@@ -14,7 +14,8 @@ import biomes.common.space.mobius.MobiusMath;
 	every tree, every fixed step (`biomes.mobius.MobiusCollision.tryMove`
 	runs at 60Hz) — cheap for one tree, not free at `MobiusModel.TARGET_TREE_COUNT`-many.
 
-	`species` is one of `MobiusForestGenerator.SPECIES_CONIFER`/`_ROUND`/`_DEAD`
+	`species` is one of `MobiusForestGenerator.SPECIES_CONIFER`/`_ROUND`/
+	`_SUMMER`/`_DEAD`
 	— a plain `Int`, not a real Haxe enum, so this stays a flat, directly
 	JSON-serializable structure (an enum instance isn't). `rotation` spins
 	a tree's own `tangent`/`right` basis around `up` before
@@ -76,14 +77,20 @@ class MobiusForestGenerator {
 	/** A round-canopy silhouette (`biomes.common.tree.TreeMesh.addRoundFoliage`). **/
 	public static inline final SPECIES_ROUND:Int = 1;
 
+	/** An authored low-poly summer tree loaded from `res/models/trees-and-rocks.fbx`, used sparingly so the forest gets a few hero trees without making every tree a separate imported model draw call. **/
+	public static inline final SPECIES_SUMMER:Int = 2;
+
 	/** A bare trunk with a few stub branches, no foliage (`biomes.common.tree.TreeMesh.addDeadBranches`) — an accent, not the norm. **/
-	public static inline final SPECIES_DEAD:Int = 2;
+	public static inline final SPECIES_DEAD:Int = 3;
 
 	/** Chance a given tree rolls `SPECIES_CONIFER` — checked first, so this is its own share of the total. **/
 	static inline final CONIFER_CHANCE:Float = 0.5;
 
 	/** Chance a given tree rolls `SPECIES_ROUND`, checked after `SPECIES_CONIFER` — the remaining `1 - CONIFER_CHANCE - ROUND_CHANCE` falls through to `SPECIES_DEAD`. **/
-	static inline final ROUND_CHANCE:Float = 0.35;
+	static inline final ROUND_CHANCE:Float = 0.27;
+
+	/** Chance a given tree rolls the authored low-poly summer tree, checked after the procedural conifer/round variants. Kept modest so the imported-model draw-call cost stays bounded. **/
+	static inline final SUMMER_CHANCE:Float = 0.08;
 
 	/**
 		Scatters `count` trees (or however many fit before
@@ -115,7 +122,8 @@ class MobiusForestGenerator {
 			}
 
 			var speciesRoll = rng();
-			var species = speciesRoll < CONIFER_CHANCE ? SPECIES_CONIFER : (speciesRoll < CONIFER_CHANCE + ROUND_CHANCE ? SPECIES_ROUND : SPECIES_DEAD);
+			var species = speciesRoll < CONIFER_CHANCE ? SPECIES_CONIFER : (speciesRoll < CONIFER_CHANCE
+				+ ROUND_CHANCE ? SPECIES_ROUND : (speciesRoll < CONIFER_CHANCE + ROUND_CHANCE + SUMMER_CHANCE ? SPECIES_SUMMER : SPECIES_DEAD));
 
 			trees.push({
 				u: u,

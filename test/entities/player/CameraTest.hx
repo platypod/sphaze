@@ -1,5 +1,7 @@
 package entities.player;
 
+import biomes.common.space.mobius.MobiusMath;
+import biomes.common.space.mobius.MobiusSpace;
 import utest.Test;
 import utest.Assert;
 import biomes.common.space.sphere.SphereMath;
@@ -78,5 +80,24 @@ class CameraTest extends Test {
 		Camera.applyTo(camera, player);
 
 		Assert.floatEquals(radius - Camera.EYE_HEIGHT - 3, camera.pos.length(), 1e-9);
+	}
+
+	function testApplyToCameraStaysContinuousAcrossTheMobiusSeam():Void {
+		var radius = 50.0;
+		var twists = 3;
+		var beforeU = 2 * Math.PI - 0.02;
+		var startV = 30.0;
+		var pos = MobiusMath.pointAt(beforeU, startV, twists, radius);
+		var frame = MobiusMath.localFrameAt(beforeU, startV, twists, radius);
+		var player = new PlayerModel(pos, frame.tu, 0, new MobiusSpace(twists, radius));
+		var camera = new h3d.Camera();
+
+		Camera.applyTo(camera, player);
+		var oldUp = camera.up.clone();
+
+		player.moveForward(2, radius);
+		Camera.applyTo(camera, player);
+
+		Assert.isTrue(oldUp.dot(camera.up) > 0.99);
 	}
 }

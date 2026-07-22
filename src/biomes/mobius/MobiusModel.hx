@@ -32,14 +32,21 @@ class MobiusModel {
 	/** How far short of the ribbon's true edge a player is stopped — same role as `biomes.tower.TowerCollision.COLLISION_CLEARANCE`. **/
 	public static inline final COLLISION_CLEARANCE:Float = 1;
 
+	/** How thick each safety wall is, measured inward from the ribbon's own open edge. **/
+	public static inline final WALL_THICKNESS:Float = 4;
+
+	/** Half the player's own eye height (`entities.player.Camera.EYE_HEIGHT / 2`) — the requested low parapet height. **/
+	public static inline final WALL_HEIGHT:Float = 3;
+
 	/**
-		Whether `v` is still within the ribbon's own walkable width, short of
-		its true edge by `COLLISION_CLEARANCE`.
+		Whether `v` is still within the ribbon's own walkable width, stopping
+		at the inside face of the safety wall and short of that by
+		`COLLISION_CLEARANCE`.
 		@param v across-width offset from the centerline.
 		@return true if `v` hasn't crossed the ribbon's own edge.
 	**/
 	public static inline function isWithinEdge(v:Float):Bool {
-		return Math.abs(v) <= HALF_WIDTH - COLLISION_CLEARANCE;
+		return Math.abs(v) <= HALF_WIDTH - WALL_THICKNESS - COLLISION_CLEARANCE;
 	}
 
 	/**
@@ -97,4 +104,11 @@ class MobiusModel {
 
 	/** How far a tree's own root is lifted off the ribbon surface, along local `up` — same z-fighting-avoidance role as `biomes.common.grass.GrassMesh.ROOT_LIFT`. **/
 	public static inline final TREE_ROOT_LIFT:Float = 0.05;
+
+	/**
+		Where the forest's own unavoidable Möbius normal-sign branch cut lives.
+		Kept opposite the spawn seam so the visually obvious "strip connects to
+		itself here" region doesn't make tree meshes swap sides underfoot.
+	**/
+	public static inline final TREE_FRAME_CUT_U:Float = 3.141592653589793;
 }

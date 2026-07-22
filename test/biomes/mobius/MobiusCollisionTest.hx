@@ -69,6 +69,36 @@ class MobiusCollisionTest extends Test {
 		Assert.floatEquals(0, params.v, 1e-6);
 	}
 
+	function testTryMoveRestoresSurfaceUpWhenABlockedStepGetsReverted():Void {
+		var startV = MobiusModel.HALF_WIDTH - 2;
+		var pos = MobiusMath.pointAt(2 * Math.PI - 0.02, startV, TWISTS, MobiusModel.RADIUS);
+		var frame = MobiusMath.localFrameAt(2 * Math.PI - 0.02, startV, TWISTS, MobiusModel.RADIUS);
+		var player = new PlayerModel(pos, frame.tu, 0, new MobiusSpace(TWISTS, MobiusModel.RADIUS));
+		var oldSurfaceUp = player.surfaceUp;
+		var blockedResult = player.space.moveAlong(pos, frame.tu, frame.tu, 20, MobiusModel.RADIUS);
+		var forest:ForestLayout = {
+			trees: [
+				{
+					u: 0,
+					v: 0,
+					x: blockedResult.pos.x,
+					y: blockedResult.pos.y,
+					z: blockedResult.pos.z,
+					species: MobiusForestGenerator.SPECIES_CONIFER,
+					rotation: 0,
+					trunkHeight: 10,
+					trunkRadius: 2,
+					foliageRadius: 4,
+					foliageHeight: 8
+				}
+			]
+		};
+
+		MobiusCollision.tryMove(player, frame.tu, 20, TWISTS, MobiusModel.RADIUS, forest);
+
+		Assert.isTrue(oldSurfaceUp.dot(player.surfaceUp) > 0.999);
+	}
+
 	function testIsBlockedByATrunkIsTrueWithinTrunkRadiusPlusClearance():Void {
 		var forest:ForestLayout = {
 			trees: [

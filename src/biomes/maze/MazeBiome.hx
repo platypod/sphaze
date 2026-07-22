@@ -79,6 +79,10 @@ class MazeBiome implements Biome {
 		return GRAVITY;
 	}
 
+	public function backgroundColor():Int {
+		return 0x202020;
+	}
+
 	public function build(parent:h3d.scene.Object):Void {
 		GridMesh.build(maze, parent);
 		var size = PaintingModel.fillWall(GridMesh.WALL_HEIGHT);

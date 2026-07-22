@@ -1,5 +1,7 @@
 package entities.player;
 
+import biomes.common.space.mobius.MobiusMath;
+import biomes.common.space.mobius.MobiusSpace;
 import utest.Test;
 import utest.Assert;
 import biomes.common.space.sphere.SphereMath;
@@ -187,5 +189,20 @@ class PlayerModelTest extends Test {
 		player.jump(30);
 
 		Assert.floatEquals(18, player.verticalVelocity);
+	}
+
+	function testMoveForwardAcrossMobiusSeamKeepsSurfaceUpContinuous():Void {
+		var twists = 3;
+		var beforeU = 2 * Math.PI - 0.02;
+		var startV = 30.0;
+		var pos = MobiusMath.pointAt(beforeU, startV, twists, 50);
+		var frame = MobiusMath.localFrameAt(beforeU, startV, twists, 50);
+		var player = new PlayerModel(pos, frame.tu, 0, new MobiusSpace(twists, 50));
+		var oldUp = player.surfaceUp;
+
+		player.moveForward(2, 50);
+
+		Assert.isTrue(oldUp.dot(player.surfaceUp) > 0.99);
+		Assert.isTrue(player.surfaceUp.dot(player.space.upAt(player.pos)) < -0.99);
 	}
 }

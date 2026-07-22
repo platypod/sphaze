@@ -98,6 +98,50 @@ class MobiusMath {
 	}
 
 	/**
+		The same local frame as `localFrameAt`, but with the unavoidable
+		Möbius normal-sign discontinuity moved from `u = 0` to `cutU`.
+
+		The same physical point on an odd-twist Möbius strip has two equally
+		valid parameter-space frames: `(u, v)` and `(u - 2*PI, -v)`. They agree
+		on `tu` but flip `tv` and `normal`. `localFrameAt` always picks the
+		`[0, 2*PI)` branch, which puts that sign flip exactly at the wrap seam.
+		Callers that want the visual "branch cut" somewhere less disruptive can
+		choose the alternate representative for one side of the loop instead.
+	**/
+	public static function localFrameWithCutAt(u:Float, v:Float, twists:Int, radius:Float, cutU:Float):{
+		tu:h3d.Vector,
+		tv:h3d.Vector,
+		normal:h3d.Vector,
+		tuLength:Float
+	} {
+		return u >= cutU ? localFrameAt(u - 2 * Math.PI, -v, twists, radius) : localFrameAt(u, v, twists, radius);
+	}
+
+	/**
+		`localFrameWithCutAt`, plus the second global Möbius chart choice for
+		the same cut location: keeping `tu` but negating `tv`/`normal`
+		everywhere. Which of those two charts matches the player depends on the
+		path they took to get here, not on `(u, v)` alone.
+	**/
+	public static function localFrameWithCutAndOrientationAt(u:Float, v:Float, twists:Int, radius:Float, cutU:Float, flipped:Bool):{
+		tu:h3d.Vector,
+		tv:h3d.Vector,
+		normal:h3d.Vector,
+		tuLength:Float
+	} {
+		var frame = localFrameWithCutAt(u, v, twists, radius, cutU);
+		if (!flipped) {
+			return frame;
+		}
+		return {
+			tu: frame.tu,
+			tv: frame.tv.scaled(-1),
+			normal: frame.normal.scaled(-1),
+			tuLength: frame.tuLength
+		};
+	}
+
+	/**
 		Inverse of `pointAt`: recovers `(u, v)` for a point already on the
 		ribbon (e.g. `entities.player.PlayerModel.pos`, which stores a raw
 		3D vector rather than `(u, v)` directly — see

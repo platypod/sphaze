@@ -8,7 +8,6 @@ import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
 import biomes.mobius.MobiusBiome;
 import biomes.mobius.MobiusForestGenerator;
-import biomes.mobius.MobiusMesh;
 import biomes.tower.TowerBiome;
 import biomes.tower.TowerGenerator;
 import entities.hourglass.HourglassModel;
@@ -300,20 +299,6 @@ class GameLoop {
 			debugOverlayVisible = !debugOverlayVisible;
 			debugOverlay.visible = debugOverlayVisible;
 		}
-		if (currentBiome.id() == MobiusBiome.ID) {
-			var mobiusBiome = Std.downcast(currentBiome, MobiusBiome);
-			if (mobiusBiome != null) {
-				var rotateDirection = hxd.Key.isDown(Keybinds.SPRINT) ? -1 : 1;
-				if (hxd.Key.isPressed(Keybinds.MOBIUS_TREE2_ROTATE_X))
-					mobiusBiome.rotateTreeAlignment(0, rotateDirection);
-				if (hxd.Key.isPressed(Keybinds.MOBIUS_TREE2_ROTATE_Y))
-					mobiusBiome.rotateTreeAlignment(1, rotateDirection);
-				if (hxd.Key.isPressed(Keybinds.MOBIUS_TREE2_ROTATE_Z))
-					mobiusBiome.rotateTreeAlignment(2, rotateDirection);
-				if (hxd.Key.isPressed(Keybinds.MOBIUS_TREE2_OFFSET))
-					mobiusBiome.adjustTreeGroundBias(rotateDirection);
-			}
-		}
 		if (debugOverlayVisible) {
 			updateDebugOverlay();
 		}
@@ -361,12 +346,6 @@ class GameLoop {
 			'',
 			'fps=' + hxd.Math.fmt(hxd.Timer.fps()),
 		];
-		if (currentBiome.id() == MobiusBiome.ID) {
-			lines.push(MobiusMesh.importedTreeDebugLabel());
-			lines.push("tree align: T/Y/U (+15°), Shift+T/Y/U (-15°)");
-			lines.push("tree offset: I (+), Shift+I (-)");
-		}
-
 		// performance.memory is a non-standard, Chromium-only API — absent
 		// (Firefox/Safari, or newer Chrome with the feature restricted)
 		// this reads as null, and the line is simply omitted.

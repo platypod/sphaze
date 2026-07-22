@@ -99,6 +99,10 @@ private class StubBiome implements Biome {
 		return 60;
 	}
 
+	public function backgroundColor():Int {
+		return 0x202020;
+	}
+
 	public function build(parent:h3d.scene.Object):Void {}
 
 	public function spawnPlayer(returning:Bool, fromBiomeId:Null<String>):PlayerModel {

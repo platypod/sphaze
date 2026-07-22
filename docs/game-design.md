@@ -51,6 +51,20 @@ Not implemented yet — parked here until we get to them.
 - **Scouting mechanic**: send something off in a direction — a rolling
   ball, a burst of colored gas, whatever reads well — to reveal a bit of the
   path ahead before the player commits to walking it themselves.
+- **Cross-biome displacement (send it back where it belongs)**: things
+  from one biome turn up in another — a creature or object escaped into
+  the wrong world — and the player's job is to spot it and return it
+  home. Salvaged from story-spine alternative 4 ("The Night Shift",
+  rejected — see that section below): the storyline died, this mechanic
+  was explicitly kept (hooman: "a great idea"). Fits "interconnected,
+  not a level select" (traffic between biomes makes them one world) and
+  "see far, not near" (an out-of-place thing is exactly what reads from
+  across the sphere — a wrong glint in the wrong biome). The existing
+  spawn scaffolding (`entities.CreatureSpawnTable`,
+  `entities.registries.CreaturesRegistry`/`NpcsRegistry`) is already
+  shaped for "what escapes where". Needs chase/lure/carry interactions
+  that don't exist in any form yet — prototype the cheapest version
+  first, same discipline as every other backlog entry here.
 - **Reverse-time mechanic, hung off the hub hourglass**: the hub's own
   tiltable hourglass (`entities.hourglass.HourglassModel`/`Hourglass`, implemented)
   now has a real trigger for this, not just the safety valve this entry used
@@ -227,6 +241,19 @@ beat — the moment its meaning is revealed.
   and the observation that this and alternative 1 are nearly the same
   story from two protagonists (a house, a painter, a cat, a death) — a
   possible synthesis or sequel door left deliberately unexplored.
+- **Alternative 4 — "The Night Shift" (whimsy / caretaking) — REJECTED
+  (2026-07-22).** The player as a cat night guard in a museum-sphere
+  whose exhibits wake at night and climb out of their paintings; put
+  everything back before dawn, earn promotions into deeper wings,
+  uncover why the museum's night runs on bottled time. Rejected on the
+  storyline itself (didn't appeal — and it sits in Night-at-the-Museum's
+  shadow), not on the register; recorded briefly because one part was
+  explicitly kept: the cross-biome "things escape where they don't
+  belong, send them back" mechanic, now a story-agnostic entry under
+  Mechanics above. One more fragment noted before dropping the rest:
+  rehanging paintings as player-driven re-curation of which doorway
+  leads where — unclaimed by any surviving candidate, worth grabbing if
+  a winner can hold it.
 
 ### Controls
 

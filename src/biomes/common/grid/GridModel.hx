@@ -3,7 +3,7 @@ package biomes.common.grid;
 /**
 	A latitude/longitude grid over the sphere — the substrate any grid-based
 	biome walks on (today: the maze; likely reused as-is by a future compass
-	or candlelight biome, per docs/game-design.md's backlog, since those read
+	or candlelight biome, per docs/game-design/ideas-backlog.md's backlog, since those read
 	as mechanic variations on the same corridors, not a different layout).
 	The two pole rows would otherwise collapse into COLS degenerate slivers
 	meeting at a point, so each pole is a single merged node that every cell

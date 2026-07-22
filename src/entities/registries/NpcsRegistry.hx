@@ -7,7 +7,7 @@ typedef NpcLocation = {
 }
 
 /**
-	Tracks each traveling NPC's current location — see docs/game-design.md's
+	Tracks each traveling NPC's current location — see docs/game-design/ideas-backlog.md's
 	backlog ("cute characters... noir") for the eventual content this is
 	for. Fixed/triggered-location only, no background simulation: an NPC's
 	location changes only when something explicitly calls `moveTo` (a

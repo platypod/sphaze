@@ -9,7 +9,7 @@ import graphics.Colours;
 	The minimal hub-side marker for `biomes.mobius.MobiusBiome` — a single
 	framed painting anchored at `basis.origin`, nothing else: no
 	surrounding wall or spire the way `MazeShrine`/`TowerReplica` build one
-	(see `docs/game-design.md`'s "prototype the cheapest version first"
+	(see `docs/game-design/philosophy.md`'s "prototype the cheapest version first"
 	pillar, confirmed with hooman for this first pass). `wallA`/`wallB` in
 	`build` exist purely to give `entities.painting.PaintingModel.buildQuad`
 	a width/orientation to mount the frame on — there's no physical wall

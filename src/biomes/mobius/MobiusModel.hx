@@ -8,7 +8,7 @@ import biomes.common.space.mobius.MobiusMath;
 	`TowerBiome`. Started as a bare ribbon (just `isWithinEdge`'s own edge
 	boundary, no obstacles) to evaluate the twisted shape and the walk-
 	around-and-return-mirrored feel in isolation first, per
-	`docs/game-design.md`'s "prototype the cheapest version first" pillar —
+	`docs/game-design/philosophy.md`'s "prototype the cheapest version first" pillar —
 	now also carries the forest's own constants (see the block below), the
 	first obstacle layout built on top of that bare ribbon.
 **/

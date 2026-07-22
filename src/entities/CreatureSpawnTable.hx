@@ -11,7 +11,7 @@ package entities;
 	Deliberately not wired into any biome's `build()` yet: there's no actual
 	creature `Entity` type to instantiate from an entry, so wiring this in
 	now would just be an inert loop with nothing to do. Wire it in once a
-	real creature type exists (see docs/game-design.md's backlog — "cute
+	real creature type exists (see docs/game-design/ideas-backlog.md's backlog — "cute
 	characters" isn't designed yet) — that's also when this needs an actual
 	`res/data/` file and `hxd.Res` loading, not just this parser.
 **/

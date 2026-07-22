@@ -21,7 +21,7 @@ import graphics.Colours;
 	need to distinguish anything — every arrival starts the same way, at
 	`TowerModel.SPAWN_LAYER`'s own always-solid entrance tile.
 
-	Also tracks the "Falls counter" (docs/game-design.md's backlog entry,
+	Also tracks the "Falls counter" (docs/game-design/ideas-backlog.md's backlog entry,
 	being implemented here): how many *distinct* layers the player has
 	stood on this visit, `fallCount` — counting a re-landing on an
 	already-touched layer only once, unlike `deepestLayerReached`, which

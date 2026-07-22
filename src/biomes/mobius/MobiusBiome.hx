@@ -16,7 +16,7 @@ import entities.player.PlayerModel;
 	out of the Moëbius Strip Biome... sow and grow lots of them"). Started
 	as a bare ribbon (see `MobiusModel`'s own class doc) purely to evaluate
 	the twist count's own visual/spatial feel in isolation first, per
-	`docs/game-design.md`'s "prototype unproven mechanics before
+	`docs/game-design/philosophy.md`'s "prototype unproven mechanics before
 	committing" pillar — the forest is the first obstacle layout built on
 	top of that.
 

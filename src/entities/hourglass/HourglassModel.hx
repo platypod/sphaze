@@ -13,7 +13,7 @@ import entities.hourglass.Hourglass.TriggerSide;
 	`entities.registries.BiomesRegistry.globalTimeScale` and applied in
 	`game.GameLoop.fixedUpdate`).
 
-	This is `docs/game-design.md`'s own backlogged "Hourglass game-speed
+	This is `docs/game-design/ideas-backlog.md`'s own backlogged "Hourglass game-speed
 	control (hub)" prototype, implemented per direct ask rather than left
 	parked. **Triggering a tilt change is still scoped to physically
 	standing in the hub** (see `Hourglass.triggerSide`) — nowhere else has
@@ -46,7 +46,7 @@ import entities.hourglass.Hourglass.TriggerSide;
 	permanently — represented today by `Hourglass.buildSand` swapping the
 	sand's own color to gold, per the ask ("represent it by changing the
 	colour of the sand to... say, golden"); nothing else in the game reacts
-	to `unlocked` yet. This is the same idea `docs/game-design.md`'s own
+	to `unlocked` yet. This is the same idea `docs/game-design/ideas-backlog.md`'s own
 	"Reverse-time mechanic, hung off the hub hourglass" backlog entry named
 	for the hourglass's own earlier `reversing` safety valve (now removed,
 	replaced entirely by this) — still unproven what `unlocked` should

@@ -2,6 +2,7 @@ package game;
 
 import biomes.common.Biome;
 import biomes.common.grid.GridModel;
+import biomes.conway.ConwayBiome;
 import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
 import biomes.maze.MazeBiome;
@@ -80,7 +81,8 @@ class GameLoop {
 		biomeRegistry.register(new MazeBiome(MazeGenerator.generate()));
 		biomeRegistry.register(new TowerBiome(TowerGenerator.generate(), hourglassModel));
 		biomeRegistry.register(new MobiusBiome(MobiusForestGenerator.generate()));
-		enterBiome(MobiusBiome.ID, false);
+		biomeRegistry.register(new ConwayBiome());
+		enterBiome(ConwayBiome.ID, false);
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,
 		// perf stats. Hidden by default; toggled in fixedUpdate.

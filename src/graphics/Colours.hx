@@ -57,6 +57,12 @@ class Colours {
 	/** See `MOBIUS_BAND_A`. **/
 	public static inline final MOBIUS_BAND_B:Int = 0xFF3C6EB0;
 
+	/** `biomes.conway.ConwayMesh` floor tiles — dim "dead" cells. **/
+	public static inline final CONWAY_TILE_DEAD:Int = 0xFF111A22;
+
+	/** `biomes.conway.ConwayMesh` raised live-cell blocks and the hub waypoint. **/
+	public static inline final CONWAY_TILE_LIVE:Int = 0xFF3BC47A;
+
 	/** `biomes.common.tree.TreeMesh`'s own trunks, at the root (`graphics.shaders.HeightGradient`'s own base color) — a plain bark-brown placeholder, no real art yet either. **/
 	public static inline final TREE_TRUNK_BASE:Int = 0xFF3E2E20;
 

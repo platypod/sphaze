@@ -2,6 +2,7 @@ package biomes.hub;
 
 import biomes.common.Biome;
 import biomes.common.Gravity;
+import biomes.conway.ConwayBiome;
 import biomes.hub.HubStructure.StructureBasis;
 import biomes.maze.MazeBiome;
 import biomes.mobius.MobiusBiome;
@@ -53,6 +54,9 @@ class HubBiome implements Biome {
 	/** Directly opposite `HubModel.SPAWN_PHI` around the equator — exactly between `MAZE_SHRINE_PHI`/`TOWER_REPLICA_PHI`, the one remaining evenly-spaced gap. **/
 	static final MOBIUS_WAYPOINT_PHI:Float = Math.PI;
 
+	/** Between spawn (0) and the maze shrine (2*pi/3), avoiding overlap with other landmarks. **/
+	static final CONWAY_WAYPOINT_PHI:Float = Math.PI / 3;
+
 	/**
 		Directly ahead of the fixed spawn point (same `phi`, further along
 		increasing `theta` — the direction a fresh arrival's own default
@@ -70,6 +74,7 @@ class HubBiome implements Biome {
 	final mazeShrineBasis:StructureBasis;
 	final towerReplicaBasis:StructureBasis;
 	final mobiusWaypointBasis:StructureBasis;
+	final conwayWaypointBasis:StructureBasis;
 	final hourglassBasis:StructureBasis;
 
 	/** Shared with `biomes.tower.TowerBiome`, which only reads `unlocked` off it — see that class's own doc for why the tower cares. Injected rather than owned outright so neither biome has to reach into the other's own instance (see `biomes.common.Biome`'s own class doc). **/
@@ -82,6 +87,7 @@ class HubBiome implements Biome {
 		mazeShrineBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, MAZE_SHRINE_PHI, HubModel.RADIUS);
 		towerReplicaBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, TOWER_REPLICA_PHI, HubModel.RADIUS);
 		mobiusWaypointBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, MOBIUS_WAYPOINT_PHI, HubModel.RADIUS);
+		conwayWaypointBasis = HubStructure.anchorAt(HubModel.SPAWN_THETA, CONWAY_WAYPOINT_PHI, HubModel.RADIUS);
 		hourglassBasis = HubStructure.anchorAt(HOURGLASS_THETA, HubModel.SPAWN_PHI, HubModel.RADIUS);
 		this.hourglassModel = hourglassModel;
 	}
@@ -103,6 +109,7 @@ class HubBiome implements Biome {
 		MazeShrine.build(parent, mazeShrineBasis, hxd.Res.sprites.painting__biome_maze_01.toTexture());
 		TowerReplica.build(parent, towerReplicaBasis, hxd.Res.sprites.painting__biome_tower_01.toTexture());
 		MobiusWaypoint.build(parent, mobiusWaypointBasis);
+		ConwayWaypoint.build(parent, conwayWaypointBasis);
 
 		Hourglass.build(parent, hourglassBasis);
 		hourglassContainer = new h3d.scene.Object(parent);
@@ -130,6 +137,7 @@ class HubBiome implements Biome {
 			case MazeBiome.ID: MazeShrine.returnSpawn(mazeShrineBasis, HubModel.RADIUS);
 			case TowerBiome.ID: TowerReplica.returnSpawn(towerReplicaBasis, HubModel.RADIUS);
 			case MobiusBiome.ID: MobiusWaypoint.returnSpawn(mobiusWaypointBasis, HubModel.RADIUS);
+			case ConwayBiome.ID: ConwayWaypoint.returnSpawn(conwayWaypointBasis, HubModel.RADIUS);
 			default: throw 'unreachable: no hub structure registered for biome "$fromBiomeId"';
 		}
 	}
@@ -138,7 +146,8 @@ class HubBiome implements Biome {
 		return [
 			MazeShrine.exitPainting(mazeShrineBasis, MazeBiome.ID),
 			TowerReplica.exitPainting(towerReplicaBasis, TowerBiome.ID),
-			MobiusWaypoint.exitPainting(mobiusWaypointBasis, MobiusBiome.ID)
+			MobiusWaypoint.exitPainting(mobiusWaypointBasis, MobiusBiome.ID),
+			ConwayWaypoint.exitPainting(conwayWaypointBasis, ConwayBiome.ID)
 		];
 	}
 

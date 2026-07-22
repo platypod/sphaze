@@ -6,6 +6,7 @@ dist
 
 # Haxe/Heaps build output
 bin/
+res/.tmp/
 *.hl
 *.hlc
 haxelib.json.lock

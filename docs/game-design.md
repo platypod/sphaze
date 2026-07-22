@@ -197,6 +197,36 @@ beat — the moment its meaning is revealed.
   rendering commitment); cats/ghosts/ravens survive only by translation.
   Its driver is becoming (cold start, escalating power) — strongest
   moment-to-moment progression of the candidates so far.
+- **Alternative 3 — "The Late Resident" (noir / self-investigation) —
+  REJECTED (2026-07-22).** Recorded because the idea was judged genuinely
+  good; rejected because hooman isn't keen on *walking* it — playing the
+  ghost of the house's own death is not a fiction they want to inhabit,
+  however clean the design. The pitch, for the record: the player is the
+  ghost, waking nameless and weightless in the sphere-house, seen only by
+  the cat (cats see ghosts); the hourglass stopped at the exact moment
+  they died, and the paintings are places from their life preserved the
+  way memory preserves places — slightly wrong. Driver: the oldest noir
+  hook, detective and case at once — find out who you were and how you
+  died. Becoming spine at zero art cost: each recovered memory returns an
+  ability the player had in life (you don't learn to jump, you *remember*
+  you could — "re-membering" in the literal sense), and the world recovers
+  the player in return (portraits regain your face, ghosts learn your
+  name back one fragment at a time, the raven — corvids really do
+  recognize individual faces for years — returns your belongings to an
+  accumulating shelf). Progression knowledge-gated in the most literal
+  way possible: you advance by finding out. Rereads: the tower is where
+  you fell (fall counter = making peace with falling; minimal-falls
+  unlock = the perfect descent you didn't get the first time — with an
+  explicit tone guardrail: the death stays an ambiguous, investigable
+  case, never a self-harm reading); gold sand = recovered moments of your
+  life; the backlogged reverse-time mechanic becomes the ending — flip
+  the finished hourglass to undo the death at the price of un-knowing
+  everything the player became, or let it run out and walk into the last
+  painting whole. Salvageable even though rejected: the "world remembers
+  you back" impact channel, the ability-as-memory unlock justification,
+  and the observation that this and alternative 1 are nearly the same
+  story from two protagonists (a house, a painter, a cat, a death) — a
+  possible synthesis or sequel door left deliberately unexplored.
 
 ### Controls
 

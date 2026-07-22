@@ -122,8 +122,81 @@ Not implemented yet — parked here until we get to them.
 ### Narrative & characters
 
 - **Story and lore**: we need a main story to knead everything together.
+  Candidate story spines are collected in the section below while we
+  explore; none is chosen yet.
 - **Cute characters**: cats, ghosts, ravens, something with a coherent
   theme, rather noir.
+
+### Story spine — alternatives under exploration
+
+Candidates for the main story, gathered as we explore (2026-07-22 session
+onward). No decision yet — more alternatives are still being drafted. When
+one wins, log the decision in `docs/PROJECT_LOG.md` with the rejected
+alternatives and why they lost, fold the winner into the Philosophy
+section above, and reshape the backlog entries to hang off it.
+
+Common ground both current candidates were built on (treat these as
+requirements for any further candidate too): the player's actions must
+visibly accumulate in the hub ("impact on the world" made literal — which
+in turn needs persistence across sessions, not yet built); progression is
+curiosity/knowledge-gated per the "interconnected, not a level select"
+pillar; storytelling stays fully diegetic (no cutscenes, no journal UI);
+and the hourglass's existing gold-sand unlock
+(`entities.hourglass.HourglassModel.unlocked`) becomes the first story
+beat — the moment its meaning is revealed.
+
+- **Alternative 1 — "The Painter's House" (warm / restoration).** The
+  player is a cat in the house of a painter who is gone — dead, or lost
+  inside their own work; never said outright. The hub sphere is the house;
+  the wall paintings are the painter's works, which a cat can slip into.
+  The hourglass ran out at the moment the painter vanished, and each
+  painting-biome holds a portion of the painter's time crystallized as
+  gold sand. Driver: set right the one wrong thing in each painting and
+  bring the sand home; each return wakes the house a little more (lamps
+  light, ghosts talk, ravens arrive, hub paintings visibly repaint to
+  reflect what the player changed). Mechanical rereads: the fall counter
+  is a cat judged on its landings ("top and bottom floors only" = two
+  perfect drops); raising your head to see across the sphere is a cat's
+  posture; the time-scale tilt is borrowing the painter's power; deferred
+  tree growth plugs into returned time. Ending: with all sand returned the
+  player can flip the hourglass — restart the painter's time, or let the
+  house rest — one diegetic walk-up choice. Costs: none on art (keeps all
+  current assets and the noir tone as-is); weaker moment-to-moment power
+  progression than alternative 2 — its strengths are place and ending, its
+  driver is restoration (warm, melancholy, finite).
+- **Alternative 2 — "Garden of Eden" (cold / becoming).** The player is a
+  pattern in a cellular automaton that became something the rules don't
+  account for, fell out of its grid during a crash, and landed in the
+  developer's machine. The hub is the computer seen from inside; paintings
+  recast as glowing windows into running programs. Driver: evolution up
+  the real CA taxonomy, each stage a gameplay unlock — still life (walk),
+  oscillator (act on the world's tick), glider (jump/traversal), spaceship
+  (speed), gun (emit scout patterns — the backlog's scouting mechanic),
+  and finally Garden of Eden: a configuration with no possible
+  predecessor, the mathematical proof the player did not evolve from the
+  system. Each infiltrated program yields a rule fragment; Life iterations
+  at different versions are core biomes, mapping straight onto the
+  existing space-topology abstraction (`biomes.common.space` — flat,
+  sphere, Möbius): the Möbius biome becomes the build with a twisted
+  boundary condition, making "one side affects the other" the honest
+  consequence of its topology. Mechanical rereads: "see far, not near" is
+  a theorem here (a glider is only a glider from afar; up close it's five
+  meaningless cells — mark-now-see-later follows instantly); the
+  hourglass is the simulation clock (time-scale = touching the scheduler,
+  gold sand = stolen root/CPU time); the tower is a call stack (minimal
+  falls = tail-call optimization). Cast translates to computing folklore:
+  ghosts become daemons and zombie processes, the raven a watchdog that
+  notices and reports what the player changes, the cat stays as an
+  outside god (the developer's real cat on the keyboard). Story channel:
+  the developer's own notes/commits change between runs as they slowly
+  discover the player exists; ending choice — reveal yourself, merge back
+  into the grid, or leave through the network. Costs: real ones on art —
+  stone/grass/forest doesn't survive, needs a digital-noir re-skin
+  (phosphor/CRT dark keeps the noir pillar but nothing painterly); the
+  fiction invites expectations of cellular/generative visuals (bigger
+  rendering commitment); cats/ghosts/ravens survive only by translation.
+  Its driver is becoming (cold start, escalating power) — strongest
+  moment-to-moment progression of the candidates so far.
 
 ### Controls
 

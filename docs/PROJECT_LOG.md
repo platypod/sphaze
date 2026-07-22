@@ -751,3 +751,15 @@ hooman, on first look: "the trees are awful... please make them a lot cleaner. M
 **Shading**: new `graphics.shaders.HeightGradient` (the color-mixing half of `GrassWind`, without the wind sway — a flat base-to-tip `mix`) replaces the flat `h3d.shader.FixedColor` fill trunks/foliage used before. A single flat color reads plasticky for a solid volumetric shape in a way it never did for the ribbon's own thin surface. `Colours.TREE_TRUNK_BASE`/`_TIP` and `TREE_FOLIAGE_BASE`/`_TIP` replace the old single-color `TREE_TRUNK`/`TREE_FOLIAGE`. `TreeMesh` now threads a UV buffer through every function (height fraction in `v`, `u` unused) for this.
 
 New `MobiusForestGeneratorTest` cases for species (only ever a known constant, all three actually reachable at default chances) and rotation (stays within a full turn); existing manually-constructed `PlacedTree` literals in `MobiusCollisionTest` updated for the two new required fields. `make fmt`/`lint`/`check`/`test` all clean (18044 assertions). Not verified in-browser — same limitation as ever; this round in particular was reasoned from the geometry math alone, without ever having seen the "awful" result being fixed, so worth a specific second look once hooman can actually check it.
+
+## 2026-07-22 — game-design.md split into a docs/game-design/ folder
+
+The single `docs/game-design.md` had grown four jobs with different
+lifecycles — pillars, live story exploration, idea backlog, and rejected
+alternatives. Split by lifecycle into `docs/game-design/`: `philosophy.md`
+(pillars), `story-line.md` (current story state only), `ideas-backlog.md`
+(not-yet-implemented ideas), `design-decisions-records.md` (append-only
+records of decisions with their rejected alternatives and why — hooman's
+standing preference for how decisions are kept), with the folder's
+`README.md` defining how content moves between them. The old path stays as
+a redirect stub so this log's older references still resolve.

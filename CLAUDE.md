@@ -2,7 +2,7 @@
 
 A 3D maze wrapped onto the inside of a sphere: the player walks the interior surface, and can raise their head to see clear across to the far side — but not what's in their immediate vicinity. Built in Haxe + Heaps, primarily vibe-coded (Claude does most of the writing, hooman directs and reviews).
 
-This file holds the non-negotiables. Full rationale and details live in `docs/GUIDELINES.md`; project history and past decisions live in `docs/PROJECT_LOG.md`; design philosophy and the feature/idea backlog live in `docs/game-design.md`; known bugs live in `docs/bug-tracker.md`; fixed bugs live in `docs/CHANGELOG.md`. Read those when you need the "why," the history, or the design intent — this file is just the "what."
+This file holds the non-negotiables. Full rationale and details live in `docs/GUIDELINES.md`; project history and past decisions live in `docs/PROJECT_LOG.md`; game design lives in the `docs/game-design/` folder (start at its `README.md` — philosophy, story-line, ideas-backlog, design-decisions-records, each with movement rules between them); known bugs live in `docs/bug-tracker.md`; fixed bugs live in `docs/CHANGELOG.md`. Read those when you need the "why," the history, or the design intent — this file is just the "what."
 
 ## Architecture
 
@@ -43,9 +43,11 @@ This file holds the non-negotiables. Full rationale and details live in `docs/GU
 ## Design & bug tracking
 
 - New feature/mechanic ideas that aren't being implemented right now go in
-  `docs/game-design.md`'s backlog — check them against that file's
-  Philosophy section first; an idea that cuts against a pillar is a reason
-  to raise it explicitly rather than add it silently.
+  `docs/game-design/ideas-backlog.md` — check them against
+  `docs/game-design/philosophy.md` first; an idea that cuts against a
+  pillar is a reason to raise it explicitly rather than add it silently.
+  Design decisions (chosen + rejected alternatives + why) are recorded in
+  `docs/game-design/design-decisions-records.md`.
 - A bug found but not fixed immediately goes in `docs/bug-tracker.md`.
 - When a bug gets fixed: remove its entry from `docs/bug-tracker.md` and add
   one to `docs/CHANGELOG.md` (date, one-line description, fixing commit).

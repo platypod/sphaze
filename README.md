@@ -108,8 +108,12 @@ invest in 2 or 3.** Revisit this section and log the decision in
 
 ## Design, backlog & bug tracking
 
-- [`docs/game-design.md`](docs/game-design.md) — design philosophy (what
-  this game is trying to be, checked against before adding anything new)
-  and the backlog of not-yet-implemented ideas.
+- [`docs/game-design/`](docs/game-design/README.md) — design docs split by
+  lifecycle: [philosophy](docs/game-design/philosophy.md) (what this game
+  is trying to be), [story-line](docs/game-design/story-line.md) (current
+  state of the story), [ideas-backlog](docs/game-design/ideas-backlog.md)
+  (not-yet-implemented ideas), and
+  [design-decisions-records](docs/game-design/design-decisions-records.md)
+  (decisions with their rejected alternatives and why).
 - [`docs/bug-tracker.md`](docs/bug-tracker.md) — known bugs not yet fixed.
 - [`docs/CHANGELOG.md`](docs/CHANGELOG.md) — bugs that have been fixed.

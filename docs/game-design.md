@@ -105,6 +105,16 @@ Not implemented yet — parked here until we get to them.
   or interpolated-scale approach for the actual visual growth — unproven
   which, prototype the cheapest version before committing, same discipline
   as every other backlog entry here.
+- **One side affects the other (Möbius strip)**: changing something on one
+  lift of the Möbius biome could affect its counterpart on the other — e.g.
+  cutting, marking, growing, or otherwise altering part of the strip and
+  later discovering the "same" place from the mirrored traversal state has
+  changed too. Strong fit for the project's "interconnected, not a level
+  select" and "prototype unproven mechanics before committing" pillars:
+  this should read as a consequence of the strip's topology, not a generic
+  switch puzzle pasted onto it. Worth prototyping with the cheapest possible
+  reversible interaction first before designing a whole puzzle chain around
+  it.
 
 ### Levels & biomes
 

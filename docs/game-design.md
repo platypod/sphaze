@@ -264,6 +264,109 @@ beat — the moment its meaning is revealed.
   rehanging paintings as player-driven re-curation of which doorway
   leads where — unclaimed by any surviving candidate, worth grabbing if
   a winner can hold it.
+- **Alternative 5 — "The Minotaur" (inverted noir / becoming) — ABSORBED
+  into alternative 6 (2026-07-22).** The player as the creature that
+  lives in the maze: no mirrors in a labyrinth, so it knows its own face
+  only through the paintings that appear in the hub after each incursion,
+  painted up on the surface from the testimony of people who fled.
+  Driver: reputation as identity — terrify intruders and the depictions
+  darken and the heroes come harder; shepherd them out unseen and the
+  monster in the paintings slowly gains eyes, hands, a face. Rereads:
+  "see far, not near" flips to the warden's view (intruders' torchlight
+  crawling the far side of the sphere); the backlogged mark mechanic
+  turns adversarial (erase/forge/redraw the intruders' own chalk);
+  the hourglass is the prison's sentence, gold sand time served; ending
+  = the last hero arrives carrying a mirror, and looking is the choice.
+  Never separately accepted or rejected — superseded when hooman pivoted
+  from one twisted myth to a whole game of them; survives as alternative
+  6's Labyrinth material, upgraded there by hooman's goblin twist.
+- **Alternative 6 — Twisted mythologies (leading candidate,
+  2026-07-22).** Not one more storyline but an engine the surviving
+  candidates can plug into. Premise: real myths (Greek, Egyptian, Norse,
+  anywhere — famous or obscure, all public domain) revisited and bent.
+  The player's pre-installed mythic literacy is free grounding and free
+  misdirection: say "labyrinth" and they expect the bull, so the game
+  earns its curiosity the moment it whispers that the story they know is
+  the cover story (hooman's seed example: the Minotaur isn't a huge
+  bull-monster but a scheming goblin steering visitors toward a real
+  monstrous bull — or toward a made-up one). Sometimes the monster is
+  the hero; characters cross and interlap between myths. Structural
+  frame: every myth exists twice — *as told* (displayed in the hub;
+  paintings are exactly what myths already are to us, painted scenes,
+  which makes the backlog's "enter real paintings" idea native) and *as
+  found* (inside, twisted). The player witnesses the found version and
+  carries it home; the hub's record repaints to the uncovered — or,
+  when a myth stays ambiguous, *chosen* — version, so the world the
+  player accumulates is their own edition of the mythology. Odd worlds:
+  myths supply them natively (the cosmic egg = a world on a sphere's
+  interior; Ouroboros/Valhalla's replaying battle = the Möbius strip;
+  Sisyphus or Babel = the tower; the Labyrinth = the maze; the Duat's
+  nightly sun-crossing = a biome on the hourglass's clock), and where a
+  myth has none we assign one by choice. Main risk, named as structural:
+  "Greek wing / Norse wing / Egyptian wing" is exactly the flat level
+  select the pillars forbid — the main story thread below isn't
+  decoration, it's what makes it one game. NOTE: hooman rejected the
+  first implementation pass wholesale (a Muninn's-errand player role and
+  a pre-assigned list of myth-to-biome wings) — keep the engine,
+  re-derive all implementations from whichever motive below wins.
+
+  **Main story thread — why we revisit the myths.** Three motive
+  candidates. Hooman's current preference (2026-07-22): **A and C
+  liked, both in play; B not favored.**
+  - **Thread A — "The Nameless Extra" (defiance / earn a name).** Every
+    myth has a nobody — the sailor who drowns so the storm feels real,
+    the guard the hero steps over — and it is always the same nobody:
+    the player, summoned into every telling to do the dying, visible in
+    the margin of every hub painting as a small figure with its back
+    turned. The game starts the day they refuse. Why visit: the stories
+    themselves keep dragging their extra in. Why twist: as told, the
+    story has no room for you — only a bent tale can hold a new
+    character, and an extra can't fight heroes, only nudge from below
+    (move props, mislead, warn, befriend the monster — the goblin verb
+    set, generalized). Why monsters ally: they're the other miscast
+    ones. Why choose versions: a story changed enough acquires a new
+    character, and that character needs a name. Becoming spine: margin →
+    bit part → named; impact channel: the marginal figure in the hub's
+    paintings turns around, moves centerward, gains a face as presence
+    is earned. Endgame: at the top of naming sits godhood (a god is a
+    character retold forever) — is that what you wanted, or did you
+    just want the sailor to get a funeral line? Cost: the most authored
+    premise (the wake-up conceit must be written well); melancholy-
+    leaning, though defiant rather than grieving.
+  - **Thread B — "The Vacant Throne" (ambition) — not favored.**
+    Pantheons have empty seats; the hub is a hall of vacant thrones and
+    the player a claimant. A throne belongs to whoever the stories say
+    it belongs to, so twisting myths *is* the mechanism of power — and
+    the twist that would win the throne and the twist that's true keep
+    diverging, with the game quietly counting which the player chose;
+    the tally is the ending (learn why the seats are empty, then sit,
+    install someone fitter, or break the chair). Recorded because the
+    diverging-truth device and the empty-seats worldbuilding are strong;
+    not favored because ambition as sole driver goes cold without heavy
+    relationship counterweight, and gods-and-thrones drifts toward
+    generic epic against this game's small noir register.
+  - **Thread C — "The Hospice" (devotion).** Gods age as their stories
+    wear out: retold badly for centuries — flattened into "the
+    monster", "the pretty one" — they thin. The hub is the shabby, warm
+    pantheon-hospice where they've retired (a sun god down to one
+    candle, the cat that belonged to a goddess and won't discuss it),
+    and the player is the young teller who still visits. Discovering
+    what actually happened in a myth — the strange, specific,
+    inconvenient truth — feeds the god it belongs to: truth is
+    nourishment, cliché is starvation, so the as-told versions are
+    literally the disease. Recurring moral needle: some residents
+    prefer the flattering lie, and choosing what to feed them is the
+    choice mechanic. Becoming spine: apprentice → trusted with the
+    stories → offered a dying god's seat, with the ending shaped by
+    whose stories the player has been telling all along. Costs:
+    adjacent to *American Gods* (differentiate: fidelity, not
+    popularity, is what feeds); an ensemble piece — many characters to
+    write well, the expensive kind of content.
+
+  Composition note: the threads compose (A's nobody could climb B's
+  ladder; C's hospice could sit at the top of it), but composition is
+  polish — the load-bearing open decision is which single motive owns
+  the game: defiance (A), ambition (B), or devotion (C).
 
 ### Controls
 

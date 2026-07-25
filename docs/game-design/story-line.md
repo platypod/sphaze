@@ -11,8 +11,8 @@ the why, note it in `../PROJECT_LOG.md`, and reshape
 
 ## Requirements (common ground for any candidate)
 
-Distilled from the exploration so far (2026-07-22 onward) — treat these as
-requirements for any new candidate too:
+Distilled from the exploration so far — treat these as requirements for 
+any new candidate too:
 
 - The player's actions must **visibly accumulate in the hub** ("impact on
   the world" made literal — which in turn needs persistence across
@@ -20,11 +20,46 @@ requirements for any new candidate too:
 - Progression is **curiosity/knowledge-gated**, per the "interconnected,
   not a level select" pillar.
 - Storytelling stays **fully diegetic** — no cutscenes, no journal UI.
-- The hourglass's existing gold-sand unlock
-  (`entities.hourglass.HourglassModel.unlocked`) becomes the **first story
-  beat** — the moment its meaning is revealed.
 
-## Leading candidate — Alternative 6: Twisted mythologies
+## Leading candidate — Garden of Eden
+
+The player is a pattern in a cellular automaton that became something the 
+rules don't account for, fell out of its grid during a crash, perahsp, 
+and landed in the developer's machine. The hub could be the computer seen 
+from inside; paintings recast as glowing windows into running programs. 
+
+Driver: evolution up the real CA taxonomy, each stage a gameplay unlock — 
+still life (walk), oscillator (act on the world's tick), glider 
+(jump/traversal), spaceship (speed), gun (emit scout patterns — the 
+backlog's scouting mechanic), and finally Garden of Eden: a configuration 
+with no possible predecessor, the mathematical proof the player did not evolve 
+from the system. Each infiltrated program yields a rule fragment; Life iterations
+at different versions are core biomes, mapping straight onto the
+existing space-topology abstraction (`biomes.common.space` — flat,
+sphere, Möbius): the Möbius biome becomes the build with a twisted
+boundary condition, making "one side affects the other" the honest
+consequence of its topology. Mechanical rereads: "see far, not near" is
+a theorem here (a glider is only a glider from afar; up close it's five
+meaningless cells — mark-now-see-later follows instantly); the
+hourglass is the simulation clock (time-scale = touching the scheduler,
+gold sand = stolen root/CPU time); the tower is a call stack (minimal
+falls = tail-call optimization). Cast translates to computing folklore:
+ghosts become daemons and zombie processes, the raven a watchdog that
+notices and reports what the player changes, the cat stays as an
+outside god (the developer's real cat on the keyboard). Story channel:
+the developer's own notes/commits change between runs as they slowly
+discover the player exists; ending choice — reveal yourself, merge back
+into the grid, or leave through the network. Costs: real ones on art —
+stone/grass/forest doesn't survive, needs a digital-noir re-skin
+(phosphor/CRT dark keeps the noir pillar but nothing painterly); the
+fiction invites expectations of cellular/generative visuals (bigger
+rendering commitment); cats/ghosts/ravens survive only by translation.
+Its driver is becoming (cold start, escalating power) — strongest
+moment-to-moment progression of the parked candidates.
+
+
+
+## Alternative 6: Twisted mythologies
 
 Not one more storyline but an engine the surviving candidates can plug
 into. Premise: real myths (Greek, Egyptian, Norse, anywhere — famous or
@@ -129,36 +164,3 @@ nameless extra) is a deliberately unexplored door.
   driver is restoration (warm, melancholy, finite). Composes with
   alternative 6: "the painter painted the myths wrong" is a possible skin
   for the twisted-mythologies engine.
-- **Alternative 2 — "Garden of Eden" (cold / becoming).** The player is a
-  pattern in a cellular automaton that became something the rules don't
-  account for, fell out of its grid during a crash, and landed in the
-  developer's machine. The hub is the computer seen from inside; paintings
-  recast as glowing windows into running programs. Driver: evolution up
-  the real CA taxonomy, each stage a gameplay unlock — still life (walk),
-  oscillator (act on the world's tick), glider (jump/traversal), spaceship
-  (speed), gun (emit scout patterns — the backlog's scouting mechanic),
-  and finally Garden of Eden: a configuration with no possible
-  predecessor, the mathematical proof the player did not evolve from the
-  system. Each infiltrated program yields a rule fragment; Life iterations
-  at different versions are core biomes, mapping straight onto the
-  existing space-topology abstraction (`biomes.common.space` — flat,
-  sphere, Möbius): the Möbius biome becomes the build with a twisted
-  boundary condition, making "one side affects the other" the honest
-  consequence of its topology. Mechanical rereads: "see far, not near" is
-  a theorem here (a glider is only a glider from afar; up close it's five
-  meaningless cells — mark-now-see-later follows instantly); the
-  hourglass is the simulation clock (time-scale = touching the scheduler,
-  gold sand = stolen root/CPU time); the tower is a call stack (minimal
-  falls = tail-call optimization). Cast translates to computing folklore:
-  ghosts become daemons and zombie processes, the raven a watchdog that
-  notices and reports what the player changes, the cat stays as an
-  outside god (the developer's real cat on the keyboard). Story channel:
-  the developer's own notes/commits change between runs as they slowly
-  discover the player exists; ending choice — reveal yourself, merge back
-  into the grid, or leave through the network. Costs: real ones on art —
-  stone/grass/forest doesn't survive, needs a digital-noir re-skin
-  (phosphor/CRT dark keeps the noir pillar but nothing painterly); the
-  fiction invites expectations of cellular/generative visuals (bigger
-  rendering commitment); cats/ghosts/ravens survive only by translation.
-  Its driver is becoming (cold start, escalating power) — strongest
-  moment-to-moment progression of the parked candidates.

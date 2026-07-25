@@ -63,6 +63,9 @@ class Colours {
 	/** `biomes.conway.ConwayMesh` raised live-cell blocks and the hub waypoint. **/
 	public static inline final CONWAY_TILE_LIVE:Int = 0xFF3BC47A;
 
+	/** `biomes.conway.ConwayMesh` closed-edge neon walls ("Tron" maze lines). **/
+	public static inline final CONWAY_WALL_NEON:Int = 0xFF38E8FF;
+
 	/** `biomes.common.tree.TreeMesh`'s own trunks, at the root (`graphics.shaders.HeightGradient`'s own base color) — a plain bark-brown placeholder, no real art yet either. **/
 	public static inline final TREE_TRUNK_BASE:Int = 0xFF3E2E20;
 

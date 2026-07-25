@@ -1,10 +1,14 @@
 package biomes.conway;
 
+import biomes.conway.ConwayGrid.Pole;
+import biomes.conway.ConwayMaze.ConwayMazeData;
+
 /**
 	Mutable Conway Game of Life state over `ConwayGrid`'s own denser tile set.
 **/
 class ConwayState {
 	static inline final INITIAL_DENSITY:Float = 0.24;
+	static inline final POLE_DENSITY:Float = 0.5;
 
 	var alive:haxe.ds.StringMap<Bool>;
 
@@ -18,15 +22,27 @@ class ConwayState {
 		return alive.exists(ConwayGrid.keyOf(row, col));
 	}
 
+	public function isPoleAlive(pole:Pole):Bool {
+		return alive.exists(ConwayGrid.keyOfPole(pole));
+	}
+
 	/** Advances one Conway generation. **/
-	public function step():Void {
+	public function step(maze:ConwayMazeData):Void {
 		var next = new haxe.ds.StringMap<Bool>();
-		ConwayGrid.eachCell((row, col) -> {
+		ConwayGrid.eachRingCell((row, col) -> {
 			var hereAlive = isAlive(row, col);
-			var liveNeighbors = ConwayGrid.liveNeighborCount(this, row, col);
+			var liveNeighbors = ConwayGrid.liveNeighborCount(this, maze, row, col);
 			var nextAlive = hereAlive ? (liveNeighbors == 2 || liveNeighbors == 3) : liveNeighbors == 3;
 			if (nextAlive) {
 				next.set(ConwayGrid.keyOf(row, col), true);
+			}
+		});
+		ConwayGrid.eachPole((pole) -> {
+			var hereAlive = isPoleAlive(pole);
+			var liveNeighbors = ConwayGrid.liveNeighborCountPole(this, maze, pole);
+			var nextAlive = hereAlive ? (liveNeighbors == 2 || liveNeighbors == 3) : liveNeighbors == 3;
+			if (nextAlive) {
+				next.set(ConwayGrid.keyOfPole(pole), true);
 			}
 		});
 		alive = next;
@@ -57,11 +73,20 @@ class ConwayState {
 	}
 
 	function seedInitial():Void {
-		ConwayGrid.eachCell((row, col) -> {
+		ConwayGrid.eachRingCell((row, col) -> {
 			// Deterministic noise so the same session starts from the same
 			// pattern, while still looking naturally scattered.
 			if (hash01(row, col) < INITIAL_DENSITY) {
 				alive.set(ConwayGrid.keyOf(row, col), true);
+			}
+		});
+		ConwayGrid.eachPole((pole) -> {
+			var seed = switch pole {
+				case North: hash01(-1, 0);
+				case South: hash01(-2, 0);
+			}
+			if (seed < POLE_DENSITY) {
+				alive.set(ConwayGrid.keyOfPole(pole), true);
 			}
 		});
 	}

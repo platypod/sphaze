@@ -2,6 +2,7 @@ package biomes.conway;
 
 import biomes.common.Biome;
 import biomes.common.Gravity;
+import biomes.conway.ConwayMaze.ConwayMazeData;
 import biomes.hub.HubBiome;
 import entities.painting.PaintingModel;
 import entities.player.PlayerModel;
@@ -22,10 +23,12 @@ class ConwayBiome implements Biome {
 	static final SPAWN_FACING:Float = 0.0;
 
 	var state:ConwayState;
+	var maze:ConwayMazeData;
 	var accumulator:Float = 0;
 	var container:Null<h3d.scene.Object>;
 
 	public function new() {
+		maze = ConwayMaze.generate();
 		state = new ConwayState();
 	}
 
@@ -43,7 +46,7 @@ class ConwayBiome implements Biome {
 
 	public function build(parent:h3d.scene.Object):Void {
 		container = new h3d.scene.Object(parent);
-		ConwayMesh.build(container, state);
+		ConwayMesh.build(container, state, maze);
 	}
 
 	public function spawnPlayer(returning:Bool, fromBiomeId:Null<String>):PlayerModel {
@@ -57,7 +60,7 @@ class ConwayBiome implements Biome {
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {
-		player.moveAlong(direction, distance, ConwayGrid.RADIUS);
+		ConwayCollision.tryMove(player, direction, distance, ConwayGrid.RADIUS, maze);
 	}
 
 	public function applyGravity(player:PlayerModel, dt:Float):Void {
@@ -69,14 +72,14 @@ class ConwayBiome implements Biome {
 		var stepped = false;
 		while (accumulator >= STEP_INTERVAL) {
 			accumulator -= STEP_INTERVAL;
-			state.step();
+			state.step(maze);
 			stepped = true;
 		}
 		if (!stepped || container == null) {
 			return;
 		}
 		container.removeChildren();
-		ConwayMesh.build(container, state);
+		ConwayMesh.build(container, state, maze);
 	}
 
 	public function timeScale():Float {
@@ -85,6 +88,7 @@ class ConwayBiome implements Biome {
 
 	public function serialize():String {
 		return haxe.Json.stringify({
+			maze: ConwayMaze.serialize(maze),
 			state: state.serialize(),
 			accumulator: accumulator,
 		});
@@ -92,12 +96,13 @@ class ConwayBiome implements Biome {
 
 	public function restore(json:String):Void {
 		var parsed:Dynamic = haxe.Json.parse(json);
+		maze = parsed.maze == null ? ConwayMaze.generate() : ConwayMaze.deserialize(Std.string(parsed.maze));
 		state = ConwayState.deserialize(Std.string(parsed.state));
 		var restoredAccumulator = Std.parseFloat(Std.string(parsed.accumulator));
 		accumulator = Math.isNaN(restoredAccumulator) ? 0 : restoredAccumulator;
 		if (container != null) {
 			container.removeChildren();
-			ConwayMesh.build(container, state);
+			ConwayMesh.build(container, state, maze);
 		}
 	}
 }

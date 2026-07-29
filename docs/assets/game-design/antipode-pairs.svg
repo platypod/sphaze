@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 440" width="680" height="440" role="img" aria-label="A sphere drawn as a circle. Two cells sit at opposite ends of a line through the centre. A hand marks one; the same change appears at the other, or its opposite. A dashed sightline shows that the antipode is the point most clearly visible from the interior.">
+  <title>Antipode pairs</title>
+  <style>
+    .paper { fill: #f6efe0; }
+    .ink { fill: none; stroke: #3b3226; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .ink-thin { fill: none; stroke: #3b3226; stroke-width: 1.3; stroke-linecap: round; }
+    .ink-dash { fill: none; stroke: #7a6c58; stroke-width: 1.5; stroke-dasharray: 7 6; stroke-linecap: round; }
+    .wall { fill: #d8cbb0; stroke: #3b3226; stroke-width: 1.8; stroke-linejoin: round; }
+    .accent { fill: none; stroke: #c9762a; stroke-width: 2.6; stroke-linecap: round; }
+    .accent-fill { fill: #c9762a; }
+    .pink { fill: #d1477f; stroke: #3b3226; stroke-width: 1.4; }
+    .shade { fill: #3b3226; opacity: 0.13; }
+    .hand { font-family: "Bradley Hand", "Segoe Print", "Comic Sans MS", "Chalkboard SE", cursive; fill: #3b3226; }
+    .ttl { font-size: 20px; }
+    .lbl { font-size: 14px; }
+    .lbl-sm { font-size: 12.5px; fill: #7a6c58; }
+  </style>
+
+  <rect class="paper" width="680" height="440" rx="10"/>
+  <text class="hand ttl" x="26" y="36">antipode pairs</text>
+  <text class="hand lbl-sm" x="26" y="56">every cell has exactly one opposite — and it is the one you see best</text>
+
+  <circle class="ink" cx="340" cy="250" r="150"/>
+
+  <!-- the axis through the centre -->
+  <path class="ink-dash" d="M 234 144 L 446 356"/>
+  <circle cx="340" cy="250" r="3.5" class="accent-fill"/>
+
+  <!-- cell A (upper left on the shell) -->
+  <rect class="wall" x="216" y="128" width="34" height="12" rx="2" transform="rotate(-45 233 134)"/>
+  <circle class="accent" cx="233" cy="134" r="15"/>
+
+  <!-- cell B, its antipode (lower right) -->
+  <rect class="wall" x="430" y="360" width="34" height="12" rx="2" transform="rotate(-45 447 366)"/>
+  <circle class="accent" cx="447" cy="366" r="15"/>
+
+  <!-- a walker inside, looking straight across at the antipode -->
+  <circle class="ink" cx="300" cy="368" r="8"/>
+  <path class="ink" d="M 300 360 L 300 346 M 300 355 L 291 349 M 300 355 L 309 349"/>
+  <path class="ink-dash" d="M 306 352 C 330 300 300 200 244 148"/>
+
+  <text class="hand lbl" x="26" y="140">tag / open / carry</text>
+  <text class="hand lbl" x="26" y="158">a wall here…</text>
+
+  <text class="hand lbl" x="486" y="352">…and it happens</text>
+  <text class="hand lbl" x="486" y="370">there too —</text>
+  <text class="hand lbl-sm" x="486" y="390">or the exact opposite</text>
+
+  <text class="hand lbl-sm" x="150" y="424">from the inside, the antipode is dead centre of your view</text>
+</svg>

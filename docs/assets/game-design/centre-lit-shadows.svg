@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 460" width="680" height="460" role="img" aria-label="A sphere with a single lamp at its centre. Two walls on the near side of the interior cast wedge-shaped shadows onto the far side, so the structure behind the player is readable as shadow in front of them.">
+  <title>Centre-lit shadows</title>
+  <style>
+    .paper { fill: #f6efe0; }
+    .ink { fill: none; stroke: #3b3226; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .ink-thin { fill: none; stroke: #3b3226; stroke-width: 1.3; stroke-linecap: round; }
+    .ink-dash { fill: none; stroke: #7a6c58; stroke-width: 1.5; stroke-dasharray: 7 6; stroke-linecap: round; }
+    .wall { fill: #d8cbb0; stroke: #3b3226; stroke-width: 1.8; stroke-linejoin: round; }
+    .accent { fill: none; stroke: #c9762a; stroke-width: 2.6; stroke-linecap: round; }
+    .accent-fill { fill: #c9762a; }
+    .pink { fill: #d1477f; stroke: #3b3226; stroke-width: 1.4; }
+    .shade { fill: #3b3226; opacity: 0.13; }
+    .hand { font-family: "Bradley Hand", "Segoe Print", "Comic Sans MS", "Chalkboard SE", cursive; fill: #3b3226; }
+    .ttl { font-size: 20px; }
+    .lbl { font-size: 14px; }
+    .lbl-sm { font-size: 12.5px; fill: #7a6c58; }
+  </style>
+
+  <rect class="paper" width="680" height="460" rx="10"/>
+  <text class="hand ttl" x="26" y="36">centre-lit shadows</text>
+  <text class="hand lbl-sm" x="26" y="56">one lamp at the centre: walls here are drawn as shadows there</text>
+
+  <circle class="ink" cx="340" cy="262" r="152"/>
+
+  <!-- shadow wedges cast onto the far side -->
+  <path class="shade" d="M 340 262 L 214 372 L 262 396 Z"/>
+  <path class="shade" d="M 340 262 L 452 380 L 400 400 Z"/>
+
+  <!-- the lamp -->
+  <g>
+    <circle cx="340" cy="262" r="9" fill="#f0c24a" stroke="#3b3226" stroke-width="1.6"/>
+    <path class="ink-thin" d="M 340 240 L 340 232 M 340 292 L 340 300 M 318 262 L 310 262 M 362 262 L 370 262 M 324 246 L 318 240 M 356 278 L 362 284 M 356 246 L 362 240 M 324 278 L 318 284"/>
+  </g>
+
+  <!-- near-side walls, between lamp and the far shell -->
+  <rect class="wall" x="248" y="182" width="15" height="40" rx="2" transform="rotate(-38 255 202)"/>
+  <rect class="wall" x="424" y="176" width="15" height="40" rx="2" transform="rotate(34 431 196)"/>
+
+  <!-- rays clipped by the walls -->
+  <path class="ink-dash" d="M 332 254 L 216 370"/>
+  <path class="ink-dash" d="M 348 254 L 450 378"/>
+
+  <!-- the walker reading the far side -->
+  <circle class="ink" cx="316" cy="120" r="8"/>
+  <path class="ink" d="M 316 128 L 316 142 M 316 133 L 307 139 M 316 133 L 325 139"/>
+
+  <text class="hand lbl" x="26" y="150">walls up here…</text>
+  <text class="hand lbl" x="470" y="150">…and here</text>
+  <text class="hand lbl" x="150" y="428">…throw their shape down there</text>
+  <text class="hand lbl-sm" x="150" y="448">read the half behind you on the half in front of you</text>
+</svg>

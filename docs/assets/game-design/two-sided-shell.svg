@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" width="760" height="470" role="img" aria-label="Cross-section of the sphere shell. Above the line, inside the sphere: a walker under gravity 60 between plain tall walls, with a long unobstructed sightline across the interior. Below the line, outside: an inverted walker under gravity 4.5 arcing over three hatched walls in a single jump. Each wall appears on both sides of the shell at the same place. A pink post pierces the shell and is visible from either face.">
+  <title>Two-sided maze: one shell, two faces</title>
+  <style>
+    .paper { fill: #f6efe0; }
+    .ink { fill: none; stroke: #3b3226; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .ink-thin { fill: none; stroke: #3b3226; stroke-width: 1.3; stroke-linecap: round; }
+    .ink-dash { fill: none; stroke: #7a6c58; stroke-width: 1.5; stroke-dasharray: 7 6; stroke-linecap: round; }
+    .wall-in { fill: #e0d5bd; stroke: #3b3226; stroke-width: 1.8; stroke-linejoin: round; }
+    .wall-out { fill: #c3b393; stroke: #3b3226; stroke-width: 1.8; stroke-linejoin: round; }
+    .hatch { stroke: #6f6250; stroke-width: 1; }
+    .mark { fill: #d1477f; stroke: #3b3226; stroke-width: 1.6; }
+    .accent { fill: none; stroke: #c9762a; stroke-width: 2.6; stroke-linecap: round; }
+    .hand { font-family: "Bradley Hand", "Segoe Print", "Comic Sans MS", "Chalkboard SE", cursive; fill: #3b3226; }
+    .ttl { font-size: 20px; }
+    .face { font-size: 17px; letter-spacing: 1.5px; }
+    .lbl { font-size: 14px; }
+    .lbl-sm { font-size: 12.5px; fill: #7a6c58; }
+  </style>
+
+  <rect class="paper" width="760" height="470" rx="10"/>
+
+  <text class="hand ttl" x="28" y="36">one shell — two faces</text>
+  <text class="hand lbl-sm" x="28" y="56">cross-section: every wall stands on both sides, in the same place</text>
+
+  <!-- inside label band -->
+  <text class="hand face" x="28" y="104">INSIDE</text>
+  <text class="hand lbl" x="28" y="126">gravity 60 — walls are walls</text>
+  <text class="hand lbl" x="470" y="104">sees clear across</text>
+  <text class="hand lbl-sm" x="470" y="122">but pinned into the corridors</text>
+
+  <!-- ============ inside: plain walls rising into the sphere ============ -->
+  <rect class="wall-in" x="173" y="212" width="14" height="45" rx="2"/>
+  <rect class="wall-in" x="283" y="225" width="14" height="45" rx="2"/>
+  <rect class="wall-in" x="393" y="228" width="14" height="45" rx="2"/>
+  <rect class="wall-in" x="503" y="221" width="14" height="45" rx="2"/>
+  <rect class="wall-in" x="613" y="205" width="14" height="45" rx="2"/>
+
+  <circle class="ink" cx="240" cy="239" r="9"/>
+  <path class="ink" d="M 240 248 L 240 262 M 240 253 L 230 259 M 240 253 L 250 259"/>
+  <path class="ink-dash" d="M 249 233 C 330 176 500 172 596 200"/>
+
+  <!-- ============ the shell ============ -->
+  <path class="ink" d="M 60 235 Q 380 320 700 235"/>
+  <path class="ink-thin" d="M 60 244 Q 380 329 700 244"/>
+
+  <!-- the mark: one post through the shell -->
+  <rect class="mark" x="452" y="233" width="7" height="84" rx="3"/>
+
+  <!-- ============ outside: hatched walls rising away from the sphere ============ -->
+  <g>
+    <rect class="wall-out" x="173" y="265" width="14" height="38" rx="2"/>
+    <path class="hatch" d="M 174 277 L 186 265 M 174 291 L 186 279"/>
+    <rect class="wall-out" x="283" y="278" width="14" height="38" rx="2"/>
+    <path class="hatch" d="M 284 290 L 296 278 M 284 304 L 296 292"/>
+    <rect class="wall-out" x="393" y="281" width="14" height="38" rx="2"/>
+    <path class="hatch" d="M 394 293 L 406 281 M 394 307 L 406 295"/>
+    <rect class="wall-out" x="503" y="274" width="14" height="38" rx="2"/>
+    <path class="hatch" d="M 504 286 L 516 274 M 504 300 L 516 288"/>
+    <rect class="wall-out" x="613" y="257" width="14" height="38" rx="2"/>
+    <path class="hatch" d="M 614 269 L 626 257 M 614 283 L 626 271"/>
+  </g>
+
+  <!-- inverted walker: "up" here is away from the sphere -->
+  <circle class="ink" cx="340" cy="307" r="9"/>
+  <path class="ink" d="M 340 298 L 340 284 M 340 293 L 330 287 M 340 293 L 350 287"/>
+
+  <!-- the jump, clearing three walls -->
+  <path class="accent" d="M 352 302 C 420 388 570 380 640 268"/>
+  <path class="accent" d="M 632 279 L 641 266 L 648 280"/>
+
+  <!-- leader from the mark post into the label band -->
+  <path class="ink-thin" d="M 455 319 L 437 356"/>
+
+  <!-- outside label band -->
+  <text class="hand face" x="28" y="404">OUTSIDE</text>
+  <text class="hand lbl" x="28" y="426">gravity 4.5 — one jump clears 3 walls</text>
+  <text class="hand lbl-sm" x="28" y="444">horizon curves away: nothing far to see</text>
+
+  <text class="hand lbl" x="330" y="382">the mark post pierces the shell —</text>
+  <text class="hand lbl" x="330" y="400">so it reads from either face</text>
+  <text class="hand lbl-sm" x="330" y="424">crossing over happens at the poles</text>
+  <text class="hand lbl-sm" x="330" y="440">(placeholder — the real door is undecided)</text>
+</svg>

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 440" width="680" height="440" role="img" aria-label="A sphere with three great circles at different inclinations. Dots mark where they intersect, serving as junctions. A walker follows one circle and an arrow shows the path returning to its start.">
+  <title>Great-circle corridors</title>
+  <style>
+    .paper { fill: #f6efe0; }
+    .ink { fill: none; stroke: #3b3226; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .ink-thin { fill: none; stroke: #3b3226; stroke-width: 1.3; stroke-linecap: round; }
+    .ink-dash { fill: none; stroke: #7a6c58; stroke-width: 1.5; stroke-dasharray: 7 6; stroke-linecap: round; }
+    .wall { fill: #d8cbb0; stroke: #3b3226; stroke-width: 1.8; stroke-linejoin: round; }
+    .accent { fill: none; stroke: #c9762a; stroke-width: 2.6; stroke-linecap: round; }
+    .accent-fill { fill: #c9762a; }
+    .pink { fill: #d1477f; stroke: #3b3226; stroke-width: 1.4; }
+    .shade { fill: #3b3226; opacity: 0.13; }
+    .hand { font-family: "Bradley Hand", "Segoe Print", "Comic Sans MS", "Chalkboard SE", cursive; fill: #3b3226; }
+    .ttl { font-size: 20px; }
+    .lbl { font-size: 14px; }
+    .lbl-sm { font-size: 12.5px; fill: #7a6c58; }
+  </style>
+
+  <rect class="paper" width="680" height="440" rx="10"/>
+  <text class="hand ttl" x="26" y="36">great-circle corridors</text>
+  <text class="hand lbl-sm" x="26" y="56">every corridor, followed far enough, is a loop</text>
+
+  <circle class="ink" cx="340" cy="252" r="150"/>
+  <ellipse class="ink-thin" cx="340" cy="252" rx="150" ry="48"/>
+  <ellipse class="ink-thin" cx="340" cy="252" rx="150" ry="48" transform="rotate(58 340 252)"/>
+  <ellipse class="ink-thin" cx="340" cy="252" rx="150" ry="48" transform="rotate(-58 340 252)"/>
+
+  <!-- junctions where circles cross -->
+  <circle cx="490" cy="252" r="4.5" class="accent-fill"/>
+  <circle cx="190" cy="252" r="4.5" class="accent-fill"/>
+  <circle cx="420" cy="122" r="4.5" class="accent-fill"/>
+  <circle cx="260" cy="382" r="4.5" class="accent-fill"/>
+  <circle cx="262" cy="124" r="4.5" class="accent-fill"/>
+  <circle cx="418" cy="380" r="4.5" class="accent-fill"/>
+
+  <!-- walking "straight" along one circle, all the way round -->
+  <path class="accent" d="M 340 300 C 250 300 190 280 190 252 C 190 224 250 204 340 204"/>
+  <path class="accent" d="M 330 196 L 342 204 L 330 212"/>
+
+  <circle class="ink" cx="352" cy="292" r="8"/>
+  <path class="ink" d="M 352 284 L 352 270 M 352 279 L 343 273 M 352 279 L 361 273"/>
+
+  <text class="hand lbl" x="26" y="150">walk straight…</text>
+  <text class="hand lbl" x="26" y="168">…arrive behind</text>
+  <text class="hand lbl" x="26" y="186">yourself</text>
+
+  <text class="hand lbl" x="516" y="176">crossings are</text>
+  <text class="hand lbl" x="516" y="194">the junctions</text>
+
+  <text class="hand lbl-sm" x="120" y="424">up close every corridor looks identically straight — only distance tells them apart</text>
+</svg>

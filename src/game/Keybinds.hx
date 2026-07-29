@@ -33,6 +33,9 @@ class Keybinds {
 
 	public static inline final JUMP:Int = hxd.Key.SPACE;
 
+	/** "Act here" — whatever the current biome does with it, if anything (see `biomes.common.Biome.interact`). **/
+	public static inline final INTERACT:Int = hxd.Key.F;
+
 	public static inline final TOGGLE_DEBUG_OVERLAY:Int = hxd.Key.F3;
 	public static inline final EXPORT_MAZE:Int = hxd.Key.E;
 	public static inline final IMPORT_MAZE:Int = hxd.Key.L;

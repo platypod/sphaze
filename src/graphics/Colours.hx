@@ -66,6 +66,12 @@ class Colours {
 	/** `biomes.conway.ConwayMesh` closed-edge neon walls ("Tron" maze lines). **/
 	public static inline final CONWAY_WALL_NEON:Int = 0xFF38E8FF;
 
+	/** `biomes.twosided.MarkModel`'s own posts — a hot pink that exists in no other biome, so a mark can never be mistaken for scenery while the mechanic is being tested. **/
+	public static inline final MARK_POST:Int = 0xFFFF3FA0;
+
+	/** `biomes.twosided.TwoSidedBiome`'s own pole-crossing discs — placeholder signage for a placeholder mechanism, see that class's own doc. **/
+	public static inline final CROSSING_MARKER:Int = 0xFFF5C84A;
+
 	/** `biomes.debug.DebugHubBiome`'s own floor — a flat mid-grey, deliberately drab: the dev room shouldn't look like content (see that class's own doc). **/
 	public static inline final DEBUG_FLOOR:Int = 0xFF3A3A3E;
 

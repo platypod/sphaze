@@ -189,6 +189,9 @@ class HubBiome implements Biome {
 		Hourglass.buildDynamic(hourglassContainer, hourglassBasis, hourglassModel);
 	}
 
+	/** Nothing to interact with here — see `biomes.common.Biome.interact`'s own doc. **/
+	public function interact(player:PlayerModel):Void {}
+
 	/** The hourglass's own current game-speed multiplier — see `HourglassModel.timeScale`'s own doc. **/
 	public function timeScale():Float {
 		return hourglassModel.timeScale();

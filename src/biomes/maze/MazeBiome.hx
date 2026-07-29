@@ -129,6 +129,9 @@ class MazeBiome implements Biome {
 	/** Nothing here ticks on its own — see `biomes.common.Biome.tick`'s own doc. **/
 	public function tick(player:PlayerModel, dt:Float):Void {}
 
+	/** Nothing to interact with here — see `biomes.common.Biome.interact`'s own doc. **/
+	public function interact(player:PlayerModel):Void {}
+
 	/** No game-speed control here — see `biomes.common.Biome.timeScale`'s own doc. **/
 	public function timeScale():Float {
 		return 1;

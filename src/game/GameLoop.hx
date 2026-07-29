@@ -13,6 +13,7 @@ import biomes.mobius.MobiusBiome;
 import biomes.mobius.MobiusForestGenerator;
 import biomes.tower.TowerBiome;
 import biomes.tower.TowerGenerator;
+import biomes.twosided.TwoSidedBiome;
 import biomes.wind.WindBiome;
 import entities.hourglass.HourglassModel;
 import entities.player.Camera;
@@ -87,6 +88,7 @@ class GameLoop {
 		biomeRegistry.register(new ConwayBiome());
 		biomeRegistry.register(new WindBiome());
 		biomeRegistry.register(new ExteriorBiome());
+		biomeRegistry.register(new TwoSidedBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it
@@ -304,6 +306,10 @@ class GameLoop {
 			player.jump(JUMP_IMPULSE);
 		}
 		currentBiome.applyGravity(player, scaledDt);
+
+		if (hxd.Key.isPressed(Keybinds.INTERACT)) {
+			currentBiome.interact(player);
+		}
 
 		checkPaintingTrigger();
 

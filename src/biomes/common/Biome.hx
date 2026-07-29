@@ -96,6 +96,23 @@ interface Biome {
 	function tick(player:PlayerModel, dt:Float):Void;
 
 	/**
+		The player pressed the interact key here. A biome with nothing to
+		interact with ignores it — a no-op, same as `tick` for a biome with
+		no per-tick state of its own.
+
+		Part of the contract rather than a downcast in `GameLoop`, for the same
+		reason everything else here is (see this interface's own class doc):
+		`GameLoop` reads the key and hands it to whichever biome is current
+		without knowing what, if anything, that biome does with it. Introduced
+		for `biomes.twosided.TwoSidedBiome`'s own marks, and deliberately
+		named for the *input* rather than for marking — several backlogged
+		mechanics (wall-carry, junction drafting, scouting) are all "the player
+		acted here," and none of them wants its own key.
+		@param player the player interacting; a biome may act on their position, or move them.
+	**/
+	function interact(player:PlayerModel):Void;
+
+	/**
 		This biome's own contribution to the game's overall game-speed
 		multiplier — `1` for every biome except the hub, whose own
 		hourglass can push it up or down (see `entities.hourglass.HourglassModel`).

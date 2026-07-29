@@ -101,6 +101,20 @@ class GridMesh {
 		floorMesh.material.mainPass.addShader(new UnlitTexture(grassTexture, FLOOR_TILE_U, FLOOR_TILE_V));
 		floorMesh.material.mainPass.culling = None;
 
+		buildWalls(maze, parent, wallsOutward);
+	}
+
+	/**
+		Just the walls, without the floor shell — what a biome that raises
+		walls on *both* sides of one shell needs
+		(`biomes.twosided.TwoSidedBiome`), since it wants two wall sets over a
+		single floor and building the floor twice would z-fight it against
+		itself at the same radius.
+		@param maze the layout to build walls for.
+		@param parent the scene object to attach the wall mesh under.
+		@param wallsOutward whether walls extrude away from the sphere's centre — see `build`.
+	**/
+	public static function buildWalls(maze:GridData, parent:h3d.scene.Object, wallsOutward:Bool = false):Void {
 		var wallBuilder = new WallBuilder(maze, wallsOutward);
 		eachCell((row, col) -> wallBuilder.addWallsAround(row, col));
 		var wallPrim = new h3d.prim.Polygon(wallBuilder.points, wallBuilder.idx);

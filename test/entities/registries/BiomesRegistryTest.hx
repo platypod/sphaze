@@ -99,6 +99,8 @@ private class StubBiome implements Biome {
 		return 60;
 	}
 
+	public function interact(player:PlayerModel):Void {}
+
 	public function backgroundColor():Int {
 		return 0x202020;
 	}

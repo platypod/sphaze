@@ -67,12 +67,17 @@ class PlayerModel extends Entity {
 
 	/**
 		Which biome's topology `pos`/`forward` live in — defaults to
-		`SphereSpace`, the only implementation that exists today, so every
-		existing call site (spawning, tests) is unaffected by this field's
-		presence. A future non-spherical biome would spawn its own
+		`SphereSpace`. A biome with a different topology spawns its own
 		`PlayerModel` with its own `Space` instead.
+
+		Settable (through `switchSpace`) rather than final, which it used to
+		be: `biomes.twosided.TwoSidedBiome` walks the *same* shell from both
+		sides, so crossing between them changes nothing about where the player
+		is — only which way "up" is from there. Re-spawning a whole
+		`PlayerModel` to express that would throw away the position and facing
+		that the crossing is supposed to preserve.
 	**/
-	public final space:Space;
+	public var space(default, null):Space;
 
 	/**
 		A continuous choice of local "up" at `pos`, used for camera roll,
@@ -142,6 +147,25 @@ class PlayerModel extends Entity {
 		var up = SphereMath.upVectorAt(spawnPos, new h3d.Vector(0, 0, 0));
 		var spawnForward = SphereMath.rotateAroundAxis(SphereMath.thetaTangentAt(theta, phi), up, facing);
 		return new PlayerModel(spawnPos, spawnForward);
+	}
+
+	/**
+		Adopts a different topology at the same position — for a biome that
+		moves the player between two sides of one surface
+		(`biomes.twosided.TwoSidedBiome`). `pos` and `forward` are untouched:
+		a tangent to the shell is a tangent to it from either side, so the
+		player keeps standing exactly where they stood, facing the same way.
+
+		`surfaceUp` is recomputed *without* the sign-continuity check
+		`applyMoveResult` applies. That check exists to stop the local frame
+		flipping as the player walks (see `surfaceUp`'s own doc), which is
+		exactly the opposite of what's wanted here: crossing to the other side
+		of a surface is precisely the moment "up" is *supposed* to reverse.
+		@param space the topology to adopt.
+	**/
+	public function switchSpace(space:Space):Void {
+		this.space = space;
+		this.surfaceUp = space.upAt(pos);
 	}
 
 	/**

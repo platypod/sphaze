@@ -82,6 +82,9 @@ class ConwayBiome implements Biome {
 		ConwayMesh.build(container, state, maze);
 	}
 
+	/** Nothing to interact with here — see `biomes.common.Biome.interact`'s own doc. **/
+	public function interact(player:PlayerModel):Void {}
+
 	public function timeScale():Float {
 		return 1;
 	}

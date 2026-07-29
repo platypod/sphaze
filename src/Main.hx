@@ -21,6 +21,17 @@ class Main extends hxd.App {
 		gameLoop = new GameLoop(s3d, s2d, engine);
 	}
 
+	/**
+		Renders, then serves any pending documentation capture — which has to
+		happen here, inside the same frame as the draw calls, since the WebGL
+		drawing buffer is gone by the next event (see
+		`GameLoop.captureIfRequested`).
+	**/
+	override function render(e:h3d.Engine):Void {
+		super.render(e);
+		gameLoop.captureIfRequested();
+	}
+
 	override function update(dt:Float):Void {
 		accumulator += dt;
 		while (accumulator >= FIXED_DT) {

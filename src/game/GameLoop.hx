@@ -59,6 +59,13 @@ class GameLoop {
 
 	var mazeGroup:h3d.scene.Object;
 
+	/**
+		Set by the capture key, consumed by `captureIfRequested` — the request
+		can't be served where it's made (see that method's own doc for why it
+		has to happen inside the render frame).
+	**/
+	var captureRequested:Bool = false;
+
 	var debugOverlay:h2d.Text;
 	var debugOverlayVisible:Bool = false;
 	var mazeFileInput:js.html.InputElement;
@@ -331,6 +338,39 @@ class GameLoop {
 		if (hxd.Key.isPressed(Keybinds.IMPORT_MAZE)) {
 			promptImportMaze();
 		}
+		if (hxd.Key.isPressed(Keybinds.CAPTURE_SCREENSHOT)) {
+			captureRequested = true;
+		}
+	}
+
+	/**
+		Downloads a PNG of the current view if the capture key was pressed (P) —
+		the documentation-screenshot tool, so an illustration in
+		`docs/game-design/` can be retaken from the game itself rather than
+		grabbed off someone's desktop.
+
+		**Must be called from inside the render frame**, right after the scene is
+		drawn (see `Main.render`), and that's not a style choice: Heaps creates
+		its WebGL context without `preserveDrawingBuffer`
+		(`h3d.impl.GlDriver`'s own options), so the drawing buffer is discarded
+		the moment control returns to the browser and a `toDataURL` from
+		anywhere else — `fixedUpdate`, an event handler — reads back blank. Hence
+		the request/serve split rather than capturing where the key is read.
+
+		Reuses `exportMaze`'s own anchor-download trick, for the same reason it
+		exists there: a browser page can't write a file any other way.
+	**/
+	public function captureIfRequested():Void {
+		if (!captureRequested) {
+			return;
+		}
+		captureRequested = false;
+
+		var canvas = @:privateAccess hxd.Window.getInstance().canvas;
+		var anchor:js.html.AnchorElement = cast js.Browser.document.createElement("a");
+		anchor.href = canvas.toDataURL("image/png");
+		anchor.download = 'sphaze-${currentBiome.id()}-${DateTools.format(Date.now(), "%Y%m%d-%H%M%S")}.png';
+		anchor.click();
 	}
 
 	/**

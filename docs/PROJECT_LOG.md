@@ -992,3 +992,56 @@ The generalisable lesson, now in the backlog's perception entry: a static cue
 carries an axis, not a direction. Any perception mechanic that means to point
 somewhere has to say how it resolves the 180° ambiguity, and motion is the
 cheapest answer.
+
+## 2026-07-29 — Documentation pass on docs/game-design/
+
+hooman: the game-design folder is "hardly legible for a reader" and lacks images
+or diagrams. Measured before changing anything, and the measurement moved the
+plan: `ideas-backlog.md` was 458 lines carrying **5 headings** and single bullets
+of **9,225** and **4,919** characters — so the primary problem wasn't missing
+pictures, it was unscannable nested prose (much of it written earlier the same
+day, in a decision-record register rather than a browsable one). Agreed scope:
+full visual pass, hand-drawn style.
+
+**Structure.** Every idea now has its own `###` heading (23 of them), so entries
+are linkable and GitHub builds a TOC; an at-a-glance table up front maps each
+idea to what it changes, its state and its cost; every entry follows one shape
+(pitch → *Fits* → *Unproven* → *Cost*, with long reasoning in a collapsed
+`<details>`); the perception candidates, the rule-driven wall variants and the
+verticality routes became tables rather than nested bullet lists. Longest
+paragraph is down from 9,225 to 1,930 characters and every internal anchor
+resolves. The rule-driven-walls engineering block moved out to
+`docs/game-design/notes/`, with a new convention: past ~25 lines outside its
+details block, an entry is a design note and gets its own file.
+
+**Six hand-drawn diagrams** (`docs/assets/game-design/*.svg`) for the ideas prose
+is worst at: the two-sided shell in cross-section, antipode pairs, great-circle
+corridors, inverse-legibility walls, centre-lit shadows, the rosetta maze.
+Authored as text so they diff like code, on cream paper with ink strokes —
+paper-backed deliberately, since a bare dark-stroke SVG vanishes against GitHub's
+dark theme. Lesson recorded in the assets README: art in the middle, text only in
+reserved top/bottom bands. The first attempt put labels over the drawing and was
+unreadable; the second put inside and outside walls at the same x and they merged
+into single bars (honest — it *is* the same maze — but illegible, fixed by
+hatching the outside set).
+
+**Mermaid diagrams** for things that are graphs rather than prose: the doc
+lifecycle in the folder README, and the story-candidate map in `story-line.md`
+(in play / parked / rejected, with the absorbed-and-salvaged edges). Plus a
+"what exists today" table of the nine biomes with their surface and carve style.
+Unverified locally — no mermaid renderer on this machine — so the syntax rests on
+being standard GitHub-flavoured.
+
+**A capture key for screenshots.** No screenshots exist yet, and this is why:
+the automated browser preview can view the game but cannot write PNGs into the
+repo. So the game now takes its own — `P` downloads the current view, fired from
+`Main.render` because a `toDataURL` outside the render frame reads back entirely
+black (measured: one distinct colour, `0,0,0` — Heaps builds its context without
+`preserveDrawingBuffer`). The keypress-to-file chain is *not* confirmed end to
+end: this browser neither delivers keys to the canvas reliably nor lets downloads
+reach the filesystem. `docs/assets/game-design/README.md` carries the shot list —
+eleven captures with the vantage that makes each legible — and the standing rule
+that a screenshot older than the mechanic it illustrates is a bug.
+
+One thing deliberately left plain: `philosophy.md`. The pillars are short,
+load-bearing text, and precision matters there more than pleasantness.

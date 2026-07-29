@@ -1,458 +1,501 @@
 # Ideas backlog
 
-Not implemented yet — parked here until we get to them. Check new entries
-against [philosophy.md](philosophy.md) before adding; when an idea gets
-implemented, delete it from here (the implementation itself, plus
-`../PROJECT_LOG.md`, is the record from then on). Where an entry came from
-somewhere outside the project, [inspirations.md](inspirations.md) holds the
-reference and the specific lesson taken from it — including the
-geometry-corollary rule most of the 2026-07-29 entries below were judged
-against.
+Not implemented yet — parked here until we get to them.
+
+**How to use this file.** Skim the table, open the entry you care about, expand
+its details only if you're about to build it. Every entry keeps the same shape:
+a one-line pitch, then *Fits* (which pillar it serves), *Unproven* (what a
+prototype has to answer), *Cost*, and a collapsed block for the reasoning.
+
+**House rules.** Check a new entry against [philosophy.md](philosophy.md) before
+adding it, and against the geometry-corollary rule in
+[inspirations.md](inspirations.md) — *a biome's mechanic should be a corollary of
+the sphere, not a decoration on it.* When an idea ships, delete it from here (the
+code plus [`../PROJECT_LOG.md`](../PROJECT_LOG.md) is the record from then on) —
+keeping only whatever part is still open. If an entry outgrows ~25 lines outside
+its details block, it's a design note: give it its own file under
+[notes/](notes/) and link it, the way
+[the rule-driven walls one](notes/rule-driven-walls-engineering.md) does.
+
+## At a glance
+
+| Idea | Changes | State | Cost |
+|---|---|---|---|
+| [Mark now, see later](#mark-now-see-later) | wayfinding | idea (built cross-face only, in two-sided) | low |
+| [Someone messes with the marks](#someone-messes-with-the-marks) | wayfinding, tone | idea, blocked on marks | low |
+| [Scouting](#scouting) | wayfinding | idea | medium |
+| [Cross-biome displacement](#cross-biome-displacement) | world cohesion | idea | medium |
+| [Reverse time](#reverse-time-off-the-hourglass) | time | trigger built, effect open | medium |
+| [Falls-counter unlocks](#falls-counter-unlocks) | precision | counter built, unlocks open | low |
+| [Tree growth](#real-tree-growth-möbius-forest) | time | deferred by choice | medium |
+| [One side affects the other](#one-side-affects-the-other-möbius) | topology | idea | medium |
+| [Walls that behave by a rule](#walls-that-behave-by-a-rule) | wall state | idea (4 variants) | high |
+| [Two-sided maze](#two-sided-maze-the-open-half) | topology, gravity | **prototype landed**, crossing open | — |
+| [Perception rules](#perception-rules-as-the-biomes-own-variable) | what you may know | **one of ten built** | low each |
+| [Antipode pairs](#antipode-pairs) | geometry | idea | medium |
+| [Great-circle corridors](#great-circle-corridors) | geometry | idea | high |
+| [Junction drafting](#junction-drafting) | who builds the maze | idea | medium |
+| [Verticality](#verticality-a-maze-that-isnt-flat) | traversal | idea (3 ways in) | low→high |
+| [Paintings mechanics](#paintings-mechanics) | traversal | partly covered by the hub | low |
+| [Various levels](#various-levels) | biome identity | idea | — |
+| [Per-biome maze recipes](#per-biome-maze-recipes) | biome identity | styles built, assignment open | low |
+| [Biome links / rosetta maze](#biome-links-and-the-rosetta-maze) | progression | idea | high |
+| [Secret painting swap](#secret-one-time-painting-swap-tower) | secret | idea | low |
+
+---
 
 ## Mechanics
 
-- **"Mark now, see later"**: let the player leave marks on the ground (e.g.
-  an arrow at a path junction pointing back the way they came). A mark isn't
-  legible up close — it only becomes readable once the player is far enough
-  away to see it and its surroundings from across the sphere, letting them
-  retrace their route (or deduce a better one) from the opposite side.
-  Unproven idea — worth prototyping before committing to it.
-  - **Someone else messes with the marks** (2026-07-29): marks the player
-    left don't always still say what they said. An arrow rotated a few
-    degrees, a mark moved one junction over, one added that the player
-    never left. The explicit ask is **subtle but noticeable** — the player
-    should be able to catch it (and, ideally, start distrusting a
-    still-correct mark, which is the better half of the effect), never be
-    silently griefed by an invisible RNG. So: tamper rarely, tamper
-    *visibly-in-hindsight* (a tampered mark should look slightly wrong when
-    re-examined up close, e.g. a hand not the player's), and never tamper
-    with the mark the player is currently looking at. Pairs naturally with
-    whoever is doing it being a real character (the raven/watchdog in the
-    Garden of Eden candidate; the goblin steering visitors in the salvaged
-    Minotaur material — see
-    [design-decisions-records.md](design-decisions-records.md)). Depends on
-    the base mark mechanic existing first; don't build the antagonist
-    before the thing it vandalises.
-- **Scouting mechanic**: send something off in a direction — a rolling
-  ball, a burst of colored gas, whatever reads well — to reveal a bit of the
-  path ahead before the player commits to walking it themselves.
-- **Cross-biome displacement (send it back where it belongs)**: things
-  from one biome turn up in another — a creature or object escaped into
-  the wrong world — and the player's job is to spot it and return it
-  home. Salvaged from the rejected "Night Shift" story alternative (see
-  [design-decisions-records.md](design-decisions-records.md)): the
-  storyline died, this mechanic was explicitly kept (hooman: "a great
-  idea"). Fits "interconnected, not a level select" (traffic between
-  biomes makes them one world) and "see far, not near" (an out-of-place
-  thing is exactly what reads from across the sphere — a wrong glint in
-  the wrong biome). The existing spawn scaffolding
-  (`entities.CreatureSpawnTable`,
-  `entities.registries.CreaturesRegistry`/`NpcsRegistry`) is already
-  shaped for "what escapes where". Needs chase/lure/carry interactions
-  that don't exist in any form yet — prototype the cheapest version
-  first, same discipline as every other backlog entry here.
-- **Reverse-time mechanic, hung off the hub hourglass**: the hub's own
-  tiltable hourglass (`entities.hourglass.HourglassModel`/`Hourglass`, implemented)
-  now has a real trigger for this, not just the safety valve this entry used
-  to describe — walk it all the way to its minus floor and keep trying to
-  push past it (`HourglassModel.overdraftCount`/`OVERDRAFT_UNLOCK_COUNT`)
-  and it snaps back to neutral and sets `unlocked` permanently, represented
-  today by the sand turning gold. Still exactly as open as this entry always
-  said: nothing else in the game reacts to `unlocked` yet. The idea remains
-  to hang a real mechanic off it somewhere (undo a hazard, rewind an
-  obstacle, replay the player's own last few seconds of movement —
-  unproven which). Prototype the cheapest version of whatever that
-  mechanic is before wiring it into any biome design, same discipline as
-  every other backlog entry here.
-- **Falls counter: unlock something for a low count**: the counter itself and
-  its floor ring-glow cue are implemented (`biomes.tower.TowerBiome.fallCount`,
-  `graphics.shaders.TileRingGlow` — see `../PROJECT_LOG.md`), nudging the
-  player toward precision over speed. Still open: the actual objectives hung
-  off it. Three scenarios, each meant to unlock something different (nothing
-  built yet for any of them): touching only the top and bottom floors (the
-  minimum possible), touching every single floor, and anything in between
-  (no unlock). What each unlock actually is remains undecided/unproven.
-- **Real tree growth over time (Möbius forest)**: the Möbius biome's forest
-  (`biomes.mobius.MobiusForestGenerator`, implemented) is a one-time
-  procedural scatter today — trees are placed fully-grown, once, at
-  `game.GameLoop` startup, same as every other biome's own generated layout.
-  hooman: we might want real growth later instead — saplings that visibly
-  grow into full trees over time — but explicitly deferred for now in favor
-  of the cheaper static version. If this gets built, it should hang off the
-  hourglass's own time-scale mechanism (`entities.hourglass.HourglassModel.timeScale`/
-  `entities.registries.BiomesRegistry.globalTimeScale`, already global —
-  see `../PROJECT_LOG.md`'s "hourglass's own speed effect goes global"
-  entry) rather than inventing a second, separate clock: growth would speed
-  up, slow down, or (at the hourglass's own extreme tilt) stop dead in
-  place along with everything else time-scaled already does, "a mechanism
-  with the time stop" per the ask. Needs its own persistent per-tree state
-  (a growth stage or planted-at timestamp in `MobiusForestGenerator.PlacedTree`,
-  serialized/restored same as the rest of the layout) and a rebuild-on-tick
-  or interpolated-scale approach for the actual visual growth — unproven
-  which, prototype the cheapest version before committing, same discipline
-  as every other backlog entry here.
-- **One side affects the other (Möbius strip)**: changing something on one
-  lift of the Möbius biome could affect its counterpart on the other — e.g.
-  cutting, marking, growing, or otherwise altering part of the strip and
-  later discovering the "same" place from the mirrored traversal state has
-  changed too. Strong fit for the project's "interconnected, not a level
-  select" and "prototype unproven mechanics before committing" pillars:
-  this should read as a consequence of the strip's topology, not a generic
-  switch puzzle pasted onto it. Worth prototyping with the cheapest possible
-  reversible interaction first before designing a whole puzzle chain around
-  it.
-- **Walls that behave by a rule, not just walls** (2026-07-29): a biome
-  whose maze isn't a fixed layout but one governed by a rule the player
-  learns to read. Several candidates, each its own biome rather than a
-  stack of twists in one:
-  - **Metronome walls**: sections rise and fall on the world tick, so
-    crossing is a timing problem. The hourglass is already a global
-    time-scale control (`entities.hourglass.HourglassModel.timeScale` via
-    `entities.registries.BiomesRegistry.globalTimeScale`), which makes the
-    player's own difficulty dial diegetic — slow time to make a closing gap
-    crossable — at no new-mechanism cost.
-  - **Corridors that close behind you**: crossing an edge shuts it. Forces
-    the whole route to be planned from across the sphere *before* entering,
-    which is the strongest fit for the "see far, not near" pillar of
-    anything in this file. Precedent for "shifting a passage is itself a
-    move" in [inspirations.md](inspirations.md) (Ravensburger's Labyrinth).
-  - **Growth**: hedges that close over time, so the maze you solved is not
-    the maze you return through. Shares its clock with the deferred
-    Möbius tree-growth entry above — build them on the same mechanism or
-    neither.
-  - **Life-driven walls** — the Conway variant, and the one with a real
-    open question against it (raised directly, 2026-07-29): wouldn't a
-    Life board mostly die back, leaving the maze open? Yes — random soup at
-    `biomes.conway.ConwayState.INITIAL_DENSITY` mostly evaporates within a
-    few dozen generations into scattered still lifes and blinkers, i.e. a
-    *mostly open* board. So raw B3/S23 on the walls is a bad wall
-    generator, and the existing `biomes.conway.ConwayBiome` should be read
-    as what it is (a live simulation the player walks *on*, with a static
-    maze of its own) rather than as a step toward this. Four ways it could
-    still work, if it's wanted: **(a)** invert the mapping (walls = dead
-    cells) so the sparse stable end-state is a sparse *maze* — but then the
-    opening generations are a near-solid block; **(b)** seed deliberate
-    patterns instead of soup and treat each as level furniture — a blinker
-    is a door, a still life is a permanent wall, a glider is a moving
-    hazard — which is the version that's actually a *mechanic* (pattern
-    literacy) rather than a texture; **(c)** run Life only on a subset of
-    edges layered over a static spanning tree, so connectivity is
-    guaranteed by construction and Life can only add or remove shortcuts;
-    **(d)** use a rule with a labyrinthine stable attractor instead of
-    B3/S23 — B3/S12345 is literally known as "Maze" and grows exactly that
-    kind of structure. Recommendation if it gets built: (c) plus (d),
-    prototyped on the cheapest possible board before any level design
-    leans on it.
+### Mark now, see later
 
-  **What the codebase would need** (asked directly, 2026-07-29 — answer:
-  much less than expected, but not nothing):
-  - The good news is that wall state already has exactly **one chokepoint**:
-    `biomes.common.grid.GridModel.isOpen`. Rendering
-    (`GridMesh`'s own `Walls`), collision (`GridModel.wallZoneNeighbor` →
-    `GridCollision`) and decoration placement
-    (`GridModel.isWellClearOfWalls`) all ask it rather than reading
-    `GridData.openEdges` themselves, so "walls that change" is a change
-    *behind* one call, not a change to every consumer. **Keep it that
-    way**: the rule to preserve is that nothing snapshots `openEdges` into
-    a private copy. One thing already does derive state at load time —
-    `biomes.maze.MazeExitWall.find`, cached in `MazeBiome.exitWall` — and
-    would need re-deriving (or pinning) whenever a rule-driven layout
-    mutates.
-  - **Rebuild cadence is the real cost.** `GridMesh.build` builds the whole
-    sphere's walls as one `h3d.prim.Polygon`, and `Biome.build` only runs on
-    entry. `ConwayBiome` already proves per-step rebuilding is viable at its
-    own 0.75s cadence; a full grid maze rebuilt at 60Hz is not. So a
-    rule-driven biome needs either rebuild-on-change-only (fine for
-    close-behind-you, where changes are rare and player-driven) or walls
-    split into per-cell meshes so only the changed cells rebuild.
-  - **A wall arriving around a stationary player needs a decided rule**,
-    and there isn't one: `wallZoneNeighbor`'s test is deliberately "am I
-    deeper into this wall's zone than I was last tick", i.e. a *movement*
-    test, which by construction can't fire for a player standing still
-    while geometry closes on them. Pick one (refuse the close, eject along
-    the nearest open tangent, or harm the player) before any biome depends
-    on it, rather than discovering it as a stuck-in-a-wall bug.
-  - **Serialization needs the rule's phase, not just the edges.**
-    `Biome.serialize` currently encodes open edges alone, which is enough
-    for a static maze; a rule-driven one has to save its tick/phase too or
-    an exported bug report won't reproduce.
-- **Two-sided maze: the open half** (2026-07-29): the biome itself is built
-  (`biomes.twosided.TwoSidedBiome` — one layout, both faces of the shell,
-  ordinary gravity inside, weak enough outside to jump three walls high,
-  marks that pierce the shell so they read from either side). What's
-  deliberately *not* built, and is the interesting part:
-  - **How you actually cross.** Today the poles are simply open, chosen as
-    the cheapest thing that makes both faces reachable — the poles are the
-    grid's own degenerate merged cells, so a hole there needs no new
-    geometry. hooman's own framing was "warp, opening, whatever flip
-    mechanism… we'll figure out later," so this is a placeholder wearing a
-    placeholder's clothes (a plain yellow disc marks each pole). Candidates
-    worth weighing when it's time: a painting used as a doorway (consistent
-    with every other transition in the game, but paintings currently mean
-    "leave the biome"); a physical hole the player falls through, which makes
-    the shell read as a real thickness; or a flip triggered by something the
-    player *does* rather than somewhere they go — jumping hard enough from
-    the outside to leave the surface entirely and land on the inside would
-    make the two-gravity contrast the crossing mechanism, which is the most
-    elegant option on offer and the one worth prototyping first.
-  - **What makes marks load-bearing.** Right now a mark is a tool with no
-    lock: nothing in the biome requires one. The loop only becomes a
-    *mechanic* when something on the outside can't be found without a mark
-    placed from the inside — a wall that only reveals its door from a
-    distance, a route through a region where the outside face gives no
-    landmarks, a target that's only distinguishable from across the sphere.
-    That's the design work this prototype exists to make possible, not
-    something it settles.
-  - **What a mark says.** Currently just "here" — no direction, no
-    annotation — because the mark entry above is explicit that what a mark
-    should *say* is unproven. Cross-face marking adds a specific new
-    question: should a mark carry which *side* it was placed from?
-  - **Standing on wall tops.** A jump on the outside passes over walls
-    because collision is skipped above wall height; there's no landing on a
-    wall. Worth revisiting if verticality gets developed (see the verticality
-    entry above) — the two entries want the same thing.
-- **Perception rules as the biome's own variable** (2026-07-29): the maze
-  is ordinary; what the player is *allowed to know* is what changes. The
-  most pillar-aligned axis available, since it works directly on the
-  see-far-not-near asymmetry instead of alongside it.
+**Let the player leave marks on the ground — an arrow at a junction, say — that
+are illegible up close and only readable from across the sphere.**
 
-  **One of these is now built**, and what it learned applies to all of them:
-  `biomes.wind.WindBiome` (2026-07-29) makes a draft flow out of the exit
-  along the corridors, so the grass is a flow field converging on the way out.
-  Three findings, in the order they were learned — the last two only after
-  hooman looked at it and said it was showing nothing, which it was:
+- *Fits:* "see far, not near" directly; it's wayfinding that works *with* the
+  asymmetry instead of handing over a map.
+- *Unproven:* whether a mark you can only read from the far side is useful or
+  merely fiddly.
+- *Cost:* low. Cross-face marks already exist in
+  `biomes.twosided.MarkModel`; what's missing is the same-face version and any
+  notion of a mark *saying* something.
 
-  1. **Size**: a cue meant to be read at distance has to be physically big
-     enough to survive there. At normal grass height a blade covers under a
-     pixel from across the sphere and its shape carries nothing.
-  2. **A constant offset, not an oscillation**: the sway was a zero-mean sine,
-     so blades wobbled about upright and never bent anywhere. Anything meant to
-     be *read* needs a steady state, not just motion about a neutral one.
-  3. **Motion is what carries direction; a static cue only carries an axis.**
-     A lean looks much the same bent either way from a distance. What
-     distinguishes "the exit is that way" from "it's behind me" is a gust
-     travelling downwind — which needs each blade's phase to come from its
-     place along the flow rather than a random per-blade value. Generalised:
-     any of the entries below that plans to point somewhere needs to say how it
-     resolves the 180° ambiguity, and motion is the cheapest answer.
+<details><summary>Detail</summary>
 
-  Still open there, and probably shared: whether a distance cue is genuinely
-  navigable rather than merely visible (unresolved — needs walking, not
-  screenshots), and that nothing stops a player reading the cue one tuft at a
-  time at their feet, which defeats the point; the fix is making the *local*
-  reading ambiguous while the aggregate stays honest.
+The original shape: a mark isn't legible up close — it only becomes readable
+once the player is far enough away to see it *and its surroundings* from the
+opposite side, letting them retrace their route (or deduce a better one). The
+two-sided prototype covers a narrower case (a post visible from either face,
+saying only "here"), so the open questions are what a mark should say, and
+whether reading one at distance is genuinely worth the walk.
+</details>
 
-  The rest, roughly cheapest first — one per biome, never stacked:
-  - **Candlelight (invert the asymmetry)**: see near, not far. The
-    mansion/shorter-sight level already sketched under "Various levels"
-    below. Makes the core hook felt by its absence, and turns marks and
-    memory into the only tools.
-  - **Inverse-legibility walls**: wall height is what reads from across the
-    sphere, so make it a gradient — walls grow *taller* the closer the
-    player gets to the goal, meaning visibility drops as they approach and
-    the endgame must be executed on a plan made from far away.
-    `GridMesh.WALL_HEIGHT` is a single constant today; per-edge height is a
-    data change, not an architectural one.
-  - **Centre-lit shadows**: one light at the sphere's centre casts every
-    wall's shadow onto the *far side*, so the structure of the hemisphere
-    behind the player is legible as shadow on the hemisphere in front of
-    them. Nothing but a sphere's interior can do this, which makes it the
-    strongest geometry-corollary candidate in this list.
-  - **Near-fade**: near geometry renders translucent/faint, far geometry
-    crisp — the pillar taken literally rather than approximated by fog.
-    Cheap to try (a distance term in the wall shader) and immediately
-    answers whether the asymmetry is fun when pushed to its limit.
-  - **Mirror band**: a polished ring (water at the equator, glass, ice)
-    reflecting the far side, so the player can read around their own
-    horizon by looking at the reflection instead of across the sphere.
-  - **Echo**: a pulse the player emits; walls answer, and the reply's
-    rhythm encodes distance. A non-visual perception channel, diegetic by
-    construction, and it composes with candlelight rather than competing.
-  - **Posture trade**: extend the core mechanic into an explicit exchange —
-    crouch and you see local detail but nothing far; raise your head and
-    you see across but not your own feet. Today raising your head is free;
-    making it cost something is the cheapest way to turn the hook into a
-    decision.
-  - **One snapshot**: the player may keep exactly one remembered view of
-    the far side at a time (a still image, diegetically a sketch or a
-    photograph), replacing it whenever they take another. Wayfinding
-    without ever handing over a map, per the pillar's own warning.
-  - **Drifting fog banks**: patches of occlusion moving across the sphere's
-    interior, so surveying is opportunistic — wait for a gap rather than
-    look whenever you like. The weakest of these against the
-    geometry-corollary rule (it would work in any maze) — noted for
-    completeness, not recommended first.
-  - **Compass**: always know the bearing of the goal, never the walls (also
-    sketched under "Various levels" below).
-- **Antipode pairs** (2026-07-29, hooman: "I like the antipod pairs idea"):
-  every point on a sphere has exactly one antipode, and — on the interior —
-  it is the point the player can see *best*, since it's the farthest one and
-  sits dead centre of their view when they raise their head. So make the
-  maze paired: what the player does to a wall here happens to its antipodal
-  counterpart there, either **identically or inverted** (the shape of the
-  ask: "the same/opposite to the corresponding one"). Three verbs worth
-  prototyping, cheapest first:
-  - **Tag** a wall (no structural change) and its antipode is tagged too —
-    the safest first prototype, because it can't make a maze unsolvable
-    and it immediately answers the real question: can a player actually
-    *find* the antipodal wall by looking, and does that read as a
-    connection rather than a coincidence?
-  - **Remove/add** a wall and its antipode opens/closes with it (same), or
-    closes/opens against it (opposite). "Opposite" is the more interesting
-    puzzle and the more dangerous one — it can wall off a region, so a
-    solvability check (or a rule that a pair may never close the last route
-    to a cell) is part of the design, not an afterthought.
-  - **Carry** a wall: pick a wall up here and it can only be set down at an
-    antipode — Void Stranger's tile-rod verb (see
-    [inspirations.md](inspirations.md)) with the sphere supplying the
-    constraint that makes it interesting, since choosing what to move means
-    reading the far side and then walking half a world with the shape held
-    in memory.
+### Someone messes with the marks
 
-  Implementation note: the antipode of a `GridNode` is a pure key transform
-  (`theta → pi - theta`, `phi → phi + pi`, then re-resolve the column
-  against `GridModel.colsForRow` — the two rows involved have the same
-  column count by symmetry, so pairs are exact rather than approximate),
-  and edges pair by their two endpoints' antipodes. Worth checking early
-  whether the pole nodes pair with each other cleanly (they should: north's
-  antipode is south) since they're the grid's usual special case. Shares
-  the "changing here changes there" shape with the Möbius entry above —
-  build the second one on whatever mechanism the first one establishes.
-- **Great-circle corridors** (2026-07-29): a maze whose corridors are arcs
-  of great circles, so *every* corridor followed far enough returns to where
-  it started — walking "straight" is a loop, and the puzzle becomes working
-  out which circle you're on. Up close every corridor looks identically
-  straight, so the only way to tell them apart is from a distance: the
-  asymmetry doing load-bearing work rather than being decoration. Wants its
-  own layout generator rather than the row/column grid (a set of great
-  circles at assorted inclinations, with intersections as junctions), which
-  also means its own collision approach — the most structurally expensive
-  idea in this file, and worth a cheap unwalkable visual mock-up (just the
-  circles, drawn) before committing to walkable geometry.
-- **Junction drafting** (2026-07-29): don't generate the maze up front. At
-  each junction the player picks what to build there from a small offered
-  hand, under constraints (limited pieces, a piece that must be used, a
-  budget), with incomplete information about what's beyond. Choosing the
-  layout becomes the gameplay rather than a menu — the Blue Prince lesson in
-  [inspirations.md](inspirations.md). Two placements, and hooman explicitly
-  wants both on the table: **in the sphere**, where the half-built maze is
-  visible from across it and so becomes a growing monument to the player's
-  own choices (which is the story-line requirement that the player's actions
-  visibly accumulate, satisfied by geometry instead of props), and **in
-  another biome** with a different topology, where drafting is the whole
-  identity rather than a layer on a maze. Open question to answer with the
-  cheapest prototype: whether the offered hand is drawn at the junction
-  (immediate, tense) or planned before entering (deliberate, more like
-  drafting a route) — those are different games.
-- **Verticality: a maze that isn't flat** (2026-07-29, hooman: "I like the
-  idea of a 3D maze as well… I don't know on which space it will fit best
-  yet"): today every walkable surface is a 2D sheet embedded in 3D (sphere
-  interior, Möbius strip, the tower's stacked floors), and a maze on it is a
-  2D maze. A genuinely 3D maze means the third axis carries route
-  information: routes that pass over and under each other, walls whose
-  height is a gate rather than a barrier, and dead ends that are only dead
-  at one altitude. Three ways in, with different costs:
-  - **Jump as a verb** (cheapest): `Biome.gravity()` is already per-biome
-    and `GameLoop.JUMP_IMPULSE` is shared, so a low-gravity biome jumps
-    higher off the same launch with no new mechanism. Give walls per-edge
-    heights and the maze becomes a topographic map — one you can read from
-    across the sphere, since height is exactly what reads at distance
-    (composes with the inverse-legibility entry above).
-  - **Concentric shells**: two or more grid spheres at different radii,
-    linked by openings, so "up" moves the player between whole mazes and
-    the far side you can see is not the one you're standing on. Fits the
-    existing grid code (a second `GridGeometry.RADIUS`) far better than it
-    fits the collision code, which assumes one radius per biome.
-  - **Zero-G / free flight**: no floor at all, a lattice maze the player
-    flies through. The tower already proves real free-fall through open
-    space with `FlatSpace`, but removing "there is a surface you stand on"
-    invalidates most of what `PlayerModel`/`Camera` assume about a local
-    up — the most expensive of the three, and the one to prototype in the
-    ugliest possible form first.
+**Marks the player left don't always still say what they said.**
 
-  No decision on which space it lands in; the honest first step is the jump
-  variant on the existing sphere grid, because it's nearly free and it
-  answers whether verticality is fun here at all before anything gets
-  rebuilt around it.
+- *Fits:* the noir tone, and it makes wayfinding social rather than mechanical.
+- *Unproven:* the dosage. Explicit ask: **subtle but noticeable.**
+- *Cost:* low, but blocked on the base mark mechanic.
+
+<details><summary>Detail</summary>
+
+An arrow rotated a few degrees, a mark moved one junction over, one added that
+the player never left. The player should be able to *catch* it — and, ideally,
+start distrusting a still-correct mark, which is the better half of the effect —
+never be silently griefed by an invisible RNG. So: tamper rarely, tamper
+visibly-in-hindsight (a tampered mark should look slightly wrong when
+re-examined up close — a hand not the player's), and never tamper with the mark
+the player is currently looking at.
+
+Pairs naturally with whoever is doing it being a real character: the
+raven/watchdog in the Garden of Eden candidate, or the goblin steering visitors
+in the salvaged Minotaur material (see
+[design-decisions-records.md](design-decisions-records.md)). Don't build the
+antagonist before the thing it vandalises.
+</details>
+
+### Scouting
+
+**Send something off in a direction — a rolling ball, a burst of coloured gas —
+to reveal a bit of the path ahead before committing to walk it.**
+
+- *Fits:* wayfinding that costs something, rather than free information.
+- *Unproven:* what the scout *is*, diegetically and mechanically.
+- *Cost:* medium — needs a moving thing with its own collision.
+
+### Cross-biome displacement
+
+**Things turn up in the wrong biome — a creature or object escaped into a world
+it doesn't belong to — and the player's job is to spot it and take it home.**
+
+- *Fits:* "interconnected, not a level select" (traffic between biomes makes them
+  one world) and "see far, not near" (an out-of-place thing is exactly what reads
+  from across the sphere — a wrong glint in the wrong biome).
+- *Unproven:* the carry/lure/chase interaction, which doesn't exist in any form.
+- *Cost:* medium.
+
+<details><summary>Detail</summary>
+
+Salvaged from the rejected "Night Shift" story alternative (see
+[design-decisions-records.md](design-decisions-records.md)): the storyline died,
+this mechanic was explicitly kept (hooman: "a great idea"). The existing spawn
+scaffolding (`entities.CreatureSpawnTable`,
+`entities.registries.CreaturesRegistry`/`NpcsRegistry`) is already shaped for
+"what escapes where". Prototype the cheapest version first.
+</details>
+
+### Reverse time, off the hourglass
+
+**Hang a real rewind mechanic off the hub hourglass's hidden unlock.**
+
+- *Fits:* diegetic-over-chrome — the control is an object in the world.
+- *Unproven:* what the mechanic *is* (undo a hazard, rewind an obstacle, replay
+  the player's own last few seconds).
+- *Cost:* medium; the trigger exists, the effect doesn't.
+
+<details><summary>Detail</summary>
+
+The tiltable hourglass (`entities.hourglass.HourglassModel`/`Hourglass`) already
+has a real trigger, not just the safety valve this entry used to describe: walk
+it to its minus floor and keep pushing past it
+(`HourglassModel.overdraftCount`/`OVERDRAFT_UNLOCK_COUNT`) and it snaps back to
+neutral and sets `unlocked` permanently, shown today by the sand turning gold.
+Nothing else in the game reacts to `unlocked` yet. Prototype the cheapest
+version of whatever the mechanic is before wiring level design around it.
+</details>
+
+### Falls-counter unlocks
+
+**Hang objectives off the tower's fall counter.**
+
+- *Fits:* rewards precision over speed.
+- *Unproven:* what each unlock actually is — undecided.
+- *Cost:* low.
+
+<details><summary>Detail</summary>
+
+The counter and its floor ring-glow cue are built
+(`biomes.tower.TowerBiome.fallCount`, `graphics.shaders.TileRingGlow`). Three
+scenarios, each meant to unlock something different, none built: touching only
+the top and bottom floors (the minimum possible), touching every single floor,
+and anything in between (no unlock).
+</details>
+
+### Real tree growth (Möbius forest)
+
+**Saplings that visibly grow into full trees over time, instead of a one-time
+scatter placed fully grown.**
+
+- *Fits:* gives the hourglass's time-scale something else to bite on.
+- *Unproven:* rebuild-on-tick vs interpolated scale.
+- *Cost:* medium. **Deliberately deferred** in favour of the cheap static version.
+
+<details><summary>Detail</summary>
+
+If built, it should hang off the existing global time-scale
+(`HourglassModel.timeScale` / `BiomesRegistry.globalTimeScale`) rather than
+inventing a second clock: growth would speed up, slow down, or stop dead along
+with everything else — "a mechanism with the time stop", per the ask. Needs
+persistent per-tree state (a growth stage or planted-at timestamp in
+`MobiusForestGenerator.PlacedTree`, serialized with the rest of the layout).
+</details>
+
+### One side affects the other (Möbius)
+
+**Change something on one lift of the strip and its counterpart on the other
+changes too.**
+
+- *Fits:* a consequence of the strip's topology, not a switch puzzle pasted onto
+  it. Shares its shape with [antipode pairs](#antipode-pairs) — build the second
+  on whatever mechanism the first establishes.
+- *Unproven:* whether the player ever *notices* the pairing.
+- *Cost:* medium. Prototype the cheapest reversible interaction first.
+
+### Walls that behave by a rule
+
+**A biome whose maze isn't a fixed layout but one governed by a rule the player
+learns to read.** Each variant is its own biome, not a stack of twists in one.
+
+| Variant | What it does | Notes |
+|---|---|---|
+| **Metronome** | sections rise and fall on the world tick | the hourglass is already a global time-scale dial, so the player's difficulty control is diegetic at no new cost |
+| **Close behind you** | crossing an edge shuts it | strongest "see far, not near" fit in this file: the whole route must be planned before entry. Precedent: Ravensburger's Labyrinth ([inspirations](inspirations.md)) |
+| **Growth** | hedges close over time | shares its clock with [tree growth](#real-tree-growth-möbius-forest) — build both on one mechanism or neither |
+| **Life-driven** | walls follow a cellular automaton | has a real objection against it, below |
+
+- *Unproven:* all four; and Life-driven has a known problem.
+- *Cost:* high — see [the engineering
+  note](notes/rule-driven-walls-engineering.md) for what the codebase needs
+  (short version: one chokepoint already exists; the gaps are rebuild cadence, a
+  wall closing on a stationary player, and serializing the rule's phase).
+
+<details><summary>Why raw Conway is a bad wall generator — and four ways it could still work</summary>
+
+Raised directly (2026-07-29): wouldn't a Life board mostly die back, leaving the
+maze open? Yes. Random soup at `biomes.conway.ConwayState.INITIAL_DENSITY`
+evaporates within a few dozen generations into scattered still lifes and
+blinkers — a *mostly open* board. So raw B3/S23 on the walls doesn't work, and
+the existing `biomes.conway.ConwayBiome` should be read as what it is (a live
+simulation the player walks *on*, with a static maze of its own) rather than a
+step toward this.
+
+1. **Invert the mapping** (walls = dead cells) so the sparse stable end-state is
+   a sparse *maze* — but then the opening generations are a near-solid block.
+2. **Seed deliberate patterns** instead of soup and treat each as level
+   furniture: a blinker is a door, a still life is a permanent wall, a glider is
+   a moving hazard. This is the version that's actually a *mechanic* (pattern
+   literacy) rather than a texture.
+3. **Run Life on a subset of edges** layered over a static spanning tree, so
+   connectivity is guaranteed by construction and Life can only add or remove
+   shortcuts.
+4. **Use a rule with a labyrinthine attractor** — B3/S12345 is literally known
+   as "Maze" and grows exactly that kind of structure.
+
+Recommendation if it gets built: 3 plus 4, on the cheapest possible board first.
+</details>
+
+### Two-sided maze: the open half
+
+**Built** — `biomes.twosided.TwoSidedBiome`: one layout, both faces of the
+shell, ordinary gravity inside, weak enough outside to jump three walls high,
+marks that pierce the shell and read from either side. What's left is the
+interesting part.
+
+![Cross-section of the shell: inside the sphere a walker under gravity 60 between plain walls with a long sightline; outside, an inverted walker under gravity 4.5 arcing over three hatched walls; a pink post pierces the shell and reads from both faces.](../assets/game-design/two-sided-shell.svg)
+
+- **How you actually cross.** The poles are simply open today, chosen because
+  they're the grid's own degenerate merged cells and need no new geometry —
+  hooman's framing was "warp, opening, whatever flip mechanism… we'll figure out
+  later." Candidates: a painting as a doorway (consistent with every other
+  transition, but paintings currently mean *leave the biome*); a physical hole
+  that makes the shell read as real thickness; or **a flip triggered by
+  something the player does** — jumping hard enough from the outside to leave
+  the surface and land on the inside, which makes the two-gravity contrast
+  itself the door. That last is the most elegant and the one to prototype first.
+- **What makes marks load-bearing.** A mark is currently a tool with no lock:
+  nothing requires one. It becomes a *mechanic* only when something on the
+  outside can't be found without a mark placed from the inside — a wall that
+  only reveals its door from a distance, a region where the outside face gives
+  no landmarks, a target only distinguishable from across the sphere.
+- **What a mark says.** Just "here", for now. Cross-face marking adds a
+  question: should a mark record which *side* it was placed from?
+- **Standing on wall tops.** A jump on the outside passes over walls because
+  collision is skipped above wall height; there's no landing on one. Wants the
+  same thing [verticality](#verticality-a-maze-that-isnt-flat) wants.
+
+### Perception rules as the biome's own variable
+
+**The maze is ordinary; what the player is *allowed to know* is what changes.**
+The most pillar-aligned axis available — it works directly on the
+see-far-not-near asymmetry instead of alongside it. One per biome, never stacked.
+
+| Rule | What changes | Corollary of the sphere? |
+|---|---|---|
+| **Candlelight** | see near, not far — the asymmetry inverted | yes (felt by absence) |
+| **Inverse-legibility walls** | walls grow taller nearer the goal, so visibility drops as you approach | yes |
+| **Centre-lit shadows** | one lamp at the centre draws the far hemisphere's walls as shadows | **strongest** — only a sphere's interior can do it |
+| **Near-fade** | near geometry faint, far geometry crisp | yes (the pillar, literally) |
+| **Mirror band** | a polished ring reflects the far side, so you read around your own horizon | yes |
+| **Echo** | a pulse whose reply rhythm encodes distance | partly (non-visual channel) |
+| **Posture trade** | crouch to see near, raise your head to see far — never both | yes |
+| **One snapshot** | keep exactly one remembered view of the far side at a time | partly |
+| **Compass** | always know the goal's bearing, never the walls | no |
+| **Drifting fog** | occlusion moves, so surveying is opportunistic | weakest — works in any maze |
+
+![Cross-section of a corridor where wall heights grow toward the goal; a sightline from far out clears the low walls and dies against the tall ones.](../assets/game-design/inverse-legibility.svg)
+
+![A sphere with a single lamp at its centre; walls on the near interior cast wedge-shaped shadows onto the far side.](../assets/game-design/centre-lit-shadows.svg)
+
+<details><summary>What the first built one (the wind biome) settled — read this before building another</summary>
+
+`biomes.wind.WindBiome` (2026-07-29) makes a draft flow out of the exit along
+the corridors, so the grass is a flow field converging on the way out. Three
+findings, in the order learned — the last two only after hooman looked at it and
+said it was showing nothing, which it was:
+
+1. **Size.** A cue meant to be read at distance has to be physically big enough
+   to survive there. At normal grass height a blade covers under a pixel from
+   across the sphere and its shape carries nothing.
+2. **A constant offset, not an oscillation.** The sway was a zero-mean sine, so
+   blades wobbled about upright and never bent anywhere. Anything meant to be
+   *read* needs a steady state, not just motion about a neutral one.
+3. **Motion carries direction; a static cue carries only an axis.** A lean looks
+   much the same bent either way from a distance. What distinguishes "the exit is
+   that way" from "it's behind me" is a gust travelling downwind — each blade's
+   phase taken from its place along the flow, not a random per-blade value.
+   **Generalised: any entry here that means to point somewhere must say how it
+   resolves the 180° ambiguity, and motion is the cheapest answer.**
+
+Still open, and probably shared by all ten: whether a distance cue is genuinely
+*navigable* rather than merely visible (needs walking, not screenshots), and that
+nothing stops a player reading the cue one tuft at a time at their feet, which
+defeats the point — the fix is making the *local* reading ambiguous while the
+aggregate stays honest.
+</details>
+
+### Antipode pairs
+
+**Every point on a sphere has exactly one antipode — and from the interior it's
+the point you see *best*. So pair the maze: what you do to a wall here happens
+to its counterpart there, identically or inverted.**
+
+![A sphere with two cells at opposite ends of a line through the centre; a change at one appears at the other, or its opposite.](../assets/game-design/antipode-pairs.svg)
+
+- *Fits:* the geometry-corollary rule, hardest of any entry here. hooman: "I like
+  the antipod pairs idea."
+- *Unproven:* whether a player can *find* the paired wall by looking, and whether
+  it reads as a connection rather than a coincidence.
+- *Cost:* medium.
+
+<details><summary>Three verbs, cheapest first — and the implementation note</summary>
+
+- **Tag** a wall (no structural change) and its antipode is tagged too. The safest
+  first prototype: it can't make a maze unsolvable, and it answers the real
+  question immediately.
+- **Remove/add** a wall and its antipode opens/closes with it (same), or against
+  it (opposite). "Opposite" is the more interesting puzzle and the more
+  dangerous one — it can wall off a region, so a solvability check (or a rule
+  that a pair may never close the last route to a cell) is part of the design.
+- **Carry** a wall: pick one up here and it can only be set down at an antipode
+  — Void Stranger's tile-rod verb ([inspirations](inspirations.md)) with the
+  sphere supplying the constraint, since choosing what to move means reading the
+  far side and then walking half a world with the shape held in memory.
+
+Implementation: the antipode of a `GridNode` is a pure key transform (`theta →
+pi - theta`, `phi → phi + pi`, then re-resolve the column against
+`GridModel.colsForRow` — the two rows involved have the same column count by
+symmetry, so pairs are exact), and edges pair by their endpoints' antipodes.
+Check early that the poles pair cleanly (they should: north's antipode is
+south), since they're the grid's usual special case.
+</details>
+
+### Great-circle corridors
+
+**A maze whose corridors are arcs of great circles, so every corridor followed
+far enough returns to where it started. Walking "straight" is a loop; the puzzle
+is working out which circle you're on.**
+
+![A sphere with three great circles at different inclinations, dots at their crossings, and a path that returns to its own start.](../assets/game-design/great-circle-corridors.svg)
+
+- *Fits:* up close every corridor looks identically straight, so only distance
+  tells them apart — the asymmetry doing load-bearing work.
+- *Unproven:* whether "which circle am I on" is a puzzle or just disorienting.
+- *Cost:* **high** — wants its own layout generator (circles at assorted
+  inclinations, intersections as junctions) and its own collision approach.
+  Worth a cheap unwalkable mock-up (just the circles, drawn) before committing to
+  walkable geometry.
+
+### Junction drafting
+
+**Don't generate the maze up front: at each junction the player picks what to
+build from a small offered hand, under constraints, with incomplete information
+about what's beyond.**
+
+- *Fits:* choosing the layout becomes the gameplay rather than a menu — the Blue
+  Prince lesson ([inspirations](inspirations.md)). In the sphere it also
+  satisfies the story-line's "actions visibly accumulate", by geometry instead of
+  props: the half-built maze is visible from across it.
+- *Unproven:* whether the hand is drawn *at* the junction (immediate, tense) or
+  planned before entering (deliberate, more like drafting a route). Those are
+  different games.
+- *Cost:* medium. hooman wants both placements on the table: in the sphere, and
+  in another biome where drafting is the whole identity rather than a layer.
+
+### Verticality: a maze that isn't flat
+
+**Today every walkable surface is a 2D sheet embedded in 3D, so every maze is a
+2D maze. Make the third axis carry route information.**
+
+| Way in | What it buys | Cost |
+|---|---|---|
+| **Jump as a verb** | per-edge wall heights turn the maze into a topographic map — and height is exactly what reads at distance, so it composes with inverse-legibility | low: `Biome.gravity()` is already per-biome |
+| **Concentric shells** | "up" moves between whole mazes; the far side you see isn't the one you stand on | medium: fits the grid code, fights the collision code's one-radius assumption |
+| **Zero-G / free flight** | a lattice maze with no floor at all | high: removes the local "up" that `PlayerModel`/`Camera` assume |
+
+- *Unproven:* whether verticality is fun here at all. hooman: "I don't know on
+  which space it will fit best yet."
+- *Cost:* start with the jump variant on the existing sphere grid — nearly free,
+  and it answers the question before anything gets rebuilt.
+
+---
 
 ## Levels & biomes
 
-- **Paintings mechanics**: based on what's drawn on paintings on the wall,
-  we could introduce new mechanics. For instance, a warp between two
-  paintings of the same scenery, or two sides of the same scenery, or a wall
-  the player can cross through, etc. *Note:* the hub/menu navigation
-  (decided 2026-07-17, see `../PROJECT_LOG.md`) already uses paintings as
-  doorways to the hub — revisit whether an in-maze warp/cross-through
-  mechanic is still separately wanted, or whether that's now covered.
-- **Various levels** with varying game design: one in a mansion, with a
-  candlelight, with a shorter sight. Another with a compass, etc. Maybe the
-  paintings could be the link between biomes/levels, or some kind of portal,
-  or something. We could even base some levels on real paintings which we'd
-  enter, solve a related challenge to get out with some kind of reward.
-  (The wind-led level this entry also used to name is built —
-  `biomes.wind.WindBiome`, 2026-07-29; see the perception-rules entry above
-  for what it settled and what it left open.)
-- **Per-biome maze recipes** (2026-07-29): the generation styles themselves
-  now exist and work on any topology (`biomes.common.maze.MazeStyle` —
-  randomized DFS, Prim, Kruskal, axis-biased, recursive division, plus
-  braiding as a post-pass). What's *not* decided is which biome should carve
-  with what, which is the actual design question: a biome's corridors are the
-  first thing a player reads about it, and today four of the five styles are
-  unused. Known so far, from the two biomes that pick deliberately:
-  `biomes.wind.WindBiome` carves axis-biased so its flow field gets long
-  sweeping curves, and `biomes.exterior.ExteriorBiome` carves with Prim for
-  frequent dead-end feedback where nothing else is legible. Recursive
-  division is the one with an unclaimed identity waiting for it — it makes
-  rooms and halls rather than corridors, which is the mansion level above.
-  Wants playtesting per style rather than a decision on paper, and one
-  further lesson worth stealing when it happens (see
-  [inspirations.md](inspirations.md) on Dead Cells): authored skeleton,
-  generated detail, rather than pure procedure everywhere.
-- **Biomes links**: perhaps you need to get a key, or a piece of information
-  from a biome to be able to progress in another (kind of like *Outer
-  Wilds*).
-  - **Rosetta maze** (2026-07-29 — the specific form of the above worth
-    naming, after the first sketch of it didn't land): the point is that a
-    maze's own walls can carry a *message* rather than only a route,
-    because this game already has a rule that things are illegible up close
-    and legible from far away. Concretely: generate biome B's layout so
-    that, seen from a distance, its pattern of open and closed walls isn't
-    just corridors — it's a **picture of the answer to biome A**. Say A is
-    the candlelight biome where the player can't see and has to turn
-    correctly at eleven junctions in the dark. Those eleven turns are a
-    string of lefts and rights. B is an ordinary, solvable sphere maze whose
-    walls, read as light/dark from the antipode, draw exactly that string —
-    as a row of marks, a shape, a picture of A's route. A player who walks B
-    with their head down just solves a maze and leaves; a player who stops
-    and looks across notices the wall pattern is too regular to be
-    generated, and now holds A's solution. Nothing is unlocked, no item is
-    granted, no UI says anything: the knowledge *is* the key, which is the
-    *Outer Wilds* shape this entry has always been about, made out of
-    geometry instead of a note. Two hard parts, both worth knowing before
-    building it: the layout generator has to satisfy a *constraint* (draw
-    this pattern) while staying a solvable maze — a real generative problem,
-    not a parameter — and the pattern has to be noticeable enough to be
-    found without being so obvious it looks like a bug. Cheapest first
-    prototype: hand-author one small pattern into one small maze, look at it
-    from the far side, and see whether it reads at all.
-- **Secret one-time painting swap (tower)**: if the player goes back up
-  through the tower's own *entrance* painting (the one they fell in
-  through) instead of descending to the goal and using the return
-  painting, that could trigger something secret — e.g. the hub's
-  to-tower painting gets swapped for a special one-time-use variant,
-  available only that one time the player is back in the hub, and reset
-  (back to the normal tower painting) the moment they leave through any
-  other biome's painting instead.
+### Paintings mechanics
+
+**New mechanics based on what's *drawn* on a painting: a warp between two
+paintings of the same scenery, two sides of one scene, a wall you can cross
+through.**
+
+*Note:* the hub/menu navigation (decided 2026-07-17) already uses paintings as
+doorways. Revisit whether an in-maze warp is still separately wanted.
+
+### Various levels
+
+**Levels with their own game design: a mansion by candlelight with shorter
+sight; another with a compass; levels entered *through* real paintings, with a
+challenge to solve to get back out.**
+
+The wind-led level this entry used to name is built (`biomes.wind.WindBiome`) —
+see [perception rules](#perception-rules-as-the-biomes-own-variable).
+
+### Per-biome maze recipes
+
+**The generation styles exist; which biome carves with what is undecided — and
+that's the design question, since a biome's corridors are the first thing a
+player reads about it.**
+
+- *Built:* `biomes.common.maze.MazeStyle` — randomized DFS, Prim, Kruskal,
+  axis-biased, recursive division, plus braiding as a post-pass, on any topology.
+- *Chosen so far:* the wind biome carves axis-biased so its flow field gets long
+  sweeping curves; the exterior biome carves Prim for frequent dead-end feedback
+  where nothing else is legible. **Four of five styles are unused.**
+- *Waiting for an identity:* recursive division makes rooms and halls rather than
+  corridors — which is the mansion level above.
+- *Cost:* low. Wants playtesting per style, not a decision on paper. One further
+  lesson to steal when it happens (Dead Cells, [inspirations](inspirations.md)):
+  authored skeleton, generated detail, rather than pure procedure everywhere.
+
+### Biome links, and the rosetta maze
+
+**Progression gated on knowledge rather than items: you need a key, or a piece of
+information, from one biome to get further in another (à la *Outer Wilds*).**
+
+The specific form worth naming — **the rosetta maze**: a maze's walls can carry a
+*message*, not just a route, because this game already makes things illegible up
+close and legible from afar.
+
+![Two spheres: a dark maze whose eleven blind turns are a string of lefts and rights, and an ordinary maze whose wall pattern draws that same string.](../assets/game-design/rosetta-maze.svg)
+
+- *Fits:* the knowledge *is* the key — no unlock, no item, no UI.
+- *Unproven:* whether a constrained layout can stay a solvable maze, and whether
+  the pattern can be noticeable without looking like a bug.
+- *Cost:* high. Cheapest first step: hand-author one small pattern into one small
+  maze, look at it from the far side, and see whether it reads at all.
+
+<details><summary>Worked example</summary>
+
+Say biome A is the candlelight maze where the player can't see and has to turn
+correctly at eleven junctions in the dark. Those eleven turns are a string of
+lefts and rights. Biome B is an ordinary, solvable sphere maze whose walls, read
+as light and dark from the antipode, draw exactly that string — a row of marks, a
+shape, a picture of A's route. A player who walks B head-down just solves a maze
+and leaves; one who stops and looks across notices the pattern is too regular to
+be generated, and now holds A's solution.
+
+The two hard parts: the generator has to satisfy a *constraint* (draw this
+pattern) while staying solvable, which is a real generative problem rather than a
+parameter; and the pattern has to be findable without being so obvious it reads
+as a bug.
+</details>
+
+### Secret one-time painting swap (tower)
+
+**Go back up through the tower's *entrance* painting instead of descending to the
+goal, and something secret triggers.**
+
+For example: the hub's to-tower painting is swapped for a special one-time-use
+variant, available only that one time the player is back in the hub, and reset
+the moment they leave through any other biome's painting.
+
+---
 
 ## Narrative & characters
 
-- **Story and lore**: we need a main story to knead everything together —
-  the live exploration is in [story-line.md](story-line.md).
-- **Cute characters**: cats, ghosts, ravens, something with a coherent
-  theme, rather noir.
+### Story and lore
+
+We need a main story to knead everything together — the live exploration is in
+[story-line.md](story-line.md).
+
+### Cute characters
+
+Cats, ghosts, ravens: something with a coherent theme, rather noir.
+
+---
 
 ## Controls
 
-- **Mobile controls** (see [`../GUIDELINES.md`](../GUIDELINES.md) §1.8):
-  deliberately undesigned until there's a playable desktop version to
-  adapt from.
+### Mobile controls
+
+Deliberately undesigned until there's a playable desktop version to adapt from —
+see [`../GUIDELINES.md`](../GUIDELINES.md) §1.8.

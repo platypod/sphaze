@@ -9,6 +9,35 @@ decision lands: fold the winner in here, push its pillar consequences into
 the why, note it in `../PROJECT_LOG.md`, and reshape
 [ideas-backlog.md](ideas-backlog.md) entries to hang off the winner.
 
+## The map
+
+Where the story exploration stands. Solid = still in play, dashed = parked,
+crossed out = rejected (with the why in
+[design-decisions-records.md](design-decisions-records.md)).
+
+```mermaid
+flowchart TB
+    subgraph live["in play"]
+        eden["<b>Garden of Eden</b><br/>you are a pattern that<br/>outgrew its automaton<br/><i>leading candidate</i>"]
+        myth["<b>Twisted mythologies</b><br/>an engine, not a story:<br/>every myth exists twice"]
+        myth --> threadA["Thread A — the Nameless Extra<br/><i>defiance / earn a name</i>"]
+        myth --> threadC["Thread C — the Hospice<br/><i>devotion / feed the gods truth</i>"]
+        threadA -.->|"unexplored door:<br/>the teller <i>is</i> the extra"| threadC
+    end
+    subgraph parked["alive, not leading"]
+        painter["The Painter's House<br/><i>restoration, warm</i>"]
+    end
+    subgraph gone["rejected / absorbed"]
+        late["The Late Resident"]
+        night["The Night Shift"]
+        mino["The Minotaur"]
+        throne["The Vacant Throne"]
+    end
+    mino -.->|absorbed as<br/>Labyrinth material| myth
+    night -.->|mechanic salvaged:<br/>cross-biome displacement| painter
+    painter -.->|"composes with"| myth
+```
+
 ## Requirements (common ground for any candidate)
 
 Distilled from the exploration so far — treat these as requirements for 

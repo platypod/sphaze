@@ -1,4 +1,5 @@
 package biomes.common.maze;
+
 import biomes.common.maze.MazeTopology.MazeLayout;
 
 /**

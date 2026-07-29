@@ -138,7 +138,13 @@ class HubBiome implements Biome {
 			case TowerBiome.ID: TowerReplica.returnSpawn(towerReplicaBasis, HubModel.RADIUS);
 			case MobiusBiome.ID: MobiusWaypoint.returnSpawn(mobiusWaypointBasis, HubModel.RADIUS);
 			case ConwayBiome.ID: ConwayWaypoint.returnSpawn(conwayWaypointBasis, HubModel.RADIUS);
-			default: throw 'unreachable: no hub structure registered for biome "$fromBiomeId"';
+			// Not unreachable any more: `biomes.debug.DebugHubBiome` warps
+			// straight here from outside the game's own geography, and by
+			// construction has no structure in this room to arrive beside.
+			// Falling back to the fixed spawn is right for any such caller —
+			// far better than throwing, which is what this did while every
+			// possible origin was a real biome.
+			default: PlayerModel.spawnAt(HubModel.SPAWN_THETA, HubModel.SPAWN_PHI, 0, HubModel.RADIUS);
 		}
 	}
 

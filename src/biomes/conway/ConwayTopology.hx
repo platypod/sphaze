@@ -29,7 +29,10 @@ class ConwayTopology implements RectangularTopology {
 	}
 
 	public function neighborsOf(nodeKey:String):Array<String> {
-		return [for (neighbor in ConwayMaze.neighborsOf(nodeFor(nodeKey))) ConwayMaze.nodeKey(neighbor)];
+		return [
+			for (neighbor in ConwayMaze.neighborsOf(nodeFor(nodeKey)))
+				ConwayMaze.nodeKey(neighbor)
+		];
 	}
 
 	/** Same rule as `GridTopology.axisOf` — see `EdgeAxis`'s own doc for why pole edges are `Irregular`. **/

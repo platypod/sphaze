@@ -66,6 +66,15 @@ class Colours {
 	/** `biomes.conway.ConwayMesh` closed-edge neon walls ("Tron" maze lines). **/
 	public static inline final CONWAY_WALL_NEON:Int = 0xFF38E8FF;
 
+	/** `biomes.debug.DebugHubBiome`'s own floor — a flat mid-grey, deliberately drab: the dev room shouldn't look like content (see that class's own doc). **/
+	public static inline final DEBUG_FLOOR:Int = 0xFF3A3A3E;
+
+	/** `biomes.debug.DebugHubBiome`'s own portal signs — see `graphics.LabelTexture`. **/
+	public static inline final DEBUG_SIGN:Int = 0xFF1E2430;
+
+	/** See `DEBUG_SIGN` — the label text drawn on it, bright enough to read across the dev room. **/
+	public static inline final DEBUG_SIGN_TEXT:Int = 0xFFE8EEF5;
+
 	/** `biomes.common.tree.TreeMesh`'s own trunks, at the root (`graphics.shaders.HeightGradient`'s own base color) — a plain bark-brown placeholder, no real art yet either. **/
 	public static inline final TREE_TRUNK_BASE:Int = 0xFF3E2E20;
 

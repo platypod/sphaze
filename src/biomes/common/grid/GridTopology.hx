@@ -38,7 +38,10 @@ class GridTopology implements RectangularTopology {
 	}
 
 	public function neighborsOf(nodeKey:String):Array<String> {
-		return [for (neighbor in GridModel.neighborsOf(nodeFor(nodeKey))) GridModel.nodeKey(neighbor)];
+		return [
+			for (neighbor in GridModel.neighborsOf(nodeFor(nodeKey)))
+				GridModel.nodeKey(neighbor)
+		];
 	}
 
 	/** Two ring cells in the same row run east-west; in different rows, north-south. Anything involving a merged pole is `Irregular` — see `EdgeAxis`'s own doc. **/

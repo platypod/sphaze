@@ -1,4 +1,5 @@
 package biomes.common.maze;
+
 import biomes.common.maze.MazeTopology.MazeLayout;
 import biomes.common.maze.MazeTopology.RectangularTopology;
 
@@ -86,7 +87,8 @@ class MazeCarver {
 				continue;
 			}
 
-			var next = alongRowWeight == 1 ? unvisited[Math.floor(rng() * unvisited.length)] : pickWeightedByAxis(topology, current, unvisited, alongRowWeight, rng);
+			var next = alongRowWeight == 1 ? unvisited[Math.floor(rng() * unvisited.length)] : pickWeightedByAxis(topology, current, unvisited,
+				alongRowWeight, rng);
 			if (next == null) {
 				continue;
 			}

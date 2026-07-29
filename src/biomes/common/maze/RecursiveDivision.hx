@@ -1,4 +1,5 @@
 package biomes.common.maze;
+
 import biomes.common.maze.MazeTopology.MazeLayout;
 import biomes.common.maze.MazeTopology.RectangularTopology;
 
@@ -122,8 +123,7 @@ class RecursiveDivision {
 		@param fracEnd end of the region's own fraction of the full circle, in [0, 1].
 		@param rng source of randomness in [0, 1).
 	**/
-	static function divide(layout:MazeLayout, topology:RectangularTopology, rowStart:Int, rowEnd:Int, fracStart:Float, fracEnd:Float,
-			rng:Void->Float):Void {
+	static function divide(layout:MazeLayout, topology:RectangularTopology, rowStart:Int, rowEnd:Int, fracStart:Float, fracEnd:Float, rng:Void->Float):Void {
 		var rowSpan = rowEnd - rowStart;
 		if (rowSpan >= MIN_DIVISIBLE_SPAN) {
 			// Adaptation 2: a region whose rows disagree on resolution gets

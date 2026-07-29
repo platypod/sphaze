@@ -3,6 +3,7 @@ package game;
 import biomes.common.Biome;
 import biomes.common.grid.GridModel;
 import biomes.conway.ConwayBiome;
+import biomes.debug.DebugHubBiome;
 import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
 import biomes.maze.MazeBiome;
@@ -82,7 +83,14 @@ class GameLoop {
 		biomeRegistry.register(new TowerBiome(TowerGenerator.generate(), hourglassModel));
 		biomeRegistry.register(new MobiusBiome(MobiusForestGenerator.generate()));
 		biomeRegistry.register(new ConwayBiome());
-		enterBiome(ConwayBiome.ID, false);
+		// Registered last, from whatever's already registered, and entered
+		// first: the dev room's ring of labelled portals is derived from the
+		// registry rather than a hand-kept list, so a new biome shows up in it
+		// automatically. This is also what replaced "edit enterBiome's own
+		// argument to whichever biome you're working on" as the way to get
+		// into a work-in-progress biome.
+		biomeRegistry.register(new DebugHubBiome(biomeRegistry.ids()), true);
+		enterBiome(DebugHubBiome.ID, false);
 
 		// F3 debug overlay (Minecraft-style): player position, camera angle,
 		// perf stats. Hidden by default; toggled in fixedUpdate.

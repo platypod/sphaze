@@ -36,6 +36,17 @@ class BiomesRegistry {
 	}
 
 	/**
+		Every registered biome's id, in registration order — what
+		`biomes.debug.DebugHubBiome` builds its ring of portals from, so a
+		newly registered biome gets a dev portal without anyone maintaining a
+		second list of "biomes that exist".
+		@return every registered biome id.
+	**/
+	public function ids():Array<String> {
+		return [for (id in biomes.keys()) id];
+	}
+
+	/**
 		Marks `id` as discovered — called whenever the player actually enters
 		a biome (see `GameLoop.enterBiome`), not at registration time, so a
 		freshly-registered biome (other than the hub) starts undiscovered.

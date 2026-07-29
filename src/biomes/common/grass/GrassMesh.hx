@@ -5,6 +5,7 @@ import biomes.common.grass.GrassModel.Tuft;
 import biomes.common.space.sphere.SphereMath;
 import graphics.Colours;
 import graphics.shaders.GrassWind;
+import graphics.shaders.GrassWindField;
 
 /**
 	Builds a sphere's own grass as a single `h3d.prim.Polygon` (all tufts
@@ -38,29 +39,43 @@ class GrassMesh {
 		@param swayAmplitude passed straight through to `GrassWind`; defaults to its own baseline.
 		@param swayFrequency passed straight through to `GrassWind`; defaults to its own baseline.
 		@param random source of randomness for `GrassModel.scatter`; defaults to Math.random.
+		@param windAt this position's own wind direction, for a biome whose wind varies across the sphere (see `biomes.wind.WindBiome`) — omitted, the whole field sways along one shared axis, as the hub and maze do.
+		@param heightScale passed straight through to `GrassModel.scatter`; defaults to its own baseline.
 	**/
 	public static function build(parent:h3d.scene.Object, radius:Float, isWalkable:h3d.Vector->Bool, tuftCount:Int = GrassModel.DEFAULT_TUFT_COUNT,
-			swayAmplitude:Float = GrassWind.DEFAULT_SWAY_AMPLITUDE, swayFrequency:Float = GrassWind.DEFAULT_SWAY_FREQUENCY, ?random:Void->Float):Void {
-		var tufts = GrassModel.scatter(radius, isWalkable, tuftCount, random);
+			swayAmplitude:Float = GrassWind.DEFAULT_SWAY_AMPLITUDE, swayFrequency:Float = GrassWind.DEFAULT_SWAY_FREQUENCY, ?random:Void->Float,
+			?windAt:h3d.Vector->h3d.Vector, heightScale:Float = 1):Void {
+		var tufts = GrassModel.scatter(radius, isWalkable, tuftCount, random, heightScale);
 		var points:Array<h3d.Vector> = [];
 		var idx = new hxd.IndexBuffer();
 		var uvs:Array<h3d.prim.UV> = [];
+		// Per-blade wind directions ride in the normal attribute — see
+		// `graphics.shaders.GrassWindField`'s own doc for why that attribute
+		// and not a custom buffer. Left null entirely for a shared-axis
+		// field, so no other grass mesh in the game pays for it.
+		var normals:Null<Array<h3d.col.Point>> = windAt != null ? [] : null;
 		for (tuft in tufts) {
-			addTuft(points, idx, uvs, tuft);
+			addTuft(points, idx, uvs, tuft, normals, windAt);
 		}
 
 		var prim = new h3d.prim.Polygon(points, idx);
 		prim.uvs = uvs;
+		prim.normals = normals;
 		var mesh = new h3d.scene.Mesh(prim, parent);
-		// Wind "blows" along world +X, tangent-projected per vertex in the
-		// shader itself (see `GrassWind`'s own doc) — a single fixed axis
-		// here is enough; the shader is what keeps it looking right across
-		// the whole sphere.
-		mesh.material.mainPass.addShader(new GrassWind(Colours.GRASS_BASE, Colours.GRASS_TIP, new h3d.Vector(1, 0, 0), swayAmplitude, swayFrequency));
+		if (normals != null) {
+			mesh.material.mainPass.addShader(new GrassWindField(Colours.GRASS_BASE, Colours.GRASS_TIP, swayAmplitude, swayFrequency));
+		} else {
+			// Wind "blows" along world +X, tangent-projected per vertex in the
+			// shader itself (see `GrassWind`'s own doc) — a single fixed axis
+			// here is enough; the shader is what keeps it looking right across
+			// the whole sphere.
+			mesh.material.mainPass.addShader(new GrassWind(Colours.GRASS_BASE, Colours.GRASS_TIP, new h3d.Vector(1, 0, 0), swayAmplitude, swayFrequency));
+		}
 		mesh.material.mainPass.culling = None;
 	}
 
-	static function addTuft(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, tuft:Tuft):Void {
+	static function addTuft(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, tuft:Tuft, normals:Null<Array<h3d.col.Point>>,
+			windAt:Null<h3d.Vector->h3d.Vector>):Void {
 		var up = SphereMath.upVectorAt(tuft.pos, new h3d.Vector(0, 0, 0));
 		var base = tuft.pos.add(up.scaled(ROOT_LIFT));
 		// thetaTangentAt/phiTangentAt are already an orthonormal basis
@@ -70,12 +85,15 @@ class GrassMesh {
 		// exactly perpendicular for free.
 		var dir1 = SphereMath.rotateAroundAxis(SphereMath.thetaTangentAt(tuft.theta, tuft.phi), up, tuft.rotation);
 		var dir2 = SphereMath.rotateAroundAxis(SphereMath.phiTangentAt(tuft.phi), up, tuft.rotation);
-		addBlade(points, idx, uvs, base, up, dir1, tuft);
-		addBlade(points, idx, uvs, base, up, dir2, tuft);
+		// One direction per *tuft*, not per blade: both crossed blades stand at
+		// the same place, so the same draft reaches both.
+		var wind = normals != null && windAt != null ? windAt(tuft.pos) : null;
+		addBlade(points, idx, uvs, base, up, dir1, tuft, normals, wind);
+		addBlade(points, idx, uvs, base, up, dir2, tuft, normals, wind);
 	}
 
 	static function addBlade(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, base:h3d.Vector, up:h3d.Vector, dir:h3d.Vector,
-			tuft:Tuft):Void {
+			tuft:Tuft, normals:Null<Array<h3d.col.Point>>, wind:Null<h3d.Vector>):Void {
 		var halfWidth = tuft.width / 2;
 		var left = base.sub(dir.scaled(halfWidth));
 		var right = base.add(dir.scaled(halfWidth));
@@ -85,5 +103,11 @@ class GrassMesh {
 		uvs.push(new h3d.prim.UV(tuft.phase, 0));
 		uvs.push(new h3d.prim.UV(tuft.phase, 0));
 		uvs.push(new h3d.prim.UV(tuft.phase, 1));
+
+		if (normals != null && wind != null) {
+			for (_ in 0...3) {
+				normals.push(new h3d.col.Point(wind.x, wind.y, wind.z));
+			}
+		}
 	}
 }

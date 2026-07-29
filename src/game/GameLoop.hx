@@ -12,6 +12,7 @@ import biomes.mobius.MobiusBiome;
 import biomes.mobius.MobiusForestGenerator;
 import biomes.tower.TowerBiome;
 import biomes.tower.TowerGenerator;
+import biomes.wind.WindBiome;
 import entities.hourglass.HourglassModel;
 import entities.player.Camera;
 import entities.player.PlayerModel;
@@ -83,6 +84,7 @@ class GameLoop {
 		biomeRegistry.register(new TowerBiome(TowerGenerator.generate(), hourglassModel));
 		biomeRegistry.register(new MobiusBiome(MobiusForestGenerator.generate()));
 		biomeRegistry.register(new ConwayBiome());
+		biomeRegistry.register(new WindBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it

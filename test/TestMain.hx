@@ -18,6 +18,7 @@ import biomes.maze.MazeGeneratorTest;
 import biomes.mobius.MobiusCollisionTest;
 import biomes.mobius.MobiusForestGeneratorTest;
 import biomes.tower.TowerCollisionTest;
+import biomes.wind.WindFieldTest;
 import biomes.tower.TowerGeneratorTest;
 import biomes.tower.TowerModelTest;
 import entities.CreatureSpawnTableTest;
@@ -68,6 +69,7 @@ class TestMain {
 		runner.addCase(new TowerModelTest());
 		runner.addCase(new TowerGeneratorTest());
 		runner.addCase(new TowerCollisionTest());
+		runner.addCase(new WindFieldTest());
 		Report.create(runner);
 		runner.run();
 	}

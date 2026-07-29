@@ -40,9 +40,11 @@ class GrassModel {
 		@param isWalkable whether a candidate world position is a valid place to grow a tuft — a biome's own notion of "not inside a wall/column/etc.".
 		@param count how many tufts to scatter; defaults to `DEFAULT_TUFT_COUNT`.
 		@param random source of randomness in [0, 1); defaults to Math.random.
+		@param heightScale multiplies every tuft's own height and width — for a biome where the grass has to read from across the sphere rather than just underfoot (see `biomes.wind.WindBiome`), since a blade at that distance otherwise covers well under a pixel. Width scales too, at a lower power: taller blades that stayed as thin would disappear edge-on at exactly the range they need to be legible at.
 		@return the scattered tufts.
 	**/
-	public static function scatter(radius:Float, isWalkable:h3d.Vector->Bool, count:Int = DEFAULT_TUFT_COUNT, ?random:Void->Float):Array<Tuft> {
+	public static function scatter(radius:Float, isWalkable:h3d.Vector->Bool, count:Int = DEFAULT_TUFT_COUNT, ?random:Void->Float,
+			heightScale:Float = 1):Array<Tuft> {
 		var rng = random != null ? random : Math.random;
 		var tufts:Array<Tuft> = [];
 		while (tufts.length < count) {
@@ -61,8 +63,8 @@ class GrassModel {
 				theta: theta,
 				phi: phi,
 				rotation: rng() * Math.PI,
-				height: HEIGHT_MIN + rng() * (HEIGHT_MAX - HEIGHT_MIN),
-				width: WIDTH_MIN + rng() * (WIDTH_MAX - WIDTH_MIN),
+				height: (HEIGHT_MIN + rng() * (HEIGHT_MAX - HEIGHT_MIN)) * heightScale,
+				width: (WIDTH_MIN + rng() * (WIDTH_MAX - WIDTH_MIN)) * Math.sqrt(heightScale),
 				phase: rng() * 2 * Math.PI
 			});
 		}

@@ -53,8 +53,7 @@ class WindFieldTest extends Test {
 		var open = new WindField(mazeWith([{a: exit, b: neighbor}]), exit).directionAt(positionOf(neighbor));
 		var walled = new WindField(mazeWith([]), exit).directionAt(positionOf(neighbor));
 
-		Assert.isFalse(open.x == walled.x && open.y == walled.y && open.z == walled.z,
-			"a walled-off cell should not get the same draft as a connected one");
+		Assert.isFalse(open.x == walled.x && open.y == walled.y && open.z == walled.z, "a walled-off cell should not get the same draft as a connected one");
 	}
 
 	/** Down a straight corridor, every cell gets a draft — the flood doesn't stop one step out. **/

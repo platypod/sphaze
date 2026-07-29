@@ -86,8 +86,9 @@ class GridMesh {
 	/**
 		@param maze the biome's generated layout to build meshes for.
 		@param parent the scene object to attach the meshes under.
+		@param wallsOutward whether walls extrude *away* from the sphere's centre instead of toward it — for a biome walked on the shell's outside (`biomes.exterior.ExteriorBiome`). The floor shell itself needs no flag: it's the same surface either way, and both its faces already render (`culling = None`).
 	**/
-	public static function build(maze:GridData, parent:h3d.scene.Object):Void {
+	public static function build(maze:GridData, parent:h3d.scene.Object, wallsOutward:Bool = false):Void {
 		var floorPoints:Array<h3d.Vector> = [];
 		var floorIdx = new hxd.IndexBuffer();
 		var floorUvs:Array<h3d.prim.UV> = [];
@@ -100,7 +101,7 @@ class GridMesh {
 		floorMesh.material.mainPass.addShader(new UnlitTexture(grassTexture, FLOOR_TILE_U, FLOOR_TILE_V));
 		floorMesh.material.mainPass.culling = None;
 
-		var wallBuilder = new WallBuilder(maze);
+		var wallBuilder = new WallBuilder(maze, wallsOutward);
 		eachCell((row, col) -> wallBuilder.addWallsAround(row, col));
 		var wallPrim = new h3d.prim.Polygon(wallBuilder.points, wallBuilder.idx);
 		wallPrim.uvs = wallBuilder.uvs;
@@ -323,8 +324,12 @@ private class WallBuilder {
 
 	final maze:GridData;
 
-	public function new(maze:GridData) {
+	/** Which way walls rise — see `GridMesh.build`'s own `wallsOutward` parameter. **/
+	final wallsOutward:Bool;
+
+	public function new(maze:GridData, wallsOutward:Bool = false) {
 		this.maze = maze;
+		this.wallsOutward = wallsOutward;
 	}
 
 	/**
@@ -625,9 +630,14 @@ private class WallBuilder {
 			return;
 		}
 
+		// "Up" for a wall is whichever way the player standing beside it has
+		// over their head — toward the centre on the shell's inside, away from
+		// it on the outside (see `GridMesh.build`'s own `wallsOutward`). Same
+		// single sign flip `biomes.common.space.sphere.SphereExteriorSpace`
+		// makes for the player.
 		var center = new h3d.Vector(0, 0, 0);
-		var upA = SphereMath.upVectorAt(outerA, center);
-		var upB = SphereMath.upVectorAt(outerB, center);
+		var upA = wallsOutward ? outerA.normalized() : SphereMath.upVectorAt(outerA, center);
+		var upB = wallsOutward ? outerB.normalized() : SphereMath.upVectorAt(outerB, center);
 		var topOuterA = outerA.add(upA.scaled(GridMesh.WALL_HEIGHT));
 		var topOuterB = outerB.add(upB.scaled(GridMesh.WALL_HEIGHT));
 		var topInnerA = innerA.add(upA.scaled(GridMesh.WALL_HEIGHT));

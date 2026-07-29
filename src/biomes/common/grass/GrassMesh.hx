@@ -92,8 +92,8 @@ class GrassMesh {
 		addBlade(points, idx, uvs, base, up, dir2, tuft, normals, wind);
 	}
 
-	static function addBlade(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, base:h3d.Vector, up:h3d.Vector, dir:h3d.Vector,
-			tuft:Tuft, normals:Null<Array<h3d.col.Point>>, wind:Null<h3d.Vector>):Void {
+	static function addBlade(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, base:h3d.Vector, up:h3d.Vector, dir:h3d.Vector, tuft:Tuft,
+			normals:Null<Array<h3d.col.Point>>, wind:Null<h3d.Vector>):Void {
 		var halfWidth = tuft.width / 2;
 		var left = base.sub(dir.scaled(halfWidth));
 		var right = base.add(dir.scaled(halfWidth));

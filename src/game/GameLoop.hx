@@ -4,6 +4,7 @@ import biomes.common.Biome;
 import biomes.common.grid.GridModel;
 import biomes.conway.ConwayBiome;
 import biomes.debug.DebugHubBiome;
+import biomes.exterior.ExteriorBiome;
 import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
 import biomes.maze.MazeBiome;
@@ -85,6 +86,7 @@ class GameLoop {
 		biomeRegistry.register(new MobiusBiome(MobiusForestGenerator.generate()));
 		biomeRegistry.register(new ConwayBiome());
 		biomeRegistry.register(new WindBiome());
+		biomeRegistry.register(new ExteriorBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it

@@ -23,10 +23,22 @@ import graphics.shaders.GrassWind;
 	First prototype of a **perception-rule** biome: the maze is an ordinary
 	sphere maze, and what makes it its own place is that the grass tells you
 	where the exit is. A draft flows outward from the exit along the corridors
-	(`WindField`), every tuft leans downwind, and so the whole sphere's grass —
-	seen from across it, which is the only way to see enough of it at once — is
-	a flow field with exactly one convergence point. Walk into the wind to
-	leave.
+	(`WindField`), and the grass reports it in three ways that only work
+	together — the first version had only a hand-wave of the first, and showed
+	nothing at all (reported directly: "looks to me like it's showing nothing"):
+
+	1. **A constant lean downwind.** The original sway was a zero-mean sine, so
+	   blades wobbled about upright and never actually bent anywhere;
+	   `graphics.shaders.GrassWindField.leanBias` is the term that makes the
+	   field lie one way in a still frame.
+	2. **Gusts that travel.** Each tuft's phase is its own cell's distance from
+	   the exit (`WindField.PHASE_PER_STEP`), not a random per-blade value, so
+	   the sway is a wave visibly moving *away* from the exit. This is the only
+	   cue that tells a direction from its opposite: a lean is a line, and from
+	   across the sphere a line bent one way looks much like a line bent the
+	   other.
+	3. **Enough size to survive at distance** (`GRASS_HEIGHT_SCALE`), since a
+	   sub-pixel blade has no readable shape at all.
 
 	Why this one first, of the ten perception ideas parked in
 	`docs/game-design/ideas-backlog.md`: it needs no new mechanism at all. The
@@ -44,13 +56,21 @@ import graphics.shaders.GrassWind;
 	sphere — which gives the flow field long sweeping curves to be read from,
 	instead of the short pole-to-pole zigzags a plain DFS produces.
 
-	Open, and the reason this is called a prototype: nothing yet stops the
-	player simply *following the grass at their feet* one tuft at a time, which
-	would make the whole distance-legibility idea pointless. If playtesting
-	says that's what happens, the fix is to make the local cue ambiguous
-	(sway direction jittered per tuft, only the aggregate honest) rather than
-	to remove it — but that's a real design decision, not a tuning tweak, and
-	it shouldn't be pre-empted before someone has walked this.
+	**Still unproven, and the reason this is a prototype.** Up close the lean is
+	unmistakable, and from across the sphere the corridors visibly comb. Whether
+	that is enough to *navigate by* — to pick the exit's direction out of a
+	whole sphere of combed grass — cannot be judged from a screenshot, because
+	the disambiguating half of the cue is motion. That needs someone walking it.
+	Two things to watch for while doing so:
+
+	- Whether the travelling gust reads as a direction at distance, or whether
+	  the whole field just looks busy. If it doesn't read, the next thing to try
+	  is fewer, larger, longer-wavelength gusts rather than more grass.
+	- Whether the player just follows the grass at their feet one tuft at a
+	  time, which would make the distance premise pointless. The fix there is to
+	  make the *local* reading ambiguous while the aggregate stays honest (jitter
+	  each tuft's own direction, keep the cell's mean) — a real design decision,
+	  not a tuning tweak, so it shouldn't be pre-empted.
 **/
 class WindBiome implements Biome {
 	public static inline final ID:String = "wind";
@@ -69,8 +89,14 @@ class WindBiome implements Biome {
 	/** Denser than the maze's own grass: the field *is* the mechanic here, so it needs enough blades to read as a direction rather than as scattered clumps. **/
 	static inline final TUFT_MULTIPLIER:Int = 60;
 
-	/** Stronger and slower than the maze's own sway — a lean that reads as a steady draft rather than a breeze. **/
-	static inline final SWAY_AMPLITUDE_MULTIPLIER:Float = 2.4;
+	/**
+		Gust amplitude, either side of the constant lean. Kept *below*
+		`graphics.shaders.GrassWindField.DEFAULT_LEAN_BIAS` on purpose: a gust
+		strong enough to swing blades back past upright would make the
+		direction ambiguous twice a cycle, which is the thing this whole biome
+		is trying to communicate.
+	**/
+	static inline final SWAY_AMPLITUDE_MULTIPLIER:Float = 1.6;
 
 	static inline final SWAY_FREQUENCY_MULTIPLIER:Float = 0.7;
 
@@ -146,8 +172,8 @@ class WindBiome implements Biome {
 		var size = PaintingModel.fillWall(GridMesh.WALL_HEIGHT);
 		PaintingModel.buildQuad(parent, exitWall.a, exitWall.b, exitWall.cellCenter, PaintingModel.toHubTexture(), size.baseHeight, size.height);
 		GrassMesh.build(parent, GridGeometry.RADIUS, isWalkable, GrassModel.DEFAULT_TUFT_COUNT * TUFT_MULTIPLIER,
-			GrassWind.DEFAULT_SWAY_AMPLITUDE * SWAY_AMPLITUDE_MULTIPLIER, GrassWind.DEFAULT_SWAY_FREQUENCY * SWAY_FREQUENCY_MULTIPLIER, null,
-			wind.directionAt, GRASS_HEIGHT_SCALE);
+			GrassWind.DEFAULT_SWAY_AMPLITUDE * SWAY_AMPLITUDE_MULTIPLIER, GrassWind.DEFAULT_SWAY_FREQUENCY * SWAY_FREQUENCY_MULTIPLIER, null, wind.sampleAt,
+			GRASS_HEIGHT_SCALE);
 	}
 
 	/** Same rule as `biomes.maze.MazeBiome.isWalkable` — grass grows anywhere well clear of this maze's own closed edges. **/

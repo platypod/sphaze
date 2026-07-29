@@ -945,3 +945,50 @@ first is noted in `docs/game-design/ideas-backlog.md` — a jump from the outsid
 strong enough to leave the surface and land on the inside, which would make the
 two-gravity contrast itself the door. Also still open there: nothing yet
 *requires* a mark, so the loop is a tool without a lock.
+
+## 2026-07-29 — Correction: the wind field wasn't showing anything
+
+Same day, straight after the entry above claimed the wind biome's field "reads
+as directional grain from across the sphere". hooman looked at it and said it
+appeared to show nothing at all. **They were right, and the earlier entry
+over-claimed** — what the screenshot showed was the floor's own tiled grass
+texture plus randomly-oriented blades, not the field. Three defects, only the
+third of which is an outright bug:
+
+1. **A zero-mean oscillation.** `sin(...) * amplitude` swings each blade
+   symmetrically about its rest position, so nothing ever bent downwind. Even
+   read perfectly, that conveys an undirected *axis* ("the draft runs
+   east-west here"), never "the exit is that way".
+2. **A random per-blade phase.** `GrassModel.scatter` assigns
+   `phase = rng() * 2π` per tuft, so neighbouring blades were unrelated in
+   time — no coherent motion to read.
+3. **The gust-travel term was identically zero.** It computed
+   `dot(relativePosition, windAxis)`, lifted from `GrassWind` where the axis is
+   a fixed *world* direction and that dot is a real position projection. In the
+   field version the axis is a *tangent* and `relativePosition` is radial, so
+   the two are perpendicular and the term evaluated to ~0 everywhere. The
+   travelling gust silently did nothing from the moment the field version was
+   written.
+
+Fixed by making the three things a readable field actually needs explicit, now
+documented on `graphics.shaders.GrassWindField` and `biomes.wind.WindBiome`: a
+**constant lean** (`leanBias`, kept above the gust amplitude so a gust never
+swings a blade back past upright and re-introduces the ambiguity), a **gust
+phase taken from the tuft's own distance from the exit**
+(`WindField.PHASE_PER_STEP`, via the new `GrassMesh.WindSample` — so
+`sin(time - place)` is a wave travelling downwind), and the blade size from
+before. `GrassMesh`'s per-tuft callback now returns direction *and* flow
+position instead of a bare direction, and a new test pins the phase ramp rising
+step by step away from the exit, since that monotonic ramp is the whole
+mechanism.
+
+Verified as far as stills allow: up close the field bends unmistakably one way,
+and from across the sphere the corridors visibly comb. **Not** verified, and
+explicitly left that way: whether it's navigable. The half of the cue that
+resolves direction is motion, which a screenshot cannot show — that judgement
+needs someone walking it.
+
+The generalisable lesson, now in the backlog's perception entry: a static cue
+carries an axis, not a direction. Any perception mechanic that means to point
+somewhere has to say how it resolves the 180° ambiguity, and motion is the
+cheapest answer.

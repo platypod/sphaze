@@ -218,15 +218,29 @@ against.
 
   **One of these is now built**, and what it learned applies to all of them:
   `biomes.wind.WindBiome` (2026-07-29) makes a draft flow out of the exit
-  along the corridors, so the grass is a flow field converging on the way
-  out. The finding worth carrying to every other entry below: a cue meant to
-  be read *at distance* has to be physically big enough to survive at that
-  distance — at normal grass height the field was invisible from across the
-  sphere (a blade covers under a pixel there) and the whole premise failed
-  silently. Also still open there, and probably shared: nothing stops a player
-  reading the cue one tuft at a time at their feet, which defeats the point;
-  the fix is making the *local* reading ambiguous while the aggregate stays
-  honest.
+  along the corridors, so the grass is a flow field converging on the way out.
+  Three findings, in the order they were learned — the last two only after
+  hooman looked at it and said it was showing nothing, which it was:
+
+  1. **Size**: a cue meant to be read at distance has to be physically big
+     enough to survive there. At normal grass height a blade covers under a
+     pixel from across the sphere and its shape carries nothing.
+  2. **A constant offset, not an oscillation**: the sway was a zero-mean sine,
+     so blades wobbled about upright and never bent anywhere. Anything meant to
+     be *read* needs a steady state, not just motion about a neutral one.
+  3. **Motion is what carries direction; a static cue only carries an axis.**
+     A lean looks much the same bent either way from a distance. What
+     distinguishes "the exit is that way" from "it's behind me" is a gust
+     travelling downwind — which needs each blade's phase to come from its
+     place along the flow rather than a random per-blade value. Generalised:
+     any of the entries below that plans to point somewhere needs to say how it
+     resolves the 180° ambiguity, and motion is the cheapest answer.
+
+  Still open there, and probably shared: whether a distance cue is genuinely
+  navigable rather than merely visible (unresolved — needs walking, not
+  screenshots), and that nothing stops a player reading the cue one tuft at a
+  time at their feet, which defeats the point; the fix is making the *local*
+  reading ambiguous while the aggregate stays honest.
 
   The rest, roughly cheapest first — one per biome, never stacked:
   - **Candlelight (invert the asymmetry)**: see near, not far. The

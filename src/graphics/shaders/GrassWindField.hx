@@ -7,7 +7,28 @@ package graphics.shaders;
 	along the corridors, so the grass across the whole sphere traces a field
 	pointing home.
 
-	Two deliberate choices worth knowing about:
+	**How it actually conveys a direction** — three things together, because the
+	first version of this shader had none of them and consequently showed
+	nothing at all (reported directly: "looks to me like it's showing nothing"):
+
+	1. A **constant lean** downwind (`leanBias`), not just an oscillation. A
+	   zero-mean sine leaves every blade upright on average; the bias is what
+	   bends the field one way in a still frame.
+	2. A **travelling gust**: the blade's own place along the flow arrives in
+	   `uv.x` (see `biomes.common.grass.GrassMesh.WindSample`) rather than a
+	   random per-blade phase, so `sin(time - place)` is a wave visibly moving
+	   *away from the exit*. This is the only cue that separates a direction
+	   from its opposite — a lean alone is a line, not an arrow.
+	3. Enough physical size to survive at distance (`GrassModel.scatter`'s own
+	   `heightScale`), since a sub-pixel blade carries no readable shape.
+
+	The bug the first version hid behind: it tried to travel gusts with
+	`dot(relativePosition, windAxis)`, copied from `GrassWind` where the axis is
+	a fixed world direction. Here the axis is a *tangent*, and
+	`relativePosition` is radial, so that dot product is ~0 everywhere — the
+	travel term silently did nothing.
+
+	Two more deliberate choices worth knowing about:
 
 	**The per-blade direction rides in the vertex normal attribute.** Not
 	because it's a normal — this mesh has no lighting whatsoever (see
@@ -31,6 +52,9 @@ package graphics.shaders;
 	where the direction comes from.
 **/
 class GrassWindField extends hxsl.Shader {
+	/** Baseline constant downwind bend at the tip, in world units — see the `leanBias` constructor parameter. **/
+	public static inline final DEFAULT_LEAN_BIAS:Float = 2.5;
+
 	static var SRC = {
 		@input var input:{
 			var uv:Vec2;
@@ -48,7 +72,7 @@ class GrassWindField extends hxsl.Shader {
 		@param var colorTip:Vec4;
 		@param var swayAmplitude:Float;
 		@param var swayFrequency:Float;
-		@param var gustSpeed:Float;
+		@param var leanBias:Float;
 		var relativePosition:Vec3;
 		var calculatedUV:Vec2;
 		var output:{
@@ -66,8 +90,16 @@ class GrassWindField extends hxsl.Shader {
 			// swaying it sideways.
 			var windTangent = (input.normal - up * dot(input.normal, up)).normalize();
 			var heightWeight = input.uv.y * input.uv.y;
-			var phase = input.uv.x + dot(relativePosition, input.normal) * gustSpeed;
-			var sway = sin(global.time * swayFrequency + phase) * swayAmplitude * heightWeight;
+			// `uv.x` is the blade's own place along the flow, not a random
+			// phase (see `biomes.common.grass.GrassMesh.WindSample`), so
+			// `time - place` is a wave travelling *downwind*: the one cue here
+			// that distinguishes a direction from its opposite.
+			var gust = sin(global.time * swayFrequency - input.uv.x);
+			// Bias, not just oscillation: a zero-mean sine leaves every blade
+			// upright on average, which is why the first version of this
+			// showed nothing at all. The constant term is what actually bends
+			// the field downwind and makes it readable in a still frame.
+			var sway = (leanBias + gust * swayAmplitude) * heightWeight;
 			var swayed = relativePosition + windTangent * sway;
 
 			var worldPos = swayed * global.modelView.mat3x4();
@@ -81,17 +113,17 @@ class GrassWindField extends hxsl.Shader {
 	/**
 		@param colorBase blade color at the root.
 		@param colorTip blade color at the tip.
-		@param swayAmplitude how far (world units) the tip sways at the peak of its motion.
-		@param swayFrequency how fast blades oscillate, in radians/second.
-		@param gustSpeed how fast a sway gust visibly travels along a blade's own wind direction.
+		@param swayAmplitude how far (world units) the tip oscillates either side of its leaned position.
+		@param swayFrequency how fast the gust wave advances, in radians/second.
+		@param leanBias constant downwind bend at the tip, in world units — the field's own readable-in-a-still-frame direction. Should exceed `swayAmplitude`, or gusts swing blades back upwind and the direction stops being unambiguous.
 	**/
 	public function new(colorBase:Int, colorTip:Int, swayAmplitude:Float = GrassWind.DEFAULT_SWAY_AMPLITUDE,
-			swayFrequency:Float = GrassWind.DEFAULT_SWAY_FREQUENCY, gustSpeed:Float = GrassWind.DEFAULT_GUST_SPEED) {
+			swayFrequency:Float = GrassWind.DEFAULT_SWAY_FREQUENCY, leanBias:Float = DEFAULT_LEAN_BIAS) {
 		super();
 		this.colorBase.setColor(colorBase);
 		this.colorTip.setColor(colorTip);
 		this.swayAmplitude = swayAmplitude;
 		this.swayFrequency = swayFrequency;
-		this.gustSpeed = gustSpeed;
+		this.leanBias = leanBias;
 	}
 }

@@ -1,5 +1,6 @@
 package biomes.wind;
 
+import biomes.common.grass.GrassMesh.WindSample;
 import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridData;
 import biomes.common.grid.GridModel.GridNode;
@@ -34,6 +35,18 @@ class WindField {
 		false.
 	**/
 	static inline final NO_DRAFT_FALLBACK_PHI:Float = 0;
+
+	/**
+		Gust phase added per step away from the exit, in radians — what turns
+		the whole field's sway into a wave that visibly travels *downwind*
+		rather than every blade wobbling on its own clock (see
+		`graphics.shaders.GrassWindField`). At this value a gust's wavelength is
+		roughly seven cells: long enough that neighbouring corridors move
+		together and the motion reads as one sweep, short enough that a player
+		can see a crest pass rather than waiting for the whole sphere to
+		breathe in unison.
+	**/
+	public static inline final PHASE_PER_STEP:Float = 0.9;
 
 	final distances:Map<String, Int> = [];
 
@@ -78,26 +91,38 @@ class WindField {
 	}
 
 	/**
-		Which way the draft blows at a world position: *away* from the exit,
-		i.e. from the neighbouring cell one step closer to it, toward this one.
-		Blowing outward rather than inward is the deliberate choice — the
-		player walks into the wind to leave, and from a distance the field's
-		one convergence point is the way out.
+		Everything a blade at `pos` needs: which way the draft blows, and how
+		far along the flow it stands.
+
+		The direction blows *away* from the exit — from the neighbouring cell
+		one step closer to it, toward this one. Outward rather than inward is
+		deliberate: the player walks into the wind to leave, and the field's one
+		convergence point is the way out.
+
+		The flow position is that cell's own distance from the exit turned into
+		a phase (`PHASE_PER_STEP`). Direction alone is only an *axis* on screen
+		— a lean looks the same bent either way from a distance — so the
+		travelling gust this phase produces is what actually distinguishes "the
+		exit is that way" from "the exit is behind me". That omission is
+		precisely why the first version of this biome showed nothing readable.
 		@param pos a world position on the maze's own sphere.
-		@return a unit tangent at `pos` pointing downwind.
+		@return the draft direction (a unit tangent at `pos`) and this cell's own gust phase.
 	**/
-	public function directionAt(pos:h3d.Vector):h3d.Vector {
+	public function sampleAt(pos:h3d.Vector):WindSample {
 		var theta = SphereMath.thetaOf(pos);
 		var phi = SphereMath.phiOf(pos);
 		var here = GridModel.nodeAt(theta, phi);
+		var depth = distances.get(GridModel.nodeKey(here));
+		var flowPosition = (depth != null ? depth : 0) * PHASE_PER_STEP;
+
 		var upstream = upstreamOf(here);
 		if (upstream == null) {
-			return SphereMath.phiTangentAt(NO_DRAFT_FALLBACK_PHI + phi);
+			return {dir: SphereMath.phiTangentAt(NO_DRAFT_FALLBACK_PHI + phi), flowPosition: flowPosition};
 		}
 
 		var from = centreOf(upstream);
 		var to = centreOf(here);
-		return tangentAt(pos, to.sub(from));
+		return {dir: tangentAt(pos, to.sub(from)), flowPosition: flowPosition};
 	}
 
 	/**

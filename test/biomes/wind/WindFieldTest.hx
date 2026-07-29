@@ -20,7 +20,7 @@ class WindFieldTest extends Test {
 		var neighbor = RingNode(7, 1);
 		var field = new WindField(mazeWith([{a: exit, b: neighbor}]), exit);
 
-		var direction = field.directionAt(positionOf(neighbor));
+		var direction = field.sampleAt(positionOf(neighbor)).dir;
 		var awayFromExit = towardFrom(exit, neighbor);
 
 		Assert.isTrue(direction.dot(awayFromExit) > 0,
@@ -34,7 +34,7 @@ class WindFieldTest extends Test {
 		var field = new WindField(mazeWith([{a: exit, b: neighbor}]), exit);
 
 		var pos = positionOf(neighbor);
-		var direction = field.directionAt(pos);
+		var direction = field.sampleAt(pos).dir;
 
 		Assert.floatEquals(1, direction.length());
 		Assert.floatEquals(0, direction.dot(pos.normalized()));
@@ -50,8 +50,8 @@ class WindFieldTest extends Test {
 	function testWalledOffCellsGetNoDraftFromTheExit():Void {
 		var exit = RingNode(7, 0);
 		var neighbor = RingNode(7, 1);
-		var open = new WindField(mazeWith([{a: exit, b: neighbor}]), exit).directionAt(positionOf(neighbor));
-		var walled = new WindField(mazeWith([]), exit).directionAt(positionOf(neighbor));
+		var open = new WindField(mazeWith([{a: exit, b: neighbor}]), exit).sampleAt(positionOf(neighbor)).dir;
+		var walled = new WindField(mazeWith([]), exit).sampleAt(positionOf(neighbor)).dir;
 
 		Assert.isFalse(open.x == walled.x && open.y == walled.y && open.z == walled.z, "a walled-off cell should not get the same draft as a connected one");
 	}
@@ -63,8 +63,28 @@ class WindFieldTest extends Test {
 		var field = new WindField(mazeWith(edges), cells[0]);
 
 		for (col in 1...5) {
-			var direction = field.directionAt(positionOf(cells[col]));
+			var direction = field.sampleAt(positionOf(cells[col])).dir;
 			Assert.floatEquals(1, direction.length(), 'no draft at corridor cell $col');
+		}
+	}
+
+	/**
+		The gust phase has to *increase* step by step away from the exit — that
+		monotonic ramp is what makes the sway a wave travelling downwind, and
+		without it the field conveys an axis but no direction (which is exactly
+		how the first version of this biome ended up showing nothing readable).
+	**/
+	function testFlowPhaseRisesStepByStepAwayFromTheExit():Void {
+		var cells = [for (col in 0...5) RingNode(7, col)];
+		var edges = [for (col in 0...4) {a: cells[col], b: cells[col + 1]}];
+		var field = new WindField(mazeWith(edges), cells[0]);
+
+		var previous = -1.0;
+		for (col in 0...5) {
+			var phase = field.sampleAt(positionOf(cells[col])).flowPosition;
+			Assert.isTrue(phase > previous, 'phase should rise with distance from the exit; cell $col gave $phase after $previous');
+			Assert.floatEquals(col * WindField.PHASE_PER_STEP, phase);
+			previous = phase;
 		}
 	}
 

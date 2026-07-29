@@ -2,6 +2,8 @@ import utest.Runner;
 import utest.ui.Report;
 import biomes.common.GravityTest;
 import biomes.common.grid.GridCollisionTest;
+import biomes.common.maze.MazeBraiderTest;
+import biomes.common.maze.MazeCarverTest;
 import biomes.common.grid.GridMeshTest;
 import biomes.common.grid.GridModelTest;
 import biomes.common.space.flat.FlatSpaceTest;
@@ -39,6 +41,8 @@ class TestMain {
 		runner.addCase(new SphereMathTest());
 		runner.addCase(new GridModelTest());
 		runner.addCase(new MazeGeneratorTest());
+		runner.addCase(new MazeCarverTest());
+		runner.addCase(new MazeBraiderTest());
 		runner.addCase(new PlayerModelTest());
 		runner.addCase(new CameraTest());
 		runner.addCase(new GridMeshTest());

@@ -1,5 +1,7 @@
 package biomes.conway;
 
+import biomes.common.maze.MazeCarver;
+import biomes.common.maze.MazeStyle;
 import biomes.conway.ConwayGrid.Pole;
 
 enum ConwayNode {
@@ -12,44 +14,38 @@ typedef ConwayMazeData = {
 }
 
 /**
-	Conway biome's own maze layout over ConwayGrid's topology.
+	Conway biome's own maze layout over ConwayGrid's topology: which style
+	it's generated in, its (de)serialization, and the node/edge key vocabulary
+	the rest of the biome queries it through (`ConwayGrid.liveNeighborCount`,
+	`ConwayMesh`).
+
+	The carve itself lives in `biomes.common.maze`, reached through
+	`ConwayTopology` — this class used to hold its own verbatim copy of
+	`biomes.maze.MazeGenerator`'s randomized DFS, which is exactly the
+	duplication that made adding a second generation style a per-biome job.
 **/
 class ConwayMaze {
+	/**
+		Generates this biome's own maze in its default style — randomized DFS,
+		unchanged from the copy this class used to carry itself.
+		@param random source of randomness in [0, 1); defaults to Math.random.
+		@return the generated maze's open edges.
+	**/
 	public static function generate(?random:Void->Float):ConwayMazeData {
-		var rng = random != null ? random : Math.random;
-		var visited = new haxe.ds.StringMap<Bool>();
-		var openEdges = new haxe.ds.StringMap<Bool>();
+		return generateWith(RandomizedDfs, 0, random);
+	}
 
-		var start = allNodes()[0];
-		if (start == null) {
-			return {openEdges: openEdges};
-		}
-
-		var stack:Array<ConwayNode> = [start];
-		visited.set(nodeKey(start), true);
-
-		while (stack.length > 0) {
-			var current = stack[stack.length - 1];
-			if (current == null) {
-				break;
-			}
-
-			var unvisited = neighborsOf(current).filter((neighbor) -> !visited.exists(nodeKey(neighbor)));
-			if (unvisited.length == 0) {
-				stack.pop();
-				continue;
-			}
-
-			var next = unvisited[Math.floor(rng() * unvisited.length)];
-			if (next == null) {
-				continue;
-			}
-			openEdges.set(edgeKey(current, next), true);
-			visited.set(nodeKey(next), true);
-			stack.push(next);
-		}
-
-		return {openEdges: openEdges};
+	/**
+		Generates this biome's own maze in any style, optionally braided — see
+		`biomes.maze.MazeGenerator.generateWith`, of which this is the exact
+		counterpart over this biome's own denser grid.
+		@param style which algorithm to carve with.
+		@param braidFraction what fraction of dead ends to open into loops, in [0, 1] — 0 leaves a perfect maze.
+		@param random source of randomness in [0, 1); defaults to Math.random.
+		@return the generated maze's open edges.
+	**/
+	public static function generateWith(style:MazeStyle, braidFraction:Float = 0, ?random:Void->Float):ConwayMazeData {
+		return MazeCarver.carve(ConwayTopology.INSTANCE, style, braidFraction, random);
 	}
 
 	public static function serialize(maze:ConwayMazeData):String {

@@ -1,62 +1,53 @@
 package biomes.maze;
 
-import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridData;
-import biomes.common.grid.GridModel.GridNode;
+import biomes.common.grid.GridTopology;
+import biomes.common.maze.MazeCarver;
+import biomes.common.maze.MazeStyle;
 
 /**
-	Generates and (de)serializes the maze biome's own layout — the spanning-
-	tree puzzle-generation algorithm that's specifically what makes this
-	biome a *maze*, as opposed to `GridModel`'s topology/query logic, which
-	any grid-based biome shares.
+	The maze biome's own layout: which style it's generated in, and how a
+	specific one is saved and reloaded.
 
-	Ported from old/src/maze/mazeGenerator.ts — the algorithm is engine-
-	agnostic, so it carries over unchanged; only language/API details differ
-	(a Haxe enum instead of a tagged union, a StringMap-backed set instead of
-	Set<string>).
+	The generation *algorithms* aren't here any more — they're in
+	`biomes.common.maze`, working through `GridTopology` — because they were
+	never specific to this biome, only to this grid: the randomized-DFS carve
+	that used to live here was copy-pasted verbatim into
+	`biomes.conway.ConwayMaze` the moment a second grid-based biome existed.
+	What stays here is the part that genuinely is this biome's own: which
+	recipe it uses, and its serialization format (see `serialize`'s own doc
+	for why the format is tied to the grid rather than to an RNG seed).
+
+	Originally ported from old/src/maze/mazeGenerator.ts; the algorithm
+	survives unchanged inside `MazeCarver.carve`'s own `RandomizedDfs`
+	branch, loop for loop.
 **/
 class MazeGenerator {
 	/**
-		Generates a perfect maze (spanning tree — exactly one path between any
-		two cells) over the grid via randomized depth-first search.
+		Generates this biome's own maze in its default style — a perfect maze
+		(spanning tree, exactly one path between any two cells) carved by
+		randomized depth-first search, same as every maze in the game so far.
 		@param random source of randomness in [0, 1); defaults to Math.random.
 		@return the generated maze's open edges.
 	**/
 	public static function generate(?random:Void->Float):GridData {
-		var rng = random != null ? random : Math.random;
-		var visited = new haxe.ds.StringMap<Bool>();
-		var openEdges = new haxe.ds.StringMap<Bool>();
+		return generateWith(RandomizedDfs, 0, random);
+	}
 
-		var start = GridModel.allNodes()[0];
-		if (start == null) {
-			return {openEdges: openEdges};
-		}
-
-		var stack:Array<GridNode> = [start];
-		visited.set(GridModel.nodeKey(start), true);
-
-		while (stack.length > 0) {
-			var current = stack[stack.length - 1];
-			if (current == null) {
-				break;
-			}
-
-			var unvisited = GridModel.neighborsOf(current).filter(neighbor -> !visited.exists(GridModel.nodeKey(neighbor)));
-			if (unvisited.length == 0) {
-				stack.pop();
-				continue;
-			}
-
-			var next = unvisited[Math.floor(rng() * unvisited.length)];
-			if (next == null) {
-				continue;
-			}
-			openEdges.set(GridModel.edgeKey(current, next), true);
-			visited.set(GridModel.nodeKey(next), true);
-			stack.push(next);
-		}
-
-		return {openEdges: openEdges};
+	/**
+		Generates this biome's own maze in any style, optionally braided —
+		the seam a differently-generated grid biome hangs off, and how a
+		design question ("what should this biome's corridors feel like")
+		reaches the algorithms without every biome writing its own carve.
+		Which biome should use which recipe is still open (see
+		`docs/game-design/ideas-backlog.md`).
+		@param style which algorithm to carve with.
+		@param braidFraction what fraction of dead ends to open into loops, in [0, 1] — 0 leaves a perfect maze.
+		@param random source of randomness in [0, 1); defaults to Math.random.
+		@return the generated maze's open edges.
+	**/
+	public static function generateWith(style:MazeStyle, braidFraction:Float = 0, ?random:Void->Float):GridData {
+		return MazeCarver.carve(GridTopology.INSTANCE, style, braidFraction, random);
 	}
 
 	/**

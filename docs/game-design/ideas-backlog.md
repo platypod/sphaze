@@ -176,6 +176,41 @@ against.
     `Biome.serialize` currently encodes open edges alone, which is enough
     for a static maze; a rule-driven one has to save its tick/phase too or
     an exported bug report won't reproduce.
+- **Two-sided maze: the open half** (2026-07-29): the biome itself is built
+  (`biomes.twosided.TwoSidedBiome` — one layout, both faces of the shell,
+  ordinary gravity inside, weak enough outside to jump three walls high,
+  marks that pierce the shell so they read from either side). What's
+  deliberately *not* built, and is the interesting part:
+  - **How you actually cross.** Today the poles are simply open, chosen as
+    the cheapest thing that makes both faces reachable — the poles are the
+    grid's own degenerate merged cells, so a hole there needs no new
+    geometry. hooman's own framing was "warp, opening, whatever flip
+    mechanism… we'll figure out later," so this is a placeholder wearing a
+    placeholder's clothes (a plain yellow disc marks each pole). Candidates
+    worth weighing when it's time: a painting used as a doorway (consistent
+    with every other transition in the game, but paintings currently mean
+    "leave the biome"); a physical hole the player falls through, which makes
+    the shell read as a real thickness; or a flip triggered by something the
+    player *does* rather than somewhere they go — jumping hard enough from
+    the outside to leave the surface entirely and land on the inside would
+    make the two-gravity contrast the crossing mechanism, which is the most
+    elegant option on offer and the one worth prototyping first.
+  - **What makes marks load-bearing.** Right now a mark is a tool with no
+    lock: nothing in the biome requires one. The loop only becomes a
+    *mechanic* when something on the outside can't be found without a mark
+    placed from the inside — a wall that only reveals its door from a
+    distance, a route through a region where the outside face gives no
+    landmarks, a target that's only distinguishable from across the sphere.
+    That's the design work this prototype exists to make possible, not
+    something it settles.
+  - **What a mark says.** Currently just "here" — no direction, no
+    annotation — because the mark entry above is explicit that what a mark
+    should *say* is unproven. Cross-face marking adds a specific new
+    question: should a mark carry which *side* it was placed from?
+  - **Standing on wall tops.** A jump on the outside passes over walls
+    because collision is skipped above wall height; there's no landing on a
+    wall. Worth revisiting if verticality gets developed (see the verticality
+    entry above) — the two entries want the same thing.
 - **Perception rules as the biome's own variable** (2026-07-29): the maze
   is ordinary; what the player is *allowed to know* is what changes. The
   most pillar-aligned axis available, since it works directly on the

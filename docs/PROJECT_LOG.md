@@ -893,3 +893,55 @@ vantage point in-browser (including a temporary pitched-up spawn, since the
 wind field's whole claim is about the view across the sphere); actually
 *walking* them is hooman's, per `CLAUDE.md`'s own note on interactive
 verification.
+
+## 2026-07-29 — Release v0.13.0, and the two-sided maze
+
+**Released and deployed.** Tagged `v0.13.0` (everything above), GHA built the
+multi-arch image to GHCR, and the stack's `games` module was bumped and
+deployed to prod (`make deploy ENV=prd MODULE=games`, over the SSH-tunnel
+kubeconfig). Worth noting for the future: prod was still running **v0.10.0** —
+`v0.11.0` and `v0.12.0` had been tagged but never deployed, which is exactly
+the gap the manual-deploy choice in `README.md` leaves open. Three releases'
+worth of changes went live at once. Verified: rollout complete, old pod gone,
+`sphaze.platypod.ovh` serving 200.
+
+**Two-sided maze** (`biomes.twosided.TwoSidedBiome`), hooman's own idea, asked
+for as "write it down and prototype it". One layout, walked from both sides of
+the shell, and the two faces are complementary by construction rather than by
+decoration:
+
+- *Inside*: ordinary gravity, and the game's own hook — raise your head and the
+  far side is laid out in front of you. You can see, but you're pinned into the
+  corridors.
+- *Outside*: gravity weak enough that a jump clears exactly three wall heights
+  (`GRAVITY_OUTSIDE` is **derived** from `GameLoop.JUMP_IMPULSE` and
+  `GridMesh.WALL_HEIGHT`, not guessed: 18² / (2 × 4.5) = 36 = 3 × 12), against
+  a face where the surface curves away below the horizon so surveying is
+  impossible. You can move, but you can't see — except for the few seconds of
+  *local* vantage a leap buys.
+
+The mechanic the two faces exist to serve, per the ask: see something from one
+side, mark it, find the mark from the other. `MarkModel` posts **pierce** the
+shell, standing out equally on both faces — the first thing in the game that
+carries information between two viewpoints. Checked in-browser from a forced
+outside spawn at the apex of a three-wall jump: the mark reads clearly over the
+wall tops from ~40 units out, and the vantage genuinely works, though the view
+at apex is mostly void (the exterior horizon drops away fast, so the useful
+band is low).
+
+Implementation notes worth keeping: `GridMesh.buildWalls` split out of `build`
+so one shell can carry two wall sets without building the floor twice at the
+same radius; `PlayerModel.space` stopped being `final` in favour of a
+documented `switchSpace` that deliberately *jumps* the up-vector branch that
+`applyMoveResult`'s continuity check exists to preserve — crossing to the other
+side of a surface is precisely when "up" should reverse; and a new
+`Biome.interact` hook (no-op in the other eight biomes), named for the input
+rather than for marking, because wall-carry, junction drafting and scouting are
+all "the player acted here" and none of them should want its own key.
+
+Crossing sides is a **knowing placeholder**: the poles are open, marked with a
+plain disc. The real mechanism is still open, and the candidate worth trying
+first is noted in `docs/game-design/ideas-backlog.md` — a jump from the outside
+strong enough to leave the surface and land on the inside, which would make the
+two-gravity contrast itself the door. Also still open there: nothing yet
+*requires* a mark, so the loop is a tool without a lock.

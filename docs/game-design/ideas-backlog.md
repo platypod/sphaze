@@ -179,8 +179,21 @@ against.
 - **Perception rules as the biome's own variable** (2026-07-29): the maze
   is ordinary; what the player is *allowed to know* is what changes. The
   most pillar-aligned axis available, since it works directly on the
-  see-far-not-near asymmetry instead of alongside it. Candidates, roughly
-  cheapest first — one per biome, never stacked:
+  see-far-not-near asymmetry instead of alongside it.
+
+  **One of these is now built**, and what it learned applies to all of them:
+  `biomes.wind.WindBiome` (2026-07-29) makes a draft flow out of the exit
+  along the corridors, so the grass is a flow field converging on the way
+  out. The finding worth carrying to every other entry below: a cue meant to
+  be read *at distance* has to be physically big enough to survive at that
+  distance — at normal grass height the field was invisible from across the
+  sphere (a blade covers under a pixel there) and the whole premise failed
+  silently. Also still open there, and probably shared: nothing stops a player
+  reading the cue one tuft at a time at their feet, which defeats the point;
+  the fix is making the *local* reading ambiguous while the aggregate stays
+  honest.
+
+  The rest, roughly cheapest first — one per biome, never stacked:
   - **Candlelight (invert the asymmetry)**: see near, not far. The
     mansion/shorter-sight level already sketched under "Various levels"
     below. Makes the core hook felt by its absence, and turns marks and
@@ -323,11 +336,29 @@ against.
   doorways to the hub — revisit whether an in-maze warp/cross-through
   mechanic is still separately wanted, or whether that's now covered.
 - **Various levels** with varying game design: one in a mansion, with a
-  candlelight, with a shorter sight. Another with a compass, another led by
-  the wind, etc. Maybe the paintings could be the link between
-  biomes/levels, or some kind of portal, or something. We could even base
-  some levels on real paintings which we'd enter, solve a related challenge
-  to get out with some kind of reward.
+  candlelight, with a shorter sight. Another with a compass, etc. Maybe the
+  paintings could be the link between biomes/levels, or some kind of portal,
+  or something. We could even base some levels on real paintings which we'd
+  enter, solve a related challenge to get out with some kind of reward.
+  (The wind-led level this entry also used to name is built —
+  `biomes.wind.WindBiome`, 2026-07-29; see the perception-rules entry above
+  for what it settled and what it left open.)
+- **Per-biome maze recipes** (2026-07-29): the generation styles themselves
+  now exist and work on any topology (`biomes.common.maze.MazeStyle` —
+  randomized DFS, Prim, Kruskal, axis-biased, recursive division, plus
+  braiding as a post-pass). What's *not* decided is which biome should carve
+  with what, which is the actual design question: a biome's corridors are the
+  first thing a player reads about it, and today four of the five styles are
+  unused. Known so far, from the two biomes that pick deliberately:
+  `biomes.wind.WindBiome` carves axis-biased so its flow field gets long
+  sweeping curves, and `biomes.exterior.ExteriorBiome` carves with Prim for
+  frequent dead-end feedback where nothing else is legible. Recursive
+  division is the one with an unclaimed identity waiting for it — it makes
+  rooms and halls rather than corridors, which is the mansion level above.
+  Wants playtesting per style rather than a decision on paper, and one
+  further lesson worth stealing when it happens (see
+  [inspirations.md](inspirations.md) on Dead Cells): authored skeleton,
+  generated detail, rather than pure procedure everywhere.
 - **Biomes links**: perhaps you need to get a key, or a piece of information
   from a biome to be able to progress in another (kind of like *Outer
   Wilds*).

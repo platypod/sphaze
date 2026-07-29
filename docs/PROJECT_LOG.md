@@ -767,3 +767,129 @@ this log's older `docs/game-design.md` references — and the live ones in
 `src/` doc-comments — were retargeted to the specific folder files
 (backlog mentions → `ideas-backlog.md`, pillar mentions →
 `philosophy.md`) rather than left dangling.
+
+## 2026-07-29 — Making each biome's maze feel like its own place
+
+Started as a design conversation (can mazes differ per biome, and how?),
+turned into a research pass plus four pieces of implementation.
+
+**Research and a new doc.** Looked outside the project for prior art and
+kept the useful links, each with the specific transferable lesson, in a new
+`docs/game-design/inspirations.md` (wired into the folder's `README.md`, this
+repo's `README.md` and `CLAUDE.md`). The load-bearing reference is
+**HyperRogue**: 72 lands whose mechanics each demonstrate a different
+property of the hyperbolic plane — the same situation this game is in with
+the sphere. That distilled into a rule the new backlog entries were judged
+against: *a biome's mechanic should be a corollary of the sphere, not a
+decoration on it — if it would work unchanged in a flat rectangular maze,
+it's a reskin.* Deliberately **not** promoted into `philosophy.md` as a
+pillar on the strength of one session; parked in the inspirations doc as a
+pillar candidate, to be judged against a few real biome ideas first. Other
+lessons taken: one reusable verb per dungeon and pick the gameplay before
+the theme (Zelda), a whole area whose lesson is that one rule you relied on
+is deleted (The Witness), the player editing the maze (Void Stranger),
+drafting the layout as the gameplay (Blue Prince), identity from restriction
+plus authored-skeleton/generated-detail (Dead Cells), and shifting a passage
+as your move (Ravensburger's Labyrinth).
+
+**Ideas parked** in `ideas-backlog.md`, all from hooman's own list: walls
+that behave by a rule (metronome, close-behind-you, growth, Life-driven),
+perception rules as the per-biome variable (ten candidates — candlelight,
+inverse-legibility wall heights, centre-lit shadows onto the far side,
+near-fade, mirror band, echo pulse, posture trade, one-snapshot memory,
+drifting fog, compass), antipode pairs (tag/remove/carry, same or opposite),
+great-circle corridors, junction drafting, verticality, subtle mark
+tampering, the rosetta maze re-explained from scratch, and per-biome maze
+recipes. Two of those entries answer questions hooman asked directly:
+
+- *Would Life-driven walls even work, given Life dies back?* Largely no, as
+  suspected: random soup at the Conway biome's own density evaporates within
+  a few dozen generations into scattered still lifes and blinkers — a mostly
+  *open* board. Recorded with four ways it could still work (invert the
+  mapping; seed deliberate patterns as level furniture; run Life only on
+  edges layered over a static spanning tree so connectivity is guaranteed;
+  or use a rule with a labyrinthine attractor — B3/S12345 is literally
+  called "Maze"), and a recommendation of the last two together.
+- *What would the codebase need to anticipate rule-driven walls?* Less than
+  expected: wall state has exactly one chokepoint (`GridModel.isOpen`), which
+  the mesh, collision and decoration all already query, so "walls that
+  change" is a change *behind* one call. The rule to preserve is that nothing
+  snapshots `openEdges` privately (one thing already derives state at load —
+  `MazeExitWall.find`, cached on the biome — and would need re-deriving). The
+  three real gaps: rebuild cadence (the whole sphere's walls are one
+  `Polygon`, and `Biome.build` only runs on entry), no decided rule for a
+  wall arriving around a *stationary* player (`wallZoneNeighbor`'s test is a
+  movement test by construction, so it can't fire), and `Biome.serialize`
+  encoding edges but not a rule's phase.
+
+**Maze generation, once, for every topology.** The randomized-DFS carve was
+copy-pasted per topology (`MazeGenerator` and `ConwayMaze` held the same loop
+over the same string keys), so a second *style* would have been a per-biome
+job. New `biomes.common.maze` package: a `MazeTopology` seam (opaque node
+keys, adjacency, an edge's axis), `GridTopology`/`ConwayTopology` adapters,
+and five styles — randomized DFS (the original, preserved loop for loop),
+Prim, Kruskal, axis-biased DFS, recursive division — plus braiding as a
+post-pass rather than a style, since it applies to any of them and is the one
+thing that deliberately breaks the perfect-maze property. Recursive division
+needed three adaptations for this surface, documented on the class; the
+sharpest was that its seam wall at phi = 0 must have **no door**, because a
+door there closes a full-width single-row corridor into a ring — caught by
+the perfect-maze test failing by exactly one edge while every other style
+passed. Every style is tested for connectivity and edge count against the
+real grid (varying column count, merged poles) rather than a toy rectangle.
+Edge-key format unchanged, so previously exported maze JSON still loads.
+
+**A debug hub, and it's where the game now starts.** Getting into a
+work-in-progress biome meant editing `GameLoop`'s own `enterBiome` call and
+putting it back. `biomes.debug.DebugHubBiome` is a deliberately drab flat
+room whose ring of labelled portals is derived from `BiomesRegistry.ids()`,
+so a newly registered biome gets a portal for free. Explicitly *not* the real
+hub: `HubBiome` is a designed, diegetic place, and bolting plain signage onto
+it would spoil exactly that. Needed `graphics.LabelTexture`, the project's
+first text-in-world (h2d drawn to a render target, reusing `PaintingModel`'s
+quad unchanged), and it turned up two things worth remembering: a sign quad
+must be proportioned like its texture, and painting quads mount **mirrored**
+in tangent order — invisible for abstract art, not for text ("hub" rendered
+"dud"). `HubBiome.spawnPlayer` also stopped throwing for an origin it has no
+structure for, since the debug room warps in from outside the game's
+geography by construction.
+
+**Wind-led biome, the first perception-rule prototype**
+(`biomes.wind.WindBiome`). A draft floods breadth-first out of the exit over
+*open* edges only, so it runs along corridors rather than through walls; every
+tuft leans downwind, so the whole sphere's grass is a flow field with one
+convergence point. Chosen first of the ten perception ideas because it needed
+no new mechanism — grid, collision, grass, sway shader and exit painting all
+existed, leaving one BFS and a per-blade direction. Per-blade directions ride
+in the vertex normal attribute (`h3d.prim.Polygon` already uploads it), so
+the whole field is one draw call instead of one mesh per corridor; a separate
+`GrassWindField` shader rather than a flag on `GrassWind`, so no other grass
+mesh has to supply normals. **The finding the prototype existed to produce:**
+at normal grass height the field is invisible from across the sphere — a blade
+covers well under a pixel there, so its lean carries nothing and the
+legible-at-distance premise fails silently. Blades scaled up until it reads
+(4x read beautifully and towered over the camera; 1.8 puts them at eye level,
+which turns out to be *on* the see-far-not-near pillar rather than a
+compromise against it — waist-high grass hides the corridor you're standing
+in). Still open, and left open on purpose: nothing stops a player following
+the grass at their feet one tuft at a time.
+
+**Exterior biome** (`biomes.exterior.ExteriorBiome`): the same maze walked on
+the *outside* of the shell, where the surface curves away below the horizon
+and the far side isn't hard to read but geometrically absent — the deliberate
+inversion of the game's hook, worth one appearance as a revelation rather
+than a biome to develop. It cost almost nothing, which is the notable part:
+`GridModel`/`GridGeometry`/`GridCollision` work in theta/phi and don't care
+which side of the shell the player is on, so the entire inversion is two sign
+flips — `SphereExteriorSpace`'s own "up" (camera, gravity, turning and
+strafing follow it automatically, because they read `PlayerModel.surfaceUp`
+rather than assuming a direction) and `GridMesh.build`'s new `wallsOutward`.
+Vindicates extracting the `Space` seam back on 2026-07-18 before there was a
+second topology to retrofit against.
+
+`make fmt`/`lint`/`check`/`test` clean throughout (18k+ assertions). The
+debug hub, wind biome and exterior biome were each checked from a fixed
+vantage point in-browser (including a temporary pitched-up spawn, since the
+wind field's whole claim is about the view across the sphere); actually
+*walking* them is hooman's, per `CLAUDE.md`'s own note on interactive
+verification.

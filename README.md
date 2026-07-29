@@ -112,8 +112,10 @@ invest in 2 or 3.** Revisit this section and log the decision in
   lifecycle: [philosophy](docs/game-design/philosophy.md) (what this game
   is trying to be), [story-line](docs/game-design/story-line.md) (current
   state of the story), [ideas-backlog](docs/game-design/ideas-backlog.md)
-  (not-yet-implemented ideas), and
+  (not-yet-implemented ideas),
   [design-decisions-records](docs/game-design/design-decisions-records.md)
-  (decisions with their rejected alternatives and why).
+  (decisions with their rejected alternatives and why), and
+  [inspirations](docs/game-design/inspirations.md) (external references and
+  the specific lesson each one carries).
 - [`docs/bug-tracker.md`](docs/bug-tracker.md) — known bugs not yet fixed.
 - [`docs/CHANGELOG.md`](docs/CHANGELOG.md) — bugs that have been fixed.

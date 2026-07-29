@@ -10,6 +10,7 @@ of movement are the contract:
 | [story-line.md](story-line.md) | The **current state** of the story: live candidates, preferences, open decisions | When a story decision lands, the winner folds into the story (and its pillar consequences into philosophy.md); losers move to design-decisions-records.md with the why |
 | [ideas-backlog.md](ideas-backlog.md) | Not-yet-implemented ideas, checked against philosophy.md before entering | When implemented, **delete the entry** — the implementation plus `../PROJECT_LOG.md` is the record from then on |
 | [design-decisions-records.md](design-decisions-records.md) | Decision records: what was decided, what was rejected, and why | Append-only; entries never leave |
+| [inspirations.md](inspirations.md) | External references (games, design writing) with the specific lesson each carries, and which backlog entry it feeds | Entries stay after the idea they fed ships — unlike backlog entries — since "why is it shaped like this" outlives the shipping |
 
 Related, outside this folder: [`../PROJECT_LOG.md`](../PROJECT_LOG.md) is the
 chronological history (what happened, when); the records file here is the

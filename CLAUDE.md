@@ -2,7 +2,7 @@
 
 A 3D maze wrapped onto the inside of a sphere: the player walks the interior surface, and can raise their head to see clear across to the far side — but not what's in their immediate vicinity. Built in Haxe + Heaps, primarily vibe-coded (Claude does most of the writing, hooman directs and reviews).
 
-This file holds the non-negotiables. Full rationale and details live in `docs/GUIDELINES.md`; project history and past decisions live in `docs/PROJECT_LOG.md`; game design lives in the `docs/game-design/` folder (start at its `README.md` — philosophy, story-line, ideas-backlog, design-decisions-records, each with movement rules between them); known bugs live in `docs/bug-tracker.md`; fixed bugs live in `docs/CHANGELOG.md`. Read those when you need the "why," the history, or the design intent — this file is just the "what."
+This file holds the non-negotiables. Full rationale and details live in `docs/GUIDELINES.md`; project history and past decisions live in `docs/PROJECT_LOG.md`; game design lives in the `docs/game-design/` folder (start at its `README.md` — philosophy, story-line, ideas-backlog, design-decisions-records, inspirations, each with movement rules between them); known bugs live in `docs/bug-tracker.md`; fixed bugs live in `docs/CHANGELOG.md`. Read those when you need the "why," the history, or the design intent — this file is just the "what."
 
 ## Architecture
 

@@ -60,11 +60,43 @@ class Colours {
 	/** `biomes.conway.ConwayMesh` floor tiles — dim "dead" cells. **/
 	public static inline final CONWAY_TILE_DEAD:Int = 0xFF111A22;
 
-	/** `biomes.conway.ConwayMesh` raised live-cell blocks and the hub waypoint. **/
+	/**
+		`tools.geodesic.GeodesicMesh`'s own pentagon floor tiles — the 12
+		icosahedral pinch-points, a brighter lift off `CONWAY_TILE_DEAD`
+		(same hue family, not a new one) so they read as distinct without
+		competing with `CONWAY_TILE_LIVE`. This constant is the single
+		switch for that: set it equal to `CONWAY_TILE_DEAD` to have
+		pentagons blend back into the hexagons instead, no code change
+		needed beyond this value — see `GeodesicMesh.build`'s own doc for
+		why the split is architected as two separate meshes rather than
+		per-vertex color.
+	**/
+	public static inline final CONWAY_TILE_PENTAGON:Int = 0xFF35566E;
+
+	/**
+		`biomes.conway.ConwayMesh` raised live-cell blocks and the hub
+		waypoint — the single hue every lifecycle stage shares
+		(`ConwayMesh.scaledColor` dims it per stage rather than switching
+		hue; "too much colours... let's keep unicolor-cells, but make them
+		brighter when they birth, dimmer when they age, dimmer again when
+		they die").
+	**/
 	public static inline final CONWAY_TILE_LIVE:Int = 0xFF3BC47A;
 
-	/** `biomes.conway.ConwayMesh` closed-edge neon walls ("Tron" maze lines). **/
-	public static inline final CONWAY_WALL_NEON:Int = 0xFF38E8FF;
+	/**
+		`tools.geodesic.GeodesicMesh`'s own tracked-glider live blocks — a
+		warm amber standing apart from `CONWAY_TILE_LIVE`'s green so a
+		spawned glider (`GeodesicGliderTracker`) reads as a distinct,
+		followable thing against the ambient soup, not just a brighter
+		blob of the same color.
+	**/
+	public static inline final CONWAY_TILE_GLIDER:Int = 0xFFFFB627;
+
+	/** `biomes.conway.ConwayMesh` closed-edge walls' dark base panel — `graphics.shaders.ConwayWallGlow` paints the actual Tron lines on top. **/
+	public static inline final CONWAY_WALL_PANEL:Int = 0xFF0A0E16;
+
+	/** `biomes.conway.ConwayMesh` closed-edge walls' emissive rim/seam color, see `graphics.shaders.ConwayWallGlow`. Also the color of an *opened* reactive wall's own faded "ghost" — same panel, just at `ConwayMesh.GHOST_WALL_OPACITY`. **/
+	public static inline final CONWAY_WALL_GLOW:Int = 0xFF38E8FF;
 
 	/** `biomes.twosided.MarkModel`'s own posts — a hot pink that exists in no other biome, so a mark can never be mistaken for scenery while the mechanic is being tested. **/
 	public static inline final MARK_POST:Int = 0xFFFF3FA0;

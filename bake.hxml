@@ -1,0 +1,3 @@
+-cp src
+-main tools.geodesic.GeodesicBake
+-neko bin/bake.n

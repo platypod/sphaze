@@ -2,7 +2,6 @@ package game;
 
 import biomes.common.Biome;
 import biomes.common.grid.GridModel;
-import biomes.conway.ConwayBiome;
 import biomes.debug.DebugHubBiome;
 import biomes.exterior.ExteriorBiome;
 import biomes.common.space.sphere.SphereMath;
@@ -19,6 +18,7 @@ import entities.hourglass.HourglassModel;
 import entities.player.Camera;
 import entities.player.PlayerModel;
 import entities.registries.BiomesRegistry;
+import tools.geodesic.GeodesicConwayBiome;
 
 /**
 	Everything about actually playing the game: biome setup/switching, input
@@ -92,7 +92,12 @@ class GameLoop {
 		biomeRegistry.register(new MazeBiome(MazeGenerator.generate()));
 		biomeRegistry.register(new TowerBiome(TowerGenerator.generate(), hourglassModel));
 		biomeRegistry.register(new MobiusBiome(MobiusForestGenerator.generate()));
-		biomeRegistry.register(new ConwayBiome());
+		// Geodesic sphere (tools.geodesic), swapped in for the original
+		// lat/long ConwayBiome — see
+		// docs/game-design/notes/geodesic-sphere-engineering.md's own
+		// "wiring into the real game" step 4. Same registry id
+		// (ConwayBiome.ID), so ConwayWaypoint needed no change.
+		biomeRegistry.register(new GeodesicConwayBiome());
 		biomeRegistry.register(new WindBiome());
 		biomeRegistry.register(new ExteriorBiome());
 		biomeRegistry.register(new TwoSidedBiome());

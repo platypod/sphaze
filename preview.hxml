@@ -1,0 +1,4 @@
+-cp src
+-lib heaps
+-main tools.geodesic.GeodesicPreview
+-js bin/geodesic-preview.js

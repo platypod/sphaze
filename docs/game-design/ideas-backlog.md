@@ -29,7 +29,7 @@ its details block, it's a design note: give it its own file under
 | [Falls-counter unlocks](#falls-counter-unlocks) | precision | counter built, unlocks open | low |
 | [Tree growth](#real-tree-growth-möbius-forest) | time | deferred by choice | medium |
 | [One side affects the other](#one-side-affects-the-other-möbius) | topology | idea | medium |
-| [Walls that behave by a rule](#walls-that-behave-by-a-rule) | wall state | idea (4 variants) | high |
+| [Walls that behave by a rule](#walls-that-behave-by-a-rule) | wall state | Life-driven built, 3 idea | high |
 | [Two-sided maze](#two-sided-maze-the-open-half) | topology, gravity | **prototype landed**, crossing open | — |
 | [Perception rules](#perception-rules-as-the-biomes-own-variable) | what you may know | **one of ten built** | low each |
 | [Antipode pairs](#antipode-pairs) | geometry | idea | medium |
@@ -39,6 +39,11 @@ its details block, it's a design note: give it its own file under
 | [Paintings mechanics](#paintings-mechanics) | traversal | partly covered by the hub | low |
 | [Various levels](#various-levels) | biome identity | idea | — |
 | [Per-biome maze recipes](#per-biome-maze-recipes) | biome identity | styles built, assignment open | low |
+| [Geodesic sphere for Conway](#geodesic-sphere-for-conway-hexagons--12-pentagon-beacons) | biome identity, geometry | idea, engineering scoped | high |
+| [Maze-compatible life rule](#a-maze-compatible-life-rule) | biome identity, simulation | open question, measured | medium |
+| [Hex-native structure library](#a-hex-native-structure-library) | biome identity, simulation | **real traveling spaceship confirmed + ported, in-game** | low |
+| [True glider guns](#true-glider-guns) | biome identity, simulation | idea, half-unblocked (traveler exists) | high |
+| [Deliberate pentagon activation](#deliberate-pentagon-activation-not-random-soup) | biome identity, progression | **shared prerequisite (soup off) built**, 4 variants still idea | low→high |
 | [Biome links / rosetta maze](#biome-links-and-the-rosetta-maze) | progression | idea | high |
 | [Secret painting swap](#secret-one-time-painting-swap-tower) | secret | idea | low |
 
@@ -201,9 +206,9 @@ learns to read.** Each variant is its own biome, not a stack of twists in one.
 | **Metronome** | sections rise and fall on the world tick | the hourglass is already a global time-scale dial, so the player's difficulty control is diegetic at no new cost |
 | **Close behind you** | crossing an edge shuts it | strongest "see far, not near" fit in this file: the whole route must be planned before entry. Precedent: Ravensburger's Labyrinth ([inspirations](inspirations.md)) |
 | **Growth** | hedges close over time | shares its clock with [tree growth](#real-tree-growth-möbius-forest) — build both on one mechanism or neither |
-| **Life-driven** | walls follow a cellular automaton | has a real objection against it, below |
+| **Life-driven** | walls follow a cellular automaton | **built**, option 3 below — see [2026-08-03 record](design-decisions-records.md) |
 
-- *Unproven:* all four; and Life-driven has a known problem.
+- *Unproven:* Metronome, Close behind you, Growth — Life-driven shipped its first cut.
 - *Cost:* high — see [the engineering
   note](notes/rule-driven-walls-engineering.md) for what the codebase needs
   (short version: one chokepoint already exists; the gaps are rebuild cadence, a
@@ -214,10 +219,8 @@ learns to read.** Each variant is its own biome, not a stack of twists in one.
 Raised directly (2026-07-29): wouldn't a Life board mostly die back, leaving the
 maze open? Yes. Random soup at `biomes.conway.ConwayState.INITIAL_DENSITY`
 evaporates within a few dozen generations into scattered still lifes and
-blinkers — a *mostly open* board. So raw B3/S23 on the walls doesn't work, and
-the existing `biomes.conway.ConwayBiome` should be read as what it is (a live
-simulation the player walks *on*, with a static maze of its own) rather than a
-step toward this.
+blinkers — a *mostly open* board. So raw B3/S23 on the walls doesn't work
+directly — see below for the shape that shipped instead.
 
 1. **Invert the mapping** (walls = dead cells) so the sparse stable end-state is
    a sparse *maze* — but then the opening generations are a near-solid block.
@@ -227,11 +230,17 @@ step toward this.
    literacy) rather than a texture.
 3. **Run Life on a subset of edges** layered over a static spanning tree, so
    connectivity is guaranteed by construction and Life can only add or remove
-   shortcuts.
+   shortcuts. **Built 2026-08-03**, gated on rolling per-cell activity rather
+   than raw density (`biomes.conway.ConwayMazeReactivity`): a field of frozen
+   still lifes has population but no activity, so its walls settle back to
+   closed instead of staying open forever on stale density.
 4. **Use a rule with a labyrinthine attractor** — B3/S12345 is literally known
-   as "Maze" and grows exactly that kind of structure.
+   as "Maze" and grows exactly that kind of structure. Still open — the board
+   underneath `ConwayBiome` stays plain B3/S23 for now.
 
 Recommendation if it gets built: 3 plus 4, on the cheapest possible board first.
+3 landed; 4 (or seeded patterns from option 2) remain open follow-ups if 3
+alone doesn't hold up in play.
 </details>
 
 ### Two-sided maze: the open half
@@ -396,6 +405,14 @@ about what's beyond.**
   which space it will fit best yet."
 - *Cost:* start with the jump variant on the existing sphere grid — nearly free,
   and it answers the question before anything gets rebuilt.
+- **Jump variant, first cut, built 2026-08-04** — on `biomes.conway`, not a new
+  grid: live cells got a real hitbox (`ConwayGrid.groundHeightAt`), standable
+  on top, and `ConwayCollision` lets a player airborne above `ConwayGrid.WALL_HEIGHT`
+  cross a closed edge — jump onto a live cell, jump again from there, clear a
+  wall. `ConwayBiome.GRAVITY` came down from `60` to `28` to make the first
+  jump actually reach a cell's own top (see that constant's own doc for the
+  arithmetic). Answers the "is this fun" question for the maze grid itself
+  next, if wanted — this only proves it on Conway's own denser grid.
 
 ---
 
@@ -435,6 +452,257 @@ player reads about it.**
 - *Cost:* low. Wants playtesting per style, not a decision on paper. One further
   lesson to steal when it happens (Dead Cells, [inspirations](inspirations.md)):
   authored skeleton, generated detail, rather than pure procedure everywhere.
+
+### Geodesic sphere for Conway (hexagons + 12 pentagon beacons)
+
+**Replace `biomes.conway`'s lat/long grid — cells shrink toward the poles by
+`sin(theta)`, uneven in a way the ordinary maze grid already fixed for itself
+(`GridModel.colsForRow` bands column count near the poles) but Conway's own
+grid deliberately didn't — with a hexagon-based geodesic sphere, and lean into
+the 12 pentagons a sphere always forces rather than hide them.**
+
+Raised directly (2026-08-04): "I don't quite like the fact that a cell's
+dimension near the poles is so different... What if we based each cell on a
+hexagon... redesigned our sphere around it?" then, on the unavoidable 12
+defect cells an icosahedral hex tiling produces: "I don't mind the N
+pentagons — on the opposite, we will build mechanisms around them." Landed on
+a pulsing-beacon rule for the pentagons: visually a tall column of light with
+no hitbox, technically a cell alive on its own fixed clock rather than by
+neighbor count — with the rule itself modeled as swappable per-pentagon data,
+anticipating other mechanics later.
+
+- *Fits:* [inspirations.md](inspirations.md)'s own rule directly — *"a
+  biome's mechanic should be a corollary of the sphere, not a decoration on
+  it."* The 12 pentagons aren't a design choice dressed up after the fact;
+  Euler's formula forces them on any sphere tiled this way, and the beacon
+  rule is what happens when that forced structure is read as signal rather
+  than defect.
+- *Was already asked once:* [PROJECT_LOG.md](../PROJECT_LOG.md) records the
+  lat/long-vs-cube-sphere/geodesic question being walked through and
+  deliberately deferred before the maze was ever built — *"revisit if pole
+  distortion... turns out to matter once the maze is actually walkable."*
+  This is that revisit.
+- *Unproven:* whether a 6-neighbor Life rule (B3/S23 doesn't transfer as-is —
+  no diagonals, different neighbor count) actually produces the
+  gliders/oscillators/methuselahs the square grid now has, before committing
+  to one; whether the position→cell lookup's face-boundary tie-break is
+  actually clean in practice, not just on paper.
+- *Cost:* high, but scoped — see [the engineering
+  note](notes/geodesic-sphere-engineering.md) for the construction method
+  (icosahedral subdivision → Goldberg dual, density tunable via one
+  frequency parameter, 12 pentagons guaranteed and always mutually
+  non-adjacent), the generate → score → bake pipeline (checked-in data
+  asset, not computed live), four candidate hex-Life rulesets with a
+  recommended starting one, and — the part that could have been a
+  showstopper but isn't — a known-good position→cell lookup algorithm (the
+  same three-step approach Uber's H3 uses: nearest-icosahedral-face bucket,
+  local closed-form projection, table lookup; effectively constant-time, not
+  a scan over cell count).
+- *Open:* whether this stays Conway-specific or becomes a sibling to
+  `biomes.common.grid`'s shared `GridTopology`/`GridModel` for other biomes —
+  not decided; the pentagon-beacon mechanic argues for Conway-specific for
+  now regardless, since no other biome has a reason to want beacons.
+
+### A maze-compatible life rule
+
+**Find a hex Life rule that stays alive while its neighbour influence is
+gated by the maze's own walls — so the walls shape the simulation instead of
+merely being reshaped by it.**
+
+Split out of the geodesic-sphere work above (2026-08-05) after the shipped
+answer went the other way. `biomes.conway`'s square grid gates Life by walls:
+a cell only counts a neighbour it has an open passage to. That was ported to
+the hex sphere and had to be taken straight back out, because there it
+doesn't change the dynamics, it ends them — measured across all four
+candidate rules, a wall-gated board is extinct within ~5 generations, every
+time.
+
+The arithmetic is unforgiving. A hex node has 6 neighbours; a carved maze is
+a spanning tree, so ~2 of them are open; every candidate rule needs 2-3
+*live* neighbours to sustain anything. So a cell needs essentially both of
+its two open neighbours alive simultaneously, every generation. The square
+grid survives the same rule because it has 8 neighbours *and* because
+`ConwayGrid.allowsInfluence` lets diagonal influence route through either
+intermediate cell — influence leaks around corners there. A hexagon has no
+diagonals; every neighbour is a direct edge, all or nothing.
+
+Also measured and rejected as a way out: opening the maze up. `B2/S23` only
+comes alive past ~5 open edges of 6, at which point there is barely a maze
+left; and `MazeBraider` at `fraction = 1` reaches only 2.19, nowhere near.
+
+- *Fits:* the same [inspirations.md](inspirations.md) rule the geodesic
+  sphere is built on — a biome's mechanic should be a corollary of the
+  sphere. Walls that genuinely constrain the life growing between them is a
+  stronger version of that than walls the life merely pushes around.
+- *Unproven:* whether such a rule exists at all. The four candidates were
+  never a search — they were derived by scaling `B3/S23`'s thresholds by the
+  neighbour-count ratio, which is a reasonable first guess and nothing more.
+  Nobody has swept the space for a rule suited to a *sparse* graph (survival
+  at 1-2 live neighbours, asymmetric birth/survive, or a generation rule that
+  reads wall state as something other than a hard gate).
+- *Cost:* medium, and cheaply bounded — `GeodesicLifeReport` already
+  compares rules across conditions headlessly, and reintroducing the gate is
+  a change to a single method (`GeodesicLifeState.liveNeighborCount`). The
+  work is the search and its scoring criteria, not the plumbing.
+
+### A hex-native structure library
+
+**Find small Life patterns (oscillators, "gliders," methuselahs) that
+actually work on this sphere's 6-neighbour hex/pentagon grid —
+`biomes.conway.ConwaySeedLibrary`'s own patterns don't transfer, they're
+defined for the square grid's 8-neighbour rule.** Build-order Phase 8 from
+[the engineering note](notes/geodesic-sphere-engineering.md).
+
+**Search actually run, 2026-08-06** (`GeodesicGliderSearch`,
+`GeodesicGliderTrajectory`) — see `GeodesicGliderTracker`'s own doc for the
+full story. Local exhaustive 1-ring search found 24 confirmed translating
+patterns across 4 candidate rules, but the long-run follow-up (5000
+generations) showed every `B2/S34` candidate — the rule the real board
+actually plays under — is a *bounded shuttle*, drifting about one hex-cell
+out and back forever rather than genuinely traveling.
+
+**Resolved the same day, from outside the local search space.** Web
+research on hexagonal Life-like automata turned up `xq14_0ig5l3z102`: a
+real, confirmed period-14 spaceship in `B2/S34H` (Golly/Catagolue's own
+name for this exact rule), found by Catagolue's own distributed soup
+search across ~100 billion random soups — a working example already
+existed, just never reachable by a single node's own 1-ring. Ported onto
+this mesh (`GeodesicGliderPatterns.placeKnownSpaceship`, walking real 3D
+tangent directions rather than any coordinate system) and verified by
+`GeodesicGliderPort`'s own headless probe: 8 clean periods (112
+generations) of genuinely growing centroid drift — real net travel, not
+the shuttles' oscillation — before it reaches a pentagon and dissolves
+into a small residual structure. This is what `GeodesicGliderTracker`
+spawns now, replacing the shuttle patterns entirely.
+
+- *Fits:* the geometry-corollary rule, same as everything else in this
+  package — even though the *pattern itself* came from outside the project,
+  placing it required this mesh's own real geometry (no shortcut via a
+  coordinate system that doesn't exist here).
+- *Resolved:* whether a genuinely traveling pattern exists on this grid —
+  yes, confirmed. *Still unproven:* how far it travels before a pentagon
+  interrupts it varies by anchor and direction (8 periods / ~112
+  generations from one measured anchor) — not yet characterized across
+  many anchors, and no attempt made yet to find a *second* known hex
+  spaceship for comparison.
+- *Cost:* the port itself was cheap once the right object was found — the
+  real cost was in the coordinate-convention debugging (an initial wrong
+  guess at which diagonal pair of hex neighbors the pattern's axes use
+  quietly produced a broken port that looked like just another shuttle
+  until checked against a plain flat-grid simulation).
+
+### True glider guns
+
+**A structure that emits gliders on its own, forever — the way Conway's
+Gosper gun does — rather than `GeodesicGliderTracker`'s own scripted
+re-seed-on-a-timer stand-in.** Raised explicitly (2026-08-06) so the
+difference between "spawn point" (built) and "glider gun" (not attempted)
+stays visible rather than getting quietly conflated later.
+
+- *Fits:* a gun built around ["a hex-native structure
+  library"](#a-hex-native-structure-library)'s now-confirmed
+  `xq14_0ig5l3z102` traveler would be the strongest possible answer to
+  "gliders gliding forevermore" — an emergent source, not a scripted one.
+- *Unproven:* whether a gun is even possible here — now half-blocked
+  instead of fully. One ingredient exists: a real traveling glider
+  (`xq14_0ig5l3z102`, confirmed, ported, in-game). Still missing: a second
+  oscillator whose own period lines up to eject one cleanly, and the
+  travel-distance problem a gun would inherit unmodified — the known
+  traveler only survives ~8 periods before reaching a pentagon and
+  dissolving, which bounds how far downstream of a gun anything could
+  actually go before the same fate meets it.
+- *Cost:* still high, but the blocking half of the prerequisite (any
+  confirmed traveler at all) is done — what's left is finding or
+  constructing the ejector oscillator, a real but bounded search rather
+  than an open one.
+
+### Deliberate pentagon activation, not random soup
+
+**Raised directly (2026-08-06):** the geodesic sphere's ambient soup (Phase
+5/6's `B2_S23` default, ~55% population, always churning) reads as too
+chaotic — "too many activated cells right from the start... I'd like the
+game to be less chaotic, so that the player has ground to think and have a
+meaningful impact." The proposed redirect: stop simulating a random board at
+all, and let the player *choose* which structure to spawn at which pentagon
+— the order/timing of activation becomes the actual puzzle, and a specific
+sequence unlocks the route to the maze's goal.
+
+**Shared prerequisite for all four variants below — built (2026-08-06):**
+turn the ambient soup off so a spawned structure's own propagation is the
+only thing happening and stays legible. `GeodesicConwayBiome` no longer
+seeds the board at all, and steps `GeodesicLifeState` with a
+`noRandomBirths` source instead of `Math.random` so `MUTATION_RATE` can't
+sprout stray life anywhere either — the only cells ever alive are
+`GeodesicGliderTracker`'s own scripted spawn points (see its own doc) and
+whatever their birth/survival math grows from those. Requested directly
+after playing the soup version ("I want only the spawned gliders"). What's
+still *not* built: any of the four variants themselves — this only
+satisfies their shared precondition, not player choice, unlockable
+structures, or a later reversion beat. This also reopens ["a
+maze-compatible life rule"](#a-maze-compatible-life-rule) from a different
+angle: with no ambient soup to sustain, the rule only has to keep *one
+deliberately-placed structure* alive/legible near a pentagon, not the
+whole sphere — a much smaller design space than what that entry scoped.
+
+Four variants raised together, not mutually exclusive:
+
+1. **Learn structures elsewhere, unlock them here.** Other biomes teach
+   specific Life patterns (gliders and the like); the sphere is one of the
+   later stages, only fully playable once some are unlocked. Directly the
+   pillar's own worked example — "a key or piece of information gating
+   another biome, à la *Outer Wilds*" — not a stretch to fit.
+2. **Travel first, mastery later.** The sphere carries both the
+   pentagon-activation mechanic *and* an ordinary travel/maze layer from the
+   start, so the player sees and walks it early, but only *works* the
+   pentagon puzzle once enough has been unlocked elsewhere (per idea 1).
+   Softens the sequencing risk of "you can't touch the sphere's real mechanic
+   until you've been to N other biomes first."
+3. **A later reversion to real soup.** At some story beat, the sphere goes
+   back to chaotic, ungoverned Life — genuinely alive again rather than a
+   player-conducted instrument. Raised with its own caveat attached ("we'd
+   have to see how that fits the narrative") — deliberately not resolved
+   here; needs a beat in [story-line.md](story-line.md) to hang on, not
+   invented to fit after the fact.
+4. **Two-sided revisit, Conway-specific.** Exterior cells keep the
+   jump-over-wall mechanic; interior cells "just paint the floor" and only
+   pentagons (recoloured for legibility) actually matter underfoot. This
+   is the same shell already built for [the two-sided
+   maze](#two-sided-maze-the-open-half) (`biomes.twosided.TwoSidedBiome`) —
+   not a new gravity/crossing mechanic, an application of that one here. It
+   also inherits that entry's own answer to the obvious objection: the
+   exterior doesn't threaten "see far, not near," because
+   `biomes.exterior.ExteriorBiome`'s own finding is that the outside curves
+   away below the horizon — no global survey is possible from out there
+   either way, so the interior keeps its monopoly on seeing far. Also
+   inherits that entry's two open questions (how crossing actually works,
+   what makes a mark load-bearing) rather than answering them independently.
+
+- *Fits:* [inspirations.md](inspirations.md)'s own geometry-corollary rule
+  stays satisfied either way (the pentagons are still the forced topological
+  feature the mechanic hangs on); variants 1-2 are the *strongest* fit yet
+  for "interconnected, not a level select," since they make the sphere
+  literally unfinishable without having been elsewhere first.
+- *Unproven:* whether a spawned structure actually stays self-limiting
+  under any rule tried so far (see the shared prerequisite above) — nothing
+  has been measured yet, this is still at the "idea" stage per the user's
+  own framing ("that's a random idea"). Variant 4 additionally inherits
+  every open question [the two-sided maze entry](#two-sided-maze-the-open-half)
+  already has unresolved.
+- *Cost:* varies sharply by variant — turning the soup off is cheap (a
+  config change plus, likely, a real rule/propagation-containment pass);
+  variant 1's cross-biome unlock system and variant 4's Conway-specific
+  two-sided port are both real builds on top of that.
+- *Open:* which variant(s) to actually pursue, and in what order — nothing
+  committed yet. A reasonable cheap-first path floated in discussion: soup
+  off, one fixed structure per pentagon (sidesteps needing a hex-native
+  structure *library* at all — see [that backlog
+  entry](#a-hex-native-structure-library) — since the puzzle is sequencing,
+  not pattern choice), see if the core activate → propagate → wall-opens
+  loop feels good before investing in variant 1's unlock system.
+- *Open:* whether "wall-gated" has to mean a hard gate at all. A softer
+  coupling — walls halving a neighbour's contribution rather than zeroing it,
+  or gating only *birth* and not survival — might get the design intent
+  without the extinction, and was never tried.
 
 ### Biome links, and the rosetta maze
 

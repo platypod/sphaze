@@ -35,6 +35,57 @@ class ConwayGrid {
 	public static inline final COLS:Int = 56;
 	public static inline final TILE_GAP:Float = 1.5;
 
+	/**
+		How tall a *freshly born* live cell's own standable block rises
+		above the base surface — shared between `ConwayMesh` (the visual
+		block) and `groundHeightAt`/`ConwayCollision` (the real
+		standing/jump-clearance height), so the two can never disagree
+		about where a player's feet actually land. Combined with a second
+		jump's own apex (`ConwayBiome.GRAVITY`'s own doc has the
+		arithmetic — `~5.8`), `2 + 5.8 = 7.8` just clears `WALL_HEIGHT`
+		(`7.5`) — raised directly ("reduce the newly-born cell as well,
+		say 2 units high"), down from an earlier `5` that cleared with
+		`3.3` to spare. `0.3` units of margin is tight (flagged directly
+		when asked for): if the fixed-step physics' own discretization
+		ever eats into it, `YOUNG_BLOCK_HEIGHT` is the first thing to nudge
+		back up.
+	**/
+	public static inline final YOUNG_BLOCK_HEIGHT:Float = 2.0;
+
+	/**
+		How tall a live cell's own standable block rises once it's aged
+		past `YOUNG_AGE_THRESHOLD` — raised directly ("only newly-born
+		cells are big enough for the player to jump over a wall. The
+		others are slightly shorter, which is not enough"), then nudged
+		from `1` to `1.5` alongside `YOUNG_BLOCK_HEIGHT`'s own drop. A
+		second jump's own apex is `~5.8`, so `1.5 + 5.8 = 7.3` stays `0.2`
+		short of `WALL_HEIGHT` (`7.5`) — correctly insufficient, but with
+		a thinner margin than the `1` this replaced (`0.71` short) for the
+		same reason `YOUNG_BLOCK_HEIGHT`'s own doc flags.
+	**/
+	public static inline final AGED_BLOCK_HEIGHT:Float = 1.5;
+
+	/**
+		A cell's own age (`ConwayState.ageOf`), in generations, at or under
+		which it still counts as "freshly born" (`YOUNG_BLOCK_HEIGHT`)
+		rather than "settled" (`AGED_BLOCK_HEIGHT`) — shared between
+		`ConwayMesh` (so a shorter block actually looks shorter) and
+		`groundHeightAt` (so it actually stands shorter too). `4`
+		generations (~3s at `ConwayBiome.STEP_INTERVAL`) is long enough
+		that a fast-oscillating pattern (a blinker, period 2) stays tall
+		the whole time it keeps oscillating — it never actually settles —
+		while a cell that's part of a genuine still life ages past it and
+		shrinks.
+	**/
+	public static inline final YOUNG_AGE_THRESHOLD:Int = 4;
+
+	/**
+		How tall a closed edge's own wall rises above the base surface —
+		shared the same way `YOUNG_BLOCK_HEIGHT` is, between `ConwayMesh`'s
+		visual wall and `ConwayCollision`'s "high enough to clear it" gate.
+	**/
+	public static inline final WALL_HEIGHT:Float = 7.5;
+
 	public static function cornerAt(theta:Float, phi:Float):h3d.Vector {
 		return SphereMath.sphericalToCartesian(RADIUS, theta, phi);
 	}
@@ -115,6 +166,31 @@ class ConwayGrid {
 		}
 		var col = wrapCol(Std.int(Math.floor(phi * COLS / (2 * Math.PI))));
 		return RingNode(row, col);
+	}
+
+	/**
+		The standable ground height directly below `(theta, phi)` — `0`
+		unless the cell/pole here is alive, in which case
+		`YOUNG_BLOCK_HEIGHT` or `AGED_BLOCK_HEIGHT` depending on its own
+		age. Read fresh every tick by `ConwayBiome.applyGravity` (never
+		cached), so a cell dying out from under a standing player drops them
+		the same way any other biome's own vanishing floor would (`biomes.hub.HubBiome.applyGravity`'s
+		`MazeShrine.wallTopHeightAt` is the same pattern, over an unmoving
+		obstacle instead of a live one).
+		@param state the Life layer to query.
+		@param theta polar angle, see `biomes.common.space.sphere.SphereMath`.
+		@param phi azimuth, see `biomes.common.space.sphere.SphereMath`.
+		@return `0` if nothing's alive here, `YOUNG_BLOCK_HEIGHT`/`AGED_BLOCK_HEIGHT` otherwise.
+	**/
+	public static function groundHeightAt(state:ConwayState, theta:Float, phi:Float):Float {
+		return switch nodeAt(theta, phi) {
+			case PoleNode(pole): state.isPoleAlive(pole) ? blockHeightFor(state.poleAgeOf(pole)) : 0;
+			case RingNode(row, col): state.isAlive(row, col) ? blockHeightFor(state.ageOf(row, col)) : 0;
+		}
+	}
+
+	static function blockHeightFor(age:Int):Float {
+		return age <= YOUNG_AGE_THRESHOLD ? YOUNG_BLOCK_HEIGHT : AGED_BLOCK_HEIGHT;
 	}
 
 	public static function liveNeighborCount(state:ConwayState, maze:ConwayMazeData, row:Int, col:Int):Int {

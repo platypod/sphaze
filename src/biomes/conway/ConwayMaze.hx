@@ -11,6 +11,14 @@ enum ConwayNode {
 
 typedef ConwayMazeData = {
 	var openEdges:haxe.ds.StringMap<Bool>;
+
+	/**
+		The DFS spanning tree carved at generation time — always a subset of
+		`openEdges`, and never touched by `ConwayMazeReactivity`, so the maze
+		can never be split into unreachable pieces no matter how the
+		population-reactive edges open and close around it.
+	**/
+	var coreEdges:haxe.ds.StringMap<Bool>;
 }
 
 /**
@@ -23,6 +31,12 @@ typedef ConwayMazeData = {
 	`ConwayTopology` — this class used to hold its own verbatim copy of
 	`biomes.maze.MazeGenerator`'s randomized DFS, which is exactly the
 	duplication that made adding a second generation style a per-biome job.
+
+	Generation always produces a *perfect* maze (see `generateWith`'s own
+	doc), so every edge open at that moment is the spanning tree — that set
+	is captured as `coreEdges` and every other edge starts closed, ready for
+	`ConwayMazeReactivity` to open and close as the Life layer on top of it
+	lives and dies.
 **/
 class ConwayMaze {
 	/**
@@ -45,27 +59,52 @@ class ConwayMaze {
 		@return the generated maze's open edges.
 	**/
 	public static function generateWith(style:MazeStyle, braidFraction:Float = 0, ?random:Void->Float):ConwayMazeData {
-		return MazeCarver.carve(ConwayTopology.INSTANCE, style, braidFraction, random);
+		var layout = MazeCarver.carve(ConwayTopology.INSTANCE, style, braidFraction, random);
+		var coreEdges = new haxe.ds.StringMap<Bool>();
+		for (key => _ in layout.openEdges) {
+			coreEdges.set(key, true);
+		}
+		return {openEdges: layout.openEdges, coreEdges: coreEdges};
 	}
 
 	public static function serialize(maze:ConwayMazeData):String {
-		var edges = [for (key in maze.openEdges.keys()) key];
-		return haxe.Json.stringify({openEdges: edges});
+		var openEdges = [for (key in maze.openEdges.keys()) key];
+		var coreEdges = [for (key in maze.coreEdges.keys()) key];
+		return haxe.Json.stringify({openEdges: openEdges, coreEdges: coreEdges});
 	}
 
 	public static function deserialize(json:String):ConwayMazeData {
-		var parsed:{openEdges:Array<String>} = haxe.Json.parse(json);
+		var parsed:{openEdges:Array<String>, coreEdges:Array<String>} = haxe.Json.parse(json);
 		var openEdges = new haxe.ds.StringMap<Bool>();
 		if (parsed.openEdges != null) {
 			for (key in parsed.openEdges) {
 				openEdges.set(key, true);
 			}
 		}
-		return {openEdges: openEdges};
+
+		// Saves from before `coreEdges` existed had a maze that was static in
+		// its entirety — the correct reading of that is "every open edge was
+		// core", not "nothing is protected".
+		var coreEdges = new haxe.ds.StringMap<Bool>();
+		if (parsed.coreEdges != null) {
+			for (key in parsed.coreEdges) {
+				coreEdges.set(key, true);
+			}
+		} else {
+			for (key => _ in openEdges) {
+				coreEdges.set(key, true);
+			}
+		}
+		return {openEdges: openEdges, coreEdges: coreEdges};
 	}
 
 	public static function isOpen(maze:ConwayMazeData, a:ConwayNode, b:ConwayNode):Bool {
 		return maze.openEdges.exists(edgeKey(a, b));
+	}
+
+	/** Whether the edge between `a` and `b` is part of the protected spanning tree. **/
+	public static function isCore(maze:ConwayMazeData, a:ConwayNode, b:ConwayNode):Bool {
+		return maze.coreEdges.exists(edgeKey(a, b));
 	}
 
 	public static function nodeKey(node:ConwayNode):String {
@@ -86,6 +125,27 @@ class ConwayMaze {
 		var nodes:Array<ConwayNode> = [PoleNode(North), PoleNode(South)];
 		ConwayGrid.eachRingCell((row, col) -> nodes.push(RingNode(row, col)));
 		return nodes;
+	}
+
+	/**
+		Every edge of this topology, each appearing once — the counterpart to
+		`biomes.common.maze.MazeEdges.allEdges`, typed in `ConwayNode` rather
+		than raw string keys.
+	**/
+	public static function allEdges():Array<{a:ConwayNode, b:ConwayNode}> {
+		var seen = new haxe.ds.StringMap<Bool>();
+		var edges:Array<{a:ConwayNode, b:ConwayNode}> = [];
+		for (node in allNodes()) {
+			for (neighbor in neighborsOf(node)) {
+				var key = edgeKey(node, neighbor);
+				if (seen.exists(key)) {
+					continue;
+				}
+				seen.set(key, true);
+				edges.push({a: node, b: neighbor});
+			}
+		}
+		return edges;
 	}
 
 	public static function neighborsOf(node:ConwayNode):Array<ConwayNode> {

@@ -49,6 +49,20 @@ import tools.geodesic.GeodesicWallSimplifier.WallSegment;
 	jumping. `build` itself keeps the floor/walls — genuinely static
 	between generations, no reason to touch them more than once per step.
 
+	**Z-fighting near the floor, found immediately after playing the
+	smoothing above (2026-08-10, same day).** "Both wall-vs-cells and
+	cells-vs-ground (when fade into oblivion) are not too clean-looking."
+	Before continuous height interpolation existed, a live block was
+	always one of three fixed heights (none smaller than `1.0`) or
+	entirely absent — its own base reused the floor's own `TILE_LIFT`
+	harmlessly, since a block's geometry was never anywhere near the
+	floor's. A fading block's height now legitimately approaches `0`, at
+	which point a `TILE_LIFT`-based base becomes *exactly* coincident with
+	the separately-rendered floor mesh underneath it. `LIVE_CELL_BASE_LIFT`
+	gives `buildLiveCells` its own dedicated base, offset from both the
+	floor and a wall's own `WALL_BASE_LIFT` at every point during a fade,
+	not just at the endpoints — see that constant's own doc.
+
 	**`GeodesicWallSimplifier` (wall straightening) was tried here and
 	retracted (2026-08-06)**, played in the real biome rather than judged
 	from a screenshot: a merged chord's own endpoints stop lining up with
@@ -80,6 +94,27 @@ class GeodesicMesh {
 
 	/** See `biomes.conway.ConwayMesh.WALL_BASE_LIFT`'s own doc. **/
 	static inline final WALL_BASE_LIFT:Float = 0.02;
+
+	/**
+		`buildLiveCells`'s own base lift for a block's `floorBoundary` —
+		deliberately *not* `TILE_LIFT`, and deliberately its own constant
+		rather than reusing `WALL_BASE_LIFT` too (2026-08-10). Before
+		`buildLiveCells` existed, a live block was always one of three fixed
+		heights (`ConwayGrid.YOUNG_BLOCK_HEIGHT`/`AGED_BLOCK_HEIGHT`/
+		`DYING_BLOCK_HEIGHT`, none smaller than `1.0`) or entirely absent —
+		reusing the floor's own `TILE_LIFT` for a block's base was harmless,
+		since a block's own geometry was never anywhere near the floor's.
+		Continuous height interpolation changes that: as a fading block's
+		own height approaches `0`, a base built from `TILE_LIFT` becomes
+		*exactly* coincident with the separately-rendered static floor mesh
+		underneath it — genuine Z-fighting, not an approximation of it,
+		reported directly as cells looking rough fading "into oblivion."
+		This constant keeps a block's own base a real, fixed distance from
+		both the floor (`TILE_LIFT`) and a wall's own base
+		(`WALL_BASE_LIFT`) at every point during a fade, not just at the
+		endpoints.
+	**/
+	static inline final LIVE_CELL_BASE_LIFT:Float = 0.04;
 
 	/** See `biomes.conway.ConwayMesh.LIVE_BLOCK_OPACITY`'s own doc. **/
 	static inline final LIVE_BLOCK_OPACITY:Float = 0.25;
@@ -201,7 +236,7 @@ class GeodesicMesh {
 			}
 
 			var height = previousHeight + (currentHeight - previousHeight) * clampedT;
-			var floorBoundary = [for (p in boundaries[id]) lift(p, TILE_LIFT)];
+			var floorBoundary = [for (p in boundaries[id]) lift(p, LIVE_CELL_BASE_LIFT)];
 
 			switch currentHeight > 0 ? currentStages[id] : previousStages[id] {
 				case Alive:

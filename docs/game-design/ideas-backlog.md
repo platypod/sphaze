@@ -41,10 +41,12 @@ its details block, it's a design note: give it its own file under
 | [Per-biome maze recipes](#per-biome-maze-recipes) | biome identity | styles built, assignment open | low |
 | [Geodesic sphere for Conway](#geodesic-sphere-for-conway-hexagons--12-pentagon-beacons) | biome identity, geometry | idea, engineering scoped | high |
 | [Maze-compatible life rule](#a-maze-compatible-life-rule) | biome identity, simulation | open question, measured | medium |
-| [Hex-native structure library](#a-hex-native-structure-library) | biome identity, simulation | **real traveling spaceship confirmed + ported, in-game** | low |
-| [True glider guns](#true-glider-guns) | biome identity, simulation | idea, half-unblocked (traveler exists) | high |
-| [Deliberate pentagon activation](#deliberate-pentagon-activation-not-random-soup) | biome identity, progression | **shared prerequisite (soup off) built**, 4 variants still idea | low→high |
+| [Hex-native structure library](#a-hex-native-structure-library) | biome identity, simulation | **superseded (2026-08-09): live rule is now Ventrella, not B2/S34 — see below** | low |
+| [True glider guns](#true-glider-guns) | biome identity, simulation | idea, half-unblocked (a much better traveler exists now) | high |
+| [Deliberate pentagon activation](#deliberate-pentagon-activation-not-random-soup) | biome identity, progression | **shared prerequisite (soup off) still built, now via the Ventrella spawner**, 4 variants still idea | low→high |
 | [Biome links / rosetta maze](#biome-links-and-the-rosetta-maze) | progression | idea | high |
+| [Broken cells that need fixing](#broken-cells-that-need-fixing) | progression, interconnection | idea | medium |
+| [Zoom in/out to move between biomes](#zoom-inout-to-move-between-biomes) | traversal, scale | idea | high |
 | [Secret painting swap](#secret-one-time-painting-swap-tower) | secret | idea | low |
 
 ---
@@ -591,30 +593,62 @@ spawns now, replacing the shuttle patterns entirely.
   quietly produced a broken port that looked like just another shuttle
   until checked against a plain flat-grid simulation).
 
+**"Can we find others?" — a second search, also come up empty
+(2026-08-07).** `xq14_0ig5l3z102` is the *only* spaceship Catagolue has
+ever catalogued for `b2s34h`, checked directly across all 16 symmetry
+categories it tracks (not just the default one) — nothing smaller has
+ever turned up there either, across ~100 billion soups. `GeodesicGliderSearch2`
+then widened past the 1-ring: every population-3-to-5 subset of a 2-ring
+patch (19 cells, 16,473 candidates), screened short then confirmed
+long-run the same way `xq14_0ig5l3z102` itself was. `2166` looked like
+they translated in a short window; **`0` were confirmed travelers over a
+long run** — every one was another shuttle. Ran ~8 hours headless,
+`neko`.
+
+- *Unproven, still:* population 6-7 in the same 2-ring patch, and any
+  population past that 2-ring footprint entirely, are both untried —
+  this result narrows the search space, it doesn't close it. Given the
+  cost curve so far (1-ring: minutes; 2-ring pop 3-5: ~8 hours), a wider
+  pass is a real time investment, not a quick follow-up.
+- *Open:* whether it's worth searching further at all, given the known
+  spaceship already works and reads fine in play — this is now squarely
+  a "nice to have variety" question, not a "does this even work" one.
+
 ### True glider guns
 
 **A structure that emits gliders on its own, forever — the way Conway's
-Gosper gun does — rather than `GeodesicGliderTracker`'s own scripted
-re-seed-on-a-timer stand-in.** Raised explicitly (2026-08-06) so the
-difference between "spawn point" (built) and "glider gun" (not attempted)
-stays visible rather than getting quietly conflated later.
+Gosper gun does — rather than a scripted re-seed-on-a-timer stand-in.**
+Raised explicitly (2026-08-06) so the difference between "spawn point"
+(built) and "glider gun" (not attempted) stays visible rather than getting
+quietly conflated later.
 
-- *Fits:* a gun built around ["a hex-native structure
-  library"](#a-hex-native-structure-library)'s now-confirmed
-  `xq14_0ig5l3z102` traveler would be the strongest possible answer to
-  "gliders gliding forevermore" — an emergent source, not a scripted one.
-- *Unproven:* whether a gun is even possible here — now half-blocked
-  instead of fully. One ingredient exists: a real traveling glider
-  (`xq14_0ig5l3z102`, confirmed, ported, in-game). Still missing: a second
-  oscillator whose own period lines up to eject one cleanly, and the
-  travel-distance problem a gun would inherit unmodified — the known
-  traveler only survives ~8 periods before reaching a pentagon and
-  dissolving, which bounds how far downstream of a gun anything could
-  actually go before the same fate meets it.
+**Updated (2026-08-09):** the live rule changed from B2/S34 to Jeffrey
+Ventrella's own 4-state hex-CA (`docs/game-design/design-decisions-records.md`'s
+own entry has the full story), and the confirmed traveler changed with it
+— `xq14_0ig5l3z102` (B2/S34, ~8 periods before dissolving at a pentagon) is
+superseded by a Ventrella period-2 glider that traveled a chord distance of
+`1.812` on a unit sphere (most of the way to antipodal) over ~100
+generations before looping back around and colliding with its own launch
+site. `GeodesicLifeState`/`xq14_0ig5l3z102` are untouched and still compile
+as a fallback, but the *current* ingredient for a gun is the Ventrella
+glider, spawned by `GeodesicVentrellaGliderSpawner`, not the old spaceship.
+
+- *Fits:* an emergent gun would be the strongest possible answer to
+  "gliders gliding forevermore" — a source, not a scripted timer.
+- *Unproven:* whether a gun is even possible here — still half-blocked, not
+  fully. One ingredient exists: a real long-range traveler, and a
+  considerably better one than before (whole-sphere range vs. ~8 periods).
+  Still missing: a second oscillator whose own period lines up to eject
+  one cleanly. The old "dissolves at a pentagon" ceiling on how far
+  downstream a gun's output could travel is largely gone — this glider's
+  own death cause was self-collision with its own launch site after a full
+  lap, not a pentagon encounter, so a gun built around it could plausibly
+  send gliders most of the way around the sphere before anything catches
+  up with them.
 - *Cost:* still high, but the blocking half of the prerequisite (any
-  confirmed traveler at all) is done — what's left is finding or
-  constructing the ejector oscillator, a real but bounded search rather
-  than an open one.
+  confirmed traveler at all) is done, and done better than before — what's
+  left is finding or constructing the ejector oscillator, a real but
+  bounded search rather than an open one.
 
 ### Deliberate pentagon activation, not random soup
 
@@ -627,22 +661,27 @@ all, and let the player *choose* which structure to spawn at which pentagon
 — the order/timing of activation becomes the actual puzzle, and a specific
 sequence unlocks the route to the maze's goal.
 
-**Shared prerequisite for all four variants below — built (2026-08-06):**
-turn the ambient soup off so a spawned structure's own propagation is the
-only thing happening and stays legible. `GeodesicConwayBiome` no longer
-seeds the board at all, and steps `GeodesicLifeState` with a
-`noRandomBirths` source instead of `Math.random` so `MUTATION_RATE` can't
-sprout stray life anywhere either — the only cells ever alive are
-`GeodesicGliderTracker`'s own scripted spawn points (see its own doc) and
-whatever their birth/survival math grows from those. Requested directly
-after playing the soup version ("I want only the spawned gliders"). What's
-still *not* built: any of the four variants themselves — this only
-satisfies their shared precondition, not player choice, unlockable
-structures, or a later reversion beat. This also reopens ["a
-maze-compatible life rule"](#a-maze-compatible-life-rule) from a different
-angle: with no ambient soup to sustain, the rule only has to keep *one
-deliberately-placed structure* alive/legible near a pentagon, not the
-whole sphere — a much smaller design space than what that entry scoped.
+**Shared prerequisite for all four variants below — built (2026-08-06),
+carried over under a different rule (2026-08-09).** Turn the ambient soup
+off so a spawned structure's own propagation is the only thing happening
+and stays legible. Originally built for B2/S34 (`GeodesicGliderTracker`'s
+own scripted spawn points); after the live rule switched to Ventrella's
+4-state hex-CA (`docs/game-design/design-decisions-records.md`'s own
+2026-08-09 entry), the exact same philosophy carried over onto the new
+engine — `GeodesicConwayBiome` still doesn't seed the board at all, and
+steps `GeodesicVentrellaState` with a `noRandomBirths` source so
+`MUTATION_RATE` can't sprout stray life either. The only cells ever alive
+now are `GeodesicVentrellaGliderSpawner`'s own 12 pentagon-anchored launch
+sites and whatever their own subrule math grows from those — same
+requested outcome ("I want only the spawned gliders"), same mechanism in
+spirit, new class names. What's still *not* built: any of the four
+variants themselves — this only satisfies their shared precondition, not
+player choice, unlockable structures, or a later reversion beat. This also
+reopens ["a maze-compatible life rule"](#a-maze-compatible-life-rule) from
+a different angle: with no ambient soup to sustain, the rule only has to
+keep *one deliberately-placed structure* alive/legible near a pentagon,
+not the whole sphere — a much smaller design space than what that entry
+scoped.
 
 Four variants raised together, not mutually exclusive:
 
@@ -745,6 +784,93 @@ goal, and something secret triggers.**
 For example: the hub's to-tower painting is swapped for a special one-time-use
 variant, available only that one time the player is back in the hub, and reset
 the moment they leave through any other biome's painting.
+
+### Broken cells that need fixing
+
+**A cellular automaton biome contains cells that are corrupted or broken — walls
+that shouldn't be there, dead patterns that won't propagate — and the only way to
+fix them is by visiting another biome, solving a puzzle there, and that solution
+retroactively fixes the broken cells in the first biome.**
+
+- *Fits:* "interconnected, not a level select" — the two biomes become a system,
+  neither complete without the other. Forces the player to move between spaces,
+  carrying knowledge and intent across boundaries.
+- *Unproven:* the visual/mechanical clarity of "this broken pattern is waiting for
+  a fix from elsewhere" and whether the fix reads as causation or coincidence.
+- *Cost:* medium — needs state synchronization across biomes (a puzzle solved in
+  biome A affects biome B's simulation) and diegetic communication of the link
+  (how does the player understand one is waiting for the other?).
+
+<details><summary>Detail</summary>
+
+The shape: a Life biome (or another rule-based biome) where certain cells or walls
+are deliberately "broken" or dormant — a pattern that won't stabilize, oscillate,
+or propagate without external intervention. Elsewhere, another biome holds a
+puzzle (spatial, puzzle-box, timing-based) whose solution is *the seed pattern or
+rule modification* that wakes the broken cells.
+
+Example: a Life board has a region where cells keep dying before forming a glider,
+always dying one generation too early. Solving a puzzle in the wind biome (or tower,
+or any other) yields the knowledge/pattern/modification that feeds the broken cells
+the extra generation they need. Return to the Life biome and the glider is now alive
+and travels.
+
+The dangerous part is clarity: the player needs to *know* a cell is broken and
+*waiting* for a fix, not just assume it's the way the board is supposed to be. This
+is where the "see far, not near" pillar helps — a broken region should look visibly
+*wrong* from across the sphere (a pattern that's obviously incomplete, a wall
+sequence that's obviously unfinished) while being illegible up close.
+
+Pairs naturally with [cross-biome displacement](#cross-biome-displacement) if both
+are built — one moves objects between worlds, the other solves problems in one
+world to fix another.
+</details>
+
+### Zoom in/out to move between biomes
+
+**Instead of paintings or portals, zoom the camera in and out to transition
+between biomes. Zooming into a cell (or a point in space) takes you into a
+smaller, nested world; zooming out takes you back to the scale you came from.**
+
+- *Fits:* the geometry-corollary rule — zooming leverages the scale of the sphere
+  itself as a navigation mechanism. Also works with fractal/recursive concepts
+  ("you're simultaneously inside and outside the sphere").
+- *Unproven:* whether the transition feels diegetic and intentional, and whether
+  scale-based nesting can stay cognitively legible (how deep is too deep?).
+- *Cost:* high — requires significant camera/viewport work, per-biome scale
+  relationship definition, and collision/camera-clipping handling at boundaries.
+  Alternatively: much cheaper if limited to one or two specific transition points
+  per biome rather than global zoom navigation.
+
+<details><summary>Detail</summary>
+
+Two implementations, cheapest first:
+
+1. **Focal-point zoom (limited, cheaper).** Each biome has one or more "zoom
+   points" — a specific cell, a junction, a landmark — where the player can
+   hold a button to zoom in, smoothly transitioning into the next biome at full
+   scale. Zooming out from that biome returns to the same zoom point in the
+   previous biome. Think of it like opening a door and stepping through, except
+   the door is a focus-and-zoom. Cost: medium — smoother than paintings, needs
+   camera interpolation and scale-transition logic, but not a wholesale camera
+   redesign.
+
+2. **Full freecam zoom (expensive, ambitious).** The camera can zoom continuously
+   from any location; at certain scale thresholds or targets, biomes load/unload.
+   The player can zoom into the interior of a cell to find a maze inside, or zoom
+   out from the maze to see the cell as part of a larger pattern. Demands per-biome
+   scale definitions, nested collision/rendering, and careful camera constraints
+   (don't let the player zoom to an impossible scale/position). Cost: high.
+
+The first keeps the spirit — moving between worlds by changing scale — while being
+manageable. Start there, and only attempt the second if the first feels too
+constrained in play.
+
+Pairs well with fractal/recursive story ideas: if the game's philosophy includes
+"you're a pattern that escaped, now discovering larger and smaller patterns," then
+zoom-based navigation makes that philosophy *tangible*. Each biome you enter is a
+smaller scale, each exit zooms you back up.
+</details>
 
 ---
 

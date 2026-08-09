@@ -48,6 +48,8 @@ import tools.geodesic.GeodesicMeshTest;
 import tools.geodesic.GeodesicSphereTest;
 import tools.geodesic.GeodesicTopologyTest;
 import tools.geodesic.GeodesicValidatorTest;
+import tools.geodesic.GeodesicVentrellaGliderPatternTest;
+import tools.geodesic.GeodesicVentrellaGliderSpawnerTest;
 import tools.geodesic.GeodesicVentrellaRuleTest;
 import tools.geodesic.GeodesicVentrellaStateTest;
 import tools.geodesic.GeodesicWallSimplifierTest;
@@ -110,6 +112,8 @@ class TestMain {
 		runner.addCase(new GeodesicReactivityTest());
 		runner.addCase(new GeodesicTopologyTest());
 		runner.addCase(new GeodesicValidatorTest());
+		runner.addCase(new GeodesicVentrellaGliderPatternTest());
+		runner.addCase(new GeodesicVentrellaGliderSpawnerTest());
 		runner.addCase(new GeodesicVentrellaRuleTest());
 		runner.addCase(new GeodesicVentrellaStateTest());
 		runner.addCase(new GeodesicWallSimplifierTest());

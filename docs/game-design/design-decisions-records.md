@@ -1106,3 +1106,121 @@ in [story-line.md](story-line.md).
   before reading the biome as "broken" if population doesn't crash
   immediately). Needs hooman to walk the `conway`-labelled portal and
   confirm gliders are actually visible.
+- **2026-08-09 — Ambient seeding replaced by scripted glider spawns from
+  every pentagon, after a headless diagnosis chain that ruled out three
+  wrong explanations before landing on the real one — BUILT.** Played the
+  ambient-soup version above; reported directly: "very much 'not much'
+  happening... everything dies in a few generations. Then, random
+  isolated cells birth, then die." Rather than keep eyeballing that
+  through the 3D renderer, moved to pure headless computation —
+  `GeodesicVentrellaReport` (population/activity, mirroring
+  `GeodesicLifeReport`'s own shape) confirmed it precisely: every seed
+  density from `0.1` to `1.0` collapsed to the same `~0.1%` near-total
+  extinction, density-independent, which itself explained the "random
+  cells birth then die" complaint — an isolated mutated cell cycles state
+  `1`→`2`→`3`→dies over exactly 3 generations regardless of density
+  (`GeodesicVentrellaStateTest.testAnIsolatedCellCyclesThroughStatesBeforeDying`
+  had already proven this by hand).
+
+  **Three wrong turns, each closed off by measurement, not assumption,
+  before the real fix:**
+  1. *Neighbor-count bucketing.* `GeodesicVentrellaRules.MAX_NEIGHBOR_COUNT`
+     caps a subrule's own `neighborCount` digit at `3` despite hex/pentagon
+     nodes having `5`-`6` real neighbors — an interpretive gap the source
+     paper never resolves. Tried `Clamp` (raw count ≥3 reads as `3`) and
+     `Proportional` (raw count scaled by degree) as `NeighborCountMode`;
+     neither changed the ambient-soup outcome. Tried a third, more literal
+     reading (`Literal` — no bucket at all, raw counts above `3` simply
+     match nothing) after re-reading the paper's own wording with
+     hooman directly. Also made no difference — and inspecting the actual
+     transcribed table digit-by-digit showed why: **every one of the 20
+     subrules' own `neighborCount` digit is `0`, `1`, or `2` — none is
+     ever `3`.** The three modes only disagree on a comparison against
+     `3`, which this specific evolved rule never makes. The whole
+     bucketing question was provably moot for this table, discoverable by
+     inspection alone, not simulation — a real lesson in checking the data
+     before building machinery around a hypothesis.
+  2. *Small hand-placed patterns instead of ambient noise.*
+     `GeodesicVentrellaGliderSearch` (mirroring `GeodesicGliderSearchMultiRule`'s
+     own screen-then-confirm rigor, seeded states restricted to `{1, 3}`
+     per the paper's own "collisions evoke state 2" note) found plenty of
+     surviving, oscillating small patterns — a real, measured difference
+     from ambient soup — but every single one confirmed as a bounded
+     shuttle, same as the old B2/S34 search's own outcome. Killed partway
+     through (some individual confirms take ~2000 generations; the
+     positive-screen rate here was far higher than the B2/S34 search's own
+     13%, making a full run impractically slow) once a "denser
+     configurations" redesign, requested to specifically stress-test the
+     neighbor-count hypothesis, turned out moot by finding #1 above before
+     it was even built.
+  3. *Re-verifying the transcription.* Re-examined the subrule table
+     against a second look at the source image; all four highlighted
+     cells (not just the two the paper's own prose explains) checked out
+     as internally consistent — `1≡3`, `2` overwritten by `8`, and two
+     newly-checked pairs, `7≡15` and `10` overwritten by `13`, matching the
+     image's own gray/boxed highlighting convention exactly. Strengthened
+     confidence in the table rather than finding a bug.
+
+  **The actual fix: reproduce the paper's own documented glider directly,
+  rather than search for one.** All of the above were indirect — hoping a
+  search would *stumble onto* a traveler. Never tried *placing* the one
+  shape the source paper actually shows (Figure 2: two state-`1` cells two
+  hexes apart with one empty hex between them, plus one state-`3` cell
+  adjacent to the second black cell). Hand-reconstructed cell-by-cell from
+  a description of the figure's own 4 frames, self-verified before
+  trusting it (both "the gray cell lands exactly where the previous
+  frame's black cell was" checks held exactly, twice, under plain
+  axial-hex arithmetic; frame 3 came out exactly frame 1 shifted one hex,
+  confirming real period-2 drift by construction). `GeodesicVentrellaFigure2`
+  seeded it on the real baked sphere (mapping the description's compass
+  directions onto the mesh via a greedy per-hop direction match, since the
+  rule only counts neighbor *states*, never neighbor *direction*, so exact
+  compass alignment doesn't matter) and it **worked**: chord drift from
+  origin climbed to `1.812` (out of a max `2.0` on a unit sphere — most of
+  the way to antipodal) over about 60 generations, population locked at a
+  stable `6` cells the whole time, then the glider looped back around its
+  own great-circle path and died colliding with its own launch site at
+  generation `101` — node `24` (part of the original seed) reappeared in
+  the final surviving frame, and two state-`2` cells appeared right before
+  death, exactly the "collisions evoke state 2" signature the paper
+  describes. A real, working, long-range traveler — the first one this
+  project has ever confirmed on this rule family, after two failed
+  exhaustive searches (B2/S34-family and Ventrella-family alike) turned up
+  nothing but shuttles.
+
+  **Shipped as `GeodesicVentrellaGliderPattern` (placement logic) +
+  `GeodesicVentrellaGliderSpawner` (12 launch sites, one per pentagon).**
+  Each site anchors at its own pentagon's first neighbor (guaranteed a
+  hexagon — pentagons are never adjacent to each other) and launches in a
+  heading derived from `pentagonIndex % 6`, cycling through every possible
+  local direction across the 12 sites rather than all firing the same way.
+  Each site respawns every `SPAWN_INTERVAL` (`30`) generations on its own
+  staggered clock (`phase = siteIndex * SPAWN_INTERVAL / 12`), so launches
+  spread out over time instead of bursting in lockstep — untuned against
+  real play, flagged rather than assumed right, the same as `SEED_DENSITY`
+  was before it got replaced. `GeodesicConwayBiome.state.step` runs with
+  `noRandomBirths` again (reinstated, having been removed when ambient
+  seeding was tried) so the board's population is entirely attributable to
+  deliberate spawns — the same "I want only the spawned gliders"
+  philosophy the original `GeodesicGliderTracker` design had, now paired
+  with a rule that actually has a real traveler worth spawning. Anchoring
+  this close to pentagons means a glider may cross one within its first
+  couple of steps — accepted as an interesting part of watching this rule
+  up close, not routed around.
+
+  `generation` (a new `GeodesicConwayBiome` field, incrementing once per
+  `state.step`) is now part of `serialize`/`restore` so a restored save's
+  spawn sites stay on their own clock rather than resetting to phase `0`;
+  `gliderSpawner` itself isn't persisted, since its 12 sites are a pure
+  function of the checked-in sphere's own pentagon positions and
+  reconstruct identically every session.
+
+  Exit checks: `GeodesicVentrellaGliderPatternTest` (shape contract — 3
+  cells, right states, right adjacency, a pentagon origin throws) and
+  `GeodesicVentrellaGliderSpawnerTest` (every pentagon's own site
+  eventually fires, cadence lands exactly on `phase + SPAWN_INTERVAL`, not
+  a generation early). `make fmt`/`lint`/`check`/`test` all clean (38,326
+  assertions). **Not yet verified**: whether this reads well in the actual
+  running game — `CLAUDE.md`'s own "Claude can't reliably drive the game
+  in its browser preview" limitation still applies; needs hooman to walk
+  the `conway` portal and watch.

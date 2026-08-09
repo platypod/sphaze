@@ -31,8 +31,14 @@ class GeodesicLifeRules {
 	/** A higher birth threshold than the other three — a control for "what if birth should scale differently than survival." **/
 	public static final B3_S34:GeodesicLifeRule = {name: "B3/S34", birth: [3], survive: [3, 4]};
 
+	/** Birth at 2,4 neighbors; survive at 4,6 neighbors. Documented to produce period-8 gliders with multi-unit movement; richer structure candidate. **/
+	public static final B24_S46:GeodesicLifeRule = {name: "B24/S46", birth: [2, 4], survive: [4, 6]};
+
+	/** Birth at 3,5; survive at 2. Well-studied in standalone hex-CA research. **/
+	public static final B35_S2:GeodesicLifeRule = {name: "B35/S2", birth: [3, 5], survive: [2]};
+
 	/** Every candidate, in the order `GeodesicLifeReport` compares them. **/
-	public static final ALL:Array<GeodesicLifeRule> = [B2_S23, B2_S3, B2_S34, B3_S34];
+	public static final ALL:Array<GeodesicLifeRule> = [B2_S23, B2_S3, B2_S34, B3_S34, B24_S46, B35_S2];
 
 	/**
 		`B2_S34` — its third pick, each time for a different measured

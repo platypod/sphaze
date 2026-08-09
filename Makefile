@@ -24,6 +24,10 @@ bake-geodesic: ## Regenerate the baked geodesic sphere data asset (res/geodesic/
 	haxe bake.hxml
 	neko bin/bake.n
 
+search-gliders: ## Run multi-rule glider search (B2/S34, B24/S46, B35/S2 comparison)
+	haxe search.hxml
+	neko bin/search.n
+
 serve:    ## Build, then serve bin/ at http://localhost:8080 (Ctrl+C to stop)
 	$(MAKE) build
 	cd bin && python3 -m http.server 8080
@@ -32,4 +36,4 @@ help:     ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: fmt fmt-check lint check test build bake-geodesic serve help
+.PHONY: fmt fmt-check lint check test build bake-geodesic search-gliders serve help

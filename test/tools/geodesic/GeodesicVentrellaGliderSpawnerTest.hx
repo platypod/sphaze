@@ -17,8 +17,8 @@ class GeodesicVentrellaGliderSpawnerTest extends Test {
 		Assert.isTrue(state.population() > 0, "the phase-0 site should launch immediately, not wait a full interval");
 	}
 
-	/** Every one of the 12 pentagons gets its own site — over enough generations to cover every site's own phase, every one should launch at least once. **/
-	function testEveryPentagonEventuallyLaunches():Void {
+	/** Only every `PENTAGON_STRIDE`-th pentagon (by its own index into `GeodesicSphere.pentagons`) gets a site — over enough generations to cover every active site's own phase, each of those should launch at least once. **/
+	function testEveryActivePentagonEventuallyLaunches():Void {
 		var sphere = GeodesicSphere.generate(FREQUENCY);
 		var pentagons = GeodesicSphere.pentagons(sphere);
 		var spawner = new GeodesicVentrellaGliderSpawner(sphere);
@@ -35,14 +35,28 @@ class GeodesicVentrellaGliderSpawnerTest extends Test {
 			state.step(() -> 1.0);
 		}
 
-		for (pentagon in pentagons) {
-			var anchor = sphere.neighbors[pentagon][0];
+		for (i in 0...pentagons.length) {
+			if (i % GeodesicVentrellaGliderSpawner.PENTAGON_STRIDE != 0) {
+				continue; // not an active site — nothing to assert about it directly
+			}
+			var anchor = sphere.neighbors[pentagons[i]][0];
 			var anchorOrNeighborAlive = everAlive.exists(anchor);
 			for (neighbor in sphere.neighbors[anchor]) {
 				anchorOrNeighborAlive = anchorOrNeighborAlive || everAlive.exists(neighbor);
 			}
-			Assert.isTrue(anchorOrNeighborAlive, 'pentagon $pentagon\'s own site (anchor $anchor) never seems to have launched a glider');
+			Assert.isTrue(anchorOrNeighborAlive, 'pentagon ${pentagons[i]}\'s own site (anchor $anchor) never seems to have launched a glider');
 		}
+	}
+
+	/** Exactly `ceil(12 / PENTAGON_STRIDE)` sites are active, not all 12 — the actual fix for "spawning too much stuff." **/
+	function testOnlyAFractionOfPentagonsAreActive():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var pentagons = GeodesicSphere.pentagons(sphere);
+		var expectedActive = Math.ceil(pentagons.length / GeodesicVentrellaGliderSpawner.PENTAGON_STRIDE);
+
+		var spawner = new GeodesicVentrellaGliderSpawner(sphere);
+
+		Assert.equals(Std.int(expectedActive), spawner.siteCount);
 	}
 
 	/**

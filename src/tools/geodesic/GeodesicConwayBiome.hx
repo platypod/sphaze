@@ -11,6 +11,7 @@ import entities.painting.PaintingModel;
 import entities.player.PlayerModel;
 import graphics.Colours;
 import graphics.shaders.ConwayWallGlow;
+import tools.geodesic.GeodesicLifecycle.LifecycleStage;
 import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 import tools.geodesic.GeodesicVentrellaRule.GeodesicVentrellaRules;
 import tools.geodesic.Vec3.Vec3Math;
@@ -73,6 +74,25 @@ import tools.geodesic.Vec3.Vec3Math;
 	precedent this class's own doc already set when it replaced
 	`biomes.conway.ConwayBiome`.
 
+	**Smooth live-cell blocks, not per-generation pops (2026-08-10).**
+	Reported directly after the spawner shipped: "the whole thing feels
+	like it's stuttering, since cells move only at each tick." Live cell
+	blocks used to rebuild once per `STEP_INTERVAL` alongside the floor/walls,
+	so a block appeared or vanished in a single frame. `previousStages`/
+	`currentStages` now snapshot `GeodesicLifecycle.stagesOf` at each
+	generation boundary, and `rebuildLiveCells` — called every `tick`, at
+	the engine's own 60Hz fixed-update cadence (`Main.FIXED_DT`), not the
+	0.75s generation step — rebuilds just the live-cell meshes with height
+	lerped between those two snapshots via `GeodesicMesh.buildLiveCells`.
+	Collision (`applyGravity`'s own `GeodesicLifecycle.groundHeightOf`)
+	deliberately still reads the discrete, post-step `state` directly, never
+	interpolated — smoothing is a visual-only concern; blending jump timing
+	against a fractional block height would make it feel mushy, not smooth.
+	The floor/walls (`container`/`rebuildMesh`) are unaffected — genuinely
+	static between generations, so still only rebuilt when a step actually
+	happens, cheap relative to a per-frame live-cell rebuild whose own cost
+	stays bounded by population size, not `sphere.neighbors.length`.
+
 	**`serialize`/`restore`.** `fineSphere`/`coarseSphere`/`fineToCoarse`/
 	`boundaryEdges`/lookups aren't part of the save — every session
 	derives them fresh from the same checked-in baked asset plus the same
@@ -108,11 +128,17 @@ class GeodesicConwayBiome implements Biome {
 	var state:GeodesicVentrellaState;
 	var gliderSpawner:GeodesicVentrellaGliderSpawner;
 	var generation:Int = 0;
+
+	/** Every node's own stage as of the last two generation boundaries — what `rebuildLiveCells` lerps between. See this class's own "Smooth live-cell blocks" doc. **/
+	var previousStages:Array<LifecycleStage>;
+
+	var currentStages:Array<LifecycleStage>;
 	var noOpFineLayout:MazeLayout;
 	var noOpFineReactivity:GeodesicReactivity;
 	var spawnNode:Int;
 	var accumulator:Float = 0;
 	var container:Null<h3d.scene.Object>;
+	var liveCellsContainer:Null<h3d.scene.Object>;
 
 	public function new() {
 		var loaded = GeodesicSphere.fromJson(hxd.Res.load(RESOURCE_PATH).toText());
@@ -132,6 +158,8 @@ class GeodesicConwayBiome implements Biome {
 		state = new GeodesicVentrellaState(fineSphere, GeodesicVentrellaRules.SPHERE_CA);
 		gliderSpawner = new GeodesicVentrellaGliderSpawner(fineSphere);
 		gliderSpawner.tick(state, generation);
+		currentStages = GeodesicLifecycle.stagesOf(state, fineSphere);
+		previousStages = currentStages; // nothing to fade in from on first load
 
 		var noOp = GeodesicCoarseMaze.noOpFineMazeLayer(fineSphere);
 		noOpFineLayout = noOp.layout;
@@ -155,6 +183,8 @@ class GeodesicConwayBiome implements Biome {
 	public function build(parent:h3d.scene.Object):Void {
 		container = new h3d.scene.Object(parent);
 		rebuildMesh();
+		liveCellsContainer = new h3d.scene.Object(parent);
+		rebuildLiveCells();
 	}
 
 	public function spawnPlayer(returning:Bool, fromBiomeId:Null<String>):PlayerModel {
@@ -199,13 +229,16 @@ class GeodesicConwayBiome implements Biome {
 			var playerFineNode = fineLookup.nodeAt(toVec3(player.pos));
 			var playerCoarseNode = fineToCoarse[playerFineNode];
 			coarseReactivity.step(coarseLayout, edgeActivityOf, playerCoarseNode);
+			previousStages = currentStages;
+			currentStages = GeodesicLifecycle.stagesOf(state, fineSphere);
 			stepped = true;
 		}
-		if (!stepped || container == null) {
-			return;
+		if (stepped && container != null) {
+			container.removeChildren();
+			rebuildMesh();
 		}
-		container.removeChildren();
-		rebuildMesh();
+		// every call, not just when stepped — this is what actually animates: accumulator keeps moving between generation boundaries even on frames that don't cross STEP_INTERVAL
+		rebuildLiveCells();
 	}
 
 	/** Nothing to interact with here — see `biomes.common.Biome.interact`'s own doc. **/
@@ -268,6 +301,8 @@ class GeodesicConwayBiome implements Biome {
 			state = new GeodesicVentrellaState(fineSphere, GeodesicVentrellaRules.SPHERE_CA);
 			gliderSpawner.tick(state, generation);
 		}
+		currentStages = GeodesicLifecycle.stagesOf(state, fineSphere);
+		previousStages = currentStages; // nothing to fade in from across a restore
 
 		var restoredAccumulator = Std.parseFloat(Std.string(parsed.accumulator));
 		accumulator = Math.isNaN(restoredAccumulator) ? 0 : restoredAccumulator;
@@ -275,6 +310,9 @@ class GeodesicConwayBiome implements Biome {
 		if (container != null) {
 			container.removeChildren();
 			rebuildMesh();
+		}
+		if (liveCellsContainer != null) {
+			rebuildLiveCells();
 		}
 	}
 
@@ -308,6 +346,16 @@ class GeodesicConwayBiome implements Biome {
 			ghostMesh.material.mainPass.depthWrite = false;
 			ghostMesh.material.blendMode = h3d.mat.BlendMode.Alpha;
 		}
+	}
+
+	/** Rebuilds just the live-cell blocks, height-lerped between `previousStages`/`currentStages` at `accumulator / STEP_INTERVAL` — see this class's own "Smooth live-cell blocks" doc. Called every `tick`, not gated on whether a generation actually stepped this frame. **/
+	function rebuildLiveCells():Void {
+		var parent = liveCellsContainer;
+		if (parent == null) {
+			return;
+		}
+		parent.removeChildren();
+		GeodesicMesh.buildLiveCells(parent, fineSphere, fineBoundaries, previousStages, currentStages, accumulator / STEP_INTERVAL);
 	}
 
 	/** Always above `GeodesicVentrellaState.MUTATION_RATE` — passed to `state.step` so the only cells ever alive are ones `gliderSpawner`'s own launch sites put there, or that the rule's own subrules grow from those, never a random mutation flip. **/

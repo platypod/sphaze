@@ -13,7 +13,7 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 	2026-08-07 entry) — deliberate spawns, no ambient soup — just built on
 	a rule where that philosophy finally has something worth spawning.
 
-	**Anchor**: each pentagon's own first neighbor
+	**Anchor**: each active pentagon's own first neighbor
 	(`sphere.neighbors[pentagon][0]`) — guaranteed a real hexagon, since
 	pentagons are never adjacent to each other (`GeodesicValidator`'s own
 	invariant). Close enough to "around the pentagon" that the pentagon's
@@ -23,16 +23,22 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 	of steps — an accepted, interesting part of watching this rule up
 	close, not a bug to route around.
 
-	**Heading**: `southIndex = pentagonIndex % 6` — a hexagon has 6
-	neighbors, so this cycles through every possible heading at least once
-	across the 12 pentagons (twice over, since `12 / 6 = 2`), giving
-	genuinely varied launch directions rather than every site aiming the
-	same way.
+	**Which pentagons are active**: every `PENTAGON_STRIDE`-th one, not all
+	12 — played too busy at one site per pentagon ("we are spawning too
+	much stuff," 2026-08-10), cut to a third rather than tuning `SPAWN_INTERVAL`
+	down, since the complaint was about how much is on screen at once, not
+	how often any one site fires. See that constant's own doc.
 
-	**Cadence**: each site reseeds every `SPAWN_INTERVAL` generations, with
-	a staggered phase (`site index * SPAWN_INTERVAL / 12`) so all 12 don't
-	fire in lockstep. Untuned against real play — see this class's own
-	`SPAWN_INTERVAL` doc.
+	**Heading**: `southIndex = pentagonIndex % 6` (the *original* index into
+	all 12 pentagons, not the filtered active list) — a hexagon has 6
+	neighbors, so this still cycles through varied headings even with only
+	a third of sites active, and a pentagon's own heading stays stable if
+	`PENTAGON_STRIDE` changes later.
+
+	**Cadence**: each active site reseeds every `SPAWN_INTERVAL` generations,
+	with a staggered phase (`active-site index * SPAWN_INTERVAL / active count`)
+	so they don't fire in lockstep. Untuned against real play — see this
+	class's own `SPAWN_INTERVAL` doc.
 **/
 class GeodesicVentrellaGliderSpawner {
 	/**
@@ -45,18 +51,36 @@ class GeodesicVentrellaGliderSpawner {
 	**/
 	public static inline final SPAWN_INTERVAL:Int = 30;
 
+	/**
+		Only every `PENTAGON_STRIDE`-th pentagon (by its own index into
+		`GeodesicSphere.pentagons`) gets a launch site — `3` means a third
+		of the 12 are active (4 sites). Requested directly after playing
+		the all-12 version ("we are spawning too much stuff... for now,
+		we'll adjust later") — a single constant to retune rather than a
+		design that needs revisiting, on purpose.
+	**/
+	public static inline final PENTAGON_STRIDE:Int = 3;
+
 	final sphere:GeodesicSphereData;
 	final sites:Array<{anchor:Int, southIndex:Int, phase:Int}>;
+
+	/** How many launch sites are actually active — `GeodesicSphere.pentagons(sphere).length / PENTAGON_STRIDE`, rounded up. Mainly for tests. **/
+	public var siteCount(get, never):Int;
+
+	function get_siteCount():Int {
+		return sites.length;
+	}
 
 	public function new(sphere:GeodesicSphereData) {
 		this.sphere = sphere;
 		var pentagons = GeodesicSphere.pentagons(sphere);
+		var activeIndexes = [for (i in 0...pentagons.length) if (i % PENTAGON_STRIDE == 0) i];
 		sites = [
-			for (i in 0...pentagons.length)
+			for (j in 0...activeIndexes.length)
 				{
-					anchor: sphere.neighbors[pentagons[i]][0],
-					southIndex: i % 6,
-					phase: Std.int(i * SPAWN_INTERVAL / pentagons.length)
+					anchor: sphere.neighbors[pentagons[activeIndexes[j]]][0],
+					southIndex: activeIndexes[j] % 6,
+					phase: Std.int(j * SPAWN_INTERVAL / activeIndexes.length)
 				}
 		];
 	}

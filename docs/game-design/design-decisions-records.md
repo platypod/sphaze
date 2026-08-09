@@ -1224,3 +1224,69 @@ in [story-line.md](story-line.md).
   running game — `CLAUDE.md`'s own "Claude can't reliably drive the game
   in its browser preview" limitation still applies; needs hooman to walk
   the `conway` portal and watch.
+- **2026-08-10 — Two refinements after playing the spawner for real, both
+  BUILT.** "It is working" — followed by two concrete notes rather than a
+  redesign.
+  1. **Spawn density cut to a third.** "We are spawning too much stuff.
+     Let's only spawn one glider per 3 pentagons, for now." All-12-pentagons
+     read as too busy in play. `GeodesicVentrellaGliderSpawner.PENTAGON_STRIDE`
+     (new, `3`) filters which pentagons get a site rather than tuning
+     `SPAWN_INTERVAL` down — the complaint was about how much is on screen
+     at once, not how often any one site fires, so the fix targets that
+     axis specifically. A single constant, deliberately easy to retune
+     ("we'll adjust later").
+  2. **Live cell blocks now animate instead of popping.** "The whole thing
+     feels like it's stuttering, since cells move only at each tick." Root
+     cause: live blocks only rebuilt once per `STEP_INTERVAL` (0.75s,
+     `GeodesicConwayBiome`'s own generation cadence), so a block appeared
+     or vanished in a single frame — inherent to a discrete automaton,
+     which has no natural "cell in between two states" the way a moving
+     sprite has an in-between position.
+
+     Considered and rejected: true glider-identity tracking with
+     interpolated translation (re-introducing something like the old
+     `GeodesicGliderTracker`, sliding a tracked shape's visual position
+     hex-to-hex) — would look the best specifically for the tracked
+     glider, but re-solves a tracking-identity problem this project
+     deliberately dropped for simplicity, and does nothing for ambient
+     births/deaths elsewhere. Also rejected: shortening `STEP_INTERVAL` —
+     doesn't reduce the size of each pop, just how often it happens; trades
+     "occasional pop" for "constant flicker," not smoothness.
+
+     **Built: height/opacity crossfade on just the live-cell blocks**,
+     cheap enough to rebuild every render frame because it's bounded by
+     population size, not `sphere.neighbors.length`. `GeodesicLifecycle.stagesOf`
+     snapshots every node's own stage at each generation boundary;
+     `GeodesicConwayBiome` keeps two such snapshots (`previousStages`/
+     `currentStages`) and calls the new `GeodesicMesh.buildLiveCells` every
+     `tick()` — the engine's own fixed 60Hz cadence (`Main.FIXED_DT`), not
+     the 0.75s generation step, confirmed by tracing the actual call chain
+     (`Main.update` → `GameLoop.fixedUpdate` → `Biome.tick`) before
+     building on the assumption — with a lerp factor
+     (`accumulator / STEP_INTERVAL`). A node contributes to whichever
+     stage it's arriving at (if any height remains at `t`) or the stage
+     it's leaving (if fading to nothing); a cell alive in both snapshots,
+     the common case, needs no lerp at all. `GeodesicMesh.build` itself
+     was split down to just the floor/walls, which don't need any of this
+     and still only rebuild once per generation. Collision
+     (`applyGravity`'s own `groundHeightOf`) deliberately still reads the
+     discrete post-step `state` directly, never interpolated — smoothing
+     is visual-only; blending jump timing against a fractional block
+     height would make it feel mushy, not smooth.
+
+     `GeodesicMesh.build`'s own unused `trackedCells`/`TrackedCell`-routing
+     parameter (dead since the ambient-seeding revision, `GeodesicMesh.TrackedCell`'s
+     own doc already flagged it) was dropped from the signature at the same
+     time — `GeodesicGliderTracker.trackedCells()` still returns
+     `TrackedCell`, kept only because that class stays untouched as a
+     fallback, but nothing live routes through it anymore.
+
+     Exit checks: `GeodesicMeshTest` gained coverage specific to the new
+     contract (nothing alive in either snapshot → zero children, unlike
+     `build`'s own floor/walls which always draw something; a node fading
+     out still draws even though its *current* stage alone says nothing's
+     alive) plus a never-throws sweep across generations × 5 lerp factors.
+     `make fmt`/`lint`/`check`/`test` all clean (38,472 assertions).
+     **Not yet verified**: whether the animation actually reads as smooth
+     in the running game, same standing limitation as always — needs
+     hooman to watch it.

@@ -2,21 +2,24 @@ package tools.geodesic;
 
 import biomes.common.maze.MazeCarver;
 import biomes.common.maze.MazeTopology.MazeLayout;
+import tools.geodesic.GeodesicLifecycle.LifecycleStage;
 import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 import tools.geodesic.GeodesicVentrellaRule.GeodesicVentrellaRules;
 import utest.Assert;
 import utest.Test;
 
 /**
-	`GeodesicMesh.build` is Heaps scene-graph code, which this project's own
-	`utest` suite doesn't otherwise exercise (see `CLAUDE.md`'s own
-	"Workflow / verification loop" — the suite covers game logic, not
-	rendering). What's actually checkable here without a running `hxd.App`
-	is that `build` never throws across a realistic spread of generations
-	and seeds — the one failure mode a screenshot can't catch as reliably
-	as an automated sweep can, since a screenshot only ever shows one
-	generation. `GeodesicPreview`, screenshotted directly, is the visual
-	exit check this doesn't replace.
+	`GeodesicMesh.build`/`buildLiveCells` are Heaps scene-graph code, which
+	this project's own `utest` suite doesn't otherwise exercise (see
+	`CLAUDE.md`'s own "Workflow / verification loop" — the suite covers
+	game logic, not rendering). What's actually checkable here without a
+	running `hxd.App` is that both never throw across a realistic spread of
+	generations/seeds/lerp factors, plus `buildLiveCells`'s own real
+	behavioral contract (nothing alive in either snapshot → nothing drawn;
+	something fading out still draws, even though the *current* snapshot
+	alone says nothing's alive) — the parts a screenshot can't catch as
+	reliably as an automated sweep, since a screenshot only ever shows one
+	instant.
 **/
 class GeodesicMeshTest extends Test {
 	static inline final FREQUENCY:Int = 4;
@@ -67,6 +70,70 @@ class GeodesicMeshTest extends Test {
 		var parent = new h3d.scene.Object();
 
 		GeodesicMesh.build(parent, sphere, boundaries, state, layout, reactivity);
+
+		Assert.isTrue(parent.numChildren > 0);
+	}
+
+	function testBuildLiveCellsNeverThrowsAcrossManyGenerationsAndLerpFactors():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var boundaries = GeodesicDual.cellBoundaries(sphere);
+		var state = new GeodesicVentrellaState(sphere, GeodesicVentrellaRules.SPHERE_CA);
+		state.seed(0.24, new SeededRandom(3).asFunction());
+		var parent = new h3d.scene.Object();
+
+		var previousStages = GeodesicLifecycle.stagesOf(state, sphere);
+		for (generation in 0...GENERATIONS) {
+			state.step();
+			var currentStages = GeodesicLifecycle.stagesOf(state, sphere);
+			for (t in [0.0, 0.25, 0.5, 0.75, 1.0]) {
+				parent.removeChildren();
+				GeodesicMesh.buildLiveCells(parent, sphere, boundaries, previousStages, currentStages, t);
+				Assert.isTrue(parent.numChildren >= 0, 'generation $generation t=$t: buildLiveCells should not throw');
+			}
+			previousStages = currentStages;
+		}
+	}
+
+	/** Nothing alive/dying in either snapshot — genuinely nothing to draw, unlike `build`'s own floor/walls which always produce something. **/
+	function testBuildLiveCellsProducesNoChildrenWhenBothSnapshotsAreEmpty():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var boundaries = GeodesicDual.cellBoundaries(sphere);
+		var allAbsent = [for (id in 0...sphere.neighbors.length) LifecycleStage.Absent];
+		var parent = new h3d.scene.Object();
+
+		GeodesicMesh.buildLiveCells(parent, sphere, boundaries, allAbsent, allAbsent, 0.5);
+
+		Assert.equals(0, parent.numChildren);
+	}
+
+	/** A node fading out (alive last snapshot, absent now) still needs to draw mid-fade — the whole point of tracking `previousStages` separately rather than just rendering `currentStages` at some opacity. **/
+	function testBuildLiveCellsDrawsANodeFadingOutEvenThoughItsCurrentStageIsAbsent():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var boundaries = GeodesicDual.cellBoundaries(sphere);
+		var previousStages = [
+			for (id in 0...sphere.neighbors.length)
+				id == 0 ? LifecycleStage.Alive : LifecycleStage.Absent
+		];
+		var currentStages = [for (id in 0...sphere.neighbors.length) LifecycleStage.Absent];
+		var parent = new h3d.scene.Object();
+
+		GeodesicMesh.buildLiveCells(parent, sphere, boundaries, previousStages, currentStages, 0.5);
+
+		Assert.isTrue(parent.numChildren > 0, "a node mid-fade-out should still draw something at t=0.5");
+	}
+
+	/** At `t = 1` (fully at the current snapshot), a node with nothing in either snapshot except a `currentStages` entry still draws — the birth case. **/
+	function testBuildLiveCellsDrawsANewlyBornNodeAtTOne():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var boundaries = GeodesicDual.cellBoundaries(sphere);
+		var previousStages = [for (id in 0...sphere.neighbors.length) LifecycleStage.Absent];
+		var currentStages = [
+			for (id in 0...sphere.neighbors.length)
+				id == 0 ? LifecycleStage.Alive : LifecycleStage.Absent
+		];
+		var parent = new h3d.scene.Object();
+
+		GeodesicMesh.buildLiveCells(parent, sphere, boundaries, previousStages, currentStages, 1.0);
 
 		Assert.isTrue(parent.numChildren > 0);
 	}

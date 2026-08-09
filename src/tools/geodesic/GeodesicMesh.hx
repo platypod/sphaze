@@ -32,10 +32,22 @@ import tools.geodesic.GeodesicWallSimplifier.WallSegment;
 	  than derived from a `coreEdges` field on the data itself — see that
 	  class's own doc) instead of `ConwayMaze.isCore`.
 
-	Everything else — the three lifecycle mesh buckets, alpha-blended live
+	Everything else — the lifecycle mesh buckets, alpha-blended live
 	blocks, `ConwayWallGlow` for solid walls and its faded "ghost" variant
 	for open-but-non-core edges, `TILE_LIFT`/`WALL_BASE_LIFT` — carries over
 	unchanged, because none of it was ever about the grid's shape.
+
+	**`build` vs. `buildLiveCells` (2026-08-10) — split for smoothness, not
+	tidiness.** Live cell blocks used to be part of `build`'s own single
+	per-generation pass, same cadence as the floor/walls — which meant a
+	block popped fully into or out of existence the instant a generation
+	advanced, reported directly as stuttering. `buildLiveCells` is now its
+	own function, called every render frame (`GeodesicConwayBiome.tick`'s
+	own 60Hz cadence, not the 0.75s generation step) with a lerp factor, so
+	a block's own height animates smoothly between two consecutive
+	generations' worth of `GeodesicLifecycle.stagesOf` snapshots instead of
+	jumping. `build` itself keeps the floor/walls — genuinely static
+	between generations, no reason to touch them more than once per step.
 
 	**`GeodesicWallSimplifier` (wall straightening) was tried here and
 	retracted (2026-08-06)**, played in the real biome rather than judged
@@ -76,43 +88,28 @@ class GeodesicMesh {
 	public static inline final GHOST_WALL_OPACITY:Float = 0.15;
 
 	/**
-		Builds every mesh under `parent` for the current generation. Called
-		once per `GeodesicLifeState.step`/`GeodesicReactivity.step`, the
-		same "rebuild from scratch each generation" cadence
-		`biomes.conway.ConwayBiome.tick` already uses — a live population is
-		a small fraction of `sphere.neighbors.length`, so this stays cheap
-		relative to a 0.75s step interval.
+		Builds the static floor/wall meshes under `parent` for the current
+		generation — everything that doesn't need `buildLiveCells`'s own
+		per-frame smoothing, since none of it changes between generations.
+		Called once per `GeodesicVentrellaState.step`/`GeodesicReactivity.step`,
+		the same "rebuild from scratch each generation" cadence
+		`biomes.conway.ConwayBiome.tick` already uses — cheap relative to a
+		0.75s step interval.
 		@param parent the scene node to attach every mesh under.
 		@param sphere the topology to render.
 		@param boundaries every node's own cell polygon, `GeodesicDual.cellBoundaries(sphere)` — passed in rather than recomputed, since a caller stepping every generation already has it cached.
-		@param state this generation's Life layer.
+		@param state this generation's Ventrella layer.
 		@param layout this generation's maze.
 		@param reactivity the same instance driving `layout`'s own open/close, queried here only for `isCore` and `edgeActivity`.
-		@param gliderCellIds ids currently tracked by a `GeodesicGliderTracker`, drawn in `Colours.CONWAY_TILE_GLIDER` instead of the ordinary lifecycle color regardless of age — `null`/omitted draws every live cell the ordinary way, so callers with nothing to track (`GeodesicPreview`) don't need a no-op argument.
 	**/
-	public static function build(parent:h3d.scene.Object, sphere:GeodesicSphereData, boundaries:Array<Array<Vec3>>, state:GeodesicLifeState,
-			layout:MazeLayout, reactivity:GeodesicReactivity, ?gliderCellIds:Array<Int>):Void {
+	public static function build(parent:h3d.scene.Object, sphere:GeodesicSphereData, boundaries:Array<Array<Vec3>>, state:GeodesicVentrellaState,
+			layout:MazeLayout, reactivity:GeodesicReactivity):Void {
 		var floorPoints:Array<h3d.Vector> = [];
 		var floorIdx = new hxd.IndexBuffer();
 		var pentagonFloorPoints:Array<h3d.Vector> = [];
 		var pentagonFloorIdx = new hxd.IndexBuffer();
-		var youngPoints:Array<h3d.Vector> = [];
-		var youngIdx = new hxd.IndexBuffer();
-		var agedPoints:Array<h3d.Vector> = [];
-		var agedIdx = new hxd.IndexBuffer();
-		var dyingPoints:Array<h3d.Vector> = [];
-		var dyingIdx = new hxd.IndexBuffer();
-		var gliderPoints:Array<h3d.Vector> = [];
-		var gliderIdx = new hxd.IndexBuffer();
 		var wallSegments:Array<WallSegment> = [];
 		var ghostSegments:Array<WallSegment> = [];
-
-		var isGlider = new Map<Int, Bool>();
-		if (gliderCellIds != null) {
-			for (id in gliderCellIds) {
-				isGlider.set(id, true);
-			}
-		}
 
 		for (id in 0...sphere.neighbors.length) {
 			var boundary = boundaries[id];
@@ -122,21 +119,6 @@ class GeodesicMesh {
 				addFan(pentagonFloorPoints, pentagonFloorIdx, hub, floorBoundary);
 			} else {
 				addFan(floorPoints, floorIdx, hub, floorBoundary);
-			}
-
-			var stage = GeodesicLifecycle.stageOf(state, id);
-			if (stage != Absent && isGlider.exists(id)) {
-				addBlock(gliderPoints, gliderIdx, floorBoundary, GeodesicLifecycle.blockHeightOf(Young));
-			} else {
-				switch stage {
-					case Young:
-						addBlock(youngPoints, youngIdx, floorBoundary, GeodesicLifecycle.blockHeightOf(Young));
-					case Aged:
-						addBlock(agedPoints, agedIdx, floorBoundary, GeodesicLifecycle.blockHeightOf(Aged));
-					case Dying:
-						addBlock(dyingPoints, dyingIdx, floorBoundary, GeodesicLifecycle.blockHeightOf(Dying));
-					case Absent:
-				}
 			}
 
 			for (neighbor in sphere.neighbors[id]) {
@@ -157,11 +139,6 @@ class GeodesicMesh {
 		// constant's own doc): the split is the "trickery," the constant
 		// value is the switch.
 		addFloorMesh(parent, pentagonFloorPoints, pentagonFloorIdx, Colours.CONWAY_TILE_PENTAGON);
-
-		addLifecycleMesh(parent, youngPoints, youngIdx, scaledColor(Colours.CONWAY_TILE_LIVE, GeodesicLifecycle.YOUNG_BRIGHTNESS));
-		addLifecycleMesh(parent, agedPoints, agedIdx, scaledColor(Colours.CONWAY_TILE_LIVE, GeodesicLifecycle.AGED_BRIGHTNESS));
-		addLifecycleMesh(parent, dyingPoints, dyingIdx, scaledColor(Colours.CONWAY_TILE_LIVE, GeodesicLifecycle.DYING_BRIGHTNESS));
-		addLifecycleMesh(parent, gliderPoints, gliderIdx, Colours.CONWAY_TILE_GLIDER);
 
 		// NOT run through GeodesicWallSimplifier — see this class's own doc
 		// for why straightening was retracted (played in the real biome,
@@ -185,8 +162,62 @@ class GeodesicMesh {
 		}
 	}
 
+	/**
+		Builds just the live cell blocks under `parent`, with each node's
+		own height lerped between its `previousStages` and `currentStages`
+		reading — called every render frame (`GeodesicConwayBiome.tick`'s
+		own 60Hz cadence), not once per generation, so a block's own
+		appearance/disappearance animates instead of popping. See this
+		class's own doc for why this is split from `build` rather than
+		folded into it.
+
+		A node contributes to whichever stage's own bucket (`Alive`/`Dying`)
+		it's *arriving at* if it has any height left at `t`, or the stage
+		it's *leaving* if it's fading out to nothing — never both, and never
+		neither unless both readings are `Absent`. A cell alive in both
+		readings (the common case: most of a stable structure, most
+		generations) needs no lerp at all — `previousHeight == currentHeight`
+		is just a no-op blend.
+		@param parent the scene node to attach the live-cell meshes under.
+		@param sphere the topology to render.
+		@param boundaries every node's own cell polygon, `GeodesicDual.cellBoundaries(sphere)`.
+		@param previousStages every node's own stage as of the last generation boundary (`GeodesicLifecycle.stagesOf`).
+		@param currentStages every node's own stage as of the current generation boundary.
+		@param t how far between the two readings "now" is, `0` (all `previousStages`) to `1` (all `currentStages`) — typically `accumulator / STEP_INTERVAL`, clamped here so a caller doesn't have to.
+	**/
+	public static function buildLiveCells(parent:h3d.scene.Object, sphere:GeodesicSphereData, boundaries:Array<Array<Vec3>>,
+			previousStages:Array<LifecycleStage>, currentStages:Array<LifecycleStage>, t:Float):Void {
+		var alivePoints:Array<h3d.Vector> = [];
+		var aliveIdx = new hxd.IndexBuffer();
+		var dyingPoints:Array<h3d.Vector> = [];
+		var dyingIdx = new hxd.IndexBuffer();
+		var clampedT = t < 0 ? 0 : (t > 1 ? 1 : t);
+
+		for (id in 0...sphere.neighbors.length) {
+			var previousHeight = GeodesicLifecycle.blockHeightOf(previousStages[id]);
+			var currentHeight = GeodesicLifecycle.blockHeightOf(currentStages[id]);
+			if (previousHeight == 0 && currentHeight == 0) {
+				continue;
+			}
+
+			var height = previousHeight + (currentHeight - previousHeight) * clampedT;
+			var floorBoundary = [for (p in boundaries[id]) lift(p, TILE_LIFT)];
+
+			switch currentHeight > 0 ? currentStages[id] : previousStages[id] {
+				case Alive:
+					addBlock(alivePoints, aliveIdx, floorBoundary, height);
+				case Dying:
+					addBlock(dyingPoints, dyingIdx, floorBoundary, height);
+				case Absent: // unreachable: the continue above guards against both readings being Absent
+			}
+		}
+
+		addLifecycleMesh(parent, alivePoints, aliveIdx, scaledColor(Colours.CONWAY_TILE_LIVE, GeodesicLifecycle.ALIVE_BRIGHTNESS));
+		addLifecycleMesh(parent, dyingPoints, dyingIdx, scaledColor(Colours.CONWAY_TILE_LIVE, GeodesicLifecycle.DYING_BRIGHTNESS));
+	}
+
 	/** See `biomes.conway.ConwayMesh.addEdge`'s own doc — same three-way routing (closed/ghost/bare corridor), just addressed by node id and sourced from `GeodesicDual.sharedEdge` instead of a `(theta, phi)` corner formula, and collecting a raw `WallSegment` for `GeodesicWallSimplifier` rather than emitting a quad directly. **/
-	static function collectEdge(sphere:GeodesicSphereData, boundaries:Array<Array<Vec3>>, state:GeodesicLifeState, layout:MazeLayout,
+	static function collectEdge(sphere:GeodesicSphereData, boundaries:Array<Array<Vec3>>, state:GeodesicVentrellaState, layout:MazeLayout,
 			reactivity:GeodesicReactivity, a:Int, b:Int, wallSegments:Array<WallSegment>, ghostSegments:Array<WallSegment>):Void {
 		var edge = GeodesicDual.sharedEdge(sphere, boundaries, a, b);
 		var activity = GeodesicReactivity.edgeActivity(state.activityOf, a, b);
@@ -333,3 +364,13 @@ class GeodesicMesh {
 		return point.add(point.normalized().scaled(-amount));
 	}
 }
+
+/**
+	One `GeodesicGliderTracker`-tracked cell and the color its own generator
+	site was assigned. No longer consumed by `GeodesicMesh.build`/`buildLiveCells`
+	(that per-site coloring was specific to the old B2/S34 spawn-site design
+	— see `GeodesicVentrellaState`'s own doc for why it was replaced) —
+	kept only because `GeodesicGliderTracker.trackedCells` still returns it
+	and that class stays untouched as a fallback.
+**/
+typedef TrackedCell = {id:Int, color:Int};

@@ -1,0 +1,3 @@
+-cp src
+-main tools.geodesic.GeodesicVentrellaGliderSearch
+-neko bin/search-ventrella.n

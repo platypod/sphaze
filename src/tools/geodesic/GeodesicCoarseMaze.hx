@@ -127,12 +127,13 @@ class GeodesicCoarseMaze {
 		*or* across them — any one crossing with both cells alive is
 		enough to hold that edge open, matching how a single fine wall
 		already worked before the coarse maze existed at all.
-		@param fineState the Life layer, fine-keyed.
+		@param fineState the Ventrella layer, fine-keyed.
 		@param boundaryEdges `boundaryEdges`'s own output.
 		@param fineToCoarseMap `fineToCoarse`'s own output.
 		@return a coarse edge's own activity, as a function of its two node ids — `1.0` if any of its crossings has both fine endpoints alive, `0.0` otherwise (including a pair with no boundary crossing between them at all).
 	**/
-	public static function boundaryActivity(fineState:GeodesicLifeState, boundaryEdges:Array<{a:Int, b:Int}>, fineToCoarseMap:Array<Int>):(Int, Int) -> Float {
+	public static function boundaryActivity(fineState:GeodesicVentrellaState, boundaryEdges:Array<{a:Int, b:Int}>,
+			fineToCoarseMap:Array<Int>):(Int, Int) -> Float {
 		var byEdge = new haxe.ds.StringMap<Bool>();
 		for (edge in boundaryEdges) {
 			var coarseA = fineToCoarseMap[edge.a];

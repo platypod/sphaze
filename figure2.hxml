@@ -1,0 +1,3 @@
+-cp src
+-main tools.geodesic.GeodesicVentrellaFigure2
+-neko bin/figure2.n

@@ -1,6 +1,6 @@
 package tools.geodesic;
 
-import tools.geodesic.GeodesicLifeRule.GeodesicLifeRules;
+import tools.geodesic.GeodesicVentrellaRule.GeodesicVentrellaRules;
 import utest.Assert;
 import utest.Test;
 
@@ -69,7 +69,7 @@ class GeodesicCoarseMazeTest extends Test {
 		var coarseA = map[sample.a];
 		var coarseB = map[sample.b];
 
-		var state = new GeodesicLifeState(fineSphere, GeodesicLifeRules.DEFAULT);
+		var state = new GeodesicVentrellaState(fineSphere, GeodesicVentrellaRules.SPHERE_CA);
 		state.seedSingle(sample.a);
 		state.seedSingle(sample.b);
 
@@ -90,7 +90,7 @@ class GeodesicCoarseMazeTest extends Test {
 		var coarseA = map[sample.a];
 		var coarseB = map[sample.b];
 
-		var state = new GeodesicLifeState(fineSphere, GeodesicLifeRules.DEFAULT);
+		var state = new GeodesicVentrellaState(fineSphere, GeodesicVentrellaRules.SPHERE_CA);
 		state.seedSingle(sample.a);
 
 		var activityOf = GeodesicCoarseMaze.boundaryActivity(state, boundaries, map);
@@ -104,7 +104,7 @@ class GeodesicCoarseMazeTest extends Test {
 		var lookup = new GeodesicLookup(coarseSphere, COARSE_FREQUENCY);
 		var map = GeodesicCoarseMaze.fineToCoarse(fineSphere, lookup);
 		var boundaries = GeodesicCoarseMaze.boundaryEdges(fineSphere, map);
-		var state = new GeodesicLifeState(fineSphere, GeodesicLifeRules.DEFAULT);
+		var state = new GeodesicVentrellaState(fineSphere, GeodesicVentrellaRules.SPHERE_CA);
 		state.seed(1, () -> 0); // everyone alive — doesn't matter, node 0 never borders itself
 
 		var activityOf = GeodesicCoarseMaze.boundaryActivity(state, boundaries, map);

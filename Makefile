@@ -28,6 +28,14 @@ search-gliders: ## Run multi-rule glider search (B2/S34, B24/S46, B35/S2 compari
 	haxe search.hxml
 	neko bin/search.n
 
+report-ventrella: ## Headless population/activity report for the live Ventrella rule (early-generation trace + density sweep)
+	haxe report.hxml
+	neko bin/report.n
+
+search-ventrella: ## Exhaustive small hand-placed-pattern search for the Ventrella rule (states 1/3, 1-ring patch)
+	haxe search-ventrella.hxml
+	neko bin/search-ventrella.n
+
 serve:    ## Build, then serve bin/ at http://localhost:8080 (Ctrl+C to stop)
 	$(MAKE) build
 	cd bin && python3 -m http.server 8080
@@ -36,4 +44,4 @@ help:     ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: fmt fmt-check lint check test build bake-geodesic search-gliders serve help
+.PHONY: fmt fmt-check lint check test build bake-geodesic search-gliders report-ventrella search-ventrella serve help

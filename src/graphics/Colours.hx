@@ -92,6 +92,31 @@ class Colours {
 	**/
 	public static inline final CONWAY_TILE_GLIDER:Int = 0xFFFFB627;
 
+	/**
+		`tools.geodesic.GeodesicGliderTracker`'s own per-site palette
+		(2026-08-07) — every generator site (the traveling spaceship or one
+		of the smaller shuttle patterns) gets its own hue instead of
+		everything sharing `CONWAY_TILE_GLIDER`, so which pentagon a moving
+		structure came from — and whether two of them are the same
+		structure meeting, not one growing — reads at a glance. Explicitly
+		"for now": a debug/exploratory palette for watching interactions,
+		not a settled art choice. `CONWAY_TILE_GLIDER` itself is `[0]`, kept
+		as the palette's own first entry rather than a separate constant,
+		so nothing else has to change if this gets folded back to one
+		shared color later.
+	**/
+	public static final CONWAY_TILE_SITE_PALETTE:Array<Int> = [
+		CONWAY_TILE_GLIDER,
+		0xFFEF476F,
+		0xFF9B5DE5,
+		0xFF3A86FF,
+		0xFFFB5607,
+		0xFFFFD60A,
+		0xFF06D6A0,
+		0xFFE0E0E0,
+		0xFFC77DFF
+	];
+
 	/** `biomes.conway.ConwayMesh` closed-edge walls' dark base panel — `graphics.shaders.ConwayWallGlow` paints the actual Tron lines on top. **/
 	public static inline final CONWAY_WALL_PANEL:Int = 0xFF0A0E16;
 

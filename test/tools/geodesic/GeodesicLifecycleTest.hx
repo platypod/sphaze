@@ -1,19 +1,19 @@
 package tools.geodesic;
 
-import tools.geodesic.GeodesicLifeRule.GeodesicLifeRules;
 import tools.geodesic.GeodesicLifecycle.LifecycleStage;
+import tools.geodesic.GeodesicVentrellaRule.GeodesicVentrellaRules;
 import utest.Assert;
 import utest.Test;
 
-/** Covers the age → stage → height/brightness rules, and specifically the one place render height and collision height deliberately disagree (`Dying`). **/
+/** Covers the alive/dying/absent → height/brightness rules, and specifically the one place render height and collision height deliberately disagree (`Dying`). **/
 class GeodesicLifecycleTest extends Test {
 	static inline final FREQUENCY:Int = 3;
 
-	function testAFreshlySeededNodeIsYoung():Void {
+	function testAFreshlySeededNodeIsAlive():Void {
 		var state = newState();
 		state.seedSingle(0);
 
-		Assert.equals(LifecycleStage.Young, GeodesicLifecycle.stageOf(state, 0));
+		Assert.equals(LifecycleStage.Alive, GeodesicLifecycle.stageOf(state, 0));
 	}
 
 	function testANodeWithNothingHappeningIsAbsent():Void {
@@ -22,10 +22,23 @@ class GeodesicLifecycleTest extends Test {
 		Assert.equals(LifecycleStage.Absent, GeodesicLifecycle.stageOf(state, 0));
 	}
 
+	/**
+		Seeded to state `3` specifically, not the default `1`: state `3`'s
+		own only subrule (`GeodesicVentrellaRules.SPHERE_CA`'s index 19,
+		`3111`) requires exactly one neighbor already in state `1`, which an
+		isolated node alone on an otherwise-quiescent board never has — so
+		no subrule matches and it correctly reverts to quiescent, the "dies"
+		case this test wants. States `1`/`2` both have at least one subrule
+		that fires from an all-quiescent neighborhood (verified by hand
+		against the table, not assumed), so they don't isolate-and-die the
+		way a lone cell would under `GeodesicLifeState`'s birth/survival
+		rules — a real, rule-specific difference worth this comment rather
+		than a silently "obvious" seed choice.
+	**/
 	function testANodeThatDiedThisGenerationIsDying():Void {
 		var state = newState();
-		state.seedSingle(0);
-		state.step(() -> 1); // alone on the board: no live neighbors, so it dies
+		state.seedSingle(0, 3);
+		state.step(() -> 1); // rng() always 1: never below MUTATION_RATE, so this generation is pure subrule math
 
 		Assert.equals(LifecycleStage.Dying, GeodesicLifecycle.stageOf(state, 0));
 	}
@@ -38,7 +51,7 @@ class GeodesicLifecycleTest extends Test {
 	**/
 	function testADyingNodeStillRendersButIsNoLongerStandable():Void {
 		var state = newState();
-		state.seedSingle(0);
+		state.seedSingle(0, 3); // see testANodeThatDiedThisGenerationIsDying's own doc for why state 3, not the default 1
 		state.step(() -> 1);
 
 		Assert.equals(GeodesicLifecycle.DYING_BLOCK_HEIGHT, GeodesicLifecycle.blockHeightOf(GeodesicLifecycle.stageOf(state, 0)));
@@ -52,34 +65,32 @@ class GeodesicLifecycleTest extends Test {
 		Assert.equals(0.0, GeodesicLifecycle.groundHeightOf(state, 0));
 	}
 
-	function testAYoungNodeIsStandableAtItsFullRenderHeight():Void {
+	function testAnAliveNodeIsStandableAtItsFullRenderHeight():Void {
 		var state = newState();
 		state.seedSingle(0);
 
-		Assert.equals(GeodesicLifecycle.YOUNG_BLOCK_HEIGHT, GeodesicLifecycle.groundHeightOf(state, 0));
+		Assert.equals(GeodesicLifecycle.ALIVE_BLOCK_HEIGHT, GeodesicLifecycle.groundHeightOf(state, 0));
 	}
 
 	/**
-		The whole point of the two standable heights: a second jump's own
-		apex (`~5.8`, see `biomes.conway.ConwayGrid.YOUNG_BLOCK_HEIGHT`)
-		must clear `WALL_HEIGHT` from a `Young` block and must not from an
-		`Aged` one. Asserted here so a future tweak to any of the three
-		constants can't silently break the combo-jump mechanic they exist
-		for.
+		The combo-jump mechanic this height exists for: a second jump's own
+		apex (`~5.8`, see `biomes.conway.ConwayGrid.YOUNG_BLOCK_HEIGHT`) must
+		clear `WALL_HEIGHT` from an `Alive` block. Asserted here so a future
+		tweak to either constant can't silently break it — see
+		`GeodesicLifecycle`'s own doc for why every live cell gets this
+		height now (no more Young/Aged split).
 	**/
-	function testOnlyAYoungBlockIsTallEnoughToJumpAWall():Void {
+	function testAnAliveBlockIsTallEnoughToJumpAWall():Void {
 		var secondJumpApex = 5.8;
 
-		Assert.isTrue(GeodesicLifecycle.YOUNG_BLOCK_HEIGHT + secondJumpApex > GeodesicLifecycle.WALL_HEIGHT);
-		Assert.isFalse(GeodesicLifecycle.AGED_BLOCK_HEIGHT + secondJumpApex > GeodesicLifecycle.WALL_HEIGHT);
+		Assert.isTrue(GeodesicLifecycle.ALIVE_BLOCK_HEIGHT + secondJumpApex > GeodesicLifecycle.WALL_HEIGHT);
 	}
 
-	function testYoungIsBrighterThanAgedWhichIsBrighterThanDying():Void {
-		Assert.isTrue(GeodesicLifecycle.brightnessOf(Young) > GeodesicLifecycle.brightnessOf(Aged));
-		Assert.isTrue(GeodesicLifecycle.brightnessOf(Aged) > GeodesicLifecycle.brightnessOf(Dying));
+	function testAliveIsBrighterThanDying():Void {
+		Assert.isTrue(GeodesicLifecycle.brightnessOf(Alive) > GeodesicLifecycle.brightnessOf(Dying));
 	}
 
-	static function newState():GeodesicLifeState {
-		return new GeodesicLifeState(GeodesicSphere.generate(FREQUENCY), GeodesicLifeRules.DEFAULT);
+	static function newState():GeodesicVentrellaState {
+		return new GeodesicVentrellaState(GeodesicSphere.generate(FREQUENCY), GeodesicVentrellaRules.SPHERE_CA);
 	}
 }

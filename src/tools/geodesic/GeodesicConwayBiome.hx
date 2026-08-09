@@ -11,8 +11,8 @@ import entities.painting.PaintingModel;
 import entities.player.PlayerModel;
 import graphics.Colours;
 import graphics.shaders.ConwayWallGlow;
-import tools.geodesic.GeodesicLifeRule.GeodesicLifeRules;
 import tools.geodesic.GeodesicSphere.GeodesicSphereData;
+import tools.geodesic.GeodesicVentrellaRule.GeodesicVentrellaRules;
 import tools.geodesic.Vec3.Vec3Math;
 
 /**
@@ -42,22 +42,20 @@ import tools.geodesic.Vec3.Vec3Math;
 	attempt (`GeodesicWallSimplifier`, merging wall geometry after the
 	fact) was retracted rather than fixed.
 
-	**Glider spawn points, no ambient soup (2026-08-06).** `state` starts
-	completely unseeded and `tick` steps it with `noRandomBirths` (never
-	below `GeodesicLifeState.MUTATION_RATE`) instead of `Math.random` — the
-	only cells ever alive are ones `gliderTracker` itself put there, or that
-	its own rule's birth/survival math grows from those, never a random
-	soup. Requested directly ("I want only the spawned gliders") after
-	playing the ambient-soup version; also the shared prerequisite
-	`docs/game-design/ideas-backlog.md`'s "deliberate pentagon activation"
-	entry had already named before this was built. `gliderTracker` re-seeds
-	a few of `GeodesicGliderSearch`'s confirmed `B2/S34` patterns next to a
-	handful of pentagons and follows them so `rebuildMesh` can draw them in
-	`Colours.CONWAY_TILE_GLIDER` — see `GeodesicGliderTracker`'s own doc for
-	why this is deliberately a scripted spawn point and not a true glider
-	gun, and `GeodesicGliderTrajectory`'s own doc for the long-run finding
-	(bounded local shuttle, not open-ended cross-sphere travel) that led to
-	spawning once per site rather than on a repeating clock.
+	**Ventrella rule (2026-08-09) — replaces the earlier `GeodesicLifeState`/B2/S34
+	engine.** `GeodesicGliderSearchMultiRule`'s own exhaustive 2-ring search
+	found zero confirmed travelers under any 2-state rule tried (B2/S34,
+	B24/S46, B35/S2) in the 3-5 cell range, where Jeffrey Ventrella's own
+	published 4-state hex-CA (`https://www.ventrella.com/SphereCA/`)
+	demonstrates a period-2 glider that survives collisions on this exact
+	topology — see `GeodesicVentrellaState`'s own doc for the full
+	rationale. `state` seeds a `SEED_DENSITY` ambient soup once at
+	construction (and again on a save with no persisted `life`) and steps
+	with real randomness every tick (`MUTATION_RATE` included).
+	`GeodesicLifeState`/`GeodesicLifeRule`/`GeodesicGliderTracker`/every
+	tool built on the old engine are untouched and still compile — a
+	complete, trivially-revertible fallback, the same precedent this
+	class's own doc already set when it replaced `biomes.conway.ConwayBiome`.
 
 	**`serialize`/`restore`.** `fineSphere`/`coarseSphere`/`fineToCoarse`/
 	`boundaryEdges`/lookups aren't part of the save — every session
@@ -66,9 +64,7 @@ import tools.geodesic.Vec3.Vec3Math;
 	What *is* persisted: `coarseLayout.openEdges`, the coarse core edge set
 	(`GeodesicReactivity.coreEdgeKeys`/`fromCoreKeys` — a save has no
 	"freshly carved" layout lying around, so the immutable core set has to
-	travel on its own), the fine Life state, and the tick accumulator —
-	the same four-part shape `ConwayBiome.serialize` uses, just addressed
-	across two node spaces instead of one.
+	travel on its own), the Ventrella state, and the tick accumulator.
 **/
 class GeodesicConwayBiome implements Biome {
 	static inline final RESOURCE_PATH:String = "geodesic/conway-sphere.json";
@@ -80,6 +76,9 @@ class GeodesicConwayBiome implements Biome {
 	static inline final EXIT_ARC_OFFSET:Float = 16;
 	static inline final SPAWN_FACING:Float = 0.0;
 
+	/** Independent per-node chance of an ambient seed at state `1`. Carried over from the density this project's own tooling (`GeodesicLifeReport`/`GeodesicMeshTest`) already used for ambient-soup baselines — not re-tuned for this specific rule yet, worth revisiting once played. **/
+	static inline final SEED_DENSITY:Float = 0.24;
+
 	var fineSphere:GeodesicSphereData;
 	var fineBoundaries:Array<Array<Vec3>>;
 	var fineLookup:GeodesicLookup;
@@ -88,8 +87,7 @@ class GeodesicConwayBiome implements Biome {
 	var boundaryEdges:Array<{a:Int, b:Int}>;
 	var coarseLayout:MazeLayout;
 	var coarseReactivity:GeodesicReactivity;
-	var state:GeodesicLifeState;
-	var gliderTracker:GeodesicGliderTracker;
+	var state:GeodesicVentrellaState;
 	var noOpFineLayout:MazeLayout;
 	var noOpFineReactivity:GeodesicReactivity;
 	var spawnNode:Int;
@@ -111,9 +109,8 @@ class GeodesicConwayBiome implements Biome {
 		// captured before anything steps, so the core set really is the carve — see GeodesicReactivity's own doc
 		coarseReactivity = new GeodesicReactivity(coarseSphere, coarseLayout);
 
-		// Deliberately unseeded — no ambient soup. See this class's own doc: only `gliderTracker`'s own spawn points put anything alive on the board at all.
-		state = new GeodesicLifeState(fineSphere, GeodesicLifeRules.DEFAULT);
-		gliderTracker = new GeodesicGliderTracker(fineSphere);
+		state = new GeodesicVentrellaState(fineSphere, GeodesicVentrellaRules.SPHERE_CA);
+		state.seed(SEED_DENSITY);
 
 		var noOp = GeodesicCoarseMaze.noOpFineMazeLayer(fineSphere);
 		noOpFineLayout = noOp.layout;
@@ -174,8 +171,7 @@ class GeodesicConwayBiome implements Biome {
 		var stepped = false;
 		while (accumulator >= STEP_INTERVAL) {
 			accumulator -= STEP_INTERVAL;
-			state.step(noRandomBirths); // no ambient soup — MUTATION_RATE would otherwise sprout stray life anywhere on the board, not just at gliderTracker's own spawn points
-			gliderTracker.tick(state);
+			state.step();
 			var edgeActivityOf = GeodesicCoarseMaze.boundaryActivity(state, boundaryEdges, fineToCoarse);
 			var playerFineNode = fineLookup.nodeAt(toVec3(player.pos));
 			var playerCoarseNode = fineToCoarse[playerFineNode];
@@ -236,9 +232,13 @@ class GeodesicConwayBiome implements Biome {
 
 		coarseReactivity = parsed.coreEdges != null ? GeodesicReactivity.fromCoreKeys(coarseSphere,
 			parsed.coreEdges) : new GeodesicReactivity(coarseSphere, coarseLayout);
-		state = parsed.life != null ? GeodesicLifeState.deserialize(fineSphere, GeodesicLifeRules.DEFAULT,
-			parsed.life) : new GeodesicLifeState(fineSphere, GeodesicLifeRules.DEFAULT);
-		gliderTracker = new GeodesicGliderTracker(fineSphere); // not persisted — see this class's own doc; a fresh tracker just starts untracked until its next spawn tick
+		if (parsed.life != null) {
+			state = GeodesicVentrellaState.deserialize(fineSphere, GeodesicVentrellaRules.SPHERE_CA, parsed.life);
+		} else {
+			// no persisted life state (old-format save, or malformed import) — reseed fresh rather than leave the board dead, matching what a brand-new instance does in its own constructor
+			state = new GeodesicVentrellaState(fineSphere, GeodesicVentrellaRules.SPHERE_CA);
+			state.seed(SEED_DENSITY);
+		}
 
 		var restoredAccumulator = Std.parseFloat(Std.string(parsed.accumulator));
 		accumulator = Math.isNaN(restoredAccumulator) ? 0 : restoredAccumulator;
@@ -261,7 +261,7 @@ class GeodesicConwayBiome implements Biome {
 			return;
 		}
 
-		GeodesicMesh.build(parent, fineSphere, fineBoundaries, state, noOpFineLayout, noOpFineReactivity, gliderTracker.trackedCellIds());
+		GeodesicMesh.build(parent, fineSphere, fineBoundaries, state, noOpFineLayout, noOpFineReactivity);
 
 		var edgeActivityOf = GeodesicCoarseMaze.boundaryActivity(state, boundaryEdges, fineToCoarse);
 		var segments = GeodesicCoarseMaze.wallSegments(fineSphere, fineBoundaries, boundaryEdges, fineToCoarse, coarseLayout, coarseReactivity, edgeActivityOf);
@@ -279,11 +279,6 @@ class GeodesicConwayBiome implements Biome {
 			ghostMesh.material.mainPass.depthWrite = false;
 			ghostMesh.material.blendMode = h3d.mat.BlendMode.Alpha;
 		}
-	}
-
-	/** Always above `GeodesicLifeState.MUTATION_RATE` — passed to `state.step` so the only cells ever alive are ones `gliderTracker` or the rule's own birth/survival math put there, never a random mutation flip. **/
-	static function noRandomBirths():Float {
-		return 1;
 	}
 
 	/** `fineSphere.neighbors.length == 5` never happens for a node the maze carver reaches from a hexagon-degree walk in practice at this frequency, but the search is honest about needing one anyway rather than assuming node `0` isn't a pentagon. **/

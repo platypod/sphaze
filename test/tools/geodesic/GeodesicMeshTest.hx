@@ -2,8 +2,8 @@ package tools.geodesic;
 
 import biomes.common.maze.MazeCarver;
 import biomes.common.maze.MazeTopology.MazeLayout;
-import tools.geodesic.GeodesicLifeRule.GeodesicLifeRules;
 import tools.geodesic.GeodesicSphere.GeodesicSphereData;
+import tools.geodesic.GeodesicVentrellaRule.GeodesicVentrellaRules;
 import utest.Assert;
 import utest.Test;
 
@@ -26,7 +26,7 @@ class GeodesicMeshTest extends Test {
 		var sphere = GeodesicSphere.generate(FREQUENCY);
 		var boundaries = GeodesicDual.cellBoundaries(sphere);
 		var layout = MazeCarver.carve(new GeodesicTopology(sphere), RandomizedDfs, 0, new SeededRandom(11).asFunction());
-		var state = new GeodesicLifeState(sphere, GeodesicLifeRules.DEFAULT);
+		var state = new GeodesicVentrellaState(sphere, GeodesicVentrellaRules.SPHERE_CA);
 		var reactivity = new GeodesicReactivity(sphere, layout);
 		state.seed(0.24, new SeededRandom(3).asFunction());
 		var parent = new h3d.scene.Object();
@@ -45,7 +45,7 @@ class GeodesicMeshTest extends Test {
 		var sphere = GeodesicSphere.generate(FREQUENCY);
 		var boundaries = GeodesicDual.cellBoundaries(sphere);
 		var layout = MazeCarver.carve(new GeodesicTopology(sphere), RandomizedDfs, 0, new SeededRandom(11).asFunction());
-		var state = new GeodesicLifeState(sphere, GeodesicLifeRules.DEFAULT);
+		var state = new GeodesicVentrellaState(sphere, GeodesicVentrellaRules.SPHERE_CA);
 		var reactivity = new GeodesicReactivity(sphere, layout);
 		// deliberately not seeded: every node starts dead and stays dead
 		var parent = new h3d.scene.Object();
@@ -62,7 +62,7 @@ class GeodesicMeshTest extends Test {
 		var sphere = GeodesicSphere.generate(FREQUENCY);
 		var boundaries = GeodesicDual.cellBoundaries(sphere);
 		var layout = allOpen(sphere);
-		var state = new GeodesicLifeState(sphere, GeodesicLifeRules.DEFAULT);
+		var state = new GeodesicVentrellaState(sphere, GeodesicVentrellaRules.SPHERE_CA);
 		var reactivity = new GeodesicReactivity(sphere, layout);
 		var parent = new h3d.scene.Object();
 

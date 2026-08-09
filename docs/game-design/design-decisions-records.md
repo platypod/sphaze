@@ -977,3 +977,132 @@ in [story-line.md](story-line.md).
   no longer visibly "warms up" first. Left as-is since it wasn't part of
   what was asked for; revisit only if the binary snap itself reads oddly
   in play.
+- **2026-08-07 — Second glider search, also negative — recorded, not
+  acted on.** After seeing `xq14_0ig5l3z102` glide, asked directly "can
+  we find others?" Checked Catagolue's own record first: that spaceship
+  is the *only* one ever catalogued for `b2s34h`, across all 16 symmetry
+  categories it tracks. Then ran `GeodesicGliderSearch2`: every
+  population-3-to-5 subset of a 2-ring patch (16,473 candidates), same
+  screen-then-long-run-confirm rigor as everything else this session.
+  `2166` looked promising on a short window; `0` survived long-run
+  confirmation — all shuttles. ~8 hours headless, `neko`.
+
+  Not a dead end, just unstarted further work: population 6-7 in the same
+  patch, and anything past a 2-ring footprint, remain untried. No code
+  changed — `docs/game-design/ideas-backlog.md`'s own entry carries the
+  result and the open question of whether it's worth the compute to keep
+  looking, given the known spaceship already works in play.
+- **2026-08-07 — Shuttles reinstated as their own generator sites, one
+  color per site — BUILT, explicitly "for now."** The six confirmed
+  `B2/S34` 1-ring shuttles (bounded, never travel) had been fully retired
+  once the real spaceship was ported — reframed directly: not useless for
+  never going anywhere, potentially interesting *because* they sit still
+  and a traveling glider might run into one. `GeodesicGliderTracker` now
+  builds two kinds of site — 3 traveler sites (unchanged) plus 6 shuttle
+  sites, one per known 1-ring pattern, anchored directly next to their own
+  spread-out pentagon (no `MIN_PENTAGON_CLEARANCE` needed — a 1-ring
+  pattern doesn't need walking room the way the spaceship's placement
+  walk does).
+
+  Also requested: distinguishable colors per pentagon rather than one
+  shared amber, both so a moving structure's origin is legible and so a
+  real meeting between two tracked structures reads as two colors
+  overlapping rather than one growing. `Colours.CONWAY_TILE_SITE_PALETTE`
+  added (9 hues, `CONWAY_TILE_GLIDER` kept as its own first entry);
+  `GeodesicMesh.build` reworked from a single glider bucket to one mesh
+  per distinct tracked color actually present that generation.
+  `GeodesicGliderTracker.trackedCells()` replaces `trackedCellIds()`,
+  returning `{id, color}` pairs instead of a flat id list.
+
+  `relocateActive`'s own proximity-based tracking (already population/
+  shape-agnostic, from the earlier tracking-bug fix) needed no changes to
+  support this — it already keeps following whatever's alive near a
+  structure's last position regardless of what that turns into, which is
+  exactly what watching an interaction requires.
+- **2026-08-09 — Live biome switched from `GeodesicLifeState`'s 2-state
+  B2/S34 to a published 4-state hex-CA (Jeffrey Ventrella,
+  `https://www.ventrella.com/SphereCA/`) — BUILT.** Third search for
+  richer structure, this time widening the *rule* rather than the search
+  window: `GeodesicGliderSearchMultiRule` ran the same exhaustive 2-ring,
+  population-3-to-5 search across three 2-state candidates (`B2/S34`
+  baseline, `B24/S46`, `B35/S2`) — `2166`/`864`/`0` screened positive,
+  `0`/`0`/`0` confirmed as long-run travelers under any of them.
+  Independently, Ventrella's own published rule demonstrates period-2
+  gliders that survive collisions (annihilate, reproduce, or reflect) on
+  this exact hex-sphere topology — evolved by genetic search rather than
+  hand-derived, and evidenced by the paper's own figures, not just
+  claimed. Given three hand-picked 2-state rules all measured empty in
+  the small-population range and a fourth, differently-structured rule is
+  already demonstrated to work here, switched rather than kept widening
+  the same 2-state search.
+
+  **Rejected: keep searching 2-state rules at larger populations/patches
+  first.** `GeodesicGliderSearch2`'s own note already flagged population
+  6-7 and beyond-2-ring as untried; not chosen because the 2166/864/0
+  split across three different birth/survival thresholds reads as this
+  rule *family* being thin on this topology, not as one unlucky parameter
+  choice — and a working alternative was already in hand, cheaper to try
+  than more multi-hour headless search.
+
+  **`GeodesicVentrellaRule`/`GeodesicVentrellaState`** (new): a
+  `(referenceState, neighborState, neighborCount, resultState)` subrule
+  table (20 subrules, hand-transcribed from the paper's own figure,
+  pinned by `GeodesicVentrellaRuleTest`'s shape/transcription checks),
+  applied in order each generation with later subrules free to overwrite
+  earlier ones — the paper's own "genes expressed under certain
+  circumstances" framing. One real adaptation, flagged rather than
+  silently assumed: the rule's own neighbor-count digit tops out at `3`
+  regardless of a hex node's 6 (or a pentagon's 5) actual neighbors, read
+  here as "3 or more" since the source is silent on what a higher raw
+  count should mean — untested against the source, worth watching once
+  gliders are actually observed in play.
+
+  **Ambient seeding, not scripted spawn sites — asked and answered
+  directly.** `GeodesicGliderTracker`'s scripted generator sites (spawning
+  the confirmed `B2/S34` spaceship and shuttle patterns at fixed
+  locations, one color per site) don't carry over: Ventrella's rule is
+  built to produce gliders from generic seed noise, not hand-placed
+  patterns, so `GeodesicConwayBiome` now seeds a flat `SEED_DENSITY`
+  ambient soup once at construction (and again on a save with no
+  persisted state) and steps with real randomness (`MUTATION_RATE`
+  included) every tick, instead of tracking generator sites.
+  `GeodesicGliderTracker` itself is untouched and unused by the live
+  biome — not deleted, since nothing about it was specific to the old
+  rule's own math beyond what it happened to spawn.
+
+  **No age-based visual tier — asked and answered directly.**
+  `GeodesicLifecycle`'s Young/Aged split read a single species getting
+  visually older; Ventrella's states are different species appearing as
+  gliders collide, not age classes of one thing, so `LifecycleStage`
+  simplified to `Alive`/`Dying`/`Absent`, one flat height/brightness for
+  every live cell regardless of which of the three non-zero states it's
+  in. Per-state coloring was raised as the natural next step but
+  deliberately deferred rather than guessed at ahead of seeing what the
+  rule actually produces in play. Real, stated side effect: `ALIVE_BLOCK_HEIGHT`
+  reuses the old `YOUNG_BLOCK_HEIGHT` value (not `AGED_BLOCK_HEIGHT`), so
+  every live cell is now tall enough for the combo-jump mechanic, not just
+  freshly-born ones under the old split — a gameplay-feel change, not an
+  unstated side effect of the merge.
+
+  **`GeodesicLifeState`/`GeodesicLifeRule` and every tool built on them**
+  (`GeodesicGliderSearch*`, `GeodesicGliderTracker`, `GeodesicGliderTrajectory`,
+  `GeodesicLifeReport`, `GeodesicBiomeReplay`, `GeodesicGliderPort`) are
+  untouched and still compile — a complete, trivially-revertible
+  fallback, the same precedent this project set when `GeodesicConwayBiome`
+  itself replaced `biomes.conway.ConwayBiome`.
+
+  **Not yet verified**: whether the rule actually produces visible
+  gliders on the real baked sphere, under real wall/reactivity coupling,
+  in the running game — this project's own "Claude can't reliably drive
+  the game in its browser preview" limitation applies (`CLAUDE.md`'s own
+  "Manual/interactive verification" section). What *is* verified: `make
+  fmt`/`lint`/`check`/`test` all clean (38,302 assertions, 0 failures),
+  including a hand-derived regression pin
+  (`GeodesicVentrellaStateTest.testAnIsolatedCellCyclesThroughStatesBeforeDying`)
+  confirming the engine's own subrule evaluation matches a by-hand trace
+  of the table for an isolated cell (state `1` → `2` → `3` → dies over
+  three generations — notably *not* an instant kill the way an isolated
+  `GeodesicLifeState` cell is, a real behavioral difference worth knowing
+  before reading the biome as "broken" if population doesn't crash
+  immediately). Needs hooman to walk the `conway`-labelled portal and
+  confirm gliders are actually visible.

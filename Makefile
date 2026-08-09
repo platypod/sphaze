@@ -24,9 +24,6 @@ bake-geodesic: ## Regenerate the baked geodesic sphere data asset (res/geodesic/
 	haxe bake.hxml
 	neko bin/bake.n
 
-preview-geodesic: ## Compile the standalone geodesic sphere visual check (open geodesic-preview.html to view)
-	haxe preview.hxml
-
 serve:    ## Build, then serve bin/ at http://localhost:8080 (Ctrl+C to stop)
 	$(MAKE) build
 	cd bin && python3 -m http.server 8080
@@ -35,4 +32,4 @@ help:     ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: fmt fmt-check lint check test build bake-geodesic preview-geodesic serve help
+.PHONY: fmt fmt-check lint check test build bake-geodesic serve help

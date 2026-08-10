@@ -1290,3 +1290,56 @@ in [story-line.md](story-line.md).
      **Not yet verified**: whether the animation actually reads as smooth
      in the running game, same standing limitation as always — needs
      hooman to watch it.
+- **2026-08-10 — `LIVE_CELL_BASE_LIFT` (floor Z-fighting) then a
+  `depthWrite`-ordering bug (wall bleed-through) — both BUILT, same day,
+  in sequence.** Playing the smoothing feature above surfaced two new
+  visual complaints at once: "both wall-vs-cells and cells-vs-ground
+  (when fade into oblivion) are not too clean-looking." Traced separately
+  rather than assumed to share one cause.
+
+  **Floor coincidence.** Before continuous height interpolation existed, a
+  live block was always one of three fixed heights (never smaller than
+  `1.0`) or entirely absent, so reusing the floor's own `TILE_LIFT` for a
+  block's base was harmless — the two were never actually near each
+  other. A fading block's height now legitimately approaches `0`, at
+  which point a `TILE_LIFT`-based base becomes *exactly* coincident with
+  the floor mesh underneath it. `GeodesicMesh.LIVE_CELL_BASE_LIFT` gives
+  `buildLiveCells` its own dedicated base, a fixed distance from both the
+  floor and a wall's own base at every point during a fade.
+
+  **Wall bleed-through, asked directly** ("How should we address it? Make
+  the cell slightly smaller? Or otherwise? I'm not cultured on
+  rendering... dare I say mixmapping") **— diagnosed before touching
+  anything, not guessed at.** Read Heaps' own render-pipeline source
+  first: opaque-vs-alpha draw ordering is architecturally sound
+  (`h3d.scene.fwd.Renderer` always draws the opaque "default" pass before
+  the "alpha" pass, sorted back-to-front; `depthTest` defaults to `Less`
+  regardless of `depthWrite`) — so a solid wall occluding a live cell
+  was never actually broken. The real bug:
+  `h3d.mat.Material.set_blendMode`'s own `case Alpha` branch sets
+  `mainPass.depthWrite = true` as a side effect. Every alpha-blended
+  bucket in this renderer (live cells, dying cells, ghost walls) set
+  `depthWrite = false` *before* `blendMode = Alpha`, so the explicit
+  `false` was silently overwritten back to `true` at runtime — contrary
+  to what the code and its own doc comments claimed. With `depthWrite`
+  actually `true` on two alpha-blended things sharing the same
+  back-to-front alpha pass (a live cell and a ghost wall), whichever one
+  draws first in a given frame's distance sort wins the depth buffer
+  instead of blending, and that winner flips as the camera moves — "from
+  time to time," not a constant failure, matching exactly what was
+  reported. Fixed by reordering both statements everywhere the pattern
+  occurred (`GeodesicMesh.addLifecycleMesh`, `GeodesicMesh.build`'s own
+  ghost-mesh setup, `GeodesicConwayBiome.rebuildMesh`'s own).
+  "Make the cell smaller" (the user's own first guess) would not have
+  fixed this — the geometry was never overlapping in a way a smaller
+  footprint would prevent; the bug was a runtime property flag silently
+  reset by an unrelated line, invisible from reading the code alone.
+
+  Exit checks, deliberately not skipped given how easy this exact bug is
+  to silently reintroduce: `GeodesicMeshTest` now asserts every
+  alpha-blended mesh's own runtime `depthWrite` is `false`, for both the
+  live-cell and ghost-wall buckets — and the fix was verified to actually
+  matter by temporarily reverting it and confirming the new test fails,
+  not just written and trusted. `make fmt`/`lint`/`check`/`test` all
+  clean (38,477 assertions). **Not yet visually verified** in the running
+  game.

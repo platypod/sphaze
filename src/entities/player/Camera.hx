@@ -48,4 +48,36 @@ class Camera {
 		camera.up.load(viewUp);
 		camera.target.load(eyePos.add(viewForward));
 	}
+
+	/**
+		Places `camera` at a `CameraOverride`'s own `pos`/`target`/`up`
+		directly, no `PlayerModel` involved — the counterpart to `applyTo`
+		for whatever a `biomes.common.Biome.cameraOverride` hands back
+		(today: `tools.geodesic.GeodesicConwayBiome`'s zoomed-in pentagon
+		engraving). `GameLoop` calls this instead of `applyTo` exactly when
+		`cameraOverride` returned non-null.
+		@param camera the camera to position.
+		@param placement where to put it.
+	**/
+	public static function applyOverride(camera:h3d.Camera, placement:CameraOverride):Void {
+		camera.pos.load(placement.pos);
+		camera.up.load(placement.up);
+		camera.target.load(placement.target);
+	}
+}
+
+/**
+	A camera placement a biome computes for itself, bypassing the normal
+	`PlayerModel`-derived FPS view — see `biomes.common.Biome.cameraOverride`'s
+	own doc for when a biome returns one.
+**/
+typedef CameraOverride = {
+	/** World-space eye position. **/
+	pos:h3d.Vector,
+
+	/** World-space point the camera looks at. **/
+	target:h3d.Vector,
+
+	/** World-space "up" for the camera's own roll — must not be parallel to `target - pos`, or the view degenerates. **/
+	up:h3d.Vector,
 }

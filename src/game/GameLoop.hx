@@ -71,6 +71,17 @@ class GameLoop {
 	var mazeFileInput:js.html.InputElement;
 
 	/**
+		Whether `currentBiome.cameraOverride` returned non-null last frame —
+		compared each `fixedUpdate` against this frame's own reading so the
+		mouse mode switch (`window.mouseMode`) only fires on the actual
+		enter/exit transition, not every frame while editing. See
+		`keepWantingRelativeMouse`'s own doc for the other half of this.
+	**/
+	var editingEngraving:Bool = false;
+
+	final window:hxd.Window;
+
+	/**
 		@param s3d the 3D scene to build biomes and place the camera into.
 		@param s2d the 2D scene to build the debug overlay into.
 		@param engine the render engine, for the background color.
@@ -132,7 +143,7 @@ class GameLoop {
 		// of a position — the standard FPS mouse-look. Per hxd.Window's own
 		// doc, this only engages on the player's first click on the canvas
 		// (a browser requirement for pointer lock); nothing else to wire up.
-		var window = hxd.Window.getInstance();
+		window = hxd.Window.getInstance();
 		window.mouseMode = Relative(onMouseMove, true);
 		window.onMouseModeChange = keepWantingRelativeMouse;
 	}
@@ -140,7 +151,7 @@ class GameLoop {
 	/**
 		(Re)builds `id`'s meshes under `mazeGroup`, places its exit painting,
 		and spawns the player at its entry point — used at startup, when
-		importing a previously exported maze (see `exportMaze`/
+		importing a previously exported maze (see `Biome.serialize`/
 		`onMazeFileChosen`), and whenever a painting warps the player into
 		another biome (see `checkPaintingTrigger`).
 		@param id the `Biome.id()` to enter.
@@ -192,25 +203,6 @@ class GameLoop {
 		}
 	}
 
-	/**
-		Downloads the current biome's own state as a JSON file (E) — pairs
-		with L (`promptImportMaze`) to make a maze a specific bug showed up
-		in something that can actually be saved and handed back, instead of
-		lost the moment the page reloads. Works uniformly for whichever biome
-		is current (see `Biome.serialize`) — no biome-specific special case;
-		a stateless biome like the hub just downloads a trivial `"{}"`.
-	**/
-	function exportMaze():Void {
-		var json = currentBiome.serialize();
-		var blob = new js.html.Blob([json], {type: "application/json"});
-		var url:String = js.Syntax.code("URL.createObjectURL({0})", blob);
-		var anchor:js.html.AnchorElement = cast js.Browser.document.createElement("a");
-		anchor.href = url;
-		anchor.download = 'sphaze-${currentBiome.id()}.json';
-		anchor.click();
-		js.Syntax.code("URL.revokeObjectURL({0})", url);
-	}
-
 	/** Opens the browser's file picker (L) for `onMazeFileChosen` to load from. **/
 	function promptImportMaze():Void {
 		mazeFileInput.value = "";
@@ -249,11 +241,23 @@ class GameLoop {
 		lock — set to `Relative`, which is what makes the documented
 		"first click on the canvas re-captures the mouse" behavior kick in
 		again on the very next click.
+
+		**Made edit-mode-aware (2026-08-10).** While composing a pentagon
+		engraving (`editingEngraving`), `fixedUpdate` deliberately sets
+		`window.mouseMode` to `Absolute` itself, for real cursor
+		position/clicks (`Biome.onEditClick`). Left unguarded, this function
+		would immediately force that straight back to `Relative` the moment
+		the mode-change event fires — it now leaves `Absolute` alone while
+		editing, and `fixedUpdate` restores `Relative` itself on exit rather
+		than relying on this function to notice.
 		@param from the mouse mode being changed away from.
 		@param to the mouse mode being forced to.
 		@return the mouse mode to actually use instead of `to`, or null to accept it as-is.
 	**/
 	function keepWantingRelativeMouse(from:hxd.impl.MouseMode, to:hxd.impl.MouseMode):Null<hxd.impl.MouseMode> {
+		if (editingEngraving) {
+			return null; // let Absolute stick while composing a pentagon engraving - fixedUpdate restores Relative itself on exit, see this function's own doc
+		}
 		return switch to {
 			case Absolute: Relative(onMouseMove, true);
 			case other: null;
@@ -278,10 +282,73 @@ class GameLoop {
 		currentBiome.tick(player, dt);
 		var scaledDt = dt * biomeRegistry.globalTimeScale();
 
-		// Reading keys and calling PlayerModel methods directly here is a
-		// placeholder — fine for one input source and one entity, but a
-		// dedicated input/controller system is the right home for this once
-		// there's more than a single player to drive.
+		// Non-null exactly while the current biome is showing something
+		// other than the ordinary FPS view (today: GeodesicConwayBiome's
+		// zoomed-in pentagon engraving) — see Biome.cameraOverride's own
+		// doc. Read once per frame, both for the camera itself (below) and
+		// as the "is input capture in effect right now" signal that gates
+		// normal movement/turning and the mouse mode switch.
+		var cameraView = currentBiome.cameraOverride(player);
+		var editing = cameraView != null;
+		if (editing != editingEngraving) {
+			// Transition only, not every frame — see keepWantingRelativeMouse's
+			// own doc for why entering has to bypass it, and why exiting
+			// restores Relative directly rather than leaving that function
+			// to notice on its own.
+			window.mouseMode = editing ? Absolute : Relative(onMouseMove, true);
+			editingEngraving = editing;
+		}
+
+		if (editing) {
+			if (hxd.Key.isPressed(hxd.Key.MOUSE_LEFT)) {
+				currentBiome.onEditClick(s3d.camera.rayFromScreen(window.mouseX, window.mouseY));
+			}
+		} else {
+			handleMovement(scaledDt);
+		}
+
+		// INTERACT works whether editing or not — it's how GeodesicConwayBiome
+		// itself enters *and* exits the engraving (see Biome.interact's own
+		// doc); every other biome's own no-op implementation makes this
+		// unconditional read harmless while editing is impossible anyway.
+		if (hxd.Key.isPressed(Keybinds.INTERACT)) {
+			currentBiome.interact(player);
+		}
+
+		if (cameraView != null) {
+			Camera.applyOverride(s3d.camera, cameraView);
+		} else {
+			Camera.applyTo(s3d.camera, player);
+		}
+
+		if (hxd.Key.isPressed(Keybinds.TOGGLE_DEBUG_OVERLAY)) {
+			debugOverlayVisible = !debugOverlayVisible;
+			debugOverlay.visible = debugOverlayVisible;
+		}
+		if (debugOverlayVisible) {
+			updateDebugOverlay();
+		}
+
+		if (hxd.Key.isPressed(Keybinds.IMPORT_MAZE)) {
+			promptImportMaze();
+		}
+		if (hxd.Key.isPressed(Keybinds.CAPTURE_SCREENSHOT)) {
+			captureRequested = true;
+		}
+	}
+
+	/**
+		Turning/movement/jump/gravity/paintings — split out of `fixedUpdate`
+		(2026-08-10) purely to keep that method's own branching readable once
+		it grew a second, mutually-exclusive mode (editing a pentagon
+		engraving); no behavior change from when this lived inline. Reading
+		keys and calling `PlayerModel` methods directly here is still a
+		placeholder — fine for one input source and one entity, but a
+		dedicated input/controller system is the right home for this once
+		there's more than a single player to drive.
+		@param scaledDt this frame's own `dt`, already multiplied by `biomeRegistry.globalTimeScale()`.
+	**/
+	function handleMovement(scaledDt:Float):Void {
 		if (hxd.Key.isDown(Keybinds.TURN_LEFT)) {
 			player.turn(-TURN_SPEED * scaledDt);
 		}
@@ -318,34 +385,7 @@ class GameLoop {
 			player.jump(JUMP_IMPULSE);
 		}
 		currentBiome.applyGravity(player, scaledDt);
-
-		if (hxd.Key.isPressed(Keybinds.INTERACT)) {
-			currentBiome.interact(player);
-		}
-
 		checkPaintingTrigger();
-
-		Camera.applyTo(s3d.camera, player);
-
-		if (hxd.Key.isPressed(Keybinds.TOGGLE_DEBUG_OVERLAY)) {
-			debugOverlayVisible = !debugOverlayVisible;
-			debugOverlay.visible = debugOverlayVisible;
-		}
-		if (debugOverlayVisible) {
-			updateDebugOverlay();
-		}
-
-		// E/L now work uniformly for whichever biome is current (see
-		// exportMaze/onMazeFileChosen's own docs) — no biome-specific gate.
-		if (hxd.Key.isPressed(Keybinds.EXPORT_MAZE)) {
-			exportMaze();
-		}
-		if (hxd.Key.isPressed(Keybinds.IMPORT_MAZE)) {
-			promptImportMaze();
-		}
-		if (hxd.Key.isPressed(Keybinds.CAPTURE_SCREENSHOT)) {
-			captureRequested = true;
-		}
 	}
 
 	/**
@@ -362,8 +402,9 @@ class GameLoop {
 		anywhere else — `fixedUpdate`, an event handler — reads back blank. Hence
 		the request/serve split rather than capturing where the key is read.
 
-		Reuses `exportMaze`'s own anchor-download trick, for the same reason it
-		exists there: a browser page can't write a file any other way.
+		Uses the same anchor-download trick `Biome.serialize`'s own dev tool
+		used before it was unbound from E (see `Keybinds.INTERACT`'s own
+		doc) — a browser page can't write a file any other way.
 	**/
 	public function captureIfRequested():Void {
 		if (!captureRequested) {

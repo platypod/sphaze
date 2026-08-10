@@ -101,6 +101,12 @@ private class StubBiome implements Biome {
 
 	public function interact(player:PlayerModel):Void {}
 
+	public function cameraOverride(player:PlayerModel):Null<entities.player.Camera.CameraOverride> {
+		return null;
+	}
+
+	public function onEditClick(ray:h3d.col.Ray):Void {}
+
 	public function backgroundColor():Int {
 		return 0x202020;
 	}

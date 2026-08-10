@@ -1,6 +1,7 @@
 package biomes.common;
 
 import entities.player.PlayerModel;
+import entities.player.Camera.CameraOverride;
 import entities.painting.PaintingModel;
 
 /**
@@ -113,6 +114,38 @@ interface Biome {
 	function interact(player:PlayerModel):Void;
 
 	/**
+		An override for where the camera sits and looks this frame, in place
+		of the normal first-person placement `entities.player.Camera.applyTo`
+		would otherwise compute from the player alone. Non-null exactly while
+		this biome is showing something other than the ordinary FPS view —
+		today, only `tools.geodesic.GeodesicConwayBiome`'s zoomed-in pentagon
+		engraving. `GameLoop` also reads non-null here as "this biome is
+		capturing input right now": normal movement/turning is suspended and
+		the mouse switches out of pointer-lock, for as long as this keeps
+		returning non-null (see `GameLoop.fixedUpdate`'s own doc).
+
+		Part of the contract rather than a downcast in `GameLoop`, for the
+		same reason `interact` is (see this interface's own class doc). A
+		biome with nothing of the sort returns null, unconditionally — same
+		discipline as `interact` for a biome with nothing to act on.
+		@param player the current player, in case the override is computed relative to them.
+		@return a camera placement to use instead of the normal one, or null to use the normal one.
+	**/
+	function cameraOverride(player:PlayerModel):Null<CameraOverride>;
+
+	/**
+		The player clicked while `cameraOverride` was non-null — `GameLoop`
+		only ever calls this then, with the click already unprojected into a
+		world-space ray through whichever camera `cameraOverride` had in
+		effect. A biome with no click-driven editing (every biome except
+		whichever one owns the current `cameraOverride`) is a no-op, same
+		discipline as `interact`/`tick` for a biome with nothing of their own
+		kind either.
+		@param ray the click's own world-space ray, from the overridden camera's eye through the clicked pixel.
+	**/
+	function onEditClick(ray:h3d.col.Ray):Void;
+
+	/**
 		This biome's own contribution to the game's overall game-speed
 		multiplier — `1` for every biome except the hub, whose own
 		hourglass can push it up or down (see `entities.hourglass.HourglassModel`).
@@ -131,11 +164,20 @@ interface Biome {
 	function timeScale():Float;
 
 	/**
-		This biome's own state as a JSON string, for `GameLoop`'s E (export) dev
-		tool — part of the contract rather than something `GameLoop` reaches for
-		via a type-specific downcast, so a future stateful biome doesn't need
-		its own special case there. A biome with nothing worth saving (e.g.
-		the hub) can just return `"{}"`.
+		This biome's own state as a JSON string — the counterpart `restore`
+		reads back for `GameLoop`'s L (import) dev tool. Part of the contract
+		rather than something `GameLoop` reaches for via a type-specific
+		downcast, so a future stateful biome doesn't need its own special
+		case there. A biome with nothing worth saving (e.g. the hub) can just
+		return `"{}"`.
+
+		**Currently unreachable from a keybind.** `GameLoop` used to expose
+		this via E as a matching export dev tool; E was freed for the
+		pentagon-engraving interaction instead (see `docs/PROJECT_LOG.md`'s
+		2026-08-10 entry) and nothing rebinds export elsewhere yet. Every
+		implementation is left as-is rather than deleted — `restore`/import
+		still depends on the same format, and a future export key just needs
+		to call this again.
 		@return this biome's state as JSON.
 	**/
 	function serialize():String;

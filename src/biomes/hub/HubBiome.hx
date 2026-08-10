@@ -192,6 +192,14 @@ class HubBiome implements Biome {
 	/** Nothing to interact with here — see `biomes.common.Biome.interact`'s own doc. **/
 	public function interact(player:PlayerModel):Void {}
 
+	/** No camera override here — see `biomes.common.Biome.cameraOverride`'s own doc. **/
+	public function cameraOverride(player:PlayerModel):Null<entities.player.Camera.CameraOverride> {
+		return null;
+	}
+
+	/** Nothing to click on here — see `biomes.common.Biome.onEditClick`'s own doc. **/
+	public function onEditClick(ray:h3d.col.Ray):Void {}
+
 	/** The hourglass's own current game-speed multiplier — see `HourglassModel.timeScale`'s own doc. **/
 	public function timeScale():Float {
 		return hourglassModel.timeScale();

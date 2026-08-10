@@ -8,6 +8,7 @@ import biomes.common.space.sphere.SphereMath;
 import biomes.conway.ConwayBiome;
 import biomes.hub.HubBiome;
 import entities.painting.PaintingModel;
+import entities.player.Camera.CameraOverride;
 import entities.player.PlayerModel;
 import graphics.Colours;
 import graphics.shaders.ConwayWallGlow;
@@ -123,6 +124,32 @@ import tools.geodesic.Vec3.Vec3Math;
 	travel on its own), the Ventrella state, `generation` (so a restored
 	save's spawn sites stay on the same clock rather than resetting to
 	phase `0`), and the tick accumulator.
+
+	**Pentagon composing (2026-08-10).** Player-authored counterpart to
+	`gliderSpawner`'s own ambient shape — see `GeodesicPentagonEngraving`'s
+	own doc for the full mechanic and `docs/game-design/ideas-backlog.md`'s
+	"Deliberate pentagon activation" entry for the design conversation
+	behind it. `interact` toggles `editingPentagon` on/off (entering only
+	from a pentagon node itself, per `fineLookup.nodeAt`); `cameraOverride`
+	dollies the camera in toward it while editing, which is also what
+	`GameLoop` reads to suspend normal movement/turning and switch the
+	mouse out of pointer-lock for clicking; `onEditClick` resolves a click's
+	own ray against the sphere analytically (`h3d.col.Sphere.rayIntersection`)
+	and toggles whichever footprint cell it lands on. `engraving.tickAll`
+	runs every `tick` unconditionally — a composed pentagon keeps
+	restamping itself onto the live board whether or not the player is
+	currently there, deliberately, so it acts as a sustaining source rather
+	than a one-shot seed. `accumulator`'s own `while` loop (the
+	simulation's real generation-advance) is skipped entirely while
+	`editingPentagon != null`, so composing a pattern happens against a
+	frozen board — the "freeze while zoomed in" the design conversation
+	asked for; `engraving.tickAll`'s own restamp clock is unaffected by
+	that freeze (it runs on real ticks, not generations), so a pentagon's
+	pattern still restamps on schedule even while another pentagon is
+	being edited. Not yet persisted across `serialize`/`restore` — an open
+	gap, not a considered omission; a composed pattern is currently lost on
+	reload the same way `gliderSpawner`'s sites *aren't* (those are a pure
+	function of the sphere, this is genuine player state).
 **/
 class GeodesicConwayBiome implements Biome {
 	static inline final RESOURCE_PATH:String = "geodesic/conway-sphere.json";
@@ -133,6 +160,16 @@ class GeodesicConwayBiome implements Biome {
 	static inline final STEP_INTERVAL:Float = 0.75;
 	static inline final EXIT_ARC_OFFSET:Float = 16;
 	static inline final SPAWN_FACING:Float = 0.0;
+
+	/**
+		How far above a pentagon's own world position the dollied-in
+		composing camera sits — close enough to read individual footprint
+		cells clearly, far enough to see the whole 6-cell footprint at once.
+		Untuned — a reasonable first guess against `GeodesicMesh.RADIUS`
+		(`174`), not a measured value against real cell spacing; revisit
+		after playing.
+	**/
+	static inline final ENGRAVING_VIEW_HEIGHT:Float = 30;
 
 	var fineSphere:GeodesicSphereData;
 	var fineBoundaries:Array<Array<Vec3>>;
@@ -158,6 +195,17 @@ class GeodesicConwayBiome implements Biome {
 	var container:Null<h3d.scene.Object>;
 	var liveCellsContainer:Null<h3d.scene.Object>;
 
+	/** Player-composed patterns at each pentagon — see this class's own "Pentagon composing" doc and `GeodesicPentagonEngraving`'s own class doc. **/
+	var engraving:GeodesicPentagonEngraving;
+
+	/** Which pentagon (a node id) the player is currently composing at, or null while playing normally — the sole source of truth `cameraOverride`/`onEditClick`/`tick`'s own freeze all read. **/
+	var editingPentagon:Null<Int> = null;
+
+	/** The composing camera's own screen-up while `editingPentagon != null` — the player's own facing at the moment they entered, projected into the pentagon's tangent plane, captured once on entry so the zoomed view doesn't spin freely. **/
+	var engravingViewUp:h3d.Vector;
+
+	var engravingContainer:Null<h3d.scene.Object>;
+
 	public function new() {
 		var loaded = GeodesicSphere.fromJson(hxd.Res.load(RESOURCE_PATH).toText());
 		fineSphere = loaded.sphere;
@@ -177,6 +225,9 @@ class GeodesicConwayBiome implements Biome {
 		state = new GeodesicVentrellaState(fineSphere, GeodesicVentrellaRules.SPHERE_CA);
 		gliderSpawner = new GeodesicVentrellaGliderSpawner(fineSphere);
 		gliderSpawner.tick(state, generation);
+		engraving = new GeodesicPentagonEngraving(fineSphere);
+		engravingViewUp = new h3d.Vector(0, 0,
+			1); // placeholder — always overwritten by interact() before editingPentagon (and so cameraOverride) is ever non-null
 		currentStages = GeodesicLifecycle.stagesOf(state, fineSphere);
 		previousStages = currentStages; // nothing to fade in from on first load
 
@@ -204,6 +255,7 @@ class GeodesicConwayBiome implements Biome {
 		rebuildMesh();
 		liveCellsContainer = new h3d.scene.Object(parent);
 		rebuildLiveCells();
+		engravingContainer = new h3d.scene.Object(parent);
 	}
 
 	public function spawnPlayer(returning:Bool, fromBiomeId:Null<String>):PlayerModel {
@@ -237,31 +289,98 @@ class GeodesicConwayBiome implements Biome {
 	}
 
 	public function tick(player:PlayerModel, dt:Float):Void {
-		accumulator += dt;
-		var stepped = false;
-		while (accumulator >= STEP_INTERVAL) {
-			accumulator -= STEP_INTERVAL;
-			state.step(noRandomBirths); // no ambient soup — MUTATION_RATE would otherwise sprout stray life anywhere on the board, not just at gliderSpawner's own launch sites
-			generation++;
-			gliderSpawner.tick(state, generation);
-			var edgeActivityOf = GeodesicCoarseMaze.boundaryActivity(state, boundaryEdges, fineToCoarse);
-			var playerFineNode = fineLookup.nodeAt(toVec3(player.pos));
-			var playerCoarseNode = fineToCoarse[playerFineNode];
-			coarseReactivity.step(coarseLayout, edgeActivityOf, playerCoarseNode);
-			previousStages = currentStages;
-			currentStages = GeodesicLifecycle.stagesOf(state, fineSphere);
-			stepped = true;
+		// The simulation's own generation-advance is skipped entirely while
+		// composing — the "freeze while zoomed in" this class's own
+		// "Pentagon composing" doc describes. engraving.tickAll below is
+		// deliberately NOT inside this guard: a pentagon's own restamp
+		// clock runs on real ticks, not generations, so an already-composed
+		// pattern keeps reasserting itself on schedule even while the
+		// player is off editing a different (or no) pentagon.
+		if (editingPentagon == null) {
+			accumulator += dt;
+			var stepped = false;
+			while (accumulator >= STEP_INTERVAL) {
+				accumulator -= STEP_INTERVAL;
+				state.step(noRandomBirths); // no ambient soup — MUTATION_RATE would otherwise sprout stray life anywhere on the board, not just at gliderSpawner's own launch sites
+				generation++;
+				gliderSpawner.tick(state, generation);
+				var edgeActivityOf = GeodesicCoarseMaze.boundaryActivity(state, boundaryEdges, fineToCoarse);
+				var playerFineNode = fineLookup.nodeAt(toVec3(player.pos));
+				var playerCoarseNode = fineToCoarse[playerFineNode];
+				coarseReactivity.step(coarseLayout, edgeActivityOf, playerCoarseNode);
+				previousStages = currentStages;
+				currentStages = GeodesicLifecycle.stagesOf(state, fineSphere);
+				stepped = true;
+			}
+			if (stepped && container != null) {
+				container.removeChildren();
+				rebuildMesh();
+			}
 		}
-		if (stepped && container != null) {
-			container.removeChildren();
-			rebuildMesh();
-		}
+		engraving.tickAll(state);
 		// every call, not just when stepped — this is what actually animates: accumulator keeps moving between generation boundaries even on frames that don't cross STEP_INTERVAL
 		rebuildLiveCells();
 	}
 
-	/** Nothing to interact with here — see `biomes.common.Biome.interact`'s own doc. **/
-	public function interact(player:PlayerModel):Void {}
+	/**
+		Enters or exits the pentagon-composing engraving — see this class's
+		own "Pentagon composing" doc. Entering only works while standing
+		exactly on a pentagon node (`fineSphere.neighbors[nodeId].length == 5`);
+		standing anywhere else, or already editing, this only ever exits.
+	**/
+	public function interact(player:PlayerModel):Void {
+		if (editingPentagon != null) {
+			exitEngraving();
+			return;
+		}
+		var nodeId = fineLookup.nodeAt(toVec3(player.pos));
+		if (fineSphere.neighbors[nodeId].length != 5) {
+			return; // not standing on a pentagon — nothing to enter
+		}
+		editingPentagon = nodeId;
+		var up = worldPositionOf(nodeId).normalized();
+		engravingViewUp = tangentProject(player.forward, up);
+		rebuildEngraving();
+	}
+
+	/** See `biomes.common.Biome.cameraOverride`'s own doc — non-null exactly while composing, dollied in toward `editingPentagon`'s own world position. **/
+	public function cameraOverride(player:PlayerModel):Null<CameraOverride> {
+		var pentagonId = editingPentagon;
+		if (pentagonId == null) {
+			return null;
+		}
+		var center = worldPositionOf(pentagonId);
+		var eyePos = center.add(center.normalized().scaled(ENGRAVING_VIEW_HEIGHT));
+		return {pos: eyePos, target: center, up: engravingViewUp};
+	}
+
+	/**
+		See `biomes.common.Biome.onEditClick`'s own doc. Resolves `ray`
+		against the sphere itself (`h3d.col.Sphere.rayIntersection`, exact
+		for a sphere — no need for the mesh-based picking a less regular
+		surface would require), then whichever fine node is nearest the hit
+		point (`fineLookup.nodeAt`, the same lookup collision/gravity
+		already use for "which cell is a world point in"). A miss, or a hit
+		outside the pentagon's own footprint, is silently ignored — not
+		every click lands on the engraving.
+	**/
+	public function onEditClick(ray:h3d.col.Ray):Void {
+		var pentagonId = editingPentagon;
+		if (pentagonId == null) {
+			return;
+		}
+		var t = new h3d.col.Sphere(0, 0, 0, GeodesicMesh.RADIUS).rayIntersection(ray, true);
+		if (t < 0) {
+			return;
+		}
+		var hit = ray.getPoint(t);
+		var nodeId = fineLookup.nodeAt(Vec3Math.make(hit.x, hit.y, hit.z));
+		if (!engraving.isInFootprint(pentagonId, nodeId)) {
+			return;
+		}
+		engraving.toggle(pentagonId, nodeId);
+		rebuildEngraving();
+	}
 
 	public function timeScale():Float {
 		return 1;
@@ -373,6 +492,30 @@ class GeodesicConwayBiome implements Biome {
 		}
 		parent.removeChildren();
 		GeodesicMesh.buildLiveCells(parent, fineSphere, fineBoundaries, previousStages, currentStages, accumulator / STEP_INTERVAL);
+	}
+
+	/** Clears `editingPentagon` and the engraving mesh — the exit half of `interact`'s own toggle. **/
+	function exitEngraving():Void {
+		editingPentagon = null;
+		if (engravingContainer != null) {
+			engravingContainer.removeChildren();
+		}
+	}
+
+	/** Rebuilds the engraving mesh for `editingPentagon`'s own footprint — called on entry and after every toggle, since a footprint is only 6 cells (cheap regardless of cadence, same reasoning `rebuildMesh` already leans on for the much larger floor/wall mesh). A no-op if not currently editing (defensive; every call site already guards on `editingPentagon != null` itself). **/
+	function rebuildEngraving():Void {
+		var parent = engravingContainer;
+		var pentagonId = editingPentagon;
+		if (parent == null || pentagonId == null) {
+			return;
+		}
+		parent.removeChildren();
+		GeodesicMesh.buildEngraving(parent, fineBoundaries, engraving.footprintOf(pentagonId), (nodeId) -> engraving.stateAt(pentagonId, nodeId));
+	}
+
+	/** The unit component of `vector` lying in the tangent plane at `up` — `vector`'s own radial component (along `up`) discarded. Used once, to capture the composing camera's own screen-up from the player's facing at the moment they enter (see `interact`'s own doc) — the same projection `GeodesicMesh.tangentDirection` performs internally for its own (unrelated) wall-orientation purpose, duplicated here rather than shared since that one is private to a different class and takes a "toward a neighbor" pair rather than an arbitrary vector. **/
+	static function tangentProject(vector:h3d.Vector, up:h3d.Vector):h3d.Vector {
+		return vector.sub(up.scaled(vector.dot(up))).normalized();
 	}
 
 	/** Always above `GeodesicVentrellaState.MUTATION_RATE` — passed to `state.step` so the only cells ever alive are ones `gliderSpawner`'s own launch sites put there, or that the rule's own subrules grow from those, never a random mutation flip. **/

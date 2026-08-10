@@ -119,6 +119,18 @@ class GeodesicMesh {
 	/** See `biomes.conway.ConwayMesh.LIVE_BLOCK_OPACITY`'s own doc. **/
 	static inline final LIVE_BLOCK_OPACITY:Float = 0.25;
 
+	/**
+		`buildEngraving`'s own lift for a footprint cell's panel — clear of
+		`TILE_LIFT`/`WALL_BASE_LIFT`/`LIVE_CELL_BASE_LIFT` (all under `0.1`)
+		by a wide margin, so the engraving reads as its own layer sitting
+		above the ordinary floor rather than z-fighting with it. Untuned —
+		a reasonable first guess, not a measured value.
+	**/
+	static inline final ENGRAVING_LIFT:Float = 0.5;
+
+	/** How dim an "off" engraved cell is relative to `Colours.CONWAY_WALL_GLOW` — dim enough to read as inactive next to an "on" cell's full-brightness `Colours.CONWAY_TILE_GLIDER`, bright enough to still show the footprint's own outline. Untuned — a reasonable first guess. **/
+	static inline final ENGRAVING_OFF_BRIGHTNESS:Float = 0.35;
+
 	/** See `biomes.conway.ConwayMesh.GHOST_WALL_OPACITY`'s own doc. Public: `GeodesicPreview`'s own coarse-wall prototype reuses this exact value for its own ghost bucket. **/
 	public static inline final GHOST_WALL_OPACITY:Float = 0.15;
 
@@ -266,6 +278,41 @@ class GeodesicMesh {
 
 		addLifecycleMesh(parent, alivePoints, aliveIdx, scaledColor(Colours.CONWAY_TILE_LIVE, GeodesicLifecycle.ALIVE_BRIGHTNESS));
 		addLifecycleMesh(parent, dyingPoints, dyingIdx, scaledColor(Colours.CONWAY_TILE_LIVE, GeodesicLifecycle.DYING_BRIGHTNESS));
+	}
+
+	/**
+		Draws the pentagon-composing engraving's own footprint: one flat
+		panel per footprint cell, full-brightness `Colours.CONWAY_TILE_GLIDER`
+		where the composed pattern is on, dimmed `Colours.CONWAY_WALL_GLOW`
+		where it's off — see `GeodesicPentagonEngraving`'s own doc for the
+		pattern data behind `stateAt`. Rebuilt wholesale on every toggle and
+		on enter/exit (same "removeChildren then rebuild from scratch"
+		discipline `GeodesicConwayBiome.rebuildMesh` already uses for the
+		floor/walls) — a footprint is only 6 cells, cheap regardless of
+		cadence.
+		@param parent the scene node to attach the engraving mesh under.
+		@param boundaries every node's own cell polygon, `GeodesicDual.cellBoundaries(sphere)`.
+		@param footprint the pentagon's own editable footprint, `GeodesicPentagonEngraving.footprintOf`.
+		@param stateAt reads a footprint node's own composed state (`0`/`1`) — a plain function rather than the engraving instance itself, so this class doesn't need to depend on `GeodesicPentagonEngraving`'s own type.
+	**/
+	public static function buildEngraving(parent:h3d.scene.Object, boundaries:Array<Array<Vec3>>, footprint:Array<Int>, stateAt:Int->Int):Void {
+		var onPoints:Array<h3d.Vector> = [];
+		var onIdx = new hxd.IndexBuffer();
+		var offPoints:Array<h3d.Vector> = [];
+		var offIdx = new hxd.IndexBuffer();
+
+		for (nodeId in footprint) {
+			var boundary = [for (p in boundaries[nodeId]) lift(p, ENGRAVING_LIFT)];
+			var hub = centroidOf(boundary);
+			if (stateAt(nodeId) != 0) {
+				addFan(onPoints, onIdx, hub, boundary);
+			} else {
+				addFan(offPoints, offIdx, hub, boundary);
+			}
+		}
+
+		addFloorMesh(parent, onPoints, onIdx, Colours.CONWAY_TILE_GLIDER);
+		addFloorMesh(parent, offPoints, offIdx, scaledColor(Colours.CONWAY_WALL_GLOW, ENGRAVING_OFF_BRIGHTNESS));
 	}
 
 	/** See `biomes.conway.ConwayMesh.addEdge`'s own doc — same three-way routing (closed/ghost/bare corridor), just addressed by node id and sourced from `GeodesicDual.sharedEdge` instead of a `(theta, phi)` corner formula, and collecting a raw `WallSegment` for `GeodesicWallSimplifier` rather than emitting a quad directly. **/

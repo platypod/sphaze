@@ -18,8 +18,9 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 	class drives the *ambient* traveling-glider mechanic (a fixed shape,
 	reseeded from a hexagon anchor near a pentagon, on its own clock).
 	This class is the *player-authored* counterpart: an arbitrary pattern,
-	anchored directly on a pentagon and its own 1-ring, that only exists
-	where the player has actually composed one.
+	anchored directly on a pentagon and its own `FOOTPRINT_RADIUS`-hop
+	neighborhood, that only exists where the player has actually composed
+	one.
 **/
 class GeodesicPentagonEngraving {
 	/**
@@ -31,9 +32,24 @@ class GeodesicPentagonEngraving {
 	**/
 	public static inline final RESTAMP_INTERVAL_TICKS:Int = 20;
 
+	/**
+		How many hops out from a pentagon its own editable footprint
+		reaches — widened from `1` to `3` (2026-08-10, asked directly: "a
+		wider range of config, say, three cells radius"). Safe against
+		overlapping a neighboring pentagon's own footprint: the checked-in
+		sphere is baked at frequency `11`
+		(`docs/game-design/design-decisions-records.md`'s own "Geodesic
+		sphere for Conway" entry), so the *closest* two pentagons — which
+		are always icosahedron vertices, and only ever share a subdivided
+		icosahedral edge — are `11` hops apart, more than three times
+		`2 * FOOTPRINT_RADIUS` (`6`). Untuned as a *size* otherwise — "three
+		cells" was the ask, not a measured value.
+	**/
+	public static inline final FOOTPRINT_RADIUS:Int = 3;
+
 	final sphere:GeodesicSphereData;
 
-	/** Every pentagon's own editable footprint (itself plus its 1-ring), computed once — see `footprintOf`'s own doc for why 1-ring and not wider. **/
+	/** Every pentagon's own editable footprint (itself plus every node within `FOOTPRINT_RADIUS` hops), computed once — see `footprintOf`'s own doc. **/
 	final footprints:Map<Int, Array<Int>>;
 
 	/** Per pentagon, the composed pattern: node id → desired state. A node absent here reads as `0` (off) — see `stateAt`. Only pentagons the player has actually touched get an entry at all. **/
@@ -50,14 +66,10 @@ class GeodesicPentagonEngraving {
 	}
 
 	/**
-		A pentagon's own editable neighborhood: itself plus its 1-ring (6
-		nodes total, since every pentagon has exactly 5 neighbors). Kept to
-		1-ring rather than wider — a bigger footprint would let one
-		pentagon's own composed pattern overlap a neighboring pentagon's,
-		which `restamp`'s "overwrite exactly" semantics would then fight
-		over; 1-ring keeps every pentagon's own footprint disjoint from
-		every other's (the sphere's pentagons are never adjacent to each
-		other — see `GeodesicSphere`'s own icosahedral-subdivision doc).
+		A pentagon's own editable neighborhood: itself plus every node
+		reachable within `FOOTPRINT_RADIUS` hops — see that constant's own
+		doc for why a footprint this wide still can't overlap a
+		neighboring pentagon's.
 		@param pentagonId a pentagon's own node id.
 		@return that pentagon's own footprint, pentagon first, computed once and cached.
 	**/
@@ -66,9 +78,44 @@ class GeodesicPentagonEngraving {
 		if (existing != null) {
 			return existing;
 		}
-		var footprint = [pentagonId].concat(sphere.neighbors[pentagonId]);
+		var footprint = hopNeighborhoodOf(pentagonId, FOOTPRINT_RADIUS);
 		footprints.set(pentagonId, footprint);
 		return footprint;
+	}
+
+	/**
+		Every node within `radius` hops of `origin` (inclusive, `origin`
+		itself first), by breadth-first search over `sphere.neighbors` — no
+		ring/radius helper existed anywhere in `tools.geodesic` before this
+		(confirmed by search across the whole package: every existing
+		"nearby nodes" need, e.g. `GeodesicVentrellaGliderPattern`'s own
+		`stepToward`, walks a fixed handful of hand-specified hops rather
+		than collecting a general neighborhood), so this is a small one of
+		its own rather than a reuse.
+		@param origin the node to search outward from.
+		@param radius how many hops out to include.
+		@return every node within `radius` hops, `origin` first, in BFS discovery order.
+	**/
+	function hopNeighborhoodOf(origin:Int, radius:Int):Array<Int> {
+		var visited = new Map<Int, Bool>();
+		visited.set(origin, true);
+		var order = [origin];
+		var frontier = [origin];
+		for (_ in 0...radius) {
+			var nextFrontier = [];
+			for (nodeId in frontier) {
+				for (neighbor in sphere.neighbors[nodeId]) {
+					if (visited.exists(neighbor)) {
+						continue;
+					}
+					visited.set(neighbor, true);
+					order.push(neighbor);
+					nextFrontier.push(neighbor);
+				}
+			}
+			frontier = nextFrontier;
+		}
+		return order;
 	}
 
 	/** Whether `nodeId` is inside `pentagonId`'s own editable footprint — what `GeodesicConwayBiome.onEditClick` gates a toggle on, so a click doesn't reach past the engraving's own edge. **/

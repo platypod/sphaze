@@ -1301,3 +1301,26 @@ starts from its own persisted pattern (`GeodesicPentagonEngraving.patterns`
 is never cleared on exit), blank only the first time a given pentagon
 is touched — asked about directly, already the existing behavior once
 the click-resolution bug above stopped masking it.
+
+## 2026-08-10 — Widened the pentagon footprint to 3 hops
+
+Asked directly, now that composing actually worked end to end: "a wider
+range of config, say, three cells radius." `GeodesicPentagonEngraving`'s
+1-ring footprint (`[pentagonId].concat(sphere.neighbors[pentagonId])`,
+6 nodes) becomes a real BFS, new `FOOTPRINT_RADIUS = 3` and
+`hopNeighborhoodOf` — no ring/radius helper existed anywhere in
+`tools.geodesic` before this (checked across the whole package;
+`GeodesicVentrellaGliderPattern`'s own `stepToward` walks a fixed
+handful of hand-specified hops, not a general neighborhood), so it's a
+small BFS of its own.
+
+The 1-ring choice's own doc had argued disjointness from neighboring
+pentagons' footprints as the reason to stay narrow — worth actually
+checking before widening past it, rather than assuming three hops was
+still safe. Wrote a one-off Python BFS over the checked-in baked sphere
+(`res/geodesic/conway-sphere.json`) rather than trust the "frequency
+11" figure by itself: confirmed the *closest* two of the 12 pentagons
+are exactly `11` hops apart, more than three times `2 *
+FOOTPRINT_RADIUS` (`6`) — three hops has real headroom before two
+pentagons' own footprints could ever touch. `make fmt lint check test`
+clean.

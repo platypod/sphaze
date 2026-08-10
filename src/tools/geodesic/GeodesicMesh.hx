@@ -454,13 +454,23 @@ class GeodesicMesh {
 		perpendicular to *its own* length, so two segments meeting at a
 		junction generally don't share a common thickness direction; their
 		own front/back faces simply don't line up there, leaving a gap clean
-		through the slab rather than a mitered joint. Actually mitering each
-		pair (angle-dependent, and a junction can have three segments meeting
-		at once around a hex/pentagon corner) is real work for what's a
-		cosmetic seam; a small sealed post at every such point, sized to
-		fully cover `WALL_THICKNESS` in *any* tangential direction regardless
-		of the angle(s) involved, closes it without needing to know that
-		angle at all.
+		through the slab rather than a mitered joint.
+
+		**A hexagonal pillar, not a square post (2026-08-10, same day,
+		second revision) — the square one worked but looked wrong, asked
+		directly to replace it.** Every dual vertex on this mesh is the
+		circumcenter of exactly one triangle, so at most 3 wall segments
+		ever meet at one — spaced roughly 120° apart by construction, the
+		same reason a honeycomb's own vertices are 3-valent. A regular
+		hexagon's own faces sit 60° apart, so orienting one face to square
+		up with any *one* of those segments' own departure directions lands
+		roughly every *other* face on the others too, letting each wall meet
+		its own face close to head-on ("only orthogonal contacts") instead
+		of at a corner. `POST_RADIUS` is chosen so a face lands exactly
+		`WALL_THICKNESS` wide at that alignment, flush with the wall's own
+		edges rather than over- or under-covering it — exact when the real
+		angle is exactly 120° (true away from the 12 pentagons), a close
+		approximation near them.
 
 		A "junction" here is any point shared by 2+ segments in `segments`
 		*by floating-point proximity*, not exact equality — the same
@@ -479,53 +489,96 @@ class GeodesicMesh {
 	**/
 	static function addJunctionPosts(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>,
 			segments:Array<WallSegment>):Void {
-		var junctions = new Map<String, {point:Vec3, count:Int, activity:Float}>();
+		var junctions = new Map<String, Junction>();
 		for (segment in segments) {
-			accumulateJunction(junctions, segment.a, segment.activity);
-			accumulateJunction(junctions, segment.b, segment.activity);
+			accumulateJunction(junctions, segment.a, segment.b, segment.activity);
+			accumulateJunction(junctions, segment.b, segment.a, segment.activity);
 		}
 		for (junction in junctions) {
 			if (junction.count >= 2) {
-				addPost(points, idx, uvs, activityOut, junction.point, junction.activity);
+				addJunctionPost(points, idx, uvs, activityOut, junction);
 			}
 		}
 	}
 
-	static function accumulateJunction(junctions:Map<String, {point:Vec3, count:Int, activity:Float}>, point:Vec3, activity:Float):Void {
+	static function accumulateJunction(junctions:Map<String, Junction>, point:Vec3, away:Vec3, activity:Float):Void {
 		var key = GeodesicSphere.weldKey(point);
 		var existing = junctions.get(key);
 		if (existing == null) {
-			junctions.set(key, {point: point, count: 1, activity: activity});
+			junctions.set(key, {
+				point: point,
+				count: 1,
+				activity: activity,
+				departures: [away]
+			});
 		} else {
 			existing.count++;
+			existing.departures.push(away);
 			if (activity > existing.activity) {
 				existing.activity = activity; // the post reads as lit whenever any segment meeting there is
 			}
 		}
 	}
 
-	/** Half the post's own square cross-section — sized so the post fully covers `WALL_THICKNESS` in every tangential direction regardless of the angle between whatever segments meet at its own center: a square this half-wide circumscribes a circle of radius `WALL_THICKNESS / 2`, matching how far any one segment's own slab extends from the centerline. **/
-	static inline final POST_HALF_WIDTH:Float = WALL_THICKNESS / 2;
+	/** A hexagonal pillar's own circumradius — chosen so that, oriented with a face toward `hexCorners`'s own `reference` direction, that face is exactly `WALL_THICKNESS` wide: face width is `2 * apothem * tan(30°)`, and apothem-to-circumradius is `cos(30°)`, which combine to exactly `WALL_THICKNESS` itself. **/
+	static inline final POST_RADIUS:Float = WALL_THICKNESS;
 
-	/** A small sealed box straddling `center`, from `WALL_BASE_LIFT` to `GeodesicLifecycle.WALL_HEIGHT` — see `addJunctionPosts`'s own doc for why. Winding isn't hardened for outward normals the way `addWall`'s own faces are — `buildWallMesh`'s own mesh already renders with `culling = None`, so it doesn't need to be. **/
-	static function addPost(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>, center:Vec3,
-			activity:Float):Void {
-		var base = lift(center, WALL_BASE_LIFT);
-		var top = liftFurther(base, GeodesicLifecycle.WALL_HEIGHT);
+	/** How much taller than a wall's own `GeodesicLifecycle.WALL_HEIGHT` a junction pillar stands — asked directly ("slightly higher... not much"), so a small, untuned margin rather than a measured one. **/
+	static inline final POST_HEIGHT_MARGIN:Float = 0.5;
+
+	/** A sealed hexagonal prism straddling `junction.point`, oriented so one face squares up with `junction.departures[0]` — see `addJunctionPosts`'s own doc for why. Winding isn't hardened for outward normals the way `addWall`'s own faces are — `buildWallMesh`'s own mesh already renders with `culling = None`, so it doesn't need to be. **/
+	static function addJunctionPost(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>,
+			junction:Junction):Void {
+		var base = lift(junction.point, WALL_BASE_LIFT);
+		var top = liftFurther(base, GeodesicLifecycle.WALL_HEIGHT + POST_HEIGHT_MARGIN);
 		var up = base.normalized();
-		var arbitrary = Math.abs(up.y) < 0.9 ? new h3d.Vector(0, 1, 0) : new h3d.Vector(1, 0, 0);
-		var u = up.cross(arbitrary).normalized().scaled(POST_HALF_WIDTH);
-		var v = up.cross(u); // already perpendicular to both `up` and `u`, and already `POST_HALF_WIDTH` long since `up` is unit and `up ⊥ u`
+		var reference = tangentDirection(base, junction.departures[0]);
+		var perpendicular = up.cross(reference);
 
-		var baseCorners = [base.add(u).add(v), base.sub(u).add(v), base.sub(u).sub(v), base.add(u).sub(v)];
-		var topCorners = [top.add(u).add(v), top.sub(u).add(v), top.sub(u).sub(v), top.add(u).sub(v)];
+		var baseCorners = hexCorners(base, reference, perpendicular);
+		var topCorners = hexCorners(top, reference, perpendicular);
 
-		for (i in 0...4) {
-			var next = (i + 1) % 4;
-			addWallFace(points, idx, uvs, activityOut, baseCorners[i], baseCorners[next], topCorners[next], topCorners[i], activity);
+		for (i in 0...6) {
+			var next = (i + 1) % 6;
+			addWallFace(points, idx, uvs, activityOut, baseCorners[i], baseCorners[next], topCorners[next], topCorners[i], junction.activity);
 		}
-		addWallFace(points, idx, uvs, activityOut, topCorners[0], topCorners[1], topCorners[2], topCorners[3], activity);
-		addWallFace(points, idx, uvs, activityOut, baseCorners[3], baseCorners[2], baseCorners[1], baseCorners[0], activity);
+		addPostCap(points, idx, uvs, activityOut, topCorners, junction.activity);
+		addPostCap(points, idx, uvs, activityOut, baseCorners, junction.activity);
+	}
+
+	/** The unit tangent at `from` pointing (roughly) toward `toward` — `toward`'s own radial component relative to `from` discarded, so the result actually lies in `from`'s own tangent plane instead of tilting toward or away from the sphere's center. **/
+	static function tangentDirection(from:h3d.Vector, toward:Vec3):h3d.Vector {
+		var target = lift(toward, WALL_BASE_LIFT);
+		var up = from.normalized();
+		var raw = target.sub(from);
+		return raw.sub(up.scaled(raw.dot(up))).normalized();
+	}
+
+	/** The 6 corners of a `POST_RADIUS`-circumradius hexagon centered on `center`, in the tangent plane spanned by `reference`/`perpendicular` (both assumed unit and mutually perpendicular) — offset 30° from `reference` itself, so the face spanning the first and last corners is centered on (and perpendicular to) `reference`. **/
+	static function hexCorners(center:h3d.Vector, reference:h3d.Vector, perpendicular:h3d.Vector):Array<h3d.Vector> {
+		var corners = [];
+		for (i in 0...6) {
+			var angle = Math.PI / 6 + i * Math.PI / 3;
+			var offset = reference.scaled(Math.cos(angle) * POST_RADIUS).add(perpendicular.scaled(Math.sin(angle) * POST_RADIUS));
+			corners.push(center.add(offset));
+		}
+		return corners;
+	}
+
+	/** A pillar's own top or bottom cap — a 6-triangle fan around `corners`' own centroid, each triangle getting a flat, unseamed UV/activity reading (this is a small end cap, not a `ConwayWallGlow` seam surface like `addWall`'s own faces) rather than reusing `addFan`/`MeshBuilder.addTriangle` directly, since those don't push the UV/activity entries this mesh's `uvs`/`activityOut` buffers need kept in lockstep with `points`. **/
+	static function addPostCap(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>,
+			corners:Array<h3d.Vector>, activity:Float):Void {
+		var hub = centroidOf(corners);
+		for (k in 0...corners.length) {
+			var next = (k + 1) % corners.length;
+			MeshBuilder.addTriangle(points, idx, hub, corners[k], corners[next]);
+			uvs.push(new h3d.prim.UV(0, 0));
+			uvs.push(new h3d.prim.UV(1, 0));
+			uvs.push(new h3d.prim.UV(1, 1));
+			for (_ in 0...3) {
+				activityOut.push(new h3d.col.Point(activity, activity, activity));
+			}
+		}
 	}
 
 	/** A unit-sphere direction, converted to a world point at `RADIUS - amount`. **/
@@ -548,3 +601,6 @@ class GeodesicMesh {
 	and that class stays untouched as a fallback.
 **/
 typedef TrackedCell = {id:Int, color:Int};
+
+/** One dual vertex's own tally, built by `GeodesicMesh.addJunctionPosts`: how many segments in the current bucket touch it, the direction each one departs toward (`departures`, one per occurrence — `addJunctionPost` only actually needs the first, but keeping all of them is cheap and self-documenting), and the brightest activity among them. **/
+typedef Junction = {point:Vec3, count:Int, activity:Float, departures:Array<Vec3>};

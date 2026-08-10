@@ -1452,3 +1452,41 @@ in [story-line.md](story-line.md).
   one endpoint still add exactly one post, not one per pair.
   `make fmt`/`lint`/`check`/`test` all clean (38,485 assertions).
   **Not yet visually verified.**
+- **2026-08-10 — junction posts became hexagonal pillars, same day, third
+  revision.** The square post above worked (closed the gap) but was
+  asked directly to be replaced: "rather ugly." Reused as the excuse to
+  make the junction actually well-defined rather than merely "big enough
+  to cover any angle" — every dual vertex on this mesh is the
+  circumcenter of exactly one triangle, so at most 3 wall segments ever
+  meet at one, spaced roughly 120° apart by construction (the same
+  reason a honeycomb's own vertices are 3-valent). A regular hexagon's
+  own faces sit 60° apart, so orienting *one* face toward any one of
+  those segments' own departure directions lands roughly every *other*
+  face on the remaining ones too — asked directly to confirm this before
+  building it ("only orthogonal contacts, should be fine, right?"), and
+  it holds: exact at exactly 120° (true away from the 12 pentagons),
+  a close approximation near them, where the real angle isn't quite that.
+  `POST_RADIUS` (`= WALL_THICKNESS`, a coincidence of the regular-hexagon
+  circumradius/apothem ratio at `WALL_THICKNESS`-wide faces, not a second
+  independently-chosen number) sizes the pillar so an aligned face lands
+  exactly flush with a wall's own edges instead of over- or
+  under-covering it. `POST_HEIGHT_MARGIN` (`0.5`, untuned) makes a pillar
+  stand a little taller than the walls it joins, also asked directly.
+  Orientation is derived from whichever segments are *actually* wall
+  right now (the first one found, by iteration order — no need for a
+  canonical pick, since a hexagon aligned to any one of 2-3 roughly-120°-
+  apart directions serves the others about as well as any other choice
+  would), not from the underlying triangle's fixed topology, so a
+  pillar's own alignment can shift if the specific subset of surrounding
+  edges that are closed changes generation to generation — accepted
+  rather than plumbed away, since a shifting-but-still-correctly-sized
+  pillar is a non-issue compared to the actual bug (a hole).
+
+  Exit checks: the existing hand-built-segment `GeodesicMeshTest`
+  coverage from the entry above needed no changes — it asserts relative
+  vertex-count deltas (a shared endpoint adds a post's own geometry; N
+  segments sharing one point add exactly one post, not one per pair),
+  which hold regardless of the post's own shape. `make fmt`/`lint`/
+  `check`/`test` all clean (38,485 assertions, unchanged from the square-
+  post version — same coverage, new shape underneath it).
+  **Not yet visually verified.**

@@ -106,6 +106,39 @@ class GeodesicMeshTest extends Test {
 			"three segments sharing one endpoint should still add exactly one post, not one per pair");
 	}
 
+	/**
+		The actual root cause behind the hex-pillar reveal above:
+		`hxd.IndexBuffer` is `UInt16`-backed, so a single `Polygon` can never
+		safely exceed 65536 vertices — a real game-scale wall mesh with
+		junction pillars hit just over 100,000, more than 65536 past the
+		ceiling, and every wrapped index rendered as a triangle stretched
+		between two unrelated, often-distant vertices, reported directly as
+		"texture is stretched from one object to a distant one, a lot of
+		times." Enough disjoint segments (no shared endpoints, so no
+		junction posts complicate the arithmetic) to force at least one
+		split, checked against the actual `UInt16` ceiling rather than
+		`WALL_VERTEX_BUDGET` — the budget is where `buildWallMesh` chooses
+		to split, not the hard limit itself.
+	**/
+	function testBuildWallMeshSplitsIntoMultipleMeshesPastTheVertexBudget():Void {
+		var segments = [];
+		for (i in 0...3000) {
+			var angle = i * 0.7;
+			var a = Vec3Math.make(Math.cos(angle), Math.sin(angle), i * 0.001);
+			var b = Vec3Math.make(Math.cos(angle + 0.05), Math.sin(angle + 0.05), i * 0.001 + 0.001);
+			segments.push(segment(a, b));
+		}
+
+		var meshes = GeodesicMesh.buildWallMesh(new h3d.scene.Object(), segments, glow());
+
+		Assert.isTrue(meshes.length >= 2, "3000 disjoint segments should need more than one Polygon to stay under the UInt16 index ceiling");
+		for (mesh in meshes) {
+			var polygon:h3d.prim.Polygon = cast mesh.primitive;
+			Assert.isTrue(polygon.points.length <= 65536, 'a single Polygon exceeded the UInt16 index ceiling: ${polygon.points.length}');
+		}
+		Assert.equals(segments.length * 24, vertCountOf(meshes), "chunking must not drop or duplicate any vertex");
+	}
+
 	static function segment(a:Vec3, b:Vec3):WallSegment {
 		return {a: a, b: b, activity: 1};
 	}
@@ -114,12 +147,13 @@ class GeodesicMeshTest extends Test {
 		return new ConwayWallGlow(Colours.CONWAY_WALL_PANEL, Colours.CONWAY_WALL_GLOW);
 	}
 
-	static function vertCountOf(mesh:Null<h3d.scene.Mesh>):Int {
-		if (mesh == null) {
-			return 0;
+	static function vertCountOf(meshes:Array<h3d.scene.Mesh>):Int {
+		var total = 0;
+		for (mesh in meshes) {
+			var polygon:h3d.prim.Polygon = cast mesh.primitive;
+			total += polygon.points.length;
 		}
-		var polygon:h3d.prim.Polygon = cast mesh.primitive;
-		return polygon.points.length;
+		return total;
 	}
 
 	/** An entirely open layout (no wall, no ghost) must still build without throwing — the `wallPoints`/`ghostPoints` own empty-buffer edge case. **/

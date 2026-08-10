@@ -201,15 +201,13 @@ class GeodesicMesh {
 		// recomputed whole every generation reshapes visibly whenever any
 		// single edge in it flips, since virtually every wall here is on
 		// the reactive edge set to begin with.
-		var wallMesh = buildWallMesh(parent, wallSegments, new ConwayWallGlow(Colours.CONWAY_WALL_PANEL, Colours.CONWAY_WALL_GLOW));
-		if (wallMesh != null) {
+		for (wallMesh in buildWallMesh(parent, wallSegments, new ConwayWallGlow(Colours.CONWAY_WALL_PANEL, Colours.CONWAY_WALL_GLOW))) {
 			wallMesh.material.mainPass.culling = None;
 		}
 
-		var ghostMesh = buildWallMesh(parent, ghostSegments,
+		for (ghostMesh in buildWallMesh(parent, ghostSegments,
 			new ConwayWallGlow(Colours.CONWAY_WALL_PANEL, Colours.CONWAY_WALL_GLOW, ConwayWallGlow.DEFAULT_SEAM_DENSITY,
-				ConwayWallGlow.DEFAULT_REST_BRIGHTNESS, GHOST_WALL_OPACITY));
-		if (ghostMesh != null) {
+				ConwayWallGlow.DEFAULT_REST_BRIGHTNESS, GHOST_WALL_OPACITY))) {
 			ghostMesh.material.mainPass.culling = None;
 			ghostMesh.material.blendMode = h3d.mat.BlendMode.Alpha; // sets depthWrite = true as a side effect — depthWrite below must come after
 			ghostMesh.material.mainPass.depthWrite = false;
@@ -285,38 +283,84 @@ class GeodesicMesh {
 	}
 
 	/**
-		Turns a set of wall segments into one `ConwayWallGlow` mesh, or
-		`null` if there's nothing to draw — the shared tail end of what
-		used to be duplicated inline for the wall and ghost buckets.
-		Public: `GeodesicPreview`'s own two-sphere prototype
-		(`docs/game-design/notes/geodesic-sphere-engineering.md`'s "coarse
-		maze" attempt) reuses this directly for its own coarse-derived
-		wall segments, rather than re-deriving the same UV/activity
-		bookkeeping `addWall` already does correctly.
-		@param parent the scene node to attach the mesh under.
-		@param segments the segments to draw.
-		@param shader the `ConwayWallGlow` instance to shade them with (solid vs. ghost differ only in this).
-		@return the built mesh, or `null` if `segments` was empty.
+		Heaps' own `hxd.IndexBuffer` is `UInt16`-backed — a single `Polygon`
+		can never safely hold more than 65536 vertices, or an index past
+		that silently wraps and ends up referencing an arbitrary, often-
+		distant vertex instead. `WALL_VERTEX_BUDGET` is the point past which
+		`buildWallMesh` starts a fresh `Polygon` rather than keep appending
+		to one already this close to that ceiling — some headroom under the
+		hard `65536` limit since one more `addWall`/`addJunctionPost` call
+		could add up to `POST_VERTEX_COUNT` vertices at once.
+
+		Found the hard way (2026-08-10): junction pillars pushed a real
+		game-scale wall mesh's own vertex count to just over 100,000 —
+		double the ceiling — reported directly as "texture is stretched
+		from one object to a distant one, but a lot of times," which is
+		exactly what a wrapped `UInt16` index looks like once rendered:
+		every wrapped triangle references whatever vertex happens to sit at
+		`index - 65536`, wherever in the mesh that is.
 	**/
-	public static function buildWallMesh(parent:h3d.scene.Object, segments:Array<WallSegment>, shader:ConwayWallGlow):Null<h3d.scene.Mesh> {
+	static inline final WALL_VERTEX_BUDGET:Int = 60000;
+
+	/** How many vertices one `addWall` call appends — 6 faces (front, back, 2 side caps, top, bottom), 4 each. **/
+	static inline final WALL_VERTEX_COUNT:Int = 24;
+
+	/** How many vertices one `addJunctionPost` call appends — 6 side faces (4 each) plus 2 fan caps (6 triangles of 3 verts each). **/
+	static inline final POST_VERTEX_COUNT:Int = 60;
+
+	/**
+		Turns a set of wall segments into one or more `ConwayWallGlow`
+		meshes — split across several `Polygon`s, `WALL_VERTEX_BUDGET` at a
+		time (see that constant's own doc for why), rather than assuming
+		everything always fits in one. Empty when `segments` was empty —
+		`Polygon` rejects an empty vertex list, and a fully open/fully core
+		generation legitimately produces one.
+		@param parent the scene node to attach the mesh(es) under.
+		@param segments the segments to draw.
+		@param shader the `ConwayWallGlow` instance to shade them with (solid vs. ghost differ only in this) — shared across every chunk, but each `h3d.scene.Mesh` still gets its own `material`, so a caller mutating one mesh's material (`culling`, `blendMode`, ...) never affects another.
+		@return every mesh actually built, in no particular order — empty when `segments` was empty.
+	**/
+	public static function buildWallMesh(parent:h3d.scene.Object, segments:Array<WallSegment>, shader:ConwayWallGlow):Array<h3d.scene.Mesh> {
 		if (segments.length == 0) {
-			return null; // Polygon rejects an empty vertex list, and a fully open/fully core generation legitimately produces one
+			return [];
 		}
+
+		var meshes:Array<h3d.scene.Mesh> = [];
 		var points:Array<h3d.Vector> = [];
 		var idx = new hxd.IndexBuffer();
 		var uvs:Array<h3d.prim.UV> = [];
 		var activity:Array<h3d.col.Point> = [];
+
+		function flush():Void {
+			if (points.length == 0) {
+				return;
+			}
+			var prim = new h3d.prim.Polygon(points, idx);
+			prim.uvs = uvs;
+			prim.normals = activity;
+			var mesh = new h3d.scene.Mesh(prim, parent);
+			mesh.material.mainPass.addShader(shader);
+			meshes.push(mesh);
+			points = [];
+			idx = new hxd.IndexBuffer();
+			uvs = [];
+			activity = [];
+		}
+
 		for (segment in segments) {
+			if (points.length + WALL_VERTEX_COUNT > WALL_VERTEX_BUDGET) {
+				flush();
+			}
 			addWall(points, idx, uvs, activity, segment.a, segment.b, segment.activity);
 		}
-		addJunctionPosts(points, idx, uvs, activity, segments);
-
-		var prim = new h3d.prim.Polygon(points, idx);
-		prim.uvs = uvs;
-		prim.normals = activity;
-		var mesh = new h3d.scene.Mesh(prim, parent);
-		mesh.material.mainPass.addShader(shader);
-		return mesh;
+		for (junction in collectJunctions(segments)) {
+			if (points.length + POST_VERTEX_COUNT > WALL_VERTEX_BUDGET) {
+				flush();
+			}
+			addJunctionPost(points, idx, uvs, activity, junction);
+		}
+		flush();
+		return meshes;
 	}
 
 	/** An opaque flat-colored floor bucket, guarded the same way `addLifecycleMesh` is — currently only `pentagonFloorPoints`, but written generically since a bare-hexagon-only sphere (`FREQUENCY` such that no pentagon survives subdivision) is geometrically impossible, not just untested. **/
@@ -481,24 +525,29 @@ class GeodesicMesh {
 		existing rounding (already trusted for the same "same point, computed
 		twice" problem in `GeodesicLookup`'s own weld map) is reused here
 		rather than assuming exact matches.
-		@param points vertex buffer to append to.
-		@param idx index buffer to append to.
-		@param uvs UV buffer to append to.
-		@param activityOut per-vertex activity buffer to append to.
-		@param segments the same segment list `addWall` was already called for, once each, just above this call.
+
+		Returns the data rather than building geometry directly (2026-08-10,
+		same day) — `buildWallMesh`'s own vertex-budget chunking needs to
+		check *before* committing to a post's own `POST_VERTEX_COUNT`
+		vertices, which means it has to see every junction up front rather
+		than have this method push straight into a `points` buffer it
+		doesn't otherwise control the size of.
+		@param segments the same segment list `addWall` is called for, once each.
+		@return every point touched by 2+ of `segments`, with the data `addJunctionPost` needs to build one.
 	**/
-	static function addJunctionPosts(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>,
-			segments:Array<WallSegment>):Void {
+	static function collectJunctions(segments:Array<WallSegment>):Array<Junction> {
 		var junctions = new Map<String, Junction>();
 		for (segment in segments) {
 			accumulateJunction(junctions, segment.a, segment.b, segment.activity);
 			accumulateJunction(junctions, segment.b, segment.a, segment.activity);
 		}
+		var result = [];
 		for (junction in junctions) {
 			if (junction.count >= 2) {
-				addJunctionPost(points, idx, uvs, activityOut, junction);
+				result.push(junction);
 			}
 		}
+		return result;
 	}
 
 	static function accumulateJunction(junctions:Map<String, Junction>, point:Vec3, away:Vec3, activity:Float):Void {

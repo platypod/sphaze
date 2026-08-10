@@ -352,15 +352,13 @@ class GeodesicConwayBiome implements Biome {
 		var edgeActivityOf = GeodesicCoarseMaze.boundaryActivity(state, boundaryEdges, fineToCoarse);
 		var segments = GeodesicCoarseMaze.wallSegments(fineSphere, fineBoundaries, boundaryEdges, fineToCoarse, coarseLayout, coarseReactivity, edgeActivityOf);
 
-		var wallMesh = GeodesicMesh.buildWallMesh(parent, segments.walls, new ConwayWallGlow(Colours.CONWAY_WALL_PANEL, Colours.CONWAY_WALL_GLOW));
-		if (wallMesh != null) {
+		for (wallMesh in GeodesicMesh.buildWallMesh(parent, segments.walls, new ConwayWallGlow(Colours.CONWAY_WALL_PANEL, Colours.CONWAY_WALL_GLOW))) {
 			wallMesh.material.mainPass.culling = None;
 		}
 
-		var ghostMesh = GeodesicMesh.buildWallMesh(parent, segments.ghosts,
+		for (ghostMesh in GeodesicMesh.buildWallMesh(parent, segments.ghosts,
 			new ConwayWallGlow(Colours.CONWAY_WALL_PANEL, Colours.CONWAY_WALL_GLOW, ConwayWallGlow.DEFAULT_SEAM_DENSITY,
-				ConwayWallGlow.DEFAULT_REST_BRIGHTNESS, GeodesicMesh.GHOST_WALL_OPACITY));
-		if (ghostMesh != null) {
+				ConwayWallGlow.DEFAULT_REST_BRIGHTNESS, GeodesicMesh.GHOST_WALL_OPACITY))) {
 			ghostMesh.material.mainPass.culling = None;
 			ghostMesh.material.blendMode = h3d.mat.BlendMode.Alpha; // sets depthWrite = true as a side effect (h3d.mat.Material.set_blendMode) — depthWrite below must come after, not before, or it's silently reset
 			ghostMesh.material.mainPass.depthWrite = false;

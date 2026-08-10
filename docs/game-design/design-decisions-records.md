@@ -1490,3 +1490,56 @@ in [story-line.md](story-line.md).
   `check`/`test` all clean (38,485 assertions, unchanged from the square-
   post version — same coverage, new shape underneath it).
   **Not yet visually verified.**
+- **2026-08-10 — the hex pillars above overflowed `hxd.IndexBuffer`'s own
+  `UInt16` ceiling, same day, fourth revision.** Reported directly, no
+  screenshot needed this time — "texture is stretched from one object to
+  a distant one, but a lot of times" is close to a textbook description
+  of a wrapped 16-bit index. Not found by reading the code again: found
+  by actually building the real pipeline (`GeodesicCoarseMaze.wallSegments`
+  → `GeodesicMesh.buildWallMesh`, not the simpler single-sphere path a
+  first diagnostic pass mistakenly used) at the real game's own scale
+  (fine sphere frequency `11`, coarse frequency `5`, matching
+  `res/geodesic/conway-sphere.json` and `GeodesicConwayBiome.COARSE_FREQUENCY`)
+  and counting actual vertices: **102,228** in the wall mesh alone — every
+  boundary-crossing fine edge turned out to zigzag through the fine
+  tessellation at genuine ~120° bends the whole way (measured: 2-segment
+  junctions cluster tightly around a `-0.5` dot product between their own
+  departure directions, i.e. almost exactly 120°, never near the `-1`
+  "basically straight, skip the post" a first hypothesis guessed at), so
+  nearly every one of ~1200 wall segments got its own pillar — a real,
+  structurally-necessary amount of geometry, not an overcounting bug.
+  `hxd.IndexBuffer` is `Array<hxd.impl.UInt16>` underneath (confirmed by
+  reading Heaps' own source, not assumed): any index past `65536`
+  silently wraps to `index - 65536`, so a huge chunk of that mesh was
+  rendering triangles connecting whatever vertex happened to land at the
+  wrapped-around index — anywhere else in the mesh, hence "a distant
+  one," and since it affects every vertex past the wrap point, "a lot of
+  times."
+
+  **Fix: split, not shrink.** `buildWallMesh`'s own signature changes from
+  `Null<h3d.scene.Mesh>` to `Array<h3d.scene.Mesh>` — it now starts a
+  fresh `Polygon` (`WALL_VERTEX_BUDGET = 60000`, comfortable headroom
+  under the hard `65536`) whenever the next `addWall`/`addJunctionPost`
+  call would cross it, rather than keeping the pillar density the corner
+  gap actually needed and hoping one mesh is always enough. Both call
+  sites (`GeodesicMesh.build`'s own internal wall/ghost buckets,
+  `GeodesicConwayBiome.rebuildMesh`) now loop over the returned array to
+  apply the same per-mesh material settings (`culling`, and for ghosts
+  `blendMode`/`depthWrite`) to every chunk instead of a single mesh.
+  `addJunctionPosts` split into `collectJunctions` (pure data — every
+  junction needing a post) so `buildWallMesh` can check the vertex budget
+  *before* committing to a post's own 60 vertices, rather than have the
+  old version push straight into a buffer it didn't control the size of.
+
+  Exit checks: a new `GeodesicMeshTest` builds 3000 disjoint synthetic
+  segments (no shared endpoints, so junction posts don't complicate the
+  arithmetic) — enough to force a split — and asserts every returned
+  `Polygon` actually stays at or under the real `65536` ceiling (not just
+  the `60000` budget, since the budget is where this method chooses to
+  split, not the hard limit itself), and that the total vertex count
+  across all chunks matches exactly what ungapped, unchunked geometry
+  would produce. `make fmt`/`lint`/`check`/`test` all clean (38,489
+  assertions). **Not yet visually verified** — same standing limitation,
+  but this is the one fix in this whole chain with a concrete, measured
+  root cause (a `UInt16` overflow, confirmed by counting real vertices at
+  real game scale) rather than a screenshot-driven guess.

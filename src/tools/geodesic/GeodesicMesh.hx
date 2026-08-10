@@ -123,6 +123,25 @@ class GeodesicMesh {
 	public static inline final GHOST_WALL_OPACITY:Float = 0.15;
 
 	/**
+		How thick a solid wall's own slab is, in world units — `addWall`
+		used to build a single zero-thickness quad, which "we still see
+		cells through walls from time to time" traced back to: at a
+		grazing viewing angle (looking nearly *along* the wall's own plane
+		rather than at it), a flat panel's own on-screen width shrinks
+		toward nothing, letting the camera's own view ray slip past it.
+		Real thickness means every possible viewing ray that would cross
+		the wall's own plane has to pass through actual volume first,
+		regardless of angle. Public: `GeodesicCollision.WALL_CLEARANCE`
+		derives from this same constant rather than a second copy that
+		could drift out of sync — the two have to agree, since a player
+		allowed to stand closer to a wall than this thickness extends would
+		render with their own camera inside the new solid geometry.
+		Untuned against real cell dimensions — a reasonable first guess,
+		not a measured value; revisit after playing.
+	**/
+	public static inline final WALL_THICKNESS:Float = 1.0;
+
+	/**
 		Builds the static floor/wall meshes under `parent` for the current
 		generation — everything that doesn't need `buildLiveCells`'s own
 		per-frame smoothing, since none of it changes between generations.
@@ -367,9 +386,14 @@ class GeodesicMesh {
 	}
 
 	/**
-		Appends one wall quad plus its `ConwayWallGlow` UVs/activity — see
-		`biomes.conway.ConwayMesh.addWall`'s own doc for the UV/activity
-		convention, ported unchanged.
+		Appends one wall's own sealed slab — front face, back face, and two
+		side caps, `WALL_THICKNESS` apart — instead of the single
+		zero-thickness quad `biomes.conway.ConwayMesh.addWall` still builds
+		(see `WALL_THICKNESS`'s own doc for why a flat panel isn't enough
+		here). The original single-quad UV/activity convention carries over
+		unchanged, just repeated once per face — each face gets its own
+		independent `0..wallLength` strip, matching what the one face used
+		to get alone.
 	**/
 	static function addWall(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>, edgeA:Vec3, edgeB:Vec3,
 			activity:Float):Void {
@@ -377,12 +401,35 @@ class GeodesicMesh {
 		var baseB = lift(edgeB, WALL_BASE_LIFT);
 		var topA = liftFurther(baseA, GeodesicLifecycle.WALL_HEIGHT);
 		var topB = liftFurther(baseB, GeodesicLifecycle.WALL_HEIGHT);
-		MeshBuilder.addQuad(points, idx, baseA, baseB, topB, topA);
 
-		var wallLength = baseA.sub(baseB).length();
+		// perpendicular to the panel itself — cross of its own two edges (along its length, and up its own height)
+		var faceNormal = baseB.sub(baseA).cross(topA.sub(baseA)).normalized();
+		var half = faceNormal.scaled(WALL_THICKNESS / 2);
+
+		var frontBaseA = baseA.add(half);
+		var frontBaseB = baseB.add(half);
+		var frontTopA = topA.add(half);
+		var frontTopB = topB.add(half);
+		var backBaseA = baseA.sub(half);
+		var backBaseB = baseB.sub(half);
+		var backTopA = topA.sub(half);
+		var backTopB = topB.sub(half);
+
+		addWallFace(points, idx, uvs, activityOut, frontBaseA, frontBaseB, frontTopB, frontTopA, activity);
+		addWallFace(points, idx, uvs, activityOut, backBaseB, backBaseA, backTopA, backTopB, activity);
+		addWallFace(points, idx, uvs, activityOut, backBaseA, frontBaseA, frontTopA, backTopA, activity); // A-side cap
+		addWallFace(points, idx, uvs, activityOut, frontBaseB, backBaseB, backTopB, frontTopB, activity); // B-side cap
+	}
+
+	/** One quad plus its `ConwayWallGlow` UVs/activity — see `biomes.conway.ConwayMesh.addWall`'s own doc for the UV/activity convention, ported unchanged; `addWall` now calls this once per face of a sealed slab instead of once for a single flat panel. **/
+	static function addWallFace(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>, a:h3d.Vector,
+			b:h3d.Vector, c:h3d.Vector, d:h3d.Vector, activity:Float):Void {
+		MeshBuilder.addQuad(points, idx, a, b, c, d);
+
+		var faceLength = a.sub(b).length();
 		uvs.push(new h3d.prim.UV(0, 0));
-		uvs.push(new h3d.prim.UV(wallLength, 0));
-		uvs.push(new h3d.prim.UV(wallLength, 1));
+		uvs.push(new h3d.prim.UV(faceLength, 0));
+		uvs.push(new h3d.prim.UV(faceLength, 1));
 		uvs.push(new h3d.prim.UV(0, 1));
 		for (_ in 0...4) {
 			activityOut.push(new h3d.col.Point(activity, activity, activity));

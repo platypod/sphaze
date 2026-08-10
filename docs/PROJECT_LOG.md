@@ -1236,3 +1236,35 @@ off-cells the *same* amber scaled by `ENGRAVING_OFF_BRIGHTNESS` (was
 scaling `CONWAY_WALL_GLOW`, the mismatched cyan) — one glowing hue
 family across the whole footprint rather than two unrelated colors.
 `make fmt lint check test` clean.
+
+## 2026-08-10 — Fixed: the engraving wasn't rendering at all
+
+The translucency fix above didn't fix the actual bug — a screenshot
+showed "no visual clue whatsoever," a flat unlit pentagon with no
+amber cells at all, not merely a legibility problem.
+
+Root cause was `GeodesicConwayBiome.cameraOverride` dollying the
+composing camera the wrong way. This sphere is walked from its
+*interior*; `SphereMath.upVectorAt`'s own doc is explicit that "up" for
+a point on the surface is the direction *back toward the center*, not
+the plain outward radial `worldPositionOf(pentagonId).normalized()`
+gives. `cameraOverride` used that outward direction to dolly in,
+putting the camera on the far side of the floor mesh from the hollow
+interior it should look out from — and because `ENGRAVING_LIFT` (`0.5`)
+pulls the engraving further toward the center than the floor's own
+`TILE_LIFT` (`0.03`), the misplaced camera had the opaque floor sitting
+*nearer* it than the engraving on every ray. Not dim, not occluded at
+the edges — fully hidden behind an opaque mesh, every time, hence "no
+visual clue whatsoever" rather than "hard to see."
+
+Fixed by dollying inward (`center.normalized().scaled(-1)`) instead —
+puts the camera back on the interior side, where `ENGRAVING_LIFT` being
+the larger offset now correctly makes the engraving the *nearer* layer,
+reading as a raised plaque above the floor. `interact`'s own `up` (used
+only for `tangentProject`'s screen-up capture, direction-symmetric so
+functionally unaffected either way) flipped to match, so the class
+doesn't carry two silently-inverted "up" conventions side by side.
+`make fmt lint check test` clean. Still not confirmed in the browser —
+the previous two fixes in this space were each individually reasoned
+correct and each still missed something a real screenshot caught; this
+one specifically wants a look before trusting it either.

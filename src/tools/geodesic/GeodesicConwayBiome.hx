@@ -338,19 +338,45 @@ class GeodesicConwayBiome implements Biome {
 			return; // not standing on a pentagon — nothing to enter
 		}
 		editingPentagon = nodeId;
-		var up = worldPositionOf(nodeId).normalized();
+		// Interior "up" (toward the sphere's own center, SphereMath.upVectorAt's
+		// own convention) — tangentProject's own result is direction-symmetric
+		// (an axis, not a signed direction, changes nothing about the
+		// projection either way), but matching the sign every other "up" in
+		// this class uses avoids a second, silently-inverted convention.
+		var up = worldPositionOf(nodeId).normalized().scaled(-1);
 		engravingViewUp = tangentProject(player.forward, up);
 		rebuildEngraving();
 	}
 
-	/** See `biomes.common.Biome.cameraOverride`'s own doc — non-null exactly while composing, dollied in toward `editingPentagon`'s own world position. **/
+	/**
+		See `biomes.common.Biome.cameraOverride`'s own doc — non-null exactly
+		while composing, dollied in toward `editingPentagon`'s own world
+		position. **Dollies toward the sphere's own center, not away from
+		it (2026-08-10, fixed after "no visual clue whatsoever" turned out
+		to mean the engraving wasn't rendering at all, not just wasn't
+		legible).** This sphere is walked from the *interior* —
+		`SphereMath.upVectorAt`'s own doc: "up" for a point on the surface
+		is the direction *back toward the center*, the opposite of the
+		plain outward radial `worldPositionOf(pentagonId).normalized()`
+		gives. The first version dollied outward, putting the camera on the
+		far side of the floor mesh from the hollow interior it should be
+		looking out from — and since `ENGRAVING_LIFT` (`0.5`) pulls the
+		engraving further toward the center than the floor's own `TILE_LIFT`
+		(`0.03`), that misplaced camera had the opaque floor sitting nearer
+		it than the engraving on every ray, hiding it completely rather than
+		merely dimly. Dollying inward instead puts the camera back on the
+		interior side, where `ENGRAVING_LIFT` being the larger offset makes
+		the engraving the *nearer* layer, exactly as a raised plaque above
+		the floor should read.
+	**/
 	public function cameraOverride(player:PlayerModel):Null<CameraOverride> {
 		var pentagonId = editingPentagon;
 		if (pentagonId == null) {
 			return null;
 		}
 		var center = worldPositionOf(pentagonId);
-		var eyePos = center.add(center.normalized().scaled(ENGRAVING_VIEW_HEIGHT));
+		var inward = center.normalized().scaled(-1);
+		var eyePos = center.add(inward.scaled(ENGRAVING_VIEW_HEIGHT));
 		return {pos: eyePos, target: center, up: engravingViewUp};
 	}
 

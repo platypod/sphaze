@@ -134,7 +134,7 @@ import tools.geodesic.Vec3.Vec3Math;
 	dollies the camera in toward it while editing, which is also what
 	`GameLoop` reads to suspend normal movement/turning and switch the
 	mouse out of pointer-lock for clicking; `onEditClick` resolves a click's
-	own ray against the sphere analytically (`h3d.col.Sphere.rayIntersection`)
+	own ray against the sphere analytically (`raySphereIntersection`)
 	and toggles whichever footprint cell it lands on. `engraving.tickAll`
 	runs every `tick` unconditionally — a composed pentagon keeps
 	restamping itself onto the live board whether or not the player is
@@ -382,20 +382,20 @@ class GeodesicConwayBiome implements Biome {
 
 	/**
 		See `biomes.common.Biome.onEditClick`'s own doc. Resolves `ray`
-		against the sphere itself (`h3d.col.Sphere.rayIntersection`, exact
-		for a sphere — no need for the mesh-based picking a less regular
-		surface would require), then whichever fine node is nearest the hit
-		point (`fineLookup.nodeAt`, the same lookup collision/gravity
-		already use for "which cell is a world point in"). A miss, or a hit
-		outside the pentagon's own footprint, is silently ignored — not
-		every click lands on the engraving.
+		against the sphere itself (`raySphereIntersection`, exact for a
+		sphere — no need for the mesh-based picking a less regular surface
+		would require), then whichever fine node is nearest the hit point
+		(`fineLookup.nodeAt`, the same lookup collision/gravity already use
+		for "which cell is a world point in"). A miss, or a hit outside the
+		pentagon's own footprint, is silently ignored — not every click
+		lands on the engraving.
 	**/
 	public function onEditClick(ray:h3d.col.Ray):Void {
 		var pentagonId = editingPentagon;
 		if (pentagonId == null) {
 			return;
 		}
-		var t = new h3d.col.Sphere(0, 0, 0, GeodesicMesh.RADIUS).rayIntersection(ray, true);
+		var t = raySphereIntersection(ray, GeodesicMesh.RADIUS);
 		if (t < 0) {
 			return;
 		}
@@ -406,6 +406,46 @@ class GeodesicConwayBiome implements Biome {
 		}
 		engraving.toggle(pentagonId, nodeId);
 		rebuildEngraving();
+	}
+
+	/**
+		Ray-sphere intersection distance for the sphere of radius `radius`
+		centered at the origin — a small replacement for
+		`h3d.col.Sphere.rayIntersection` (2026-08-10, found the hard way:
+		every click was resolving to the pentagon itself, wherever on
+		screen it actually landed). That stock method only ever returns
+		the *near* root of the intersection quadratic, which is negative
+		whenever the ray's own origin sits inside the sphere — exactly
+		true here by construction, since `cameraOverride` dollies the
+		composing camera *toward* the sphere's center (radius
+		`GeodesicMesh.RADIUS - ENGRAVING_VIEW_HEIGHT`, well inside
+		`GeodesicMesh.RADIUS`). Heaps clamps that negative root to `0`, so
+		every click's own ray resolved to its own eye position — and
+		because the dolly moves straight along the pentagon's own radius,
+		that eye position shares the pentagon's own direction from the
+		origin, which is why `fineLookup.nodeAt` (direction-only, ignores
+		magnitude) always landed back on the pentagon regardless of where
+		the click actually was. This picks the *far* root when the origin
+		is inside, the near one when it's outside, rather than assuming
+		either.
+		@param ray the ray to intersect, own direction assumed unit length (matches `h3d.Camera.rayFromScreen`'s own output).
+		@param radius the sphere's own radius.
+		@return the distance along `ray` to the first real intersection, or `-1` if it misses.
+	**/
+	static function raySphereIntersection(ray:h3d.col.Ray, radius:Float):Float {
+		var b = ray.px * ray.lx + ray.py * ray.ly + ray.pz * ray.lz;
+		var c = ray.px * ray.px + ray.py * ray.py + ray.pz * ray.pz - radius * radius;
+		var discriminant = b * b - c;
+		if (discriminant < 0) {
+			return -1;
+		}
+		var sqrtDiscriminant = Math.sqrt(discriminant);
+		var near = -b - sqrtDiscriminant;
+		if (near >= 0) {
+			return near;
+		}
+		var far = -b + sqrtDiscriminant;
+		return far >= 0 ? far : -1;
 	}
 
 	public function timeScale():Float {

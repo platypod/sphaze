@@ -1268,3 +1268,36 @@ doesn't carry two silently-inverted "up" conventions side by side.
 the previous two fixes in this space were each individually reasoned
 correct and each still missed something a real screenshot caught; this
 one specifically wants a look before trusting it either.
+
+## 2026-08-10 — Fixed: clicking anywhere only ever toggled the pentagon
+
+Screenshots after the camera fix landed: the engraving now renders (the
+glow/translucency fix was real), but clicking anywhere in view only
+ever changed the *pentagon's own* color, never whichever hex was
+actually clicked.
+
+Root cause was `h3d.col.Sphere.rayIntersection`, used unmodified in
+`onEditClick`. That stock method only ever returns the *near* root of
+the ray-sphere quadratic, which is negative — and gets silently
+clamped to `0` — whenever the ray's own origin sits *inside* the
+sphere. The corrected `cameraOverride` from the entry above dollies the
+composing camera toward the sphere's center, to radius
+`GeodesicMesh.RADIUS - ENGRAVING_VIEW_HEIGHT` — always inside
+`GeodesicMesh.RADIUS`, by construction, once that fix landed. So every
+click's own ray resolved to `t = 0`, i.e. `ray.getPoint(0)` = the
+camera's own eye position — and because the dolly moves straight along
+the pentagon's own radius from the origin, that eye position shares the
+pentagon's own *direction*, which `fineLookup.nodeAt` (direction-only,
+ignores magnitude) then always resolved back to the pentagon node,
+regardless of where the click actually landed on screen.
+
+New `GeodesicConwayBiome.raySphereIntersection` replaces the stock call:
+picks the far root when the ray origin is inside the sphere, the near
+one when it's outside, rather than assuming either. `make fmt lint
+check test` clean.
+
+Also confirmed, not changed: entering an already-composed pentagon
+starts from its own persisted pattern (`GeodesicPentagonEngraving.patterns`
+is never cleared on exit), blank only the first time a given pentagon
+is touched — asked about directly, already the existing behavior once
+the click-resolution bug above stopped masking it.

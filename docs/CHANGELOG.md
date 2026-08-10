@@ -16,3 +16,12 @@ not backfilled here.
 One-line description of the bug and the fix. Commit: `<hash>`.
 
 -->
+
+## 2026-08-10 — Camera could enter a wall's solitary end
+
+Walking toward the dead end of a wall (no neighbouring segment) at the wrong
+angle could still let the camera clip into it a little. Fixed as a side
+effect of `GeodesicCollision`'s new distance-based wall clearance check
+(`WALL_CLEARANCE`), which keeps the player away from a closed segment's own
+thickness by point-to-segment distance — including near either endpoint, not
+just along its middle. Commit: `1a713e9`.

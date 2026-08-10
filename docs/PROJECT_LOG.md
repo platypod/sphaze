@@ -1045,3 +1045,145 @@ that a screenshot older than the mechanic it illustrates is a bug.
 
 One thing deliberately left plain: `philosophy.md`. The pillars are short,
 load-bearing text, and precision matters there more than pleasantness.
+
+## 2026-08-10 — story-line.md split into docs/game-design/storylines/, plus a design session
+
+`story-line.md` moved to `docs/game-design/storylines/`: a `README.md`
+carrying the map and requirements, plus one `candidate-<slug>.md` file per
+candidate (`candidate-garden-of-eden.md`, `candidate-twisted-mythologies.md`,
+`candidate-painters-house.md`), each prefixed `candidate-` until validated —
+the prefix drops on the day one is chosen, same spirit as the 2026-07-22
+`game-design.md` split, one level deeper now that individual candidates have
+their own material to carry. `README.md`'s movement-rules table, the folder
+`README.md`'s flowchart, and every cross-reference in
+`design-decisions-records.md`/`ideas-backlog.md` retargeted; no content
+rewritten in the move itself.
+
+Design session on top of that move, all landing as additions rather than
+decisions (nothing here is chosen yet, see the files themselves for what's
+still open):
+
+- **The glider stage, made literal.** The already-built geodesic Conway
+  biome (12 pentagon beacons, see `ideas-backlog.md`'s "Deliberate pentagon
+  activation" and "Walls that behave by a rule" entries) reread as the
+  Garden of Eden candidate's glider-taxonomy stage in story terms: spawning
+  a structure at a pentagon and reading whether it becomes a genuine
+  traveler is the same test the player is undergoing one stage up. Solving
+  the maze by riding or triggering a chain of gliders is now framed as
+  earning that stage's own unlock — new information plus a new gameplay
+  mechanism — rather than a generic reward.
+- **Retroactive rediscovery via a gained sense**, new `ideas-backlog.md`
+  entry: start missing a sense (colourblind is the seed example), gain it
+  partway through, and biomes already solved turn out to have had an
+  obvious path invisible the whole time. Framed as an evolution-stage
+  unlock aimed at *reading* rather than *moving*, persistent and
+  retroactive across every biome already visited rather than a fixed
+  per-biome perception rule — the strongest "interconnected, not a level
+  select" fit filed there yet on paper. Cheapest first cut: a global
+  desaturation render pass, one colour-only route in an already-solvable
+  biome.
+
+Both land in `candidate-garden-of-eden.md` and `ideas-backlog.md`
+respectively, explicitly marked as not yet reconciled with the rest of
+either file.
+
+## 2026-08-10 — Pentagon-composing interface, spec'd
+
+Follow-up design round on the "Deliberate pentagon activation" backlog
+entry: how the player actually builds the pattern they spawn at a
+pentagon, worked through in a few passes rather than settled in one.
+First pass (a `E`-opens-a-2D-grid-menu interface) was flagged against
+the diegetic-over-chrome pillar directly rather than built as asked —
+"a modal menu is the one moment that would break the sphere-interior
+viewpoint" applies here as much as it did to the hub menu. Landed
+instead on: the interface is an engraving on the pentagon's own floor
+(a real object, not an overlay); `E` triggers a continuous camera
+dolly-in, never a hard cut; editing is mouse click/raycast onto the
+engraved cells — the one mouse-driven interaction in an otherwise
+walk-and-`E` game, a deliberate exception because composing a pattern
+one `E`-toggle at a time was judged too slow; the rest of the
+simulation freezes while zoomed in (likely free — reuses the existing
+`HourglassModel.timeScale`/`BiomesRegistry.globalTimeScale` dial rather
+than needing a new pause mechanism); the composed pattern persists at
+that pentagon across visits; and every ~20 ticks it's re-stamped onto
+the live board regardless of what's alive there, a sustaining source
+rather than a one-shot seed. Full detail in `ideas-backlog.md`'s
+"Deliberate pentagon activation" entry, including one real open
+question the re-stamp answer surfaced but didn't resolve: whether the
+stamp overwrites the footprint exactly or only guarantees those cells
+stay alive (OR) — left open, worth prototyping both.
+
+## 2026-08-10 — Pentagon-composing interface, built
+
+Resolved the one open question from the spec'd-but-not-built entry
+above ("overwrite the footprint exactly" — a metronome, not an
+OR-in-emergent-growth hybrid) and implemented the whole interaction.
+
+New `tools.geodesic.GeodesicPentagonEngraving`: per-pentagon composed
+pattern (node id → `0`/`1`), a pentagon's own 1-ring footprint (6 nodes,
+computed once and cached — no ring/radius helper existed anywhere in
+`tools.geodesic` before this, confirmed by search, so it's a small BFS
+of its own rather than a reused one), toggle, and `tickAll` — called
+unconditionally from `GeodesicConwayBiome.tick` every frame, restamping
+any composed pentagon onto `GeodesicVentrellaState` every
+`RESTAMP_INTERVAL_TICKS` (`20`) real ticks via `seedSingle`, regardless
+of whether the player is currently there.
+
+`biomes.common.Biome` gained two new interface methods —
+`cameraOverride(player):Null<CameraOverride>` and
+`onEditClick(ray:h3d.col.Ray):Void` — both no-ops (`return null;`/`{}`)
+on every biome except `GeodesicConwayBiome`, same discipline `interact`
+already established. `entities.player.Camera` gained the `CameraOverride`
+typedef and `applyOverride`, the stateless counterpart to `applyTo` for
+whatever a biome's own override hands back. `GameLoop.fixedUpdate` reads
+`cameraOverride` once per frame: non-null both drives the camera
+placement directly (skipping `Camera.applyTo`) and gates a new
+`editingEngraving` flag that suspends normal movement/turning/gravity/
+paintings for the frame (extracted into `handleMovement`, purely to keep
+`fixedUpdate`'s own branching readable once it grew this second mode —
+flagged by `checkstyle`'s `CyclomaticComplexity` at a `Warning` before
+the extraction, clean after) and switches `window.mouseMode` to
+`Absolute` for real cursor clicks, restored to `Relative` on exit.
+`keepWantingRelativeMouse` had to become edit-mode-aware — left
+unguarded it would force `Absolute` straight back to `Relative` the
+instant the mode-change event fired.
+
+`GeodesicConwayBiome.interact` enters/exits editing (entry gated on
+actually standing on a pentagon node, `fineSphere.neighbors[nodeId].length
+== 5`); `cameraOverride` dollies the camera in to `ENGRAVING_VIEW_HEIGHT`
+above the pentagon, screen-up captured from the player's own facing at
+the moment of entry (`tangentProject`) so the zoomed view doesn't spin
+freely; `onEditClick` resolves the click's ray against the sphere
+analytically (`h3d.col.Sphere.rayIntersection` — exact for a sphere, no
+mesh-based picking needed) then `fineLookup.nodeAt` for which cell it
+hit, same lookup collision/gravity already use. The engraving's own
+generation-advance freeze (`accumulator`'s `while` loop skipped while
+`editingPentagon != null`) is scoped to *that* board only —
+`engraving.tickAll` runs every tick regardless, so an already-composed
+pentagon keeps restamping on schedule even while a different one (or
+none) is being edited. `GeodesicMesh.buildEngraving` draws the footprint
+as flat panels, bright (`Colours.CONWAY_TILE_GLIDER`) on, dim
+(`Colours.CONWAY_WALL_GLOW` at `35%`) off, lifted clear of every other
+layer's own lift constant.
+
+**E freed by retiring the debug export-maze tool**, per direct ask
+rather than adding a second keybind: `Keybinds.EXPORT_MAZE` and
+`GameLoop.exportMaze` are gone (git history has them back if wanted);
+`Biome.serialize`/`restore` and L (import) are untouched — only the E
+export trigger and its own function are removed, so nothing about the
+save format changed. `Keybinds.INTERACT` moved from `F` to `E`
+accordingly, doubling as the two-sided biome's own existing "drop a
+mark" trigger — no behavior change there beyond the key.
+
+Compiles clean, `checkstyle` clean (0 errors, 0 warnings — the one
+`CyclomaticComplexity` warning `fixedUpdate` picked up mid-change was
+resolved by the `handleMovement` extraction above, not suppressed), full
+`utest` suite green. **Not exercised in the browser** — this project's
+own standing note on Claude driving the game applies in full here
+(mouse-look/click and WASD input don't reliably reach the canvas in this
+environment); camera math, raycasting, and the restamp/freeze logic are
+reasoned through and unit-testable in principle but have no test
+coverage yet, and the whole interaction wants a real playtest before
+trusting the untuned constants (`ENGRAVING_VIEW_HEIGHT`,
+`RESTAMP_INTERVAL_TICKS`, `ENGRAVING_LIFT`/`_OFF_BRIGHTNESS`) or the feel
+of the camera dolly/click-to-toggle loop itself.

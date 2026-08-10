@@ -11,7 +11,7 @@ flowchart LR
     philosophy -->|cuts against a pillar| discuss([raise it explicitly])
     backlog -->|built| code[/the code +<br/>PROJECT_LOG.md/]
     backlog -->|outgrows 25 lines| notes[notes/<br/><i>one design note</i>]
-    story[story-line.md<br/><i>current story state</i>] -->|"winner folds in"| story2[the story]
+    story[storylines/<br/><i>candidate-*.md, current story state</i>] -->|"winner: drop prefix"| story2[the story]
     story -->|"loser"| records[(design-decisions-records.md<br/><i>append-only</i>)]
     story -->|changes a pillar| philosophy
     inspirations[[inspirations.md<br/><i>external references</i>]] -.->|feeds| backlog
@@ -21,7 +21,7 @@ flowchart LR
 | File | Holds | Moves |
 |---|---|---|
 | [philosophy.md](philosophy.md) | Design pillars — what this game is trying to be | Changes rarely; when a decision changes a pillar, update it and record why in [design-decisions-records.md](design-decisions-records.md) |
-| [story-line.md](story-line.md) | The **current state** of the story: live candidates, preferences, open decisions | When a story decision lands, the winner folds into the story (and its pillar consequences into philosophy.md); losers move to design-decisions-records.md with the why |
+| [storylines/](storylines/README.md) | The **current state** of the story: one `candidate-*.md` file per live/parked candidate, plus a `README.md` with the map and requirements | When a story decision lands, the winner's file drops its `candidate-` prefix (and its pillar consequences fold into philosophy.md); losers' files are deleted and their content moves to design-decisions-records.md with the why |
 | [ideas-backlog.md](ideas-backlog.md) | Not-yet-implemented ideas, checked against philosophy.md before entering | When implemented, **delete the entry** — the implementation plus `../PROJECT_LOG.md` is the record from then on. Keep only whatever part is still open |
 | [design-decisions-records.md](design-decisions-records.md) | Decision records: what was decided, what was rejected, and why | Append-only; entries never leave |
 | [inspirations.md](inspirations.md) | External references (games, design writing) with the specific lesson each carries, and which backlog entry it feeds | Entries stay after the idea they fed ships — unlike backlog entries — since "why is it shaped like this" outlives the shipping |

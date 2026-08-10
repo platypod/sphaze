@@ -32,6 +32,7 @@ its details block, it's a design note: give it its own file under
 | [Walls that behave by a rule](#walls-that-behave-by-a-rule) | wall state | Life-driven built, 3 idea | high |
 | [Two-sided maze](#two-sided-maze-the-open-half) | topology, gravity | **prototype landed**, crossing open | — |
 | [Perception rules](#perception-rules-as-the-biomes-own-variable) | what you may know | **one of ten built** | low each |
+| [Retroactive rediscovery via a gained sense](#retroactive-rediscovery-via-a-gained-sense) | what you may know, persistent | idea | medium |
 | [Antipode pairs](#antipode-pairs) | geometry | idea | medium |
 | [Great-circle corridors](#great-circle-corridors) | geometry | idea | high |
 | [Junction drafting](#junction-drafting) | who builds the maze | idea | medium |
@@ -43,7 +44,7 @@ its details block, it's a design note: give it its own file under
 | [Maze-compatible life rule](#a-maze-compatible-life-rule) | biome identity, simulation | open question, measured | medium |
 | [Hex-native structure library](#a-hex-native-structure-library) | biome identity, simulation | **superseded (2026-08-09): live rule is now Ventrella, not B2/S34 — see below** | low |
 | [True glider guns](#true-glider-guns) | biome identity, simulation | idea, half-unblocked (a much better traveler exists now) | high |
-| [Deliberate pentagon activation](#deliberate-pentagon-activation-not-random-soup) | biome identity, progression | **shared prerequisite (soup off) still built, now via the Ventrella spawner**, 4 variants still idea | low→high |
+| [Deliberate pentagon activation](#deliberate-pentagon-activation-not-random-soup) | biome identity, progression | **shared prerequisite (soup off) built**; composing interface **built**; 4 narrative variants still idea | low→high |
 | [Biome links / rosetta maze](#biome-links-and-the-rosetta-maze) | progression | idea | high |
 | [Broken cells that need fixing](#broken-cells-that-need-fixing) | progression, interconnection | idea | medium |
 | [Zoom in/out to move between biomes](#zoom-inout-to-move-between-biomes) | traversal, scale | idea | high |
@@ -322,6 +323,53 @@ Still open, and probably shared by all ten: whether a distance cue is genuinely
 nothing stops a player reading the cue one tuft at a time at their feet, which
 defeats the point — the fix is making the *local* reading ambiguous while the
 aggregate stays honest.
+</details>
+
+### Retroactive rediscovery via a gained sense
+
+**Start missing a sense — colourblind is the seed example — and gain it
+partway through, so biomes already solved turn out to have had an obvious
+path invisible to the player's own eye the whole time.**
+
+Raised directly (2026-08-10), alongside the
+[Garden of Eden candidate](storylines/candidate-garden-of-eden.md)'s own
+"each stage a gameplay unlock" driver — colour vision reads there as an
+evolution stage aimed at *reading* rather than *moving*, the way `gun`
+is aimed at scouting and `spaceship` at speed. This entry is the
+story-agnostic mechanic underneath that framing.
+
+- *Fits:* "interconnected, not a level select" harder than any single
+  [perception rule](#perception-rules-as-the-biomes-own-variable) can on
+  its own — those are a fixed rule *of a biome*, gated on which biome
+  you're in; this is gated on which *stage the player is*, so unlocking
+  it changes how every biome already visited reads, not just the one
+  you're standing in. Also composes with "see far, not near": a path
+  legible only in colour, at distance, is a second axis of the same
+  asymmetry.
+- *Unproven:* whether "solved once, differently legible on a second
+  visit" reads as a reward or as "I should have seen that", and whether
+  the game can cheaply flag which already-visited biomes are worth a
+  revisit rather than making the player recheck all of them blind.
+- *Cost:* medium — the biome geometry doesn't change, only what's
+  rendered/legible; needs a persistent player-state flag (parallel to
+  the taxonomy-stage unlocks the driver already wants) and at least one
+  biome authored with a colour-only path from day one, not retrofitted.
+
+<details><summary>Detail</summary>
+
+The concrete first cut: render the game desaturated by default (a real
+rendering constraint, not just a fictional frame — see the open question
+in the candidate file about which of the two this should be); one wall,
+mark, or route in an early, already-solvable biome is distinguishable
+only by hue, invisible in greyscale; gaining colour vision (whichever
+evolution stage it's tied to) flips a global shader/render-state and
+that route is retroactively there. Generalises past colour: any sense
+the player starts without (hearing a hum through walls, feeling a draft
+without the wind biome's grass) is the same shape — gain it, then reread
+what's already behind you. Colour is the cheapest to prototype, since
+`graphics.shaders` already carries per-biome shader state to hook a
+global desaturation pass into.
+
 </details>
 
 ### Antipode pairs
@@ -700,7 +748,7 @@ Four variants raised together, not mutually exclusive:
    back to chaotic, ungoverned Life — genuinely alive again rather than a
    player-conducted instrument. Raised with its own caveat attached ("we'd
    have to see how that fits the narrative") — deliberately not resolved
-   here; needs a beat in [story-line.md](story-line.md) to hang on, not
+   here; needs a beat in [storylines/](storylines/README.md) to hang on, not
    invented to fit after the fact.
 4. **Two-sided revisit, Conway-specific.** Exterior cells keep the
    jump-over-wall mechanic; interior cells "just paint the floor" and only
@@ -742,6 +790,69 @@ Four variants raised together, not mutually exclusive:
   coupling — walls halving a neighbour's contribution rather than zeroing it,
   or gating only *birth* and not survival — might get the design intent
   without the extinction, and was never tried.
+
+**Story reading added (2026-08-10, hooman).** The same activate →
+propagate → wall-opens loop this entry already scopes, reread as the
+[Garden of Eden candidate](storylines/candidate-garden-of-eden.md)'s
+glider evolution stage made literal: the reward for solving the maze this
+way is framed as **new information plus a new gameplay mechanism** —
+i.e. whatever the taxonomy's next stage (spaceship/gun) unlocks, not a
+generic reward. Doesn't resolve any of the open questions above; only
+gives the eventual solved-state a narrative payoff to hang variant 1's
+cross-biome unlock on, if that candidate wins.
+
+**The composing interface, spec'd (2026-08-10, hooman).** How the player
+actually builds the pattern they spawn at a pentagon, worked through
+across several rounds:
+
+- **Trigger:** walk up to a pentagon, prompted to press `E`. The
+  interface itself is an engraving on the pentagon's own floor — a real
+  object in the world, not a screen-space overlay — so it stays inside
+  the diegetic-over-chrome pillar without needing an exception.
+- **Entry:** `E` starts a continuous camera dolly-in toward the
+  engraving (closer, tilted down) — still the sphere-interior POV the
+  whole game uses, never a hard cut to an orthographic top-down. `E`
+  again reverses it and returns control.
+- **Editing:** mouse click/raycast onto the engraved cells toggles them
+  on/off. The one mouse-driven interaction in a game that's otherwise
+  walk-and-`E` for everything — a deliberate exception, made because
+  composing a pattern cell-by-cell via the walk+`E` verb was judged too
+  slow.
+- **Time while composing:** the rest of the simulation **freezes**
+  while zoomed in — plausibly free, since a global time-scale dial
+  already exists for the hourglass mechanic
+  (`HourglassModel.timeScale`/`BiomesRegistry.globalTimeScale`); setting
+  it to `0` for the duration may be all this needs, rather than a new
+  pause mechanism.
+- **Persistence:** the composed pattern **persists** at that pentagon
+  across visits — returning re-opens the same engraving with the same
+  cells still toggled, so revisiting to patch a dead branch or extend a
+  growing structure is a real, expected use case, not just "compose
+  once and leave."
+- **Activation:** every ~20 ticks (tunable), the composed pattern is
+  **re-stamped onto the live board regardless of what's alive there** —
+  a sustaining source that keeps reasserting itself, not a one-shot seed
+  left to evolve freely between stamps.
+- **Resolved (2026-08-10): overwrite the footprint exactly.** The stamp
+  force-sets every footprint cell to exactly what the composed pattern
+  says (on or off), not an OR — an evolved neighbour inside the
+  footprint gets overwritten every restamp, same as a cell the player
+  never touched. The pentagon is a metronome the board can never
+  permanently diverge from, not a guaranteed-seed-plus-emergent-growth
+  hybrid. **Built** — `tools.geodesic.GeodesicPentagonEngraving.tickAll`
+  calls `GeodesicVentrellaState.seedSingle` for every footprint node on
+  each restamp, unconditionally.
+
+**Built (2026-08-10)**, full composing interface above included:
+`tools.geodesic.GeodesicPentagonEngraving` (per-pentagon pattern
+storage, footprint, restamp clock) plus the wiring through
+`GeodesicConwayBiome.interact`/`cameraOverride`/`onEditClick` and two
+new `biomes.common.Biome` interface methods (`cameraOverride`,
+`onEditClick`) every biome now implements. `Keybinds.INTERACT` moved
+from `F` to `E` for this (freed by retiring the debug export-maze tool
+— see `docs/PROJECT_LOG.md`'s own 2026-08-10 entries). Not yet
+persisted across `serialize`/`restore` — an open gap, not a considered
+omission.
 
 ### Biome links, and the rosetta maze
 
@@ -879,7 +990,7 @@ smaller scale, each exit zooms you back up.
 ### Story and lore
 
 We need a main story to knead everything together — the live exploration is in
-[story-line.md](story-line.md).
+[storylines/](storylines/README.md).
 
 ### Cute characters
 

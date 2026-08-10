@@ -2,8 +2,9 @@
 
 Append-only records of design decisions: what was decided or rejected,
 against which alternatives, and why. This is the decision-shaped complement
-to `../PROJECT_LOG.md`'s chronology — when [story-line.md](story-line.md)
-or [philosophy.md](philosophy.md) change state, the reasoning lands here so
+to `../PROJECT_LOG.md`'s chronology — when a file in
+[storylines/](storylines/README.md) or [philosophy.md](philosophy.md)
+changes state, the reasoning lands here so
 the current-state files stay clean. Entries follow this shape:
 
 > **YYYY-MM-DD — Title — STATUS.** What it was; why it got this status;
@@ -12,7 +13,7 @@ the current-state files stay clean. Entries follow this shape:
 ## Story-spine exploration (2026-07-22)
 
 Records from the story exploration session; the surviving candidates live
-in [story-line.md](story-line.md).
+in [storylines/](storylines/README.md).
 
 - **2026-07-22 — Story alternative 3, "The Late Resident" (noir /
   self-investigation) — REJECTED.** Recorded because the idea was judged

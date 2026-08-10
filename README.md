@@ -110,8 +110,9 @@ invest in 2 or 3.** Revisit this section and log the decision in
 
 - [`docs/game-design/`](docs/game-design/README.md) — design docs split by
   lifecycle: [philosophy](docs/game-design/philosophy.md) (what this game
-  is trying to be), [story-line](docs/game-design/story-line.md) (current
-  state of the story), [ideas-backlog](docs/game-design/ideas-backlog.md)
+  is trying to be), [storylines](docs/game-design/storylines/README.md)
+  (current state of the story, one file per candidate),
+  [ideas-backlog](docs/game-design/ideas-backlog.md)
   (not-yet-implemented ideas),
   [design-decisions-records](docs/game-design/design-decisions-records.md)
   (decisions with their rejected alternatives and why), and

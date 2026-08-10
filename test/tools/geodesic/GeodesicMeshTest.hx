@@ -107,6 +107,82 @@ class GeodesicMeshTest extends Test {
 	}
 
 	/**
+		The pillar's own orientation balances across every wall meeting
+		there, not just the first (2026-08-10, reported directly against a
+		real screenshot: "the pillars are not centered on the wall in all
+		directions"). A first version oriented a pillar to whichever
+		segment it found first, which is exact only when every departure is
+		*exactly* 120° from the next — true on average (`addJunctionPost`'s
+		own doc has the honeycomb-vertex reasoning) but not exactly, most
+		visibly near a pentagon. Two walls 110° apart (not the ideal 120°)
+		simulate that real deviation directly, independent of any actual
+		sphere geometry.
+
+		Goes through the public `buildWallMesh` API and extracts the built
+		pillar's own corners, the same "real machinery, not a duplicate of
+		its own internals" preference `GeodesicCollisionTest`'s own doc
+		gives for testing through public entry points — `bestFitReference`/
+		`tangentDirection` themselves aren't `public`, on purpose, so this
+		measures the actual shipped geometry rather than calling into
+		private helpers directly. The "naive" comparison (anchor to one
+		wall alone) is computed independently, from the two departure
+		angles chosen above — not by reaching into the pre-fix behavior,
+		which no longer exists as a separate code path to call.
+	**/
+	function testJunctionPillarOrientationBalancesAcrossBothWalls():Void {
+		var shared = Vec3Math.make(0, 0, 1);
+		var far0 = Vec3Math.make(1, 0, 0);
+		var far1Angle = 110 * Math.PI / 180;
+		var far1 = Vec3Math.make(Math.cos(far1Angle), Math.sin(far1Angle), 0);
+
+		var meshes = GeodesicMesh.buildWallMesh(new h3d.scene.Object(), [segment(far0, shared), segment(far1, shared)], glow());
+		Assert.equals(1, meshes.length, "2 segments + 1 post is well under the vertex budget — expected a single mesh");
+		var polygon:h3d.prim.Polygon = cast meshes[0].primitive;
+
+		// addWall pushes 24 points per segment (2 segments = 48); addJunctionPost's own 6 side faces follow,
+		// each pushing [baseCorner_i, baseCorner_next, topCorner_next, topCorner_i] — so baseCorners[i] is
+		// always the first vertex of face i, at global index 48 + 4*i.
+		var baseCorners = [for (i in 0...6) polygon.points[48 + 4 * i]];
+		var postCenter = new h3d.Vector(0, 0, 0);
+		for (corner in baseCorners) {
+			postCenter = postCenter.add(corner);
+		}
+		postCenter = postCenter.scaled(1 / baseCorners.length);
+		var up = postCenter.normalized();
+
+		// The hex's own face-normal-0 sits 30° before vertex 0 in the local frame `hexCorners` builds
+		// (vertices at 30°, 90°, ...) — so the actual chosen reference direction is vertex 0's own angle,
+		// measured against an arbitrary independent zero axis (`far0`'s own tangent direction), minus 30°.
+		var zero = tangentToward(postCenter, up, far0);
+		var perpendicular = up.cross(zero);
+		var vertex0Angle = Math.atan2(baseCorners[0].sub(postCenter).dot(perpendicular), baseCorners[0].sub(postCenter).dot(zero));
+		var actualOffset = vertex0Angle - Math.PI / 6;
+
+		var naiveWorst = Math.max(faceMisalignment(0), faceMisalignment(far1Angle));
+		var balancedWorst = Math.max(faceMisalignment(-actualOffset), faceMisalignment(far1Angle - actualOffset));
+
+		Assert.isTrue(balancedWorst < naiveWorst,
+			'expected the balanced pillar to reduce the worst-case misalignment (naive=$naiveWorst, balanced=$balancedWorst)');
+	}
+
+	/** How far `angle` sits from the *nearest* multiple of 60° — hex face-normals repeat every 60°, so this is a wall's own misalignment from the closest one. **/
+	static function faceMisalignment(angle:Float):Float {
+		var period = Math.PI / 3;
+		var folded = angle % period;
+		if (folded < 0) {
+			folded += period;
+		}
+		return Math.min(folded, period - folded);
+	}
+
+	/** The unit tangent at `from` (with local "up" `up`) pointing toward `toward`'s own world position — independently written, not a call into `GeodesicMesh.tangentDirection`, which isn't `public`. **/
+	static function tangentToward(from:h3d.Vector, up:h3d.Vector, toward:Vec3):h3d.Vector {
+		var target = new h3d.Vector(toward.x, toward.y, toward.z).scaled(GeodesicMesh.RADIUS);
+		var raw = target.sub(from);
+		return raw.sub(up.scaled(raw.dot(up))).normalized();
+	}
+
+	/**
 		The actual root cause behind the hex-pillar reveal above:
 		`hxd.IndexBuffer` is `UInt16`-backed, so a single `Polygon` can never
 		safely exceed 65536 vertices — a real game-scale wall mesh with

@@ -1543,3 +1543,39 @@ in [story-line.md](story-line.md).
   but this is the one fix in this whole chain with a concrete, measured
   root cause (a `UInt16` overflow, confirmed by counting real vertices at
   real game scale) rather than a screenshot-driven guess.
+- **2026-08-10 — pillar orientation balanced across every wall meeting
+  there, same day, fifth revision.** The index-overflow fix above
+  actually shipped a readable screenshot for the first time in this
+  whole chain, and it showed the real remaining flaw directly: "the
+  pillars are not centered on the wall in all directions." `addJunctionPost`
+  anchored a pillar's own rotation to `departures[0]` alone — exact when
+  every wall meeting there is *exactly* 120° from the next, which the
+  honeycomb-vertex reasoning makes true *on average* but not exactly
+  (measured back when diagnosing the index overflow: real 2-segment
+  junctions range roughly 113°–126°, not a fixed 120°). Anchoring to one
+  wall gave it a perfect fit and left whichever other wall(s) meet there
+  to whatever residual the real angle happened to land on.
+
+  `bestFitReference` replaces the single-departure anchor: every
+  departure's own angle (relative to an arbitrary zero direction) gets
+  folded into a single 60°-period residual — hex face-normals repeat
+  every 60° — and those residuals are *circular*-averaged (the standard
+  trick for a periodic quantity: scale the period up to a full turn
+  before averaging, so a residual near one edge of the fold doesn't
+  average incorrectly with one near the other edge of it). The result is
+  the single rotation minimizing total misalignment across every wall at
+  that junction at once, rather than favoring whichever happened to be
+  first.
+
+  Exit checks: rather than reach into `bestFitReference`/`tangentDirection`
+  directly — neither is `public`, on purpose, matching `GeodesicCollisionTest`'s
+  own "real machinery over private internals" preference — the new test
+  builds two real wall segments 110° apart (not the ideal 120°) through
+  the public `buildWallMesh`, extracts the built pillar's own corners by
+  index, and independently recomputes both the naive (anchor-to-one-wall)
+  and actual worst-case misalignment from that extracted geometry,
+  asserting the actual one is smaller. `make fmt`/`lint`/`check`/`test`
+  all clean (38,491 assertions). **Not yet visually verified** against
+  this specific fix — the report that prompted it was itself a visual
+  check of the *previous* commit, so the loop is closing, just one commit
+  behind as always.

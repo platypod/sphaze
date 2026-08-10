@@ -575,13 +575,13 @@ class GeodesicMesh {
 	/** How much taller than a wall's own `GeodesicLifecycle.WALL_HEIGHT` a junction pillar stands — asked directly ("slightly higher... not much"), so a small, untuned margin rather than a measured one. **/
 	static inline final POST_HEIGHT_MARGIN:Float = 0.5;
 
-	/** A sealed hexagonal prism straddling `junction.point`, oriented so one face squares up with `junction.departures[0]` — see `addJunctionPosts`'s own doc for why. Winding isn't hardened for outward normals the way `addWall`'s own faces are — `buildWallMesh`'s own mesh already renders with `culling = None`, so it doesn't need to be. **/
+	/** A sealed hexagonal prism straddling `junction.point`, oriented by `bestFitReference` across every one of `junction.departures` at once — see that function's own doc for why picking just one wasn't enough. Winding isn't hardened for outward normals the way `addWall`'s own faces are — `buildWallMesh`'s own mesh already renders with `culling = None`, so it doesn't need to be. **/
 	static function addJunctionPost(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>,
 			junction:Junction):Void {
 		var base = lift(junction.point, WALL_BASE_LIFT);
 		var top = liftFurther(base, GeodesicLifecycle.WALL_HEIGHT + POST_HEIGHT_MARGIN);
 		var up = base.normalized();
-		var reference = tangentDirection(base, junction.departures[0]);
+		var reference = bestFitReference(base, up, junction.departures);
 		var perpendicular = up.cross(reference);
 
 		var baseCorners = hexCorners(base, reference, perpendicular);
@@ -601,6 +601,55 @@ class GeodesicMesh {
 		var up = from.normalized();
 		var raw = target.sub(from);
 		return raw.sub(up.scaled(raw.dot(up))).normalized();
+	}
+
+	/** Hex face-normals repeat every 60°. **/
+	static final HEX_FACE_PERIOD:Float = Math.PI / 3;
+
+	/**
+		A hex orientation balanced across *every* one of `departures`, not
+		just the first — reported directly ("the pillars are not centered
+		on the wall in all directions") after a first version anchored the
+		whole hexagon to `departures[0]` alone. That's exactly right when
+		every departure is exactly 120° (`2 * HEX_FACE_PERIOD`) from the
+		next, but `addJunctionPosts`'s own doc already notes the real angle
+		only *approximates* 120° away from the 12 pentagons — a spread of a
+		few degrees either way, measured directly. Anchoring to one
+		departure gives it a perfect fit and leaves the others to whatever
+		residual the real angle happens to land on; this instead folds every
+		departure's own angle (relative to an arbitrary zero direction) into
+		a single `HEX_FACE_PERIOD` residual and *circular*-averages those
+		residuals — scaling the period up to a full turn before averaging,
+		the standard trick for a folded/periodic quantity, so a residual
+		near one edge of the fold doesn't average incorrectly with one near
+		the other edge of it — landing on the single rotation that
+		minimizes the total misalignment across every departure at once,
+		instead of favoring whichever happened to be first.
+		@param base the junction's own already-lifted world position (`addJunctionPost`'s own `base`).
+		@param up the local radial direction at `base` (`addJunctionPost`'s own `up`).
+		@param departures every wall's own "other endpoint" touching this junction, world-space, unit-sphere Vec3 — `Junction.departures`.
+		@return a unit tangent at `base`, to use as `hexCorners`'s own `reference`.
+	**/
+	static function bestFitReference(base:h3d.Vector, up:h3d.Vector, departures:Array<Vec3>):h3d.Vector {
+		var zero = tangentDirection(base, departures[0]);
+		var perpZero = up.cross(zero);
+
+		var sumX = 0.0;
+		var sumY = 0.0;
+		for (departure in departures) {
+			var dir = tangentDirection(base, departure);
+			var angle = Math.atan2(dir.dot(perpZero), dir.dot(zero));
+			var folded = angle % HEX_FACE_PERIOD;
+			if (folded < 0) {
+				folded += HEX_FACE_PERIOD;
+			}
+			var onFullTurn = folded * (2 * Math.PI / HEX_FACE_PERIOD);
+			sumX += Math.cos(onFullTurn);
+			sumY += Math.sin(onFullTurn);
+		}
+		var meanFolded = Math.atan2(sumY, sumX) * (HEX_FACE_PERIOD / (2 * Math.PI));
+
+		return zero.scaled(Math.cos(meanFolded)).add(perpZero.scaled(Math.sin(meanFolded)));
 	}
 
 	/** The 6 corners of a `POST_RADIUS`-circumradius hexagon centered on `center`, in the tangent plane spanned by `reference`/`perpendicular` (both assumed unit and mutually perpendicular) — offset 30° from `reference` itself, so the face spanning the first and last corners is centered on (and perpendicular to) `reference`. **/

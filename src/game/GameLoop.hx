@@ -291,12 +291,20 @@ class GameLoop {
 		var cameraView = currentBiome.cameraOverride(player);
 		var editing = cameraView != null;
 		if (editing != editingEngraving) {
-			// Transition only, not every frame — see keepWantingRelativeMouse's
-			// own doc for why entering has to bypass it, and why exiting
-			// restores Relative directly rather than leaving that function
-			// to notice on its own.
-			window.mouseMode = editing ? Absolute : Relative(onMouseMove, true);
+			// editingEngraving updates BEFORE window.mouseMode is touched, not
+			// after — set_mouseMode calls onMouseModeChange
+			// (keepWantingRelativeMouse) synchronously as part of the
+			// assignment below, so that function would otherwise still see the
+			// *old* editingEngraving value and force Absolute straight back to
+			// Relative on the very transition meant to leave it (found the hard
+			// way: the composing cursor never appeared, because this method's
+			// own mouseMode write kept silently undoing itself before
+			// returning). See keepWantingRelativeMouse's own doc for why
+			// entering has to bypass it at all, and why exiting restores
+			// Relative directly rather than leaving that function to notice on
+			// its own.
 			editingEngraving = editing;
+			window.mouseMode = editing ? Absolute : Relative(onMouseMove, true);
 		}
 
 		if (editing) {

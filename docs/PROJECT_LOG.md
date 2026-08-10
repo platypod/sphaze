@@ -1187,3 +1187,34 @@ coverage yet, and the whole interaction wants a real playtest before
 trusting the untuned constants (`ENGRAVING_VIEW_HEIGHT`,
 `RESTAMP_INTERVAL_TICKS`, `ENGRAVING_LIFT`/`_OFF_BRIGHTNESS`) or the feel
 of the camera dolly/click-to-toggle loop itself.
+
+## 2026-08-10 — Fixed: no cursor when entering a pentagon's engraving
+
+Reported directly after the interface above shipped: no cursor appears
+in configuration mode. Root cause was an ordering bug in `GameLoop`'s
+own mouse-mode switch, exactly the kind the "not exercised in the
+browser" caveat above was flagging as a real risk, not boilerplate
+hedging.
+
+`fixedUpdate`'s transition block wrote `window.mouseMode = Absolute`
+*before* updating `editingEngraving`. `hxd.Window.set_mouseMode`
+(`hxd.Window.js.hx`) calls `onMouseModeChange` —
+`keepWantingRelativeMouse` — *synchronously*, as the first thing it
+does, before touching pointer lock at all. So at the exact moment
+entering was requested, `keepWantingRelativeMouse` still read the *old*
+`editingEngraving == false`, took its normal (non-editing) branch, and
+returned `Relative(onMouseMove, true)` right back — silently overriding
+the very assignment that triggered it. The mode never left pointer
+lock, the browser never released the native cursor, and
+`window.mouseX`/`mouseY` never started tracking real cursor position
+either (Relative mode doesn't update them) — `onEditClick` would have
+raycast from a stale/zero position had a click even been possible to
+land.
+
+Fixed by swapping the two lines: `editingEngraving = editing;` now runs
+*before* `window.mouseMode = ...`, so `keepWantingRelativeMouse` sees
+the correct, already-updated flag when it fires. `make fmt lint check
+test` clean again. Still not exercised in the browser — the fix is
+reasoned from `hxd.Window.js.hx`'s own source (read in full to confirm
+`set_mouseMode`'s call order), not observed working, so treat this as
+higher-confidence-but-still-unverified rather than closed.

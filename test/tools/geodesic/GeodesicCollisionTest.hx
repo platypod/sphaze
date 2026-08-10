@@ -5,6 +5,7 @@ import biomes.common.maze.MazeEdges;
 import biomes.common.maze.MazeTopology.MazeLayout;
 import biomes.maze.MazeGeneratorTest.SeededRandom;
 import entities.player.PlayerModel;
+import tools.geodesic.GeodesicCoarseMaze.BoundarySegment;
 import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 import tools.geodesic.Vec3.Vec3Math;
 import utest.Assert;
@@ -117,6 +118,137 @@ class GeodesicCollisionTest extends Test {
 		var moved = GeodesicCollision.tryMove(player, direction, 0.01, RADIUS, layout, lookup);
 
 		Assert.isTrue(moved);
+	}
+
+	/**
+		`boundarySegments` (2026-08-10): once closed walls got real thickness
+		(`GeodesicMesh.WALL_THICKNESS`), the graph-only check above is no
+		longer the whole story — `tryMove` also has to keep the player away
+		from a *closed* segment's own slab. These tests build the synthetic
+		segment/clearance geometry by hand, the same "hand-built edge map"
+		style `testTryMoveAllowsAStepThatStaysWithinTheSameNode` already uses
+		above, rather than deriving it from a real `GeodesicCoarseMaze` —
+		what's under test here is `tryMove`'s own clearance arithmetic, not
+		the coarse-maze machinery `testTryMoveWithFineToCoarse*` already
+		covers. Every test below opens the *real* fine graph edge between the
+		two nodes it moves across (when it isn't staying within one node's
+		own cell), so a block is never attributable to the graph check this
+		class's own tests above already cover — only to the new clearance
+		one.
+	**/
+	function testTryMoveBlocksAStepThatEndsTooCloseToAClosedWallSegmentEvenWhenTheGraphEdgeIsOpen():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var lookup = new GeodesicLookup(sphere, FREQUENCY);
+		var nodeId = 0;
+		var neighborId = sphere.neighbors[nodeId][0];
+		var layout:MazeLayout = {openEdges: new haxe.ds.StringMap()};
+		MazeEdges.open(layout, Std.string(neighborId), Std.string(nodeId));
+
+		var boundarySegments = wallPointAt(nodeId, sphere.positions[nodeId]);
+		var player = playerAt(sphere, neighborId);
+		var direction = directionToward(sphere, neighborId, nodeId);
+		var distance = arcDistance(sphere, neighborId, nodeId) - 0.3; // lands just short of the wall point, well inside WALL_CLEARANCE
+
+		var moved = GeodesicCollision.tryMove(player, direction, distance, RADIUS, layout, lookup, null, boundarySegments);
+
+		Assert.isFalse(moved);
+	}
+
+	/** The "never trap the player" safety net: a player who's already too close to a closed wall (however that happened) must always be able to back away, even though the resulting clearance is still under `WALL_CLEARANCE`. **/
+	function testTryMoveAllowsAStepThatIncreasesDistanceFromAnAlreadyTooCloseWall():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var lookup = new GeodesicLookup(sphere, FREQUENCY);
+		var nodeId = 0;
+		var neighborId = sphere.neighbors[nodeId][0];
+		var layout:MazeLayout = {openEdges: new haxe.ds.StringMap()}; // irrelevant here: the move stays within node 0's own cell
+
+		var boundarySegments = wallPointAt(nodeId, sphere.positions[nodeId]);
+		var player = playerAt(sphere, nodeId); // starts exactly on the wall point itself: clearance 0, already too close
+		var direction = directionToward(sphere, nodeId, neighborId); // move away from the wall
+
+		var moved = GeodesicCollision.tryMove(player, direction, 0.5, RADIUS, layout, lookup, null, boundarySegments);
+
+		Assert.isTrue(moved);
+	}
+
+	/** An *open* coarse pair isn't a wall at all right now, however close its own segment geometry sits — the clearance check must skip it entirely, the same as `MazeEdges.isOpen` already does for `nearestClosedWallDistance`'s own loop. **/
+	function testTryMoveIgnoresClearanceNearAnOpenWallSegment():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var lookup = new GeodesicLookup(sphere, FREQUENCY);
+		var nodeId = 0;
+		var neighborId = sphere.neighbors[nodeId][0];
+		var layout:MazeLayout = {openEdges: new haxe.ds.StringMap()};
+		MazeEdges.open(layout, Std.string(neighborId), Std.string(nodeId));
+		MazeEdges.open(layout, "1", "2"); // the synthetic segment's own coarse pair, explicitly open
+
+		var boundarySegments = wallPointAt(nodeId, sphere.positions[nodeId]);
+		var player = playerAt(sphere, neighborId);
+		var direction = directionToward(sphere, neighborId, nodeId);
+		var distance = arcDistance(sphere, neighborId, nodeId) - 0.3;
+
+		var moved = GeodesicCollision.tryMove(player, direction, distance, RADIUS, layout, lookup, null, boundarySegments);
+
+		Assert.isTrue(moved);
+	}
+
+	/** The combo-jump mechanic exempts the clearance check too, the same as it already exempts the graph check — a player high enough above `GeodesicLifecycle.WALL_HEIGHT` is meant to clear a wall entirely, slab and all. **/
+	function testTryMoveIgnoresClearanceWhenAirborneAboveWallHeight():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var lookup = new GeodesicLookup(sphere, FREQUENCY);
+		var nodeId = 0;
+		var neighborId = sphere.neighbors[nodeId][0];
+		var layout:MazeLayout = {openEdges: new haxe.ds.StringMap()};
+		MazeEdges.open(layout, Std.string(neighborId), Std.string(nodeId));
+
+		var boundarySegments = wallPointAt(nodeId, sphere.positions[nodeId]);
+		var player = playerAt(sphere, neighborId);
+		player.airborneHeight = GeodesicLifecycle.WALL_HEIGHT + 1;
+		var direction = directionToward(sphere, neighborId, nodeId);
+		var distance = arcDistance(sphere, neighborId, nodeId) - 0.3;
+
+		var moved = GeodesicCollision.tryMove(player, direction, distance, RADIUS, layout, lookup, null, boundarySegments);
+
+		Assert.isTrue(moved);
+	}
+
+	/** Backward compat: omitting `boundarySegments` entirely (every call site before 2026-08-10) must keep behaving exactly like the graph-only check alone — no clearance check ever runs. **/
+	function testTryMoveIgnoresClearanceWhenNoBoundarySegmentsAreGiven():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var lookup = new GeodesicLookup(sphere, FREQUENCY);
+		var nodeId = 0;
+		var neighborId = sphere.neighbors[nodeId][0];
+		var layout:MazeLayout = {openEdges: new haxe.ds.StringMap()};
+		MazeEdges.open(layout, Std.string(neighborId), Std.string(nodeId));
+
+		var player = playerAt(sphere, neighborId);
+		var direction = directionToward(sphere, neighborId, nodeId);
+		var distance = arcDistance(sphere, neighborId, nodeId) - 0.3;
+
+		var moved = GeodesicCollision.tryMove(player, direction, distance, RADIUS, layout, lookup);
+
+		Assert.isTrue(moved);
+	}
+
+	/** A degenerate, single-point "segment" (`a == b`) indexed at `nodeId`, its own coarse pair (`1`/`2`) left closed unless the caller opens it — the minimal fixture `nearestClosedWallDistance`'s point-to-segment math needs. **/
+	static function wallPointAt(nodeId:Int, point:Vec3):Map<Int, Array<BoundarySegment>> {
+		var index = new Map<Int, Array<BoundarySegment>>();
+		index.set(nodeId, [
+			{
+				a: point,
+				b: point,
+				coarseA: 1,
+				coarseB: 2
+			}
+		]);
+		return index;
+	}
+
+	/** The exact great-circle arc length between two node centers, in world units — precise enough (unlike `stepDistance`'s own deliberate 1.2x overshoot) to land a move just short of a target point rather than past it. **/
+	static function arcDistance(sphere:GeodesicSphereData, fromId:Int, toId:Int):Float {
+		var from = Vec3Math.normalized(sphere.positions[fromId]);
+		var to = Vec3Math.normalized(sphere.positions[toId]);
+		var cosAngle = hxd.Math.clamp(Vec3Math.dot(from, to), -1, 1);
+		return Math.acos(cosAngle) * RADIUS;
 	}
 
 	static function carveMaze(sphere:GeodesicSphereData):MazeLayout {

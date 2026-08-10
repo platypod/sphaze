@@ -208,4 +208,47 @@ class GeodesicCoarseMaze {
 		}
 		return {layout: layout, reactivity: new GeodesicReactivity(fineSphere, layout)};
 	}
+
+	/**
+		Every boundary-crossing fine edge's own segment, indexed by *both*
+		of its fine endpoints — what `GeodesicCollision`'s own wall-clearance
+		check looks up instead of scanning every boundary edge on the whole
+		sphere per move (`boundaryEdges` alone runs into the thousands on a
+		real bake). Static geometry, computed once, same as `boundaryEdges`
+		itself — a segment's own *openness* changes as reactivity churns,
+		but its position never does, so the caller checks `MazeEdges.isOpen`
+		against whichever `MazeLayout` is current at query time rather than
+		this index baking a snapshot of it.
+		@param fineSphere the sphere the segment geometry is traced over.
+		@param fineBoundaries `GeodesicDual.cellBoundaries(fineSphere)`.
+		@param boundaryEdges `boundaryEdges`'s own output.
+		@param fineToCoarseMap `fineToCoarse`'s own output.
+		@return every fine node id that touches at least one boundary crossing, mapped to its own list of segments.
+	**/
+	public static function boundarySegmentsByFineNode(fineSphere:GeodesicSphereData, fineBoundaries:Array<Array<Vec3>>, boundaryEdges:Array<{a:Int, b:Int}>,
+			fineToCoarseMap:Array<Int>):Map<Int, Array<BoundarySegment>> {
+		var index = new Map<Int, Array<BoundarySegment>>();
+		for (edge in boundaryEdges) {
+			var geometry = GeodesicDual.sharedEdge(fineSphere, fineBoundaries, edge.a, edge.b);
+			var segment:BoundarySegment = {
+				a: geometry.a,
+				b: geometry.b,
+				coarseA: fineToCoarseMap[edge.a],
+				coarseB: fineToCoarseMap[edge.b]
+			};
+			addToIndex(index, edge.a, segment);
+			addToIndex(index, edge.b, segment);
+		}
+		return index;
+	}
+
+	static function addToIndex(index:Map<Int, Array<BoundarySegment>>, fineId:Int, segment:BoundarySegment):Void {
+		if (!index.exists(fineId)) {
+			index.set(fineId, []);
+		}
+		index.get(fineId).push(segment);
+	}
 }
+
+/** One boundary-crossing fine edge's own world geometry (at unit-sphere scale, matching `GeodesicDual.sharedEdge`'s own convention — a caller scales to world space) plus the two coarse ids whose own openness decides whether it's currently a wall at all. **/
+typedef BoundarySegment = {a:Vec3, b:Vec3, coarseA:Int, coarseB:Int};

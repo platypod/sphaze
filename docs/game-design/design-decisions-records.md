@@ -1343,3 +1343,63 @@ in [story-line.md](story-line.md).
   not just written and trusted. `make fmt`/`lint`/`check`/`test` all
   clean (38,477 assertions). **Not yet visually verified** in the running
   game.
+- **2026-08-10 — thick walls (`GeodesicMesh.WALL_THICKNESS`) plus a
+  matching collision-clearance check (`GeodesicCollision.WALL_CLEARANCE`)
+  — the depthWrite fix above wasn't the whole story.** Reported directly
+  after that fix shipped, screenshot attached: "Not fixed, we still see
+  some cells through walls." Re-diagnosed rather than assumed fixed —
+  the real cause was architecturally different from the first one.
+  `GeodesicMesh.addWall` built a single zero-thickness quad; a
+  zero-thickness plane has no volume to occlude anything with once the
+  viewing angle gets close enough to grazing, whatever the depth/blend
+  state — no ordering fix touches that, only giving the wall an actual
+  third dimension does.
+
+  **Render fix.** `addWall` now extrudes a real slab: front face, back
+  face, and two side caps, `WALL_THICKNESS` (`1.0`) apart, built by a new
+  `addWallFace` helper called once per face instead of once for a single
+  panel — the original UV/activity convention carries over unchanged,
+  just repeated per face.
+
+  **The render fix alone would have been unsafe to ship.** Explicit
+  instruction going in: "make sure the player will not be able to stick
+  his head IN or THROUGH a wall." `GeodesicCollision.tryMove` was purely
+  graph-based — "which cell am I in" — with no distance buffer from a
+  wall's own geometry, so it happily let the player walk up to the exact
+  line a wall sits on. That line is now *inside* the thickened slab, so
+  thickening the render without touching collision would have let the
+  camera end up inside solid geometry — arguably worse than the bug being
+  fixed. `GeodesicCoarseMaze.boundarySegmentsByFineNode` indexes every
+  boundary-crossing wall segment's own world geometry by fine node
+  (computed once, in `GeodesicConwayBiome`'s own constructor, since it's
+  static — a segment's position never changes, only its openness does);
+  `tryMove` now also rejects a move that would land closer than
+  `WALL_CLEARANCE` (half the slab's own thickness, plus a small margin)
+  to a *closed* segment, via ordinary point-to-segment distance.
+
+  **The safety requirement is a guarantee, not a best-effort mitigation
+  — the "never trap the player" clause is why.** A naive clearance check
+  ("block if closer than `WALL_CLEARANCE`") would have a failure mode of
+  its own: any player who ever ends up too close — a tight spawn point,
+  a save from before this landed, a future clearance-radius tweak — could
+  find every move blocked and get stuck permanently, unable to even back
+  away. `tryMove` only blocks a move when the new clearance is *worse*
+  than the old one (`newClearance < WALL_CLEARANCE && newClearance <
+  oldClearance`), so retreating out of an already-too-close spot is
+  always still possible. Exempt once airborne above
+  `GeodesicLifecycle.WALL_HEIGHT`, matching the existing jump-over-the-wall
+  combo the graph check already exempts.
+
+  Exit checks: `GeodesicCollisionTest` adds hand-built-segment coverage
+  (the same "hand-built edge map" style its own within-one-node test
+  already used) for — blocked when a move lands too close to a closed
+  segment even though the graph edge itself is open; allowed when a move
+  *increases* distance from an already-too-close wall (the safety-net
+  case specifically); ignored near an *open* segment; ignored while
+  airborne above wall height; and unaffected when `boundarySegments` is
+  omitted entirely, covering every pre-existing call site.
+  `make fmt`/`lint`/`check`/`test` all clean (38,482 assertions).
+  **Not yet visually verified** — same standing limitation as every
+  rendering change this session; needs hooman to check both that the
+  bleed-through is actually gone and that collision still feels normal
+  near walls.

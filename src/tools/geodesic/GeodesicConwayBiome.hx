@@ -11,6 +11,7 @@ import entities.painting.PaintingModel;
 import entities.player.PlayerModel;
 import graphics.Colours;
 import graphics.shaders.ConwayWallGlow;
+import tools.geodesic.GeodesicCoarseMaze.BoundarySegment;
 import tools.geodesic.GeodesicLifecycle.LifecycleStage;
 import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 import tools.geodesic.GeodesicVentrellaRule.GeodesicVentrellaRules;
@@ -93,10 +94,26 @@ import tools.geodesic.Vec3.Vec3Math;
 	happens, cheap relative to a per-frame live-cell rebuild whose own cost
 	stays bounded by population size, not `sphere.neighbors.length`.
 
+	**Thick walls need a matching clearance check (2026-08-10).** Reported
+	after the smoothing fix: "we still see cells through walls," even with
+	depth-write already correct — traced to `GeodesicMesh.addWall` building a
+	single zero-thickness quad, which vanishes at grazing viewing angles no
+	matter how depth/blend state is set. `GeodesicMesh.addWall` now extrudes
+	a real slab (`GeodesicMesh.WALL_THICKNESS`), but `GeodesicCollision.tryMove`
+	was purely graph-based — "which cell am I in" — with no distance buffer,
+	so thickening the render geometry alone would let the camera end up
+	*inside* it. `boundarySegments` (`GeodesicCoarseMaze.boundarySegmentsByFineNode`,
+	computed once here since it's static geometry) indexes wall segments by
+	fine node so `tryMove` can reject a move that lands too close to a
+	*closed* one — see `GeodesicCollision`'s own doc for the "never trap the
+	player" safety net that makes this an actual guarantee, not just a
+	usual-case mitigation.
+
 	**`serialize`/`restore`.** `fineSphere`/`coarseSphere`/`fineToCoarse`/
-	`boundaryEdges`/lookups aren't part of the save — every session
-	derives them fresh from the same checked-in baked asset plus the same
-	`COARSE_FREQUENCY`, so persisting a copy would be pure redundancy.
+	`boundaryEdges`/`boundarySegments`/lookups aren't part of the save —
+	every session derives them fresh from the same checked-in baked asset
+	plus the same `COARSE_FREQUENCY`, so persisting a copy would be pure
+	redundancy.
 	`gliderSpawner` likewise isn't persisted — its 12 sites are a pure
 	function of the checked-in sphere's own pentagon positions, so a fresh
 	instance reconstructs identically. What *is* persisted:
@@ -123,6 +140,7 @@ class GeodesicConwayBiome implements Biome {
 	var coarseSphere:GeodesicSphereData;
 	var fineToCoarse:Array<Int>;
 	var boundaryEdges:Array<{a:Int, b:Int}>;
+	var boundarySegments:Map<Int, Array<BoundarySegment>>;
 	var coarseLayout:MazeLayout;
 	var coarseReactivity:GeodesicReactivity;
 	var state:GeodesicVentrellaState;
@@ -150,6 +168,7 @@ class GeodesicConwayBiome implements Biome {
 		var coarseLookup = new GeodesicLookup(coarseSphere, COARSE_FREQUENCY);
 		fineToCoarse = GeodesicCoarseMaze.fineToCoarse(fineSphere, coarseLookup);
 		boundaryEdges = GeodesicCoarseMaze.boundaryEdges(fineSphere, fineToCoarse);
+		boundarySegments = GeodesicCoarseMaze.boundarySegmentsByFineNode(fineSphere, fineBoundaries, boundaryEdges, fineToCoarse);
 
 		coarseLayout = MazeCarver.carve(new GeodesicTopology(coarseSphere), RandomizedDfs, 0);
 		// captured before anything steps, so the core set really is the carve — see GeodesicReactivity's own doc
@@ -208,7 +227,7 @@ class GeodesicConwayBiome implements Biome {
 	}
 
 	public function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float):Void {
-		GeodesicCollision.tryMove(player, direction, distance, GeodesicMesh.RADIUS, coarseLayout, fineLookup, fineToCoarse);
+		GeodesicCollision.tryMove(player, direction, distance, GeodesicMesh.RADIUS, coarseLayout, fineLookup, fineToCoarse, boundarySegments);
 	}
 
 	/** See `biomes.conway.ConwayBiome.applyGravity`'s own doc — same "recompute fresh every tick, never cached" reasoning, over `GeodesicLifecycle.groundHeightOf` instead of `ConwayGrid.groundHeightAt`. Fine-keyed, not coarse: standing on a live block is about the fine Life layer, unrelated to which coarse region the maze puts it in. **/

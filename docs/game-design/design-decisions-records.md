@@ -1403,3 +1403,52 @@ in [story-line.md](story-line.md).
   rendering change this session; needs hooman to check both that the
   bleed-through is actually gone and that collision still feels normal
   near walls.
+- **2026-08-10 — thick walls also need sealing at the top and at
+  junctions, same day, two more rounds after the two entries above.**
+  Both caught from a single screenshot of a wall corner shot from a
+  raised-head angle (this game's own "look clear across the level"
+  mechanic makes both trivial to spot): the slab was open at the top,
+  and two segments meeting at a corner left a gap straight through the
+  geometry.
+
+  **Open top.** The first "sealed slab" version of `addWall` (the entry
+  above) built only the 4 vertical faces — front, back, two side caps —
+  and never actually closed the top or bottom, despite its own doc
+  comment's claim. `addWall` now adds a top and bottom cap too, using
+  the same `addWallFace` helper.
+
+  **Junction gaps.** Each wall segment computes its own thickness offset
+  perpendicular to *its own* length — so two segments meeting at a point
+  don't share a common thickness direction, and their own front/back
+  faces simply don't line up there. Properly mitering each pair is
+  angle-dependent, and a junction can have three segments meeting at
+  once around a hex/pentagon corner — real work for what's a cosmetic
+  seam. `addJunctionPosts` instead drops a small sealed post at every
+  point where 2+ segments in a bucket meet, sized (`POST_HALF_WIDTH =
+  WALL_THICKNESS / 2`, as a square rather than a circle) to fully cover
+  `WALL_THICKNESS` in any tangential direction regardless of the actual
+  angle(s) involved, so it doesn't need to know that angle at all.
+  "Meets" is by floating-point proximity, not exact equality —
+  `GeodesicDual.sharedEdge`'s own two endpoints, queried once per
+  neighboring node, come back numerically close but not bit-identical
+  (`GeodesicDualTest`'s own `1e-12` distance-squared tolerance is why),
+  so this reuses `GeodesicSphere.weldKey`'s existing rounding — already
+  trusted for the same "same point, computed twice" problem in
+  `GeodesicLookup`'s own weld map — rather than assuming exact matches.
+  Wall and ghost buckets get their own posts independently (each
+  `buildWallMesh` call runs `addJunctionPosts` over just its own
+  segments), so a junction where only one of the meeting edges happens
+  to be, say, a wall (the others open) correctly gets no post in the
+  wall mesh — nothing there for it to seal, the existing side cap
+  already does.
+
+  Exit checks: `GeodesicMeshTest` adds hand-built-segment coverage
+  (bypassing real sphere geometry entirely, since what's under test is
+  `addJunctionPosts`'s own counting logic, not real wall shapes —
+  `testBuildNeverThrowsAcrossManyGenerations` and friends already
+  exercise that through a real carved maze) for: two segments with no
+  shared endpoint add no extra geometry; a shared endpoint adds a post's
+  own geometry beyond the two segments alone; and three segments sharing
+  one endpoint still add exactly one post, not one per pair.
+  `make fmt`/`lint`/`check`/`test` all clean (38,485 assertions).
+  **Not yet visually verified.**

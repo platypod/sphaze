@@ -3,9 +3,13 @@ package tools.geodesic;
 import biomes.common.maze.MazeCarver;
 import biomes.common.maze.MazeEdges;
 import biomes.common.maze.MazeTopology.MazeLayout;
+import graphics.Colours;
+import graphics.shaders.ConwayWallGlow;
 import tools.geodesic.GeodesicLifecycle.LifecycleStage;
 import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 import tools.geodesic.GeodesicVentrellaRule.GeodesicVentrellaRules;
+import tools.geodesic.GeodesicWallSimplifier.WallSegment;
+import tools.geodesic.Vec3.Vec3Math;
 import utest.Assert;
 import utest.Test;
 
@@ -59,6 +63,63 @@ class GeodesicMeshTest extends Test {
 		GeodesicMesh.build(parent, sphere, boundaries, state, layout, reactivity);
 
 		Assert.isTrue(parent.numChildren > 0, "a dead board should still render its floor and walls");
+	}
+
+	/**
+		`buildWallMesh`'s own junction posts (2026-08-10): reported directly,
+		screenshot attached, of a wall corner shot from an angle that looked
+		straight into a gap in the geometry — two segments meeting at a
+		point don't share a thickness direction, so their own faces don't
+		line up there unless something extra plugs the seam. Hand-built
+		segments rather than a real sphere's own, since what's under test is
+		`addJunctionPosts`'s own counting logic, not real wall geometry
+		(`testBuildNeverThrowsAcrossManyGenerations` and friends already
+		exercise that through a real carved maze).
+	**/
+	function testBuildWallMeshAddsNoExtraGeometryWhenNoSegmentsShareAnEndpoint():Void {
+		var a = Vec3Math.make(1, 0, 0);
+		var b = Vec3Math.make(0, 1, 0);
+		var c = Vec3Math.make(0, 0, 1);
+		var d = Vec3Math.make(-1, 0, 0);
+
+		var oneSegmentVerts = vertCountOf(GeodesicMesh.buildWallMesh(new h3d.scene.Object(), [segment(a, b)], glow()));
+		var twoDisjointVerts = vertCountOf(GeodesicMesh.buildWallMesh(new h3d.scene.Object(), [segment(a, b), segment(c, d)], glow()));
+
+		Assert.equals(oneSegmentVerts * 2, twoDisjointVerts);
+	}
+
+	/** The actual reported bug: a shared endpoint must add a post's own geometry beyond what the two segments alone contribute — and, whether two or three segments share that one point, exactly one post, never one per pair. **/
+	function testBuildWallMeshAddsExactlyOneJunctionPostRegardlessOfHowManySegmentsMeetThere():Void {
+		var shared = Vec3Math.make(0, 0, 1);
+		var a = Vec3Math.make(1, 0, 0);
+		var b = Vec3Math.make(0, 1, 0);
+		var c = Vec3Math.make(-1, 0, 0);
+
+		var oneSegmentVerts = vertCountOf(GeodesicMesh.buildWallMesh(new h3d.scene.Object(), [segment(a, shared)], glow()));
+		var twoAtTheJunctionVerts = vertCountOf(GeodesicMesh.buildWallMesh(new h3d.scene.Object(), [segment(a, shared), segment(b, shared)], glow()));
+		var perPostVerts = twoAtTheJunctionVerts - oneSegmentVerts * 2;
+		Assert.isTrue(perPostVerts > 0, "a shared endpoint should add a junction post's own geometry beyond the two segments alone");
+
+		var threeAtTheJunctionVerts = vertCountOf(GeodesicMesh.buildWallMesh(new h3d.scene.Object(),
+			[segment(a, shared), segment(b, shared), segment(c, shared)], glow()));
+		Assert.equals(oneSegmentVerts * 3 + perPostVerts, threeAtTheJunctionVerts,
+			"three segments sharing one endpoint should still add exactly one post, not one per pair");
+	}
+
+	static function segment(a:Vec3, b:Vec3):WallSegment {
+		return {a: a, b: b, activity: 1};
+	}
+
+	static function glow():ConwayWallGlow {
+		return new ConwayWallGlow(Colours.CONWAY_WALL_PANEL, Colours.CONWAY_WALL_GLOW);
+	}
+
+	static function vertCountOf(mesh:Null<h3d.scene.Mesh>):Int {
+		if (mesh == null) {
+			return 0;
+		}
+		var polygon:h3d.prim.Polygon = cast mesh.primitive;
+		return polygon.points.length;
 	}
 
 	/** An entirely open layout (no wall, no ghost) must still build without throwing — the `wallPoints`/`ghostPoints` own empty-buffer edge case. **/

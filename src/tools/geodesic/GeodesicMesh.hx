@@ -309,6 +309,7 @@ class GeodesicMesh {
 		for (segment in segments) {
 			addWall(points, idx, uvs, activity, segment.a, segment.b, segment.activity);
 		}
+		addJunctionPosts(points, idx, uvs, activity, segments);
 
 		var prim = new h3d.prim.Polygon(points, idx);
 		prim.uvs = uvs;
@@ -386,11 +387,18 @@ class GeodesicMesh {
 	}
 
 	/**
-		Appends one wall's own sealed slab — front face, back face, and two
-		side caps, `WALL_THICKNESS` apart — instead of the single
-		zero-thickness quad `biomes.conway.ConwayMesh.addWall` still builds
-		(see `WALL_THICKNESS`'s own doc for why a flat panel isn't enough
-		here). The original single-quad UV/activity convention carries over
+		Appends one wall's own sealed slab — front face, back face, two side
+		caps, and a top+bottom cap, `WALL_THICKNESS` apart — instead of the
+		single zero-thickness quad `biomes.conway.ConwayMesh.addWall` still
+		builds (see `WALL_THICKNESS`'s own doc for why a flat panel isn't
+		enough here). **Actually sealed (2026-08-10) — the first version of
+		this method claimed to be but wasn't.** It built the 4 vertical faces
+		only, leaving the slab open at the top; reported directly, screenshot
+		attached, of a wall corner shot from above showing straight into the
+		hollow interior — this game's own "raise your head to see across the
+		level" mechanic (`CLAUDE.md`'s own one-line pitch) makes that gap
+		trivial to spot, not a corner case. The top/bottom caps close it.
+		The original single-quad UV/activity convention carries over
 		unchanged, just repeated once per face — each face gets its own
 		independent `0..wallLength` strip, matching what the one face used
 		to get alone.
@@ -419,6 +427,8 @@ class GeodesicMesh {
 		addWallFace(points, idx, uvs, activityOut, backBaseB, backBaseA, backTopA, backTopB, activity);
 		addWallFace(points, idx, uvs, activityOut, backBaseA, frontBaseA, frontTopA, backTopA, activity); // A-side cap
 		addWallFace(points, idx, uvs, activityOut, frontBaseB, backBaseB, backTopB, frontTopB, activity); // B-side cap
+		addWallFace(points, idx, uvs, activityOut, frontTopA, frontTopB, backTopB, backTopA, activity); // top cap
+		addWallFace(points, idx, uvs, activityOut, frontBaseB, frontBaseA, backBaseA, backBaseB, activity); // bottom cap
 	}
 
 	/** One quad plus its `ConwayWallGlow` UVs/activity — see `biomes.conway.ConwayMesh.addWall`'s own doc for the UV/activity convention, ported unchanged; `addWall` now calls this once per face of a sealed slab instead of once for a single flat panel. **/
@@ -434,6 +444,88 @@ class GeodesicMesh {
 		for (_ in 0...4) {
 			activityOut.push(new h3d.col.Point(activity, activity, activity));
 		}
+	}
+
+	/**
+		Plugs the seam a per-segment `addWall` slab leaves wherever two or
+		more wall segments meet (2026-08-10) — reported directly, screenshot
+		attached, of a corner shot from an angle that looks straight into a
+		gap in the geometry. Each segment computes its own thickness offset
+		perpendicular to *its own* length, so two segments meeting at a
+		junction generally don't share a common thickness direction; their
+		own front/back faces simply don't line up there, leaving a gap clean
+		through the slab rather than a mitered joint. Actually mitering each
+		pair (angle-dependent, and a junction can have three segments meeting
+		at once around a hex/pentagon corner) is real work for what's a
+		cosmetic seam; a small sealed post at every such point, sized to
+		fully cover `WALL_THICKNESS` in *any* tangential direction regardless
+		of the angle(s) involved, closes it without needing to know that
+		angle at all.
+
+		A "junction" here is any point shared by 2+ segments in `segments`
+		*by floating-point proximity*, not exact equality — the same
+		physical dual vertex, queried once per neighboring node via
+		`GeodesicDual.sharedEdge`, comes back numerically close but not
+		bit-identical each time (`GeodesicDualTest.testSharedEdgeAgreesFromEitherEndpoint`'s
+		own `1e-12` distance-squared tolerance is why), so `GeodesicSphere.weldKey`'s
+		existing rounding (already trusted for the same "same point, computed
+		twice" problem in `GeodesicLookup`'s own weld map) is reused here
+		rather than assuming exact matches.
+		@param points vertex buffer to append to.
+		@param idx index buffer to append to.
+		@param uvs UV buffer to append to.
+		@param activityOut per-vertex activity buffer to append to.
+		@param segments the same segment list `addWall` was already called for, once each, just above this call.
+	**/
+	static function addJunctionPosts(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>,
+			segments:Array<WallSegment>):Void {
+		var junctions = new Map<String, {point:Vec3, count:Int, activity:Float}>();
+		for (segment in segments) {
+			accumulateJunction(junctions, segment.a, segment.activity);
+			accumulateJunction(junctions, segment.b, segment.activity);
+		}
+		for (junction in junctions) {
+			if (junction.count >= 2) {
+				addPost(points, idx, uvs, activityOut, junction.point, junction.activity);
+			}
+		}
+	}
+
+	static function accumulateJunction(junctions:Map<String, {point:Vec3, count:Int, activity:Float}>, point:Vec3, activity:Float):Void {
+		var key = GeodesicSphere.weldKey(point);
+		var existing = junctions.get(key);
+		if (existing == null) {
+			junctions.set(key, {point: point, count: 1, activity: activity});
+		} else {
+			existing.count++;
+			if (activity > existing.activity) {
+				existing.activity = activity; // the post reads as lit whenever any segment meeting there is
+			}
+		}
+	}
+
+	/** Half the post's own square cross-section — sized so the post fully covers `WALL_THICKNESS` in every tangential direction regardless of the angle between whatever segments meet at its own center: a square this half-wide circumscribes a circle of radius `WALL_THICKNESS / 2`, matching how far any one segment's own slab extends from the centerline. **/
+	static inline final POST_HALF_WIDTH:Float = WALL_THICKNESS / 2;
+
+	/** A small sealed box straddling `center`, from `WALL_BASE_LIFT` to `GeodesicLifecycle.WALL_HEIGHT` — see `addJunctionPosts`'s own doc for why. Winding isn't hardened for outward normals the way `addWall`'s own faces are — `buildWallMesh`'s own mesh already renders with `culling = None`, so it doesn't need to be. **/
+	static function addPost(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, uvs:Array<h3d.prim.UV>, activityOut:Array<h3d.col.Point>, center:Vec3,
+			activity:Float):Void {
+		var base = lift(center, WALL_BASE_LIFT);
+		var top = liftFurther(base, GeodesicLifecycle.WALL_HEIGHT);
+		var up = base.normalized();
+		var arbitrary = Math.abs(up.y) < 0.9 ? new h3d.Vector(0, 1, 0) : new h3d.Vector(1, 0, 0);
+		var u = up.cross(arbitrary).normalized().scaled(POST_HALF_WIDTH);
+		var v = up.cross(u); // already perpendicular to both `up` and `u`, and already `POST_HALF_WIDTH` long since `up` is unit and `up ⊥ u`
+
+		var baseCorners = [base.add(u).add(v), base.sub(u).add(v), base.sub(u).sub(v), base.add(u).sub(v)];
+		var topCorners = [top.add(u).add(v), top.sub(u).add(v), top.sub(u).sub(v), top.add(u).sub(v)];
+
+		for (i in 0...4) {
+			var next = (i + 1) % 4;
+			addWallFace(points, idx, uvs, activityOut, baseCorners[i], baseCorners[next], topCorners[next], topCorners[i], activity);
+		}
+		addWallFace(points, idx, uvs, activityOut, topCorners[0], topCorners[1], topCorners[2], topCorners[3], activity);
+		addWallFace(points, idx, uvs, activityOut, baseCorners[3], baseCorners[2], baseCorners[1], baseCorners[0], activity);
 	}
 
 	/** A unit-sphere direction, converted to a world point at `RADIUS - amount`. **/

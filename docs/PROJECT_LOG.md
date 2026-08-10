@@ -1218,3 +1218,21 @@ test` clean again. Still not exercised in the browser — the fix is
 reasoned from `hxd.Window.js.hx`'s own source (read in full to confirm
 `set_mouseMode`'s call order), not observed working, so treat this as
 higher-confidence-but-still-unverified rather than closed.
+
+## 2026-08-10 — Pentagon engraving now glows, translucent
+
+Reported after the cursor fix landed and the interface was actually
+playable: no visual clue what the composing mode was even showing —
+the first cut drew `buildEngraving`'s two buckets as opaque flat fills
+(`addFloorMesh`), on-cells full-brightness `Colours.CONWAY_TILE_GLIDER`
+amber, off-cells a dim `Colours.CONWAY_WALL_GLOW` (cyan, an unrelated
+hue). Asked directly for cells to "light up... in amber, a bit
+translucent, well, as usual" — "as usual" read as this biome's own
+existing convention for anything alive: `addLifecycleMesh`'s alpha
+blend at `LIVE_BLOCK_OPACITY`, already used for live cells and
+walls/ghost walls. `buildEngraving` now calls `addLifecycleMesh` for
+both buckets instead of `addFloorMesh` — on-cells full-brightness amber,
+off-cells the *same* amber scaled by `ENGRAVING_OFF_BRIGHTNESS` (was
+scaling `CONWAY_WALL_GLOW`, the mismatched cyan) — one glowing hue
+family across the whole footprint rather than two unrelated colors.
+`make fmt lint check test` clean.

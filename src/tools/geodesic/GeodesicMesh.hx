@@ -128,7 +128,7 @@ class GeodesicMesh {
 	**/
 	static inline final ENGRAVING_LIFT:Float = 0.5;
 
-	/** How dim an "off" engraved cell is relative to `Colours.CONWAY_WALL_GLOW` — dim enough to read as inactive next to an "on" cell's full-brightness `Colours.CONWAY_TILE_GLIDER`, bright enough to still show the footprint's own outline. Untuned — a reasonable first guess. **/
+	/** How dim an "off" engraved cell is relative to `Colours.CONWAY_TILE_GLIDER` — same amber as an "on" cell, just dimmed, so the whole footprint reads as one lit-up surface rather than mixing in an unrelated hue; dim enough to read as inactive next to an "on" cell's full brightness, bright enough to still show the footprint's own outline. Untuned — a reasonable first guess. **/
 	static inline final ENGRAVING_OFF_BRIGHTNESS:Float = 0.35;
 
 	/** See `biomes.conway.ConwayMesh.GHOST_WALL_OPACITY`'s own doc. Public: `GeodesicPreview`'s own coarse-wall prototype reuses this exact value for its own ghost bucket. **/
@@ -281,15 +281,22 @@ class GeodesicMesh {
 	}
 
 	/**
-		Draws the pentagon-composing engraving's own footprint: one flat
-		panel per footprint cell, full-brightness `Colours.CONWAY_TILE_GLIDER`
-		where the composed pattern is on, dimmed `Colours.CONWAY_WALL_GLOW`
-		where it's off — see `GeodesicPentagonEngraving`'s own doc for the
-		pattern data behind `stateAt`. Rebuilt wholesale on every toggle and
-		on enter/exit (same "removeChildren then rebuild from scratch"
-		discipline `GeodesicConwayBiome.rebuildMesh` already uses for the
-		floor/walls) — a footprint is only 6 cells, cheap regardless of
-		cadence.
+		Draws the pentagon-composing engraving's own footprint: one glowing
+		panel per footprint cell, alpha-blended exactly like a live cell
+		(`addLifecycleMesh`, `LIVE_BLOCK_OPACITY`) rather than an opaque
+		flat fill — the same "lit up, translucent" treatment the rest of
+		this biome already uses for anything alive, reused here rather than
+		invented fresh (asked for directly, "a bit translucent, well, as
+		usual," after a first opaque-panel version shipped with no visible
+		on/off distinction at all). Full-brightness `Colours.CONWAY_TILE_GLIDER`
+		where the composed pattern is on, the same amber dimmed by
+		`ENGRAVING_OFF_BRIGHTNESS` where it's off — one hue family for the
+		whole footprint, not an unrelated color marking "off" — see
+		`GeodesicPentagonEngraving`'s own doc for the pattern data behind
+		`stateAt`. Rebuilt wholesale on every toggle and on enter/exit (same
+		"removeChildren then rebuild from scratch" discipline
+		`GeodesicConwayBiome.rebuildMesh` already uses for the floor/walls)
+		— a footprint is only 6 cells, cheap regardless of cadence.
 		@param parent the scene node to attach the engraving mesh under.
 		@param boundaries every node's own cell polygon, `GeodesicDual.cellBoundaries(sphere)`.
 		@param footprint the pentagon's own editable footprint, `GeodesicPentagonEngraving.footprintOf`.
@@ -311,8 +318,8 @@ class GeodesicMesh {
 			}
 		}
 
-		addFloorMesh(parent, onPoints, onIdx, Colours.CONWAY_TILE_GLIDER);
-		addFloorMesh(parent, offPoints, offIdx, scaledColor(Colours.CONWAY_WALL_GLOW, ENGRAVING_OFF_BRIGHTNESS));
+		addLifecycleMesh(parent, onPoints, onIdx, Colours.CONWAY_TILE_GLIDER);
+		addLifecycleMesh(parent, offPoints, offIdx, scaledColor(Colours.CONWAY_TILE_GLIDER, ENGRAVING_OFF_BRIGHTNESS));
 	}
 
 	/** See `biomes.conway.ConwayMesh.addEdge`'s own doc — same three-way routing (closed/ghost/bare corridor), just addressed by node id and sourced from `GeodesicDual.sharedEdge` instead of a `(theta, phi)` corner formula, and collecting a raw `WallSegment` for `GeodesicWallSimplifier` rather than emitting a quad directly. **/

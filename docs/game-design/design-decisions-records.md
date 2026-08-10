@@ -1579,3 +1579,52 @@ in [story-line.md](story-line.md).
   this specific fix — the report that prompted it was itself a visual
   check of the *previous* commit, so the loop is closing, just one commit
   behind as always.
+- **2026-08-10 — the pillars are confirmed good; `GeodesicCollision` now
+  slides along a blocked wall instead of stopping dead, same day, sixth
+  revision.** With the visuals settled, asked directly about the last
+  rough edge in this whole chain: "movement along the walls does not work
+  well... let's have the player slide along the wall rather than get
+  stumped." `WALL_CLEARANCE` (two fixes back) only ever had one move: full
+  step or full revert — fine for a graph-only block where there's no wall
+  geometry to work with, but once `boundarySegments` gives every wall a
+  real position, a shallow-angle approach stopping dead instead of
+  sliding is exactly the itch `biomes.common.grid.GridCollision.slideAlong`
+  already scratches on the square grid, and this grid never got its own
+  version.
+
+  Ported, not reinvented: `GeodesicCollision.slideAlong` keeps the same
+  projection (drop the component of the attempted move that runs *into*
+  the wall, keep the component that runs *along* it) `GridCollision`'s own
+  doc walks through, adapted to this grid's own wall representation — a
+  `BoundarySegment`'s own two endpoints and their chord, rather than
+  `GridModel`'s row/column wall geometry the square grid derives its own
+  tangent from. `tryMove` now: attempts the full step as before; on a
+  block, finds the nearest closed segment at the *attempted* landing spot
+  (`nearestClosedWallSegment`, a new split out of what `nearestClosedWallDistance`
+  already computed — the distance-only version now just calls this and
+  reads `.distance`), projects the original direction onto that segment's
+  own tangent, and retries as a slide from the *original* position — never
+  partway. A near-square hit projects to a near-zero slide distance
+  (squashed below `1e-9`, the same floating-point-noise guard
+  `GridCollision.slideAlong` already uses), and a slide that's *also*
+  blocked (a corner, nowhere to go) reverts fully rather than leaving the
+  player half-committed. Gated behind `boundarySegments != null` and the
+  existing airborne-above-`WALL_HEIGHT` exemption — every pre-thickness
+  call site keeps its old all-or-nothing behavior untouched.
+
+  Also closed the one open `docs/bug-tracker.md` entry while verifying
+  this: "walk towards the solitary end of a wall... camera can still enter
+  it a little" — confirmed fixed (moved to `docs/CHANGELOG.md`), a side
+  effect of `WALL_CLEARANCE`'s own point-to-segment math already covering
+  a segment's endpoints, not just its middle.
+
+  Exit checks: two new `GeodesicCollisionTest` cases build a real
+  (non-degenerate) wall segment by hand — `wallPointAt`'s existing
+  degenerate single-point fixture won't do here, since a zero-length
+  segment has a zero tangent, which would squash every slide to nothing.
+  A shallow 0.8/0.6 approach angle confirms the player ends up displaced
+  *along* the wall, not toward it; a square-on approach confirms the
+  player stops exactly where they started, not a fraction of a unit off
+  from floating-point noise. `make fmt`/`lint`/`check`/`test` all clean
+  (38,496 assertions). **Not yet visually verified** — same standing
+  limitation as ever.

@@ -229,6 +229,97 @@ class GeodesicCollisionTest extends Test {
 		Assert.isTrue(moved);
 	}
 
+	/**
+		`tryMove`'s own slide-along-the-wall behavior (2026-08-10), asked
+		directly: "movement along the walls does not work well... let's
+		have the player slide along the wall rather than get stumped."
+		Needs a *real* segment (an actual chord, not `wallPointAt`'s own
+		degenerate single point — `wallTangentOf` on a zero-length segment
+		is a zero vector, which would squash every slide attempt to
+		nothing) with a clear tangent direction to slide along, so these
+		build one by hand: a wall running along `north`, offset a few units
+		`east` of the player's own starting position — both plain tangent
+		directions at node 0, not needing to be real sphere adjacency.
+	**/
+	function testTryMoveSlidesAlongAClosedWallAtAShallowApproachAngle():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var lookup = new GeodesicLookup(sphere, FREQUENCY);
+		var nodeId = 0;
+		var layout:MazeLayout = {openEdges: new haxe.ds.StringMap()}; // the wall's own coarse pair (1, 2) stays closed
+
+		var frame = tangentFrameAt(sphere, nodeId);
+		var boundarySegments = wallSegmentAt(nodeId, frame.origin, frame.east, frame.north, 3, 10);
+
+		var player = playerAt(sphere, nodeId);
+		// mostly east (toward the wall, which sits 3 units east) with a north component to slide along — an
+		// exact 0.8/0.6 unit direction, chosen so the unblocked attempt alone lands at east offset 3.2, well
+		// inside WALL_CLEARANCE (0.8) of the wall's own east offset (3), not past it — a straight-line distance
+		// check doesn't care about "crossing," only about ending up close.
+		var direction = frame.east.scaled(0.8).add(frame.north.scaled(0.6));
+
+		var moved = GeodesicCollision.tryMove(player, direction, 4, RADIUS, layout, lookup, null, boundarySegments);
+
+		Assert.isTrue(moved, "a shallow-angle approach should slide, not stop dead");
+		var travelled = player.pos.sub(frame.origin);
+		var eastOffset = travelled.dot(frame.east);
+		var northOffset = travelled.dot(frame.north);
+		Assert.isTrue(Math.abs(eastOffset) < 1, 'the slide should not have carried the player toward the wall (east offset $eastOffset)');
+		Assert.isTrue(northOffset > 1, 'the slide should have carried the player along the wall (north offset $northOffset)');
+	}
+
+	/** Approaching square-on leaves nothing to slide with — same physics as any FPS wall-slide, and `GridCollision.slideAlong`'s own doc for the square grid gives the same reasoning. **/
+	function testTryMoveApproachingAWallSquareOnStopsDeadRatherThanSliding():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var lookup = new GeodesicLookup(sphere, FREQUENCY);
+		var nodeId = 0;
+		var layout:MazeLayout = {openEdges: new haxe.ds.StringMap()};
+
+		var frame = tangentFrameAt(sphere, nodeId);
+		var boundarySegments = wallSegmentAt(nodeId, frame.origin, frame.east, frame.north, 3, 10);
+
+		var player = playerAt(sphere, nodeId);
+		var direction = frame.east; // straight at the wall, nothing along it to slide with
+
+		// lands at east offset 2.5 — inside WALL_CLEARANCE (0.8) of the wall's own east offset (3) — same reasoning as the shallow-angle test above
+		var moved = GeodesicCollision.tryMove(player, direction, 2.5, RADIUS, layout, lookup, null, boundarySegments);
+
+		Assert.isFalse(moved);
+		Assert.isTrue(player.pos.distance(frame.origin) < 1e-6, "a square-on hit should leave the player exactly where they started");
+	}
+
+	/** Two tangent directions at `sphere.positions[nodeId]`'s own world position, plus that position itself — the local frame the slide tests build their own synthetic wall geometry in. **/
+	static function tangentFrameAt(sphere:GeodesicSphereData, nodeId:Int):{origin:h3d.Vector, east:h3d.Vector, north:h3d.Vector} {
+		var origin = playerAt(sphere, nodeId).pos;
+		var up = origin.normalized();
+		var neighborId = sphere.neighbors[nodeId][0];
+		var east = directionToward(sphere, nodeId, neighborId).normalized();
+		var north = up.cross(east).normalized();
+		return {origin: origin, east: east, north: north};
+	}
+
+	/** A real (non-degenerate) wall segment running along `north` for `halfLength` in each direction, offset `eastOffset` units east of `origin` — indexed at `nodeId`, its own coarse pair (`1`/`2`) closed unless the caller opens it. **/
+	static function wallSegmentAt(nodeId:Int, origin:h3d.Vector, east:h3d.Vector, north:h3d.Vector, eastOffset:Float,
+			halfLength:Float):Map<Int, Array<BoundarySegment>> {
+		var center = origin.add(east.scaled(eastOffset));
+		var a = center.add(north.scaled(halfLength));
+		var b = center.sub(north.scaled(halfLength));
+		var index = new Map<Int, Array<BoundarySegment>>();
+		index.set(nodeId, [
+			{
+				a: toUnitScale(a),
+				b: toUnitScale(b),
+				coarseA: 1,
+				coarseB: 2
+			}
+		]);
+		return index;
+	}
+
+	/** `point`, scaled down by `RADIUS` — the inverse of `GeodesicCollision`'s own `worldPoint`, since `BoundarySegment.a`/`.b` are unit-sphere-scale but the slide tests build their own wall geometry in world units. **/
+	static function toUnitScale(point:h3d.Vector):Vec3 {
+		return Vec3Math.make(point.x / RADIUS, point.y / RADIUS, point.z / RADIUS);
+	}
+
 	/** A degenerate, single-point "segment" (`a == b`) indexed at `nodeId`, its own coarse pair (`1`/`2`) left closed unless the caller opens it — the minimal fixture `nearestClosedWallDistance`'s point-to-segment math needs. **/
 	static function wallPointAt(nodeId:Int, point:Vec3):Map<Int, Array<BoundarySegment>> {
 		var index = new Map<Int, Array<BoundarySegment>>();

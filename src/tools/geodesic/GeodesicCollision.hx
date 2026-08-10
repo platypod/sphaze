@@ -45,6 +45,21 @@ import tools.geodesic.Vec3.Vec3Math;
 	load-bearing: without it, a player who ever ends up too close (a tight
 	spawn point, a save from before this landed, a future clearance-radius
 	tweak) could get stuck unable to move at all.
+
+	**Sliding, not stopping dead (2026-08-10, same day).** Reported
+	directly: "movement along the walls does not work well... let's have
+	the player slide along the wall rather than get stumped." A blocked
+	move used to just revert outright, same as `allowsStep`'s own original
+	all-or-nothing behavior before `WALL_CLEARANCE` existed — fine for a
+	graph-only block (there's no wall geometry to slide along yet), but
+	once `boundarySegments` gives every wall a real position and tangent,
+	stopping dead at a shallow approach angle looks and feels wrong,
+	exactly the itch `biomes.common.grid.GridCollision.slideAlong` already
+	scratches on the square grid. `slideAlong` here ports that same
+	projection (keep the component of the attempted move that runs along
+	the blocking wall, drop the component that runs into it) onto this
+	grid's own wall representation — a `BoundarySegment`'s own two
+	endpoints, rather than `GridModel`'s row/column wall geometry.
 **/
 class GeodesicCollision {
 	/** How far the player's own head must stay from a *closed* wall's centerline — half the wall's own thickness, plus a small margin so the camera doesn't graze the slab's own face. **/
@@ -58,8 +73,8 @@ class GeodesicCollision {
 		@param layout which edges are currently open — addressed by whatever id space `lookup` (as remapped by `fineToCoarse`, if given) actually resolves to.
 		@param lookup resolves a world position to the node it's standing on.
 		@param fineToCoarse when `lookup` resolves to a *fine* sphere but `layout` is a coarser maze built over a different sphere (`GeodesicCoarseMaze`'s own wall-straightening attempt), the fine→coarse map to remap through before checking `layout`. `null` when `lookup` and `layout` already share one id space — every use before the coarse maze existed.
-		@param boundarySegments the fine-node-indexed wall geometry (`GeodesicCoarseMaze.boundarySegmentsByFineNode`) to keep the player's own head `WALL_CLEARANCE` away from a *closed* wall's own now-solid slab (`GeodesicMesh.WALL_THICKNESS`), so the camera can't end up inside it. `null` skips the check entirely — every use before walls got thickness.
-		@return whether the move was allowed.
+		@param boundarySegments the fine-node-indexed wall geometry (`GeodesicCoarseMaze.boundarySegmentsByFineNode`) to keep the player's own head `WALL_CLEARANCE` away from a *closed* wall's own now-solid slab (`GeodesicMesh.WALL_THICKNESS`), so the camera can't end up inside it — also what a blocked move slides along instead of stopping dead. `null` skips both entirely — every use before walls got thickness.
+		@return whether the move was allowed, whether as a full step or a slide.
 	**/
 	public static function tryMove(player:PlayerModel, direction:h3d.Vector, distance:Float, radius:Float, layout:MazeLayout, lookup:GeodesicLookup,
 			?fineToCoarse:Array<Int>, ?boundarySegments:Map<Int, Array<BoundarySegment>>):Bool {
@@ -78,9 +93,78 @@ class GeodesicCollision {
 			return true;
 		}
 
+		var attemptedPos = player.pos;
+		player.pos = oldPos;
+		player.forward = oldForward;
+
+		if (boundarySegments == null || player.airborneHeight >= GeodesicLifecycle.WALL_HEIGHT) {
+			return false; // nothing to slide along without wall geometry — the graph-only, pre-thickness behavior
+		}
+		return slideAlong(player, oldPos, oldForward, fromId, oldClearance, attemptedPos, toFine, direction, distance, radius, layout, lookup, fineToCoarse,
+			boundarySegments);
+	}
+
+	/**
+		Redirects a blocked step into a slide along whichever closed wall
+		blocked it, keeping the component of `attemptedDirection` that runs
+		along the wall and dropping the component that runs into it — the
+		same projection `GridCollision.slideAlong`'s own doc walks through
+		for the square grid. `player.pos`/`forward` are already back at
+		`oldPos`/`oldForward` by the time this is called (`tryMove` reverts
+		before trying a slide); this only ever leaves them there or moves
+		them to a new, verified-safe position — never partway.
+		@param player the player to move — `pos`/`forward` must already be at `oldPos`/`oldForward`.
+		@param oldPos the position before this tick's own attempted move.
+		@param oldForward the forward vector before this tick's own attempted move.
+		@param fromId the coarse-or-fine id (matching `layout`'s own id space) `oldPos` resolves to.
+		@param oldClearance `oldPos`'s own distance to the nearest closed wall — the slide's own retry needs this for the same "never trap the player" comparison `clipsIntoWall` already does.
+		@param attemptedPos where the original, blocked move would have landed — the position `nearestClosedWallSegment` uses to find which wall actually blocked it.
+		@param attemptedToFine `attemptedPos`'s own fine node — indexes `boundarySegments`.
+		@param attemptedDirection the direction the blocked step was attempted along.
+		@param distance arc length of the original attempted step.
+		@param radius sphere radius.
+		@param layout which edges are currently open.
+		@param lookup resolves a world position to the node it's standing on.
+		@param fineToCoarse see `tryMove`'s own doc.
+		@param boundarySegments see `tryMove`'s own doc.
+		@return whether the slide moved the player at all.
+	**/
+	static function slideAlong(player:PlayerModel, oldPos:h3d.Vector, oldForward:h3d.Vector, fromId:Int, oldClearance:Float, attemptedPos:h3d.Vector,
+			attemptedToFine:Int, attemptedDirection:h3d.Vector, distance:Float, radius:Float, layout:MazeLayout, lookup:GeodesicLookup,
+			fineToCoarse:Null<Array<Int>>, boundarySegments:Map<Int, Array<BoundarySegment>>):Bool {
+		var blocking = nearestClosedWallSegment(attemptedPos, attemptedToFine, layout, boundarySegments);
+		if (blocking == null) {
+			return false; // the graph blocked it, but there's no indexed wall geometry there to slide along
+		}
+
+		var wallTangent = wallTangentOf(blocking);
+		var slideDistance = distance * attemptedDirection.dot(wallTangent);
+		// A near-exactly-square hit projects to a slide distance that's only
+		// nonzero by floating-point noise — see GridCollision.slideAlong's
+		// own doc for the same squash, same reasoning.
+		if (Math.abs(slideDistance) < 1e-9) {
+			return false;
+		}
+
+		player.moveAlong(wallTangent, slideDistance, radius);
+		var newToFine = lookup.nodeAt(toVec3(player.pos));
+		var newToId = toCoarse(newToFine, fineToCoarse);
+
+		if (allowsStep(layout, fromId, newToId, player.airborneHeight)
+			&& !clipsIntoWall(player, newToFine, layout, boundarySegments, oldClearance)) {
+			return true;
+		}
+
+		// The slide direction runs into a wall's own thickness too (e.g.
+		// right at a corner) — nowhere to go.
 		player.pos = oldPos;
 		player.forward = oldForward;
 		return false;
+	}
+
+	/** Unit tangent along `segment`, world-space. **/
+	static function wallTangentOf(segment:BoundarySegment):h3d.Vector {
+		return worldPoint(segment.b).sub(worldPoint(segment.a)).normalized();
 	}
 
 	/** `fine`, remapped through `fineToCoarse` when one is given. **/
@@ -114,21 +198,30 @@ class GeodesicCollision {
 
 	/** How far `pos` is from the nearest *closed* wall segment indexed at fine node `fineId` — `Math.POSITIVE_INFINITY` when there's no index, or no closed segment there, to check against. **/
 	static function nearestClosedWallDistance(pos:h3d.Vector, fineId:Int, layout:MazeLayout, boundarySegments:Null<Map<Int, Array<BoundarySegment>>>):Float {
+		var nearest = nearestClosedWallSegment(pos, fineId, layout, boundarySegments);
+		return nearest == null ? Math.POSITIVE_INFINITY : distanceToSegment(pos, nearest);
+	}
+
+	/** The nearest *closed* wall segment indexed at fine node `fineId`, or `null` when there's no index, or no closed segment there — `nearestClosedWallDistance`'s own search, but returning the segment itself (`slideAlong`'s own `wallTangentOf` needs it), not just how far it is. **/
+	static function nearestClosedWallSegment(pos:h3d.Vector, fineId:Int, layout:MazeLayout,
+			boundarySegments:Null<Map<Int, Array<BoundarySegment>>>):Null<BoundarySegment> {
 		if (boundarySegments == null) {
-			return Math.POSITIVE_INFINITY;
+			return null;
 		}
 		var segments = boundarySegments.get(fineId);
 		if (segments == null) {
-			return Math.POSITIVE_INFINITY;
+			return null;
 		}
-		var nearest = Math.POSITIVE_INFINITY;
+		var nearest:Null<BoundarySegment> = null;
+		var nearestDistance = Math.POSITIVE_INFINITY;
 		for (segment in segments) {
 			if (MazeEdges.isOpen(layout, Std.string(segment.coarseA), Std.string(segment.coarseB))) {
 				continue;
 			}
 			var d = distanceToSegment(pos, segment);
-			if (d < nearest) {
-				nearest = d;
+			if (d < nearestDistance) {
+				nearestDistance = d;
+				nearest = segment;
 			}
 		}
 		return nearest;

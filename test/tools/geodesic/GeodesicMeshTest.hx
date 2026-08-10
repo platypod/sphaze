@@ -1,6 +1,7 @@
 package tools.geodesic;
 
 import biomes.common.maze.MazeCarver;
+import biomes.common.maze.MazeEdges;
 import biomes.common.maze.MazeTopology.MazeLayout;
 import tools.geodesic.GeodesicLifecycle.LifecycleStage;
 import tools.geodesic.GeodesicSphere.GeodesicSphereData;
@@ -72,6 +73,91 @@ class GeodesicMeshTest extends Test {
 		GeodesicMesh.build(parent, sphere, boundaries, state, layout, reactivity);
 
 		Assert.isTrue(parent.numChildren > 0);
+	}
+
+	/**
+		`h3d.mat.Material.set_blendMode`'s own `case Alpha` branch sets
+		`mainPass.depthWrite = true` as a side effect (confirmed by reading
+		Heaps' own source, not assumed) — so `depthWrite = false` has to be
+		set *after* `blendMode = Alpha`, never before, or it's silently
+		reset back to `true` at runtime despite what the surrounding code
+		(and its own doc comments) claim. Every alpha-blended bucket this
+		class builds (live cells, dying cells, ghost walls) shares this
+		same ordering requirement — reported directly as "we still see
+		cells through walls from time to time," since two alpha-blended
+		things both writing depth (contrary to intent) can end up occluding
+		each other in an order that flips as Heaps' own back-to-front alpha
+		sort re-ranks them frame to frame, rather than blending as intended.
+	**/
+	function testAlphaBlendedLiveCellMeshesDoNotWriteDepth():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var boundaries = GeodesicDual.cellBoundaries(sphere);
+		var previousStages = [for (id in 0...sphere.neighbors.length) LifecycleStage.Absent];
+		var currentStages = [
+			for (id in 0...sphere.neighbors.length)
+				id < 3 ? LifecycleStage.Alive : LifecycleStage.Absent
+		];
+		var parent = new h3d.scene.Object();
+
+		GeodesicMesh.buildLiveCells(parent, sphere, boundaries, previousStages, currentStages, 1.0);
+
+		assertNoAlphaMeshWritesDepth(parent);
+	}
+
+	/**
+		Same regression, for the ghost-wall bucket `build` produces.
+		Deliberately bypasses any Life engine's own dynamics to open the
+		ghost edge — `GeodesicReactivity.step` takes its activity as a
+		plain `(Int, Int) -> Float` callback, so a synthetic "this one edge
+		is always hot" function opens it deterministically in a single
+		call, rather than depending on either engine's own ambient-soup
+		behavior (fragile, and specifically the Ventrella engine's own
+		ambient soup reliably collapses within a handful of generations —
+		see `GeodesicVentrellaReport`'s own doc).
+	**/
+	function testAlphaBlendedGhostWallMeshDoesNotWriteDepth():Void {
+		var sphere = GeodesicSphere.generate(FREQUENCY);
+		var boundaries = GeodesicDual.cellBoundaries(sphere);
+		var layout = MazeCarver.carve(new GeodesicTopology(sphere), RandomizedDfs, 0, new SeededRandom(11).asFunction());
+		var reactivity = new GeodesicReactivity(sphere, layout);
+		var state = new GeodesicVentrellaState(sphere, GeodesicVentrellaRules.SPHERE_CA); // unseeded: only reactivity's own synthetic activity matters here
+		var ghostEdge = someNonCoreEdge(sphere, reactivity);
+		var parent = new h3d.scene.Object();
+
+		reactivity.step(layout, (a, b) -> (a == ghostEdge.a && b == ghostEdge.b)
+			|| (a == ghostEdge.b && b == ghostEdge.a) ? 1.0 : 0.0, -1);
+		Assert.isTrue(MazeEdges.isOpen(layout, Std.string(ghostEdge.a), Std.string(ghostEdge.b)), "the synthetic activity should have opened this edge");
+		GeodesicMesh.build(parent, sphere, boundaries, state, layout, reactivity);
+
+		assertNoAlphaMeshWritesDepth(parent);
+	}
+
+	static function someNonCoreEdge(sphere:GeodesicSphereData, reactivity:GeodesicReactivity):{a:Int, b:Int} {
+		for (id in 0...sphere.neighbors.length) {
+			for (neighbor in sphere.neighbors[id]) {
+				if (!reactivity.isCore(id, neighbor)) {
+					return {a: id, b: neighbor};
+				}
+			}
+		}
+		throw "expected at least one non-core edge on a real carved maze";
+	}
+
+	static function assertNoAlphaMeshWritesDepth(parent:h3d.scene.Object):Void {
+		var checked = 0;
+		for (i in 0...parent.numChildren) {
+			var child = parent.getChildAt(i);
+			if (!(child is h3d.scene.Mesh)) {
+				continue;
+			}
+			var mesh:h3d.scene.Mesh = cast child;
+			if (mesh.material.blendMode == Alpha) {
+				checked++;
+				Assert.isFalse(mesh.material.mainPass.depthWrite,
+					"an alpha-blended mesh should never write depth, or it can occlude another alpha-blended mesh in a camera-angle-dependent order instead of blending");
+			}
+		}
+		Assert.isTrue(checked > 0, "expected at least one alpha-blended mesh in this scene to actually check");
 	}
 
 	function testBuildLiveCellsNeverThrowsAcrossManyGenerationsAndLerpFactors():Void {

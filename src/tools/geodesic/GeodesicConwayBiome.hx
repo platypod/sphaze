@@ -343,8 +343,8 @@ class GeodesicConwayBiome implements Biome {
 				ConwayWallGlow.DEFAULT_REST_BRIGHTNESS, GeodesicMesh.GHOST_WALL_OPACITY));
 		if (ghostMesh != null) {
 			ghostMesh.material.mainPass.culling = None;
+			ghostMesh.material.blendMode = h3d.mat.BlendMode.Alpha; // sets depthWrite = true as a side effect (h3d.mat.Material.set_blendMode) — depthWrite below must come after, not before, or it's silently reset
 			ghostMesh.material.mainPass.depthWrite = false;
-			ghostMesh.material.blendMode = h3d.mat.BlendMode.Alpha;
 		}
 	}
 

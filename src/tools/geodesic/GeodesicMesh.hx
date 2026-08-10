@@ -192,8 +192,8 @@ class GeodesicMesh {
 				ConwayWallGlow.DEFAULT_REST_BRIGHTNESS, GHOST_WALL_OPACITY));
 		if (ghostMesh != null) {
 			ghostMesh.material.mainPass.culling = None;
+			ghostMesh.material.blendMode = h3d.mat.BlendMode.Alpha; // sets depthWrite = true as a side effect — depthWrite below must come after
 			ghostMesh.material.mainPass.depthWrite = false;
-			ghostMesh.material.blendMode = h3d.mat.BlendMode.Alpha;
 		}
 	}
 
@@ -317,8 +317,8 @@ class GeodesicMesh {
 		var mesh = new h3d.scene.Mesh(new h3d.prim.Polygon(points, idx), parent);
 		mesh.material.mainPass.addShader(new h3d.shader.FixedColor(color, LIVE_BLOCK_OPACITY));
 		mesh.material.mainPass.culling = None;
+		mesh.material.blendMode = h3d.mat.BlendMode.Alpha; // sets depthWrite = true as a side effect (h3d.mat.Material.set_blendMode) — depthWrite below must come after, not before, or it's silently reset
 		mesh.material.mainPass.depthWrite = false;
-		mesh.material.blendMode = h3d.mat.BlendMode.Alpha;
 	}
 
 	/** See `biomes.conway.ConwayMesh.scaledColor`'s own doc. **/

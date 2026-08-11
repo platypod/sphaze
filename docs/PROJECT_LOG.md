@@ -1353,3 +1353,25 @@ roughly `1.9×` (`0xFF35566E` → `0xFF1F3240`), closer to the halfway
 point between dead and the original lift — no code change needed
 beyond the value itself, exactly as that constant's doc anticipated.
 `make fmt lint check test` clean.
+
+## 2026-08-11 — Dying cells were lingering across two full generations
+
+Reported directly, screenshot attached: two hexes both still visibly
+reddish at once, one freshly dead and one from the generation before,
+"about to disappear." Root cause is structural, not a color issue —
+`GeodesicMesh.buildLiveCells` lerps every height change across the
+whole `STEP_INTERVAL` (`0.75s`), and a cell's own death is genuinely
+two such transitions: live height → `GeodesicLifecycle.DYING_BLOCK_HEIGHT`
+one generation, then that height → `0` the next. ~1.5s total, by
+construction.
+
+Re-added `DEATH_EASE_SPEEDUP` (`2.5`) and the shrinking-eases-faster
+logic in `buildLiveCells` — the same mechanism tried and reverted
+2026-08-10, but that revert was in favor of trying the
+`Colours.CONWAY_TILE_DYING` color change first, not a verdict that the
+duration itself was fine; the color change alone didn't address this
+report, made it easier to actually see. `GeodesicVentrellaState.step`'s
+own rule and `STEP_INTERVAL`'s own cadence remain untouched — this only
+changes how quickly a shrinking block's own render height animates
+within whichever window it's already in. `make fmt lint check test`
+clean.

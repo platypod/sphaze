@@ -120,6 +120,26 @@ class GeodesicMesh {
 	static inline final LIVE_BLOCK_OPACITY:Float = 0.25;
 
 	/**
+		How much faster a shrinking block's own height animation runs than
+		a growing one, in `buildLiveCells` (2026-08-11). A cell's own death
+		is visible across *two* full `STEP_INTERVAL` windows by
+		construction — one generation fading from its live height down to
+		`GeodesicLifecycle.DYING_BLOCK_HEIGHT`, the next fading from there
+		to `0` — reported directly, screenshot attached, as two generations
+		of dying cells both still visibly reddish at once, lingering
+		longer than it should. A near-identical constant was tried and
+		reverted here once already (2026-08-10 log), but that was reverted
+		in favor of the `Colours.CONWAY_TILE_DYING` color change, not
+		because the duration itself was judged fine — this addresses the
+		duration report directly, now that the color makes it obvious.
+		Purely a render-side ease, same as before: `GeodesicVentrellaState.step`'s
+		own rule and `STEP_INTERVAL`'s own generation cadence are
+		untouched, only how quickly a shrinking block's own height
+		animates within whichever window it's already in.
+	**/
+	static inline final DEATH_EASE_SPEEDUP:Float = 2.5;
+
+	/**
 		`buildEngraving`'s own lift for a footprint cell's panel — clear of
 		`TILE_LIFT`/`WALL_BASE_LIFT`/`LIVE_CELL_BASE_LIFT` (all under `0.1`)
 		by a wide margin, so the engraving reads as its own layer sitting
@@ -242,6 +262,13 @@ class GeodesicMesh {
 		readings (the common case: most of a stable structure, most
 		generations) needs no lerp at all — `previousHeight == currentHeight`
 		is just a no-op blend.
+
+		**Shrinking eases faster than growing** — see `DEATH_EASE_SPEEDUP`'s
+		own doc. A block whose height is dropping this generation reaches
+		its own target height at `t = 1 / DEATH_EASE_SPEEDUP` instead of
+		`t = 1`, then holds there for the rest of the window; a growing or
+		unchanging block still lerps across the whole window exactly as
+		before.
 		@param parent the scene node to attach the live-cell meshes under.
 		@param sphere the topology to render.
 		@param boundaries every node's own cell polygon, `GeodesicDual.cellBoundaries(sphere)`.
@@ -264,7 +291,9 @@ class GeodesicMesh {
 				continue;
 			}
 
-			var height = previousHeight + (currentHeight - previousHeight) * clampedT;
+			var shrinking = currentHeight < previousHeight;
+			var easedT = shrinking ? Math.min(1, clampedT * DEATH_EASE_SPEEDUP) : clampedT;
+			var height = previousHeight + (currentHeight - previousHeight) * easedT;
 			var floorBoundary = [for (p in boundaries[id]) lift(p, LIVE_CELL_BASE_LIFT)];
 
 			switch currentHeight > 0 ? currentStages[id] : previousStages[id] {

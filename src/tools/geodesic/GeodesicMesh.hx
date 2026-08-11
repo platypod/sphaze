@@ -120,21 +120,6 @@ class GeodesicMesh {
 	static inline final LIVE_BLOCK_OPACITY:Float = 0.25;
 
 	/**
-		How much faster a shrinking block's own height animation runs than
-		a growing one, in `buildLiveCells` (2026-08-10, asked directly: "the
-		cells [to] die a little faster... same rules, but de-pop"). Purely
-		a render-side easing choice — `GeodesicVentrellaState.step`'s own
-		rule and `STEP_INTERVAL`'s own cadence are untouched, so what a cell
-		*is* each generation doesn't change, only how quickly its own
-		block visually collapses toward whatever height that generation
-		actually gave it. `1.0` would be the old even-both-ways lerp;
-		`2.0` finishes a full shrink in half the generation window instead
-		of the whole thing. Untuned past "a little" — a modest first guess,
-		not a measured value.
-	**/
-	static inline final DEATH_EASE_SPEEDUP:Float = 1.75;
-
-	/**
 		`buildEngraving`'s own lift for a footprint cell's panel — clear of
 		`TILE_LIFT`/`WALL_BASE_LIFT`/`LIVE_CELL_BASE_LIFT` (all under `0.1`)
 		by a wide margin, so the engraving reads as its own layer sitting
@@ -257,14 +242,6 @@ class GeodesicMesh {
 		readings (the common case: most of a stable structure, most
 		generations) needs no lerp at all — `previousHeight == currentHeight`
 		is just a no-op blend.
-
-		**Shrinking eases faster than growing (2026-08-10)** — see
-		`DEATH_EASE_SPEEDUP`'s own doc. A block whose height is dropping
-		this generation (dying outright to `0`, or settling to a shorter
-		live height than it had) reaches its own target height at
-		`t = 1 / DEATH_EASE_SPEEDUP` instead of `t = 1`, then holds there
-		for the rest of the window; a growing or unchanging block still
-		lerps across the whole window exactly as before.
 		@param parent the scene node to attach the live-cell meshes under.
 		@param sphere the topology to render.
 		@param boundaries every node's own cell polygon, `GeodesicDual.cellBoundaries(sphere)`.
@@ -287,9 +264,7 @@ class GeodesicMesh {
 				continue;
 			}
 
-			var shrinking = currentHeight < previousHeight;
-			var easedT = shrinking ? Math.min(1, clampedT * DEATH_EASE_SPEEDUP) : clampedT;
-			var height = previousHeight + (currentHeight - previousHeight) * easedT;
+			var height = previousHeight + (currentHeight - previousHeight) * clampedT;
 			var floorBoundary = [for (p in boundaries[id]) lift(p, LIVE_CELL_BASE_LIFT)];
 
 			switch currentHeight > 0 ? currentStages[id] : previousStages[id] {

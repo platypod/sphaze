@@ -1324,3 +1324,20 @@ are exactly `11` hops apart, more than three times `2 *
 FOOTPRINT_RADIUS` (`6`) — three hops has real headroom before two
 pentagons' own footprints could ever touch. `make fmt lint check test`
 clean.
+
+## 2026-08-10 — Dying cells de-pop a little faster
+
+Asked directly: "have the cells die 'a little faster', in terms of
+animation. Same rules, but de-pop." Purely a render-side ease, not a
+simulation change — `GeodesicVentrellaState.step`'s own rule and
+`STEP_INTERVAL`'s own generation cadence are untouched; what a cell
+*is* each generation doesn't change, only how quickly its own block
+visually collapses toward whatever height that generation gave it.
+
+`GeodesicMesh.buildLiveCells` lerped every block's own height linearly
+across the full generation window, growing and shrinking alike. New
+`DEATH_EASE_SPEEDUP = 1.75`: a block whose height is dropping this
+generation now reaches its own target height at `t = 1 /
+DEATH_EASE_SPEEDUP` instead of `t = 1`, then holds there for the rest
+of the window — growing/unchanging blocks are untouched, still the
+original even lerp. `make fmt lint check test` clean.

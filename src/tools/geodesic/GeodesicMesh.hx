@@ -277,7 +277,7 @@ class GeodesicMesh {
 		}
 
 		addLifecycleMesh(parent, alivePoints, aliveIdx, scaledColor(Colours.CONWAY_TILE_LIVE, GeodesicLifecycle.ALIVE_BRIGHTNESS));
-		addLifecycleMesh(parent, dyingPoints, dyingIdx, scaledColor(Colours.CONWAY_TILE_LIVE, GeodesicLifecycle.DYING_BRIGHTNESS));
+		addLifecycleMesh(parent, dyingPoints, dyingIdx, scaledColor(Colours.CONWAY_TILE_DYING, GeodesicLifecycle.DYING_BRIGHTNESS));
 	}
 
 	/**

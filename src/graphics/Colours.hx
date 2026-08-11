@@ -84,6 +84,18 @@ class Colours {
 	public static inline final CONWAY_TILE_LIVE:Int = 0xFF3BC47A;
 
 	/**
+		`tools.geodesic.GeodesicMesh`'s own dying-cell blocks — red instead
+		of a dimmer `CONWAY_TILE_LIVE` green (2026-08-11, asked directly:
+		dying cells should read red, not green). A deliberate one-off
+		exception to `CONWAY_TILE_LIVE`'s own "unicolor cells, dim don't
+		recolor" rule (see that constant's own doc, quoting the original
+		call for `biomes.conway.ConwayMesh`) — that call was scoped to the
+		older square-grid biome; this only recolors `GeodesicMesh`'s own
+		`Dying` bucket, not a reversal of the earlier one.
+	**/
+	public static inline final CONWAY_TILE_DYING:Int = 0xFFE5484D;
+
+	/**
 		`tools.geodesic.GeodesicMesh`'s own tracked-glider live blocks — a
 		warm amber standing apart from `CONWAY_TILE_LIVE`'s green so a
 		spawned glider (`GeodesicGliderTracker`) reads as a distinct,

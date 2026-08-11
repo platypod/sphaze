@@ -1324,3 +1324,21 @@ are exactly `11` hops apart, more than three times `2 *
 FOOTPRINT_RADIUS` (`6`) — three hops has real headroom before two
 pentagons' own footprints could ever touch. `make fmt lint check test`
 clean.
+
+## 2026-08-11 — De-pop speedup reverted; dying cells red instead
+
+Asked directly to roll back the previous entry's `DEATH_EASE_SPEEDUP`
+change (`git revert`, clean, no conflicts — `GeodesicMesh.buildLiveCells`
+back to a plain linear lerp both ways) and replace it with a color
+change instead: dying cells red, not a dimmer green.
+
+New `Colours.CONWAY_TILE_DYING` (`0xFFE5484D`), used in
+`GeodesicMesh.buildLiveCells`'s dying bucket in place of
+`Colours.CONWAY_TILE_LIVE`, `DYING_BRIGHTNESS` dimming still applied on
+top exactly as before — only the base hue changed. Flagged in
+`CONWAY_TILE_DYING`'s own doc as a deliberate, scoped exception to
+`CONWAY_TILE_LIVE`'s own "unicolor cells, dim don't recolor" rule (a
+direct quote recorded against `biomes.conway.ConwayMesh`, the older
+square-grid biome) — this only recolors `GeodesicMesh`'s own `Dying`
+bucket, not a reversal of that earlier call. `make fmt lint check test`
+clean.

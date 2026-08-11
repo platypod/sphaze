@@ -363,7 +363,20 @@ class GeodesicMeshTest extends Test {
 		Assert.equals(0, parent.numChildren);
 	}
 
-	/** A node fading out (alive last snapshot, absent now) still needs to draw mid-fade — the whole point of tracking `previousStages` separately rather than just rendering `currentStages` at some opacity. **/
+	/**
+		A node fading out (alive last snapshot, absent now) still needs to
+		draw mid-fade — the whole point of tracking `previousStages`
+		separately rather than just rendering `currentStages` at some
+		opacity. `t = 0.1`, not `0.5` (2026-08-11) — `buildLiveCells`'s own
+		`DEATH_EASE_SPEEDUP` finishes a shrink well before `t = 1`
+		(`2.5×`, i.e. by `t = 0.4`) and stops drawing entirely once the
+		eased height drops under `MIN_VISIBLE_BLOCK_HEIGHT`, so `t = 0.5`
+		now lands *after* this particular transition (`Alive` → `Absent`,
+		the largest possible drop) has already finished and stopped
+		drawing — not a mid-fade sample any more, a false negative for what
+		this test means to check. `t = 0.1` stays genuinely mid-fade
+		(comfortably before the eased shrink completes) regardless.
+	**/
 	function testBuildLiveCellsDrawsANodeFadingOutEvenThoughItsCurrentStageIsAbsent():Void {
 		var sphere = GeodesicSphere.generate(FREQUENCY);
 		var boundaries = GeodesicDual.cellBoundaries(sphere);
@@ -374,9 +387,9 @@ class GeodesicMeshTest extends Test {
 		var currentStages = [for (id in 0...sphere.neighbors.length) LifecycleStage.Absent];
 		var parent = new h3d.scene.Object();
 
-		GeodesicMesh.buildLiveCells(parent, sphere, boundaries, previousStages, currentStages, 0.5);
+		GeodesicMesh.buildLiveCells(parent, sphere, boundaries, previousStages, currentStages, 0.1);
 
-		Assert.isTrue(parent.numChildren > 0, "a node mid-fade-out should still draw something at t=0.5");
+		Assert.isTrue(parent.numChildren > 0, "a node mid-fade-out should still draw something at t=0.1");
 	}
 
 	/** At `t = 1` (fully at the current snapshot), a node with nothing in either snapshot except a `currentStages` entry still draws — the birth case. **/

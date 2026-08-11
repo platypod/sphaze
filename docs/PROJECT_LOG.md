@@ -1375,3 +1375,28 @@ own rule and `STEP_INTERVAL`'s own cadence remain untouched — this only
 changes how quickly a shrinking block's own render height animates
 within whichever window it's already in. `make fmt lint check test`
 clean.
+
+## 2026-08-11 — Stopped drawing wafer-thin blocks
+
+Asked directly to fix "a brief colour stuttering when a cell is brought
+down to a thin layer before disappearing (or when it appears)" — a
+second, smaller-scale z-fighting source than the block-vs-floor one
+`LIVE_CELL_BASE_LIFT` already fixed: once a live block's own animated
+height gets close enough to `0`, its own top and bottom caps nearly
+coincide and fight each other instead.
+
+New `GeodesicMesh.MIN_VISIBLE_BLOCK_HEIGHT` (`0.15`, a few times
+`LIVE_CELL_BASE_LIFT`'s own `0.04` for real margin): `buildLiveCells`
+now skips drawing a block entirely once its own eased height drops
+under it, on either end of a growth or shrink animation, rather than
+drawing an imperceptibly thin sliver that flickers. Traded a small
+pop in/out at the very start/end of the animation for no flicker — a
+sliver that thin wasn't reading as "there" anyway.
+
+Broke `GeodesicMeshTest.testBuildLiveCellsDrawsANodeFadingOutEvenThoughItsCurrentStageIsAbsent`:
+its own fixed `t = 0.5` sample predates `DEATH_EASE_SPEEDUP` (2026-08-11,
+same day) — with that speedup, an `Alive → Absent` shrink (the largest
+possible drop) finishes by `t = 0.4`, so `t = 0.5` was sampling *after*
+the fade had already completed and stopped drawing, not mid-fade any
+more. Moved to `t = 0.1`, comfortably mid-fade regardless. `make fmt
+lint check test` clean.

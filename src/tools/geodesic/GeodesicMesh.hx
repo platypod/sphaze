@@ -140,6 +140,26 @@ class GeodesicMesh {
 	static inline final DEATH_EASE_SPEEDUP:Float = 2.5;
 
 	/**
+		The shortest a live block's own animated height is ever actually
+		drawn at, in `buildLiveCells` — below this it's skipped entirely
+		rather than drawn wafer-thin. Reported directly: a brief color
+		"stutter" right as a block grows in or shrinks away, distinct from
+		the block-vs-floor z-fighting `LIVE_CELL_BASE_LIFT` already fixed
+		(2026-08-10) — this one is the block's own top and bottom caps
+		nearly coinciding once its own height approaches `0`, the same
+		geometric problem at a smaller scale, on the same mesh's own two
+		faces instead of two different meshes. A few times `LIVE_CELL_BASE_LIFT`
+		(`0.04`) clears it with real margin. The visible cost is a small
+		pop in/out at the very start/end of a growth/shrink animation
+		instead of a smooth approach to zero — an imperceptibly thin sliver
+		wasn't reading as "there" anyway, so trading it for no flicker reads
+		as a straight improvement, not a real animation-quality tradeoff.
+		Untuned past "clears the z-fighting range" — a reasonable first
+		guess, not a measured value.
+	**/
+	static inline final MIN_VISIBLE_BLOCK_HEIGHT:Float = 0.15;
+
+	/**
 		`buildEngraving`'s own lift for a footprint cell's panel — clear of
 		`TILE_LIFT`/`WALL_BASE_LIFT`/`LIVE_CELL_BASE_LIFT` (all under `0.1`)
 		by a wide margin, so the engraving reads as its own layer sitting
@@ -269,6 +289,11 @@ class GeodesicMesh {
 		`t = 1`, then holds there for the rest of the window; a growing or
 		unchanging block still lerps across the whole window exactly as
 		before.
+
+		**Never drawn thinner than `MIN_VISIBLE_BLOCK_HEIGHT`** — see that
+		constant's own doc. A block below it, on either end of a
+		growth/shrink animation, is skipped for that frame rather than
+		drawn wafer-thin.
 		@param parent the scene node to attach the live-cell meshes under.
 		@param sphere the topology to render.
 		@param boundaries every node's own cell polygon, `GeodesicDual.cellBoundaries(sphere)`.
@@ -294,6 +319,9 @@ class GeodesicMesh {
 			var shrinking = currentHeight < previousHeight;
 			var easedT = shrinking ? Math.min(1, clampedT * DEATH_EASE_SPEEDUP) : clampedT;
 			var height = previousHeight + (currentHeight - previousHeight) * easedT;
+			if (height < MIN_VISIBLE_BLOCK_HEIGHT) {
+				continue; // wafer-thin — skip rather than let its own top/bottom caps z-fight, see MIN_VISIBLE_BLOCK_HEIGHT's own doc
+			}
 			var floorBoundary = [for (p in boundaries[id]) lift(p, LIVE_CELL_BASE_LIFT)];
 
 			switch currentHeight > 0 ? currentStages[id] : previousStages[id] {

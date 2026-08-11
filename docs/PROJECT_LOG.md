@@ -1342,3 +1342,14 @@ direct quote recorded against `biomes.conway.ConwayMesh`, the older
 square-grid biome) — this only recolors `GeodesicMesh`'s own `Dying`
 bucket, not a reversal of that earlier call. `make fmt lint check test`
 clean.
+
+## 2026-08-11 — Pentagon floor tiles pop out less
+
+Asked directly: pentagons should "pop out less, but still noticeable."
+`Colours.CONWAY_TILE_PENTAGON`'s own doc had already flagged itself as
+"the single switch" for this exact tuning — a brightness lift off
+`CONWAY_TILE_DEAD`, previously roughly `3×` per channel. Dropped to
+roughly `1.9×` (`0xFF35566E` → `0xFF1F3240`), closer to the halfway
+point between dead and the original lift — no code change needed
+beyond the value itself, exactly as that constant's doc anticipated.
+`make fmt lint check test` clean.

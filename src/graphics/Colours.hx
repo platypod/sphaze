@@ -70,8 +70,16 @@ class Colours {
 		needed beyond this value — see `GeodesicMesh.build`'s own doc for
 		why the split is architected as two separate meshes rather than
 		per-vertex color.
+
+		**Toned down (2026-08-11)** — asked directly for pentagons to "pop
+		out less, but still noticeable." Was `0xFF35566E`, roughly `3×`
+		`CONWAY_TILE_DEAD`'s own per-channel brightness; this value is
+		roughly `1.9×` instead, closer to the halfway point between dead
+		and the original lift. Untuned past "still noticeable" — a
+		reasonable middle guess, not a measured one; the doc above still
+		holds exactly, only the value moved.
 	**/
-	public static inline final CONWAY_TILE_PENTAGON:Int = 0xFF35566E;
+	public static inline final CONWAY_TILE_PENTAGON:Int = 0xFF1F3240;
 
 	/**
 		`biomes.conway.ConwayMesh` raised live-cell blocks and the hub

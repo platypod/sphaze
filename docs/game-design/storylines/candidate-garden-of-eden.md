@@ -3,6 +3,15 @@
 **Leading candidate.** See [README.md](README.md) for how this fits against
 the other candidates, and the requirements every candidate has to meet.
 
+> **Superseded in scope, 2026-08-11.** This candidate was developed into a
+> whole-game direction — see [../direction/](../direction/README.md).
+> Everything below survives; what changed is that the premise turned out
+> to have a *theorem* under it (uncaused existence is available only in
+> negative curvature, via amenability and the Garden of Eden theorem),
+> which promotes it from "a story we could tell" to the spine of the
+> entire game. Keep this file as the record of the candidate before that
+> was noticed; the direction folder is where it lives now.
+
 The player is a pattern in a cellular automaton that became something the
 rules don't account for, fell out of its grid during a crash, perahsp,
 and landed in the developer's machine. The hub could be the computer seen

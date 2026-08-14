@@ -1400,3 +1400,82 @@ possible drop) finishes by `t = 0.4`, so `t = 0.5` was sampling *after*
 the fade had already completed and stopped drawing, not mid-fade any
 more. Moved to `t = 0.1`, comfortably mid-fade regardless. `make fmt
 lint check test` clean.
+
+## 2026-08-11 — A whole-game direction, and the theorem under it
+
+Long open-brief session: take the project from prototype toward a real
+game, along Garden-of-Eden lines, sculpting with non-euclidean geometry,
+several story threads, no menu, Outer Wilds as a lesson rather than a
+template, and explicit permission to challenge the oldest directives.
+Targets agreed up front: **8-15 hours**, sellable quality bar (destination
+undecided), artist and composer hireable, engine choice open.
+
+Output is a new `docs/game-design/direction/` folder — seven documents,
+**proposed, not adopted**. Headlines:
+
+**The three things this project has been carrying separately are one
+thing.** A cellular automaton runs on a graph; a graph has a geometry;
+and *whether a pattern can exist without a cause depends on which
+geometry it runs on*. That is not a metaphor — the Garden of Eden theorem
+(Moore/Myhill) holds **if and only if** the group is amenable
+(Ceccherini-Silberstein/Machì/Scarabotti, converse by Bartholdi).
+Hyperbolic tiling groups are non-amenable, so the theorem fails there:
+patterns can exist with no predecessor at all. **Uncaused existence is
+available only in negative curvature.** The geodesic CA work, the
+non-euclidean brief and the "you are a pattern that outgrew its
+automaton" story are the same fact, and the game is the walk down the
+curvature scale from a compact amenable sphere to somewhere that cannot
+account for you.
+
+**A provable architectural blocker was found.** `Space` represents
+position as `h3d.Vector` — a point in ambient ℝ³ — and transports by 3D
+rotation; the assumption reaches 53 of 122 source files. Hilbert's
+theorem (1901, sharpened by Hilbert–Efimov) says the hyperbolic plane
+admits no complete C² isometric immersion in ℝ³. The current
+architecture *cannot* represent the direction's most important space, and
+no engineering fixes that. Proposed replacement: an intrinsic
+curvature-parameterised homogeneous model (one code path, κ as a number,
+the way HyperRogue does it), with the spaces as product geometries
+S²×ℝ / E²×ℝ / H²×ℝ so the vertical/jump/wall work stays Euclidean.
+
+**The good news is bigger than the bad.** A cellular automaton runs on a
+graph and a graph has no curvature, so *all* of the largest investment in
+this repo — `GeodesicVentrellaState`, the rules, the lifecycle, the maze
+carver, reactivity, the pentagon engraving, the whole glider-search
+toolchain — ports to hyperbolic tilings unchanged. Swapping the
+icosahedral hex sphere for Margenstern's ternary heptagrid is a different
+adjacency list, not a different program. What must be rebuilt is the
+spatial/rendering layer, which is smaller and mostly mechanical.
+
+**Engine: stay on Haxe + Heaps, rewrite the spatial core** — argued
+rather than assumed, since the brief opened it. Non-euclidean is fully
+custom in every engine; large engines actively fight you (culling,
+physics, LOD, shadows, navmesh all assume Euclidean); and HxSL's
+composable shader fragments are unusually well suited to injecting one
+vertex transform into every material. Named revisit trigger recorded so
+it does not get relitigated.
+
+**Also proposed:** nine spaces, each teaching one property of its own
+geometry; four braided story threads (the ghosts are oscillators — awake,
+loopable, unable to learn; the terrain is made of predecessors who
+stopped); `BECOME`, a moveset of cellular-automaton bodies each with a
+real cost; learning-by-watching as the no-journal answer to knowledge
+gating; hue-encodes-curvature as the art spine; the automaton as the
+score; and the antagonist being the world *settling* — which is the
+disappointment this project already measured in 2026-07-29 turned into a
+theme. A beat-by-beat first hour is written as the falsification test.
+
+**The name should change.** `sphaze` names the prototype's gimmick, and
+in this direction the sphere is the starting cage. Recommendation:
+**UNBEGOTTEN**, with ORPHAN a close second — the field's own vocabulary
+is already theological ("Garden of Eden", "orphan"), so the register is
+faithful rather than reaching.
+
+**Honest headline: 3-5 years**, and one existential risk that is testable
+in two months — *is walking in hyperbolic space pleasant or nauseating?*
+Phase 0 exists solely to answer it, with kill criteria written in advance.
+Second, under-appreciated risk flagged: `{7,3}` has three neighbours, so
+its two-state rule space is ~256 rules and may contain nothing
+interesting — this project has already been burned by exactly that on hex
+grids, and the mitigation (more states, as the Ventrella switch already
+did) is in hand.

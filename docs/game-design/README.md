@@ -4,6 +4,13 @@ The design documentation, split by lifecycle. Each file holds one kind of
 content, and content *moves* between them as its status changes — the rules of
 movement are the contract.
 
+> **Read [direction/](direction/README.md) first if you are new here, or
+> returning after 2026-08-11.** It proposes a step change for the whole
+> project — the cellular automaton, the non-euclidean geometry and the
+> Garden-of-Eden story turn out to be one idea rather than three, and the
+> rest of this folder is written from before that was noticed. Nothing in
+> it is agreed yet.
+
 ```mermaid
 flowchart LR
     idea([a new idea]) --> philosophy
@@ -20,6 +27,7 @@ flowchart LR
 
 | File | Holds | Moves |
 |---|---|---|
+| [direction/](direction/README.md) | **The whole-game direction** — what this game *is*, above any single mechanic. Written 2026-08-11; **proposed, not adopted** | Feeds [ideas-backlog.md](ideas-backlog.md) when a piece becomes buildable; proposes pillar changes to [philosophy.md](philosophy.md) rather than assuming them; decisions land in [design-decisions-records.md](design-decisions-records.md) |
 | [philosophy.md](philosophy.md) | Design pillars — what this game is trying to be | Changes rarely; when a decision changes a pillar, update it and record why in [design-decisions-records.md](design-decisions-records.md) |
 | [storylines/](storylines/README.md) | The **current state** of the story: one `candidate-*.md` file per live/parked candidate, plus a `README.md` with the map and requirements | When a story decision lands, the winner's file drops its `candidate-` prefix (and its pillar consequences fold into philosophy.md); losers' files are deleted and their content moves to design-decisions-records.md with the why |
 | [ideas-backlog.md](ideas-backlog.md) | Not-yet-implemented ideas, checked against philosophy.md before entering | When implemented, **delete the entry** — the implementation plus `../PROJECT_LOG.md` is the record from then on. Keep only whatever part is still open |

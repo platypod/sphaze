@@ -1559,3 +1559,43 @@ visible in `roadmap.md` behind a correction note rather than quietly
 overwritten: a risk register that silently rewrites itself is not one you
 can trust, and the same discipline this log already applies to gameplay
 corrections applies to design documents.
+
+## 2026-08-11 — The heptagrid, generated and measured (Risk 2's spike)
+
+Ran the headless half of Phase 0's second spike rather than leaving it
+scheduled. New `geometry.HyperbolicTiling` generates a finite patch of any
+regular hyperbolic tiling `{p,q}` as an **adjacency graph**, which is the
+only thing a cellular automaton needs — and is therefore the first real
+consumer of the curvature core, confirming it is useful rather than merely
+correct.
+
+**Confirms the correction above empirically.** `{7,3}` interior faces have
+**seven** neighbours, by construction and by test. `{5,4}` — the named
+fallback substrate — gives five. Both generate cleanly.
+
+**A real bug, caught by measuring rather than by testing.** The first
+construction gave ring populations of exactly `1, 7, 49, 343, 2401` — that
+is `7ⁿ`, a perfect 7-ary tree, meaning welding never merged anything and
+the "tiling" was not a tiling at all. Cause: a child's generator set was
+not oriented to walk *back* to its parent, because for odd `p` none of the
+`p` directions `k·2π/p` is ever exactly `π`. Nothing reconverged, so
+nothing welded. Fixed by composing a half-turn onto each generator, so
+generator 0 becomes the inverse of the step that arrived.
+
+Worth recording that **the tests passed while the construction was
+wrong** — they asserted "each ring is larger than the last", which a tree
+satisfies enthusiastically. Replaced with exact assertions: the known
+sequence `1, 7, 21, 56, 147, 385`, and the growth rate converging on
+**φ² ≈ 2.618** (the golden ratio squared — the known growth rate of these
+tilings, and a fact the implementation cannot accidentally satisfy).
+
+That growth rate is the direction's own thesis as a measured number:
+each step outward multiplies available space by a constant factor above
+one, forever, which is what non-amenability means concretely.
+
+39,779 assertions total. `make fmt lint check test` clean.
+
+**Still not answered:** whether any rule on this tiling produces compact
+persistent travelling structures. The tiling and the harness now exist, so
+that search is a follow-up rather than a research project — but it has not
+been run, and Risk 2 stays open until it has.

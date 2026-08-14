@@ -120,7 +120,7 @@ moments.
 | # | Risk | Severity | Mitigation |
 |---|---|---|---|
 | 1 | **Motion sickness** — hyperbolic walking is intolerable | **existential** | Phase 0 exists solely for this; kill criteria written in advance; comfort as a design constraint |
-| 2 | **The `{7,3}` rule may have no interesting life** | **high, under-appreciated** | see below — this is the risk nobody would think to check |
+| 2 | **The `{7,3}` rule may have no interesting life** | medium (*corrected down* — see below) | rule space is larger than the hex grid's, but persistent travelling structures in negative curvature are unproven |
 | 3 | **Navigational frustration** — lost stops being wonder and becomes rage | high | landmark alphabet; hue-encodes-curvature; teach every skill in the safe warm sphere before removing it |
 | 4 | **Scope** — 8-15h is enormous for this genre | high | geometries are procedural; concentrate authored content in ~30 thread beats; Phase 1 ships standalone |
 | 5 | **"The simulation is honest" is expensive** | medium | decide *how* honest explicitly — see open questions |
@@ -129,31 +129,57 @@ moments.
 
 ### Risk 2, in detail — because it is the one that hides
 
-The Sprawl runs on `{7,3}`: **three neighbours per cell.** A two-state
-outer-totalistic rule there has a rule space of roughly 2⁴ × 2⁴ = 256
-rules — *tiny*. There is no guarantee any of them produces gliders,
-oscillators, or anything worth building a biome on.
+> **Corrected 2026-08-11, same session.** The first version of this entry
+> claimed `{7,3}` gives *three* neighbours per cell and a rule space of
+> only ~256, and rated the risk "high". That was wrong, and wrong in the
+> direction of alarm. **"Ternary" names three tiles around a *vertex*, not
+> three neighbours per cell** — a `{7,3}` cell is a heptagon with **seven**
+> edge-neighbours. The corrected entry stands below; the error is left
+> visible because a design doc that quietly rewrites its own risk register
+> cannot be trusted.
 
-This project has already been burned by precisely this: the multi-rule
-glider search across hex rules found **zero** confirmed travellers among
-2166 candidates, and the only working spaceship for `B2/S34H` in
-existence came from Catagolue's ~100 billion soups, not from local search.
-On a 3-neighbour grid the space is far smaller still.
+The Sprawl runs on `{7,3}`: **seven neighbours per cell.** A two-state
+outer-totalistic rule there has a rule space of roughly 2⁸ × 2⁸ = 65,536
+rules — *larger* than the hex sphere's 6-neighbour space (~16,384), not
+smaller. On rule-space size alone the heptagrid is **more** promising than
+what this project is already running on, not less.
+
+The real risk is different, and it survives the correction:
+
+**Rich dynamics on a hyperbolic tiling are unproven for this project's
+purposes.** A large rule space does not imply interesting life — this
+project has already been burned by exactly that gap on the *hex* grid,
+where the multi-rule search found **zero** confirmed travellers among
+2166 candidates, and the only known spaceship for `B2/S34H` came from
+Catagolue's ~100 billion soups rather than from local search. Add the
+specifically hyperbolic complication: neighbourhoods grow *exponentially*
+with radius, so a pattern's influence disperses far faster than on any
+flat or spherical grid, and "a small configuration that holds together
+while translating" is a harder thing to be there than here.
+
+So the question to answer is not *"is the rule space big enough"* (it is)
+but **"do compact, persistent, translating structures exist at all in
+negative curvature?"** — and that is genuinely open.
 
 **Mitigations, in order of preference:**
 
-1. **More states.** Margenstern's universal heptagrid automata use four or
-   more, and this project *already switched to a 4-state Ventrella rule*
-   for exactly this class of reason. The tooling and the instinct both
+1. **More states.** Margenstern's universal heptagrid automata use four
+   or more, and this project *already switched to a 4-state Ventrella
+   rule* for a closely related reason. The tooling and the instinct both
    exist.
-2. **Larger neighbourhood** — 2-ring instead of 1-ring, which restores rule
-   space at the cost of legibility.
-3. **Use `{5,4}` instead** — the pentagrid, four neighbours, also
-   well-studied by Margenstern.
+2. **Larger neighbourhood** — 2-ring instead of 1-ring, at the cost of
+   legibility.
+3. **`{5,4}` instead** — the pentagrid, five neighbours, also well studied
+   by Margenstern, if the heptagrid proves unfriendly.
 
-**Spike this in Phase 0**, alongside the walking test. It is cheap
-(headless, and `GeodesicLifeReport`-style harnesses already exist) and
-discovering it in Phase 2 would be catastrophic.
+**Spike this in Phase 0**, alongside the walking test. It is cheap and
+headless, the `GeodesicLifeReport`-style harnesses already exist, and the
+combinatorial tiling can be generated without any of the geometry work —
+so it can run in parallel with everything else. Discovering it in Phase 2
+would be catastrophic.
+
+**Severity after correction: medium, not high.** Still the second risk
+worth spiking early, but no longer a plausible project-killer.
 
 ---
 

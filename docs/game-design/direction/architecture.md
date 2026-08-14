@@ -130,9 +130,10 @@ cellular automaton runs on a *graph*, and a graph has no curvature:
 Swapping the frequency-11 icosahedral hex sphere for Margenstern's
 ternary heptagrid `{7,3}` is **a different adjacency list**, not a
 different program. Everything downstream keeps working. The rule itself
-will need re-tuning for 3 neighbours instead of 6 — that is a real
-research task, and this project has already done exactly that research
-once (the multi-rule glider search), so the method exists.
+will need re-tuning for the heptagrid's 7 neighbours instead of the hex
+sphere's 6 — that is a real research task, and this project has already
+done exactly that research once (the multi-rule glider search), so the
+method exists.
 
 | Must be rebuilt | Size |
 |---|---|

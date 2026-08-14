@@ -194,7 +194,7 @@ place where the space admits it was made.
 
 **7. CARRY.** Move a pattern from one geometry to another. The core
 puzzle: **a glider that works on the Fold may not survive in the Sprawl**,
-because the neighbour count differs (6 on the hex sphere, 3 on the
+because the neighbour count differs (6 on the hex sphere, 7 on the
 heptagrid) and a rule tuned to one is not tuned to the other. That is a
 genuine, already-measured property of this project's own simulation work,
 and it turns "take this over there" into a real question rather than

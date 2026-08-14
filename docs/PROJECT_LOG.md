@@ -1529,3 +1529,33 @@ whether a rewrite this deep is safely doable here. It proves **nothing**
 about whether walking in hyperbolic space is *pleasant*, which remains the
 project's one existential risk and still needs the rest of Phase 0: the
 HxSL projection fragment and one bare `{7,3}` room to walk.
+
+## 2026-08-11 — Correction: `{7,3}` has seven neighbours, not three
+
+Same session, caught while preparing to spike the risk it describes.
+`direction/roadmap.md`'s Risk 2 claimed the ternary heptagrid gives
+*three* neighbours per cell and therefore a rule space of only ~256, and
+rated that "high, under-appreciated". Wrong: **"ternary" names three tiles
+around a vertex**, not three neighbours per cell. A `{7,3}` cell is a
+heptagon and has **seven** edge-neighbours.
+
+The correction reverses the conclusion. Seven neighbours give an
+outer-totalistic rule space of ~65,536 — *larger* than the hex sphere's
+~16,384, so on rule-space size the heptagrid is more promising than what
+the game already runs on, not less. Risk 2 drops from high to medium.
+
+A real risk does survive, restated: a large rule space does not imply
+interesting life (this project already found zero confirmed travellers
+across 2166 hex candidates), and hyperbolic neighbourhoods grow
+exponentially with radius, so a pattern's influence disperses much faster
+than on a flat or spherical grid. The open question is not "is the rule
+space big enough" but "do compact, persistent, translating structures
+exist at all in negative curvature" — still worth spiking early, no
+longer a plausible project-killer.
+
+Corrected in three places (`roadmap.md`, `architecture.md`,
+`systems.md` — the last two also said 3). The wrong version is left
+visible in `roadmap.md` behind a correction note rather than quietly
+overwritten: a risk register that silently rewrites itself is not one you
+can trust, and the same discipline this log already applies to gameplay
+corrections applies to design documents.

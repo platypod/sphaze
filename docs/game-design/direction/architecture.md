@@ -265,6 +265,18 @@ Steps 1 and 2 are perhaps two months of work and they answer whether the
 whole direction is viable. Nothing after step 2 should begin until step 2
 has been *played*.
 
+## Measured since writing this
+
+`geometry.CurvedSpace`/`Isometry`/`HyperbolicTiling` and their tests were
+built in the same session — steps 1 and part of 5 of the plan above — so
+the claims here are demonstrated rather than asserted. Two results worth
+reading before implementing anything else:
+[../notes/hyperbolic-simulation-findings.md](../notes/hyperbolic-simulation-findings.md).
+The second one (**a finite hyperbolic patch is mostly boundary, and gets
+worse with size**) argues for running the simulation on a *compact*
+hyperbolic surface rather than a patch, which is an architectural
+decision this document did not anticipate.
+
 ## A note on the existing test culture
 
 This project has 38,000+ assertions and a blocking pre-commit hook. That

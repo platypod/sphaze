@@ -1599,3 +1599,38 @@ one, forever, which is what non-amenability means concretely.
 persistent travelling structures. The tiling and the harness now exist, so
 that search is a follow-up rather than a research project — but it has not
 been run, and Risk 2 stays open until it has.
+
+## 2026-08-11 — Ran the rule probe: two findings, one changes the build order
+
+Full write-up in
+[`docs/game-design/notes/hyperbolic-simulation-findings.md`](game-design/notes/hyperbolic-simulation-findings.md).
+
+**Finding 1 — `{7,3}` sustains life easily.** 972 sampled outer-totalistic
+rules survived 120 generations without dying out or saturating, dozens
+churning every single generation. A markedly better starting position than
+the hex sphere, where soup evaporated and 2166 candidates yielded zero
+travellers. Intuition: seven neighbours plus exponential neighbourhood
+growth widen the knife-edge between extinction and explosion. Travelling
+structures are still unsearched, so Risk 2 narrows rather than closes.
+
+**Finding 2 — a finite hyperbolic patch is mostly boundary, and gets worse
+with size.** The patch used had 617 faces of which only 85 were far enough
+from the edge to score — 14%. Adding rings makes the ratio *worse*, since
+ring populations grow by φ² forever. This is the isoperimetric character
+of hyperbolic space arriving as an engineering constraint, and it is the
+same fact the design keeps calling "everywhere is edge": there is no scale
+at which a hyperbolic region's boundary becomes negligible.
+
+The fix is to simulate on a **compact** hyperbolic surface rather than a
+patch — no boundary at all, by construction. The design already contains
+one: **The Knot**, the genus-2 surface, filed as a late-game exotic space.
+So this promotes it from "good biome" to "the technically correct
+substrate", and **may invert the build order** — The Knot before The
+Sprawl. Flagged in `roadmap.md` as a real ordering decision rather than
+folded in silently, since it contradicts the phases as written.
+
+Honest caveat recorded with it: the amenability argument is about
+*infinite* groups, so on a compact surface the strict theorem applies to
+the universal cover, not to the finite thing being simulated. What
+survives is the *felt* geometry. The fiction should not claim more rigour
+than the object has.

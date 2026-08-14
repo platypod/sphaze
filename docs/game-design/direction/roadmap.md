@@ -181,6 +181,21 @@ would be catastrophic.
 **Severity after correction: medium, not high.** Still the second risk
 worth spiking early, but no longer a plausible project-killer.
 
+**Partially spiked, same session — see
+[../notes/hyperbolic-simulation-findings.md](../notes/hyperbolic-simulation-findings.md).**
+`{7,3}` sustains life *easily*: 972 sampled rules survived 120 generations
+without dying or saturating, many churning every generation — a markedly
+better starting position than the hex sphere ever gave. Travelling
+structures still unsearched, so the risk is narrowed rather than closed.
+
+That spike also turned up a finding that **changes the build order**: a
+finite hyperbolic patch is mostly boundary (617 faces, 85 usable) and
+grows *worse* with size, because ring populations grow by φ² forever. The
+fix is to use a compact hyperbolic surface rather than a patch — which
+means **The Knot (genus-2) may need to be built before The Sprawl**,
+inverting the ordering in Phase 2 above. Not yet folded into the phases;
+flagged here because it is a real ordering decision, not a detail.
+
 ---
 
 ## What I could not decide alone

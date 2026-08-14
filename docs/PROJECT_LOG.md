@@ -1479,3 +1479,53 @@ its two-state rule space is ~256 rules and may contain nothing
 interesting — this project has already been burned by exactly that on hex
 grids, and the mitigation (more states, as the Ventrella switch already
 did) is in hand.
+
+## 2026-08-11 — Phase 0, step 1: the curvature core, built and tested
+
+Rather than leave the direction folder as prose, built the first step of
+its own migration plan — the piece everything else is downstream of.
+
+New `src/geometry/`: `Curvature` (the three constant-curvature geometries
+as one enum, plus the generalised trigonometry `cosK`/`sinK` that makes
+them one code path), `CurvedSpace` (the homogeneous model: the bilinear
+form, geodesic distance, normalisation, circle circumference) and
+`Isometry` (a 3×3 matrix over model coordinates; the player's entire
+spatial state in the proposed architecture).
+
+**No Heaps dependency anywhere in the package**, deliberately — the whole
+point is that the geometry is verifiable without a renderer, which is why
+this was safe to build first.
+
+`geometry.CurvedSpaceTest` proves it is the genuine article rather than
+something merely bendy, and the tests are chosen to be falsifiable:
+
+- **All three laws of cosines**, to `1e-9` — spherical, Euclidean and
+  hyperbolic, each with its own closed form. This is the decisive one; a
+  near-miss implementation fails it immediately.
+- **The sphere's triangle with three right angles closes** — three quarter
+  great-circles and three right-angle turns return to the origin. A
+  small-angle approximation cannot pass this.
+- **Squares fail to close under curvature** but close exactly in flat
+  space — holonomy, which is the mechanic `The Defect` biome is built on.
+- **Circumference grows exponentially only in hyperbolic space** (r=5→10
+  grows by >100×). This is the direction's own thesis expressed as an
+  assertion: exponential growth *is* non-amenability, which is why the
+  Garden of Eden theorem fails there, which is why uncaused patterns can
+  exist there and nowhere else.
+
+44 new assertions, 38,539 total. `make fmt lint check test` clean.
+
+Note for whoever picks this up: `make check` compiles from `Main`, and
+nothing in the game references `geometry` yet, so **only `make test`
+currently compiles this package**. That is fine for now and worth
+remembering — it also means secondary module types need explicit imports
+(`import geometry.Curvature.CurvatureMath;`), which the compiler only
+told us about once the test pulled it in.
+
+**What this does and does not prove.** It proves the mathematics and the
+representation are sound, and that the existing test culture can verify
+non-euclidean geometry headlessly — which was the main open question about
+whether a rewrite this deep is safely doable here. It proves **nothing**
+about whether walking in hyperbolic space is *pleasant*, which remains the
+project's one existential risk and still needs the rest of Phase 0: the
+HxSL projection fragment and one bare `{7,3}` room to walk.

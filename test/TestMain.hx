@@ -37,6 +37,7 @@ import entities.registries.BiomesRegistryTest;
 import entities.registries.CreaturesRegistryTest;
 import entities.registries.NpcsRegistryTest;
 import game.ProcessTest;
+import geometry.CurvedSpaceTest;
 import tools.geodesic.GeodesicCoarseMazeTest;
 import tools.geodesic.GeodesicCollisionTest;
 import tools.geodesic.GeodesicDualTest;
@@ -63,6 +64,7 @@ import tools.geodesic.IcosahedronTest;
 class TestMain {
 	static function main():Void {
 		var runner = new Runner();
+		runner.addCase(new CurvedSpaceTest());
 		runner.addCase(new SphereMathTest());
 		runner.addCase(new GridModelTest());
 		runner.addCase(new MazeGeneratorTest());

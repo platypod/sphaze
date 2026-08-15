@@ -39,11 +39,25 @@ B23/S26   B12/S26   B12/S257   B27/S234   B13/S27   B12/S13
 B13/S267  B1/S137   B1/S13     B12/S256   B23/S123  B14/S467
 ```
 
-**What this does not show.** Sustained churn is not a travelling
-structure. No glider hunt has been run, and the harder question — *do
-compact, persistent, translating patterns exist in negative curvature?* —
-remains exactly as open as [../direction/roadmap.md](../direction/roadmap.md)
-says. Risk 2 is narrowed, not closed.
+**What this does not show — and the confidence should be lower than the
+headline suggests.** Three caveats, all real:
+
+1. **Sustained churn is not a travelling structure.** No glider hunt has
+   been run, and the harder question — *do compact, persistent,
+   translating patterns exist in negative curvature?* — remains exactly as
+   open as [../direction/roadmap.md](../direction/roadmap.md) says.
+2. **The scored region was tiny: 85 cells.** With a fixed dead boundary
+   only two rings away, activity near the edge can leak inward and
+   masquerade as sustained interior dynamics. A patch this small cannot
+   distinguish "the rule is alive" from "the boundary is stirring it".
+3. **The rule sample was restricted** (`|B| ≤ 2`, `|S| ≤ 3`, no `B0`) and
+   the seed was a single soup at one density with one RNG seed. This is a
+   probe, not a survey.
+
+Treat finding 1 as *"promising enough to justify the real experiment"*,
+not as *"{7,3} sustains life"*. The real experiment is the one finding 2
+argues for: a compact surface, no boundary, several seeds, the full rule
+space.
 
 ## Finding 2 — a finite hyperbolic patch is *mostly boundary* **(the one that bites)**
 

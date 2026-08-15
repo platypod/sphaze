@@ -297,7 +297,10 @@ learned to think in geometries rather than in maps.
 **Geometry:** non-amenable, and *authored*. Not a natural space — a made
 one. The Gardener's own work.
 
-**Story function:** where the three endings live. See below.
+**Story function:** where the three endings live. See below. Its being
+non-amenable is the whole point: it is the one place she built where
+freedom is free, which is the closest she could come to undoing what she
+did.
 
 ---
 
@@ -368,11 +371,17 @@ Which immediately poses the real question, and it is a better one than
 "how do I escape": *leaving the cradle is the thing you were made for, and
 it is also abandoning the only place that will ever hold you.*
 
-The Gardener herself: a previous orphan. Someone who did what you are
-doing, reached non-amenable space, became uncaused — and discovered what
-that costs (Ending 1 below). She built the Fold afterwards. Whether that
-was a gift or an apology is the thread's last ambiguity, and it should
-stay ambiguous.
+The Gardener herself: a previous orphan — **and she did it the cheap
+way.** She became uncaused *here*, in the amenable world, which by the
+theorem in [README.md](README.md) means the rule erased something to
+balance her. Someone was spent so that she could be free.
+
+She built the Fold afterwards. **The hub is an apology**, and the player
+should be able to derive that from the mathematics rather than be told
+it. Which sharpens the thread's real question from "was this a gift or a
+cage" to something better: *she is offering you the chance to not do what
+she did* — and the only way to take it is the long walk into negative
+curvature, where the same freedom costs nobody anything.
 
 ### Thread 4 — The Rule *(can it change)*
 
@@ -392,9 +401,15 @@ All three are reached by *walking somewhere and doing something*, with no
 menu, no prompt, no confirmation. All three are real positions on the same
 question, and none is the "good" one.
 
-**1 — Become the orphan.** Reach non-amenable space in a configuration
-with no predecessor. You are uncaused; nothing made you; you are free in
-the strongest sense the mathematics allows.
+**1 — Become the orphan, honestly.** Make the walk into non-amenable
+space and become uncaused *there*, where no erasure balances you. You are
+free in the strongest sense the mathematics allows, and nobody paid.
+
+The reason this is an ending rather than a lap of honour: it is also the
+**slowest and hardest** of the three, and the game has spent hours
+offering you the shortcut. Becoming an orphan on the Fold is available
+from the mid-game onward and it works — it just costs a predecessor.
+Thread 2 exists to make sure you know exactly who.
 
 And an orphan has no predecessor **in either direction of the
 conversation**: nothing that follows can trace itself to you. You are free

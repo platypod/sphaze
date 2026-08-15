@@ -24,8 +24,14 @@ is about, and it happens to be the theological term for the same idea
 Eden" as the field's own borrowed vocabulary.
 
 - **Exact.** It states the win condition and the theme in one word.
-- **Ownable.** Essentially zero competition in games or film; instant
-  search ownership, which is worth real money to an indie release.
+- **Ownable, though not virgin** — checked 2026-08-12, after the first
+  version of this file asserted "essentially zero competition" without
+  looking. There is an obscure 2016 TV movie
+  ([tt5660230](https://www.imdb.com/title/tt5660230/)) and a 1984 Lin
+  Carter short story, *The Unbegotten Source*. **No games.** So the games
+  namespace is clear and store search would be effectively yours, which is
+  what matters — but it is not literally uncontested, and a trademark
+  search is still step 1 below rather than a formality.
 - **Right register.** Cold, old, a little sad. Matches a contemplative
   game about determinism and freedom, and matches the three endings.
 - **It sounds like a title**, not like a word.
@@ -47,15 +53,24 @@ recommendation — decide it with a trademark and store search, not taste
 alone.
 
 ### AMENABLE
-The actual property that has to fail for you to be free — and in ordinary
-English it means *compliant, docile, willing to yield*. The mathematics
-and the everyday word mean the same thing here, which is the best pun
-available in the entire subject.
-**It has the best tagline of any option:** *"A world where everything has
-a cause. Be the exception."*
-**Against:** as a title it sounds soft and slightly corporate; it carries
-no intrigue for anyone who does not already know the term. Best-in-class
-idea, worst-in-class shelf appeal.
+**Strengthened by the 2026-08-12 thesis correction**, and now genuinely
+close to the recommendation. Amenability is the exact property that makes
+freedom *expensive* — a world that balances its books, where every
+exception is paid for by an erasure. In ordinary English the word means
+*compliant, docile, willing to yield*. The mathematics and the everyday
+sense mean the same thing here, which is the best pun available in the
+subject.
+
+Its old tagline (*"A world where everything has a cause. Be the
+exception."*) died with the error — exceptions exist in every geometry.
+The corrected one is better anyway:
+
+> *"Every exception is paid for. Find somewhere nobody has to pay."*
+
+**Against:** as a title it still sounds soft and slightly corporate, and
+carries no intrigue for anyone who does not know the term. Best-in-class
+idea, worst-in-class shelf appeal — but if the game leans hard on the
+moral reading, reconsider it seriously.
 
 ### NO PREDECESSOR
 Stark and exactly the definition. Reads well on a capsule.

@@ -93,8 +93,8 @@ class HyperbolicTilingTest extends Test {
 		available space by a constant factor greater than one, forever, which
 		is why no region is ever mostly-interior, why the Sprawl's legibility
 		law has to be "see near, not far", and — via the Garden of Eden
-		theorem — why uncaused patterns can exist there at all. A flat grid's
-		equivalent ratio converges to 1.
+		theorem — why an uncaused pattern there need not cost an erasure. A
+		flat grid's equivalent ratio converges to 1.
 	**/
 	function testGrowthRateConvergesOnGoldenRatioSquared():Void {
 		var tiling = new HyperbolicTiling(7, 3, 5);

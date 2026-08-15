@@ -1634,3 +1634,58 @@ Honest caveat recorded with it: the amenability argument is about
 the universal cover, not to the finite thing being simulated. What
 survives is the *felt* geometry. The fiction should not claim more rigour
 than the object has.
+
+## 2026-08-12 — Self-review of the direction: one central error, three overclaims
+
+Asked to review the previous session's own work, judge it and improve it.
+It did not survive intact.
+
+**The thesis was wrong.** `direction/README.md` headlined *"uncaused
+existence is available only in negative curvature"*. That is **false**.
+Gardens of Eden exist in flat space — Conway's Life on ℤ² has had known
+orphans since 1971, smallest 136 cells — and ℤ² is amenable. The claim
+contradicted one of the most famous results in the field, and it was the
+first bold sentence in the folder.
+
+What the Garden of Eden theorem actually says, on an amenable group, is
+that orphans exist **if and only if** the rule erases something
+(surjective ⟺ pre-injective). So there, uncaused things and destroyed
+things are the same fact counted twice. On a non-amenable group that
+equivalence *fails*: a rule can be pre-injective but not surjective, so
+orphans exist **without anything being erased**.
+
+Corrected sentence: **in an amenable world, to be uncaused, something must
+have been erased; in a non-amenable world, you can be uncaused for free.**
+Freedom is available everywhere — negative curvature only changes whether
+it has a victim.
+
+**The correction improves the game**, which is the argument for taking the
+mathematics seriously rather than decoratively. The false version gave a
+destination; the true version gives a moral problem. Ending 1 stops being
+"reach the exit" and becomes "refuse a price you could have made someone
+else pay". The Gardener's ambiguity resolves: she took the cheap route,
+erased someone, and built the Fold afterwards as an apology — derivable
+from the theorem rather than told. Thread 2 (the ghosts, the still lifes)
+stops being atmosphere and becomes the argument. The world map is
+unchanged.
+
+**Three overclaims also corrected:**
+
+- *"That assumption reaches 53 of 122 source files"* conflated *mentions
+  `h3d.Vector`* with *depends on the ℝ³ embedding*. Measured properly: 54
+  mention it, **41 do spatial reasoning** and are genuinely affected, 16
+  are mesh builders that mostly survive. Honest figure ~40, more
+  concentrated than stated.
+- *"UNBEGOTTEN has essentially zero competition"* was asserted without
+  looking. There is a 2016 TV movie and a 1984 Lin Carter story. No games,
+  so the recommendation stands, but it is not uncontested.
+- The `{7,3}` rule probe's *"972 rules survived, sustains life easily"*
+  was stated with more confidence than an 85-cell scored region and a
+  single soup seed can carry. Downgraded to "promising enough to justify
+  the real experiment", with the three caveats written out.
+
+Also noted: **AMENABLE gets stronger as a title under the correction** —
+amenability is precisely the property that makes freedom expensive.
+
+Errors left visible behind correction notes rather than quietly
+overwritten, same discipline as the `{7,3}` neighbour-count fix.

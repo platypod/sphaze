@@ -135,7 +135,8 @@ class CurvedSpace {
 		**exponentially** — which is what non-amenability means concretely,
 		and therefore why the boundary of any region there is as large as
 		its interior, and therefore why nothing in it can be fully
-		accounted for. See `docs/game-design/direction/README.md`.
+		accounted for — which is what lets an uncaused pattern there go
+		unpaid-for. See `docs/game-design/direction/README.md`.
 		@param k the curvature.
 		@param r a geodesic radius.
 		@return the circumference of that circle.

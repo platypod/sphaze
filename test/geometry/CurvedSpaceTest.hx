@@ -10,10 +10,11 @@ import utest.Test;
 	geometries and not a plausible-looking approximation of them.
 
 	These tests matter more than their size suggests. The direction proposed
-	in `docs/game-design/direction/` rests on a mathematical claim —
-	that uncaused patterns are available only in negative curvature — and
-	the code underneath it therefore has to be *actually* hyperbolic, not
-	"bendy". Every test below checks a closed-form identity that only holds
+	in `docs/game-design/direction/` rests on a mathematical claim — that
+	in non-amenable space a pattern can be uncaused *without anything being
+	erased to balance it* — and the code underneath it therefore has to be
+	*actually* hyperbolic, not "bendy". Every test below checks a
+	closed-form identity that only holds
 	in the real geometry: the three laws of cosines, the sphere's
 	three-right-angle triangle, the failure of squares to close under
 	curvature, and exponential circumference growth.
@@ -163,8 +164,9 @@ class CurvedSpaceTest extends Test {
 		That exponential growth is non-amenability made concrete: it is why
 		the boundary of a hyperbolic region is as large as its interior, why
 		nothing there can be fully accounted for, and therefore — via the
-		Garden of Eden theorem — why uncaused patterns can exist there and
-		nowhere else. See `docs/game-design/direction/README.md`.
+		Garden of Eden theorem — why an uncaused pattern there need not be
+		paid for by an erasure, as it must be in amenable space. See
+		`docs/game-design/direction/README.md`.
 	**/
 	function testCircumferenceGrowsExponentiallyOnlyInHyperbolicSpace():Void {
 		var ratioOf = (k:Curvature) -> CurvedSpace.circleCircumference(k, 2.0) / CurvedSpace.circleCircumference(k, 1.0);

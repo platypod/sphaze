@@ -18,8 +18,18 @@ function moveAlong(pos:h3d.Vector, forward:h3d.Vector, direction:h3d.Vector,
 Positions are `h3d.Vector` — points in ambient Euclidean 3-space — and
 `moveAlong` transports them by 3D rotation. Every implementation
 (`SphereSpace`, `FlatSpace`, `MobiusSpace`, `SphereExteriorSpace`) works
-because its surface is **isometrically embedded in ℝ³**. That assumption
-reaches **53 of 122 source files**.
+because its surface is **isometrically embedded in ℝ³**.
+
+**How far that assumption reaches, measured rather than guessed** (an
+earlier version of this line said "53 of 122 source files", which
+conflated *mentions* `h3d.Vector` with *depends on the embedding* and
+overstated the blast radius): 54 files mention `h3d.Vector`; **41 do
+spatial reasoning with it** (transport, collision, tangent-frame maths)
+and are genuinely affected; 16 are mesh builders using it as a vertex
+sink, which mostly survive a change of what feeds them. So the honest
+figure is *roughly 40 files materially affected, of which the collision
+and lookup code is the hard part* — still a deep change, but a third
+smaller than first stated and much more concentrated.
 
 The hyperbolic plane admits no such embedding. **Hilbert's theorem**
 (1901), sharpened by **Hilbert–Efimov**: there is no complete C²

@@ -49,48 +49,75 @@ That is not a metaphor. It is a theorem, and it is the whole game.
 
 ### The theorem
 
+> **Corrected 2026-08-12.** The first version of this section claimed
+> *"uncaused existence is available only in negative curvature"*. That is
+> **false**, and it was the headline of this entire folder. Gardens of
+> Eden exist perfectly well in flat space — Conway's Life on ℤ² has had
+> known orphans since 1971 — and ℤ² is amenable. What actually fails in
+> non-amenable space is subtler, truer, and makes a better game. The
+> corrected version stands below; the error is left visible for the same
+> reason the risk register's is.
+
 A **Garden of Eden** (or **orphan**) is a configuration with no
-predecessor — not an unknown parent, but *no possible* parent. It cannot
-be the output of the rule applied to anything. If one exists, it was
-never caused.
+predecessor — not an unknown parent, but *no possible* parent. If one
+exists, it was never caused. **These exist in every geometry.** That is
+not the distinction.
 
-The **Garden of Eden theorem** (Moore 1962, Myhill 1963) ties orphans
-rigidly to the rule's own bookkeeping: a cellular automaton is surjective
-if and only if it is pre-injective. Cause and effect balance exactly.
+The **Garden of Eden theorem** (Moore 1962, Myhill 1963) says something
+sharper: a cellular automaton is surjective **if and only if** it is
+pre-injective. Unpacked, that is a statement about *cost*:
 
-But that theorem is a statement about the *shape of the space the
-automaton runs on*. Ceccherini-Silberstein, Machì and Scarabotti extended
-it to all **amenable** groups. Then Bartholdi proved the converse — and
-this is the door:
+> Orphans exist **if and only if** the rule erases something — if and only
+> if there are two distinct configurations, differing in finitely many
+> cells, that the rule collapses onto the same future.
+
+So in such a world, uncaused things and destroyed things are **the same
+fact counted twice**. You cannot have one without the other. Every
+exception is paid for by an erasure somewhere.
+
+That equivalence is a statement about the *shape of the space*.
+Ceccherini-Silberstein, Machì and Scarabotti extended it to all
+**amenable** groups; Bartholdi proved the converse. Together:
 
 > **The Garden of Eden theorem holds if and only if the group is
 > amenable.** On any non-amenable group it *fails*: there exist automata
-> that are pre-injective but not surjective, and vice versa.
+> that are pre-injective but **not** surjective — orphans exist *even
+> though nothing is ever erased*.
 
-A sphere is compact. Its symmetry group is amenable. The theorem holds
-there, and the accounting between cause and effect is complete and
-exact — nothing exists that the rule did not make.
+A sphere is compact and finite; its group is amenable. A flat torus is
+amenable. A hyperbolic tiling group contains free subgroups, has
+exponential growth, and is **not** amenable.
 
-A hyperbolic tiling group contains free subgroups. It has exponential
-growth. It is **not amenable**. The theorem fails there.
+Which gives the real sentence:
 
-**Uncaused existence is available only in negative curvature.**
+> **In an amenable world, to be uncaused, something must have been
+> erased. In a non-amenable world, you can be uncaused for free.**
+
+Freedom is available everywhere. **What negative curvature changes is
+whether it has a victim.**
 
 ### What that makes the game
 
 You are a pattern in an automaton. You wake on a sphere: finite, closed,
 no boundary, every direction returns. It is a perfect prison, and its
 perfection *is* its compactness — there is no "away", only the long way
-around. The bookkeeping is exact. You are an effect of something.
+around.
 
-To become an orphan — to be a thing that was never caused — you must
-reach a space whose geometry cannot account for you. You must walk down
-the curvature scale, from κ > 0, through flat, into κ < 0, until you
-stand somewhere the theorem does not hold.
+You could become an orphan here. That is the trap, and it is the game's
+central moral fact: **on the sphere, becoming uncaused is possible and it
+costs someone else their existence.** The bookkeeping is exact and it
+always balances. Somebody pays.
 
-> **Freedom is a curvature.**
+So you walk down the curvature scale, from κ > 0, through flat, into
+κ < 0 — not because freedom is unavailable behind you, but because
+everywhere behind you it is *expensive*, and you have met the people it
+would be spent on (Thread 2).
 
-And the reason you can be free there is *the same reason you get lost
+> **Freedom is cheaper in negative curvature.**
+>
+> Or, for a capsule: **somebody always pays. Go where nobody has to.**
+
+And the reason freedom is free there is *the same reason you get lost
 there*. Non-amenability means no region is ever mostly-interior: in
 hyperbolic space the boundary of any patch is as large as the patch
 itself. **Everywhere is edge.** You cannot be surrounded, contained, or
@@ -98,6 +125,27 @@ accounted for — and you cannot find your way home. Freedom and
 disorientation are one fact, expressed as a shape you walk through.
 
 That is the game. Every system below is downstream of it.
+
+### What the correction bought
+
+Recorded because it argues for taking the mathematics seriously rather
+than decoratively. The false version gave the player a *destination*
+(the only place freedom exists). The true version gives them a **moral
+problem**, which is worth far more:
+
+- **The endings gain real stakes.** Ending 1 is no longer "reach the
+  exit"; it is "refuse to pay a price you could have made someone else
+  pay". Ending 2 (stay and seed) becomes a genuine sacrifice rather than a
+  consolation.
+- **The Gardener's ambiguity resolves, better.** She became free in the
+  amenable world — so she *erased someone*. That is why she built a cradle
+  afterwards. The hub is an apology, and the player can work that out from
+  the theorem rather than being told.
+- **Thread 2 becomes load-bearing rather than atmospheric.** Meeting the
+  ghosts and the still lifes is what makes the cheap option unbearable.
+  They are not colour; they are the argument.
+- **The world map keeps its shape** — the walk from amenable to
+  non-amenable is unchanged. Only the meaning of arriving changed.
 
 ## Why this is worth doing
 
@@ -190,6 +238,7 @@ The theorems this direction rests on, so the claims can be checked rather
 than trusted:
 
 - [The Garden of Eden theorem: old and new](https://arxiv.org/pdf/1707.08898) — survey; Moore–Myhill, the amenable extension, and Bartholdi's converse
+- [Gardens of Eden in the Game of Life](https://arxiv.org/pdf/1912.00692) (Salo & Törmä) and [LifeWiki: Garden of Eden](https://conwaylife.com/wiki/Garden_of_Eden) — orphans on the *flat* square grid, known since 1971. The reason the first version of the thesis above was wrong, and worth reading before restating it
 - [Gardens of Eden and amenability on cellular automata](https://ems.press/journals/jems/articles/1812) (Bartholdi) — the converse: non-amenable groups always break the theorem
 - [Amenability of groups is characterized by Myhill's Theorem](https://arxiv.org/pdf/1605.09133) — the sharpened statement
 - [Cellular Automata in Hyperbolic Spaces](https://link.springer.com/rwe/10.1007/978-3-642-27737-5_53-5) (Margenstern) — CAs on the pentagrid and ternary heptagrid are a real, developed field

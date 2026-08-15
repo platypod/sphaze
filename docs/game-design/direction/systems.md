@@ -129,9 +129,10 @@ Wilds proved and this game arrives at differently:
 - The Sprawl's centre cannot be found by looking → you need the algorithm
   → the algorithm is *demonstrated* by a raven's flight path, if you
   watch one long enough from the Fold's far side.
-- A pattern in the Sprawl has no predecessor → you can only recognise that
-  as impossible if you have already learned to run the rule *backwards*,
-  which the Ribbon teaches by making history walkable.
+- A pattern in the Sprawl has no predecessor *and nothing was erased to
+  balance it* → you can only recognise that as remarkable if you have
+  already learned to run the rule *backwards* and to audit what it
+  destroys, which the Ribbon teaches by making history walkable.
 
 Nothing in that chain is a key or a flag. Every link is something the
 player must *understand*, and every one is learnable by watching the world

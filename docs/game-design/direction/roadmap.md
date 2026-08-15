@@ -126,6 +126,7 @@ moments.
 | 5 | **"The simulation is honest" is expensive** | medium | decide *how* honest explicitly — see open questions |
 | 6 | **Engine bet** | medium | named revisit trigger in [architecture.md](architecture.md); do not relitigate otherwise |
 | 7 | **Solo burnout over 3-5 years** | high | Phase 1 ships; visible progress; the hub gaining curvature is a progress bar for the *developer* too |
+| 8 | **`BECOME` may not be fun** — the core system, never played | **existential** (*added on review*) | moved into Phase 0; three bodies on flat ground, ten minutes, before any world is designed around it |
 
 ### Risk 2, in detail — because it is the one that hides
 
@@ -242,6 +243,55 @@ guessing would have been worse than asking.
    retire it and keep the fall-counter idea for something else.
 
 ---
+
+## Added on review (2026-08-12): two judgements the first pass ducked
+
+### Cut the world from nine spaces to five
+
+Nine spaces was generous rather than considered. Each one has to *teach*
+something and be authored well enough to be worth visiting, and the
+roadmap's own claim that "geometries are cheap" is only true of the
+geometry — not of the thread beats, landmark alphabets, audio palettes and
+playtesting each space drags behind it.
+
+Recommended core five, keeping one space per distinct *lesson*:
+
+| Keep | Because |
+|---|---|
+| **The Fold** (κ>0) | exists, and it is the cradle the whole story needs |
+| **The Defect** (cone) | cheapest space in the set and the one that teaches what curvature *is* |
+| **The Ribbon** (1D history) | cheap, unique, and the only place Thread 3 can pay off |
+| **The Sprawl** (κ<0) | the turn of the game; non-negotiable |
+| **The Knot** (genus-2) | now the *technically correct* substrate too — see the findings note |
+
+Defer **The Weft**, **The Repeat**, **The Turn** to a post-launch or
+second-act decision. The Turn (Möbius) hurts most to lose since it already
+exists — but "already exists" is a sunk cost, not a reason.
+
+This is a recommendation, not a rewrite: the nine remain described in
+[world-and-threads.md](world-and-threads.md), and the cut is a decision
+for whoever owns the project.
+
+### "Is BECOME actually fun?" belongs in Phase 0, not Phase 1
+
+The first pass rated exactly one existential risk (motion sickness) and
+put the `BECOME` system in Phase 1 as though it were a build task. That
+was an inconsistency: `BECOME` is asserted throughout
+[systems.md](systems.md) to be "the core system, and the one that makes
+this a game rather than a walking simulator", and **no part of it has ever
+been played.**
+
+The glider body in particular — *you move at fixed speed and may only
+change direction at phase boundaries* — is claimed to be "a genuinely
+distinctive movement mode". It might equally be an infuriating one. That
+claim carries as much weight as the hyperbolic-walking claim and got a
+tenth of the scrutiny.
+
+**Add to Phase 0**, alongside the walking test and cheaper than it: three
+bodies, flat ground, no art, no simulation. Can you enjoy being a glider
+for ten minutes? Kill criterion: if committed-direction movement is merely
+annoying rather than interesting, `BECOME` needs redesigning **before**
+the world is designed around it, because six of the nine spaces assume it.
 
 ## The single most important sentence in this folder
 

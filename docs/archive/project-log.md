@@ -2618,3 +2618,53 @@ content, and content wants mechanics confirmed by playing:
   complement, repair) since the opposite-rule destroys connectivity;
 - a seamless cone renderer for the Defect, the one place a legibility law
   is knowingly bent.
+
+## 2026-08-17 — The Weft: no symmetry, no coherence, both fixed
+
+Flagged directly ("I see no symmetry in the maze, nor any coherence with
+our new Artistic Direction") and both complaints traced to the same root
+cause: the Weft's own class doc claimed it reused "the Fold's" sphere,
+grid and wall mesh, untouched. It doesn't. It reuses `biomes.common.grid`
+and `biomes.maze` — the lat/long grid and generic spanning-tree maze that
+predate the whole direction — never the numbered Fold (`biomes.conway`,
+the icosahedral automaton sphere). The mixup mattered: it meant nobody
+had checked the Weft against the actual art direction, because the docs
+said it didn't need checking.
+
+**Symmetry.** `WeftModel.enforceOpposite` satisfied the opposite-state
+invariant by comparing edge keys — arbitrary, so which side of an
+antipodal pair was "authoritative" scattered across the whole sphere with
+no relationship a player standing anywhere could perceive. Replaced with
+a hemisphere split: the northern half is carved freely, the southern half
+is forced to its exact complement. `antipodeOf` maps row `r` to row
+`13 - r`, so this split is total except the single row boundary sitting
+exactly on the equator (rows 6 and 7, average theta exactly π/2), which
+keeps the old edge-key tie-break as a small, honest seam rather than a
+false hemisphere read. A new test
+(`testTheNorthernHemisphereGeneratesAndTheSouthernMirrorsIt`) pins the
+property directly against the pre-enforcement layout, which the old
+scattered rule could never have passed.
+
+**Coherence.** The maze rendered in the prototype's own grass and stone —
+organic, and hue with no relation to curvature, direct violations of
+art-and-audio.md's two universal constants. New `WeftMesh` reuses
+`GridMesh`'s verified geometry (`buildFloorPrim`/`buildWallPrim`, split
+out of `build`/`buildWalls` without changing their own behaviour) and
+applies a flat amber/ember/brass palette instead: dim matte floor, and a
+brighter wall in the *same* hue family — value carries the
+active/scenery distinction, since hue is reserved for curvature alone.
+Screenshotted pitched up across the sphere's interior to confirm: reads
+as cells now, not a lawn.
+
+Both fixes are small and load-bearing rather than a rewrite — the
+pairing rule, the collision, the grid topology and the echo are all
+untouched. What changed is which edge a pair trusts, and what a wall
+looks like once you can act on it.
+
+**Left for a separate pass, not silently fixed here:** `biomes.conway`'s
+own actual palette (`ConwayMesh`/`GeodesicMesh`) is a cool cyan/green
+"Tron" register, not the warm amber/ember/brass art-and-audio.md's master
+rule prescribes for κ>0. The Weft now follows the *written* direction
+faithfully; the Fold itself does not yet, and reconciling that is a
+larger, riskier change than this one — it touches the game's most
+finished space rather than its least.

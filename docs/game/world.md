@@ -99,8 +99,9 @@ altogether, breaking the 2-dimensionality of the sphere.
 
 ### 2. The Weft — the sphere, wired to itself *(κ > 0)*
 
-**Geometry:** an ordinary sphere — the same one the Fold walks — with no
-manifold-level trick at all. What's authored is a **rule laid over it**:
+**Geometry:** an ordinary sphere — the maze prototype's grid, not the
+Fold's own geodesic one, though both are κ>0 — with no manifold-level
+trick at all. What's authored is a **rule laid over it**:
 every wall has a partner at its geometric antipode, and toggling one
 toggles the other to the *opposite* state. Nothing is glued; there are
 always two distinct, independently-existing locations. The player has
@@ -136,19 +137,31 @@ familiar — even though you've genuinely walked a quarter or half
 circumference to a real, distant place. The illusion of identification,
 without needing the real manifold to produce it.
 
-**Built — `biomes.weft.WeftBiome`.** The pairing, the opposite-state invariant, toggling the
-wall you are facing, and the echo standing at your antipode. What is
-*not* built is the puzzle — no gate yet specifically requires reaching
-through the antipode, because that is level design and wants a mechanic
-already known to read.
+**Built — `biomes.weft.WeftBiome`.** The pairing, the opposite-state
+invariant, toggling the wall you are facing, the echo standing at your
+antipode, and `WeftMesh`'s own dialect (flat amber/ember/brass — see
+[art-and-audio.md](art-and-audio.md)) replacing the maze prototype's
+grass and stone. What is *not* built is the puzzle — no gate yet
+specifically requires reaching through the antipode, because that is
+level design and wants a mechanic already known to read.
 
-Three findings, none predictable from the design:
+Findings, none predictable from the design:
 
 - **The pole edge case landed exactly where this entry predicted.** The
   rows nearest each pole carry an *odd* column count, and the antipodal
   map shifts a row by half its columns — which on an odd row lands on a
   cell boundary. No fixed-point-free pairing of an odd number of cells
   exists at all, so those rows are simply unpaired.
+- **The first generator produced no legible symmetry, and was rewritten.**
+  Complementing edges by an arbitrary key comparison satisfies the
+  opposite-state invariant but scatters which side is "authoritative"
+  across the whole sphere — no relationship a player standing anywhere
+  could actually see, flagged directly ("no symmetry in the maze").
+  `WeftModel.enforceOpposite` now splits by hemisphere instead: the north
+  is carved freely, the south is forced to its exact opposite, so the far
+  side reads as a legible negative rather than unrelated noise — the
+  photographic-negative description below is now the generating rule, not
+  an emergent property of a scattered one.
 - **Both hemispheres still read as mazes.** A spanning-tree carve opens
   roughly half a grid's edges, so the photographic negative is also
   roughly half — not the open plain one might expect.
@@ -156,7 +169,7 @@ Three findings, none predictable from the design:
   destroys the carve's reachability guarantee, so the negative side can
   hold loops and sealed pockets. Survivable, since the space's verb is
   *opening walls* — but a Weft with an authored puzzle needs its own
-  generator (carve, complement, repair) rather than the Fold's.
+  generator (carve, complement, repair) rather than the maze prototype's.
 
 ---
 

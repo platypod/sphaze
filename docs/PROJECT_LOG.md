@@ -1979,3 +1979,22 @@ unplayed.
 
 Third standalone harness now, all on the `GeodesicPreview` precedent:
 `make walk`, `make become`, none of them touching the real game.
+
+## 2026-08-12 — Fixed: `make walk`/`make become` served the game instead
+
+Reported immediately on trying the harness: "looks like the same debug
+hub as usual." It was — both targets served the whole of `bin/`, where
+`index.html` is the *game*, so the bare `http://localhost:8081` /
+`:8082` handed back the real game and the harness only appeared at an
+explicit `/walk.html` or `/become.html` path.
+
+A footgun worth removing rather than documenting around: the wrong URL
+silently returned something plausible, so it looked like the harness had
+been built wrong rather than like the wrong page had loaded.
+
+Each harness now builds into its **own directory** (`bin/walk/`,
+`bin/become/`) with its page as that directory's `index.html`, and the
+server is rooted there — so the bare URL *is* the harness and the game is
+not reachable from that port at all (verified: `game.js` 404s on 8082).
+Both targets also now print the URL and controls in a banner before
+starting the server.

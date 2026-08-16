@@ -1,7 +1,7 @@
 -cp src
 -lib heaps
 -main tools.hyperbolic.HyperbolicWalkApp
--js bin/walk.js
+-js bin/walk/walk.js
 -D analyzer-optimize
 -D resourcesPath=res
 --macro nullSafety("src", Strict)

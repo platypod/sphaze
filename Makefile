@@ -36,15 +36,25 @@ search-ventrella: ## Exhaustive small hand-placed-pattern search for the Ventrel
 	haxe search-ventrella.hxml
 	neko bin/search-ventrella.n
 
-walk:     ## Phase 0 harness: build + serve the bare hyperbolic {7,3} room at http://localhost:8081/walk.html
+walk:     ## Phase 0 harness: the bare hyperbolic {7,3} room, served at http://localhost:8081
+	@mkdir -p bin/walk
 	haxe walk.hxml
-	cp walk.html bin/walk.html
-	cd bin && python3 -m http.server 8081
+	cp walk.html bin/walk/index.html
+	@echo ""
+	@echo "  >>> hyperbolic walk harness:  http://localhost:8081"
+	@echo "      WASD/arrows move, mouse looks, R resets. Ctrl+C to stop."
+	@echo ""
+	cd bin/walk && python3 -m http.server 8081
 
-become:   ## Phase 0 harness: the BECOME bodies on flat ground at http://localhost:8082/become.html
+become:   ## Phase 0 harness: the BECOME bodies on flat ground, served at http://localhost:8082
+	@mkdir -p bin/become
 	haxe become.hxml
-	cp become.html bin/become.html
-	cd bin && python3 -m http.server 8082
+	cp become.html bin/become/index.html
+	@echo ""
+	@echo "  >>> BECOME body harness:  http://localhost:8082"
+	@echo "      1/2/3/4 change body, left/right queue a turn, WASD walker only. Ctrl+C to stop."
+	@echo ""
+	cd bin/become && python3 -m http.server 8082
 
 serve:    ## Build, then serve bin/ at http://localhost:8080 (Ctrl+C to stop)
 	$(MAKE) build

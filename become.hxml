@@ -1,7 +1,7 @@
 -cp src
 -lib heaps
 -main tools.become.BecomeApp
--js bin/become.js
+-js bin/become/become.js
 -D analyzer-optimize
 -D resourcesPath=res
 --macro nullSafety("src", Strict)

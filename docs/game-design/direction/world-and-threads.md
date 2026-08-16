@@ -411,8 +411,24 @@ a museum or a graveyard rather than a place with weather. Elementary
 evidence lives — Rule 110 is Turing-complete, and a player who has spent
 ten hours in a cellular world should be allowed to *see* that.
 
-**Exists:** nothing, but it is trivially cheap — an elementary CA is a few
-lines, and the rendering is a heightfield.
+**Exists: `biomes.ribbon.RibbonBiome`, walkable in the game since
+2026-08-16.** Rule 110's spacetime diagram as terrain, a monolith on
+generation 0, and nothing that ticks. The predecessor content the story
+function calls for is not built — the monolith is a placeholder for it.
+
+Two things this space taught, neither of which was predictable from the
+design:
+
+- **"Trivially cheap" was right about the automaton and wrong about the
+  rendering.** The CA is fifteen lines. Making a 7,300-cell diagram
+  actually appear on screen was the work, and it failed silently the
+  first time (16-bit index buffer overflow — see `RibbonMesh`).
+- **A flat heightfield does not deliver this space's own legibility
+  law.** At walking eye height the relief foreshortens to under a pixel
+  and the whole history reads as one grey plane. The strip now
+  *descends* into the past, so the diagram is a hillside looked down
+  across — free geometrically, since a tilted plane is still
+  intrinsically flat.
 
 ---
 

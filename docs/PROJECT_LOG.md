@@ -2256,3 +2256,53 @@ returns (Heaps' camera is left-handed; `GameLoop` negates at the strafe
 site). Pre-existing, now spread across one more implementation, and in
 `docs/bug-tracker.md` rather than fixed here — correcting it also flips
 `Camera.applyTo`'s pitch axis in every existing biome.
+
+## 2026-08-16 — The Ribbon, and two things that only a build could tell us
+
+`biomes.ribbon.RibbonBiome`: Rule 110's spacetime diagram as walkable
+terrain, generation by generation, so walking north walks into the past.
+The oldest generation is a single cell with a monolith on it, and past
+that the ground stops. It is the only biome that does not tick.
+
+The automaton (`RibbonAutomaton`) is fifteen lines and tested against
+hand-computed opening generations plus Rule 90's symmetry — worth doing
+because a neighbourhood indexed backwards would quietly be a different
+rule, and the diagram would still look like a plausible automaton.
+
+**The design called this "trivially cheap — an elementary CA is a few
+lines, and the rendering is a heightfield."** Right about the automaton,
+wrong about the rendering, in two ways that only showed up on screen.
+
+**The terrain did not render at all, silently.** ~7,300 live cells at
+twenty vertices each is ~146,000, past the 65,535 a 16-bit index buffer
+can address. Heaps raised nothing and WebGL reported nothing; the
+indices wrapped and the strip drew as a bare plane — indistinguishable
+from geometry that was never generated. Found by shrinking the diagram
+until the cells reappeared. Fixed by splitting live cells across meshes
+under the limit.
+
+**Worth remembering beyond this biome:** nothing in the codebase guards
+against this. `biomes.sprawl.SprawlBiome` builds far more geometry and
+stays clear only because it culls to a draw distance first. Any static
+mesh over a few thousand boxes needs the same treatment.
+
+**Flat ground did not deliver the space's own legibility law.**
+`world-and-threads.md` promises "the past is terrain; you can see where
+you came from, literally, as landscape". At walking eye height a
+1.6-unit relief on 6-unit cells foreshortens to well under a pixel at
+any distance, and the whole history read as one uniform grey plane —
+confirmed by screenshot before and after. The strip now descends into
+the past, turning the diagram into a hillside the player looks down
+across. That is the stated law rather than a workaround for it, and it
+costs nothing: a tilted plane is intrinsically flat, so this is still a
+κ = 0 space.
+
+Two consequences followed. The spawn pitches down the slope, because
+looking level from the top of a hill is looking at sky. And live cells
+are inset within their tiles, so adjacent ones read as cells instead of
+merging into one expanse — the same trick the Sprawl's floor already
+uses.
+
+**Still open, and not checkable from here:** whether the history reads
+*as* a history while walking it, rather than as abstract terrain. The
+screenshots say it is legible; they cannot say it is meaningful.

@@ -1,6 +1,7 @@
 package tools.hyperbolic;
 
 import game.MeshBuilder;
+import game.PhysicalKeys;
 import geometry.CurvedSpace;
 import geometry.CurvedSpace.ModelPoint;
 import geometry.HyperbolicProjection;
@@ -175,26 +176,32 @@ class HyperbolicWalkApp extends hxd.App {
 		updateReadout();
 	}
 
+	/**
+		Physical `KeyboardEvent.code` throughout (`game.PhysicalKeys`) rather
+		than `hxd.Key`'s layout-labelled codes, so this works on AZERTY and
+		QWERTY alike — the same reason `game.Keybinds` already binds the
+		game's own movement that way, and a bug this file originally had.
+	**/
 	function handleInput(dt:Float):Void {
-		if (hxd.Key.isDown(hxd.Key.W) || hxd.Key.isDown(hxd.Key.UP)) {
+		if (PhysicalKeys.isDown("KeyW") || PhysicalKeys.isDown("ArrowUp")) {
 			walker.moveForward(WALK_SPEED * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.S) || hxd.Key.isDown(hxd.Key.DOWN)) {
+		if (PhysicalKeys.isDown("KeyS") || PhysicalKeys.isDown("ArrowDown")) {
 			walker.moveForward(-WALK_SPEED * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.A)) {
+		if (PhysicalKeys.isDown("KeyA")) {
 			walker.strafe(-WALK_SPEED * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.D)) {
+		if (PhysicalKeys.isDown("KeyD")) {
 			walker.strafe(WALK_SPEED * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.LEFT)) {
+		if (PhysicalKeys.isDown("ArrowLeft")) {
 			walker.turn(-TURN_SPEED * dt);
 		}
-		if (hxd.Key.isDown(hxd.Key.RIGHT)) {
+		if (PhysicalKeys.isDown("ArrowRight")) {
 			walker.turn(TURN_SPEED * dt);
 		}
-		if (hxd.Key.isPressed(hxd.Key.R)) {
+		if (PhysicalKeys.isPressed("KeyR")) {
 			walker = new HyperbolicWalker();
 			walker.moveForward(-SPAWN_DISTANCE);
 			pitch = 0;
@@ -293,7 +300,7 @@ class HyperbolicWalkApp extends hxd.App {
 
 	function updateReadout():Void {
 		var lines = [
-			"WASD / arrows move, mouse looks, R resets",
+			"WASD (ZQSD) / arrows move, mouse looks, R resets",
 			"",
 			"distance from home: " + hxd.Math.fmt(walker.distanceFromOrigin()),
 			"fps: " + hxd.Math.fmt(hxd.Timer.fps()),

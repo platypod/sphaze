@@ -1,6 +1,7 @@
 package tools.become;
 
 import game.MeshBuilder;
+import game.PhysicalKeys;
 import tools.become.BecomeModel.BodyKind;
 
 /**
@@ -168,33 +169,42 @@ class BecomeApp extends hxd.App {
 
 	override function update(dt:Float):Void {
 		handleInput();
-		var forward = (hxd.Key.isDown(hxd.Key.W) ? 1.0 : 0.0) - (hxd.Key.isDown(hxd.Key.S) ? 1.0 : 0.0);
-		var strafe = (hxd.Key.isDown(hxd.Key.D) ? 1.0 : 0.0) - (hxd.Key.isDown(hxd.Key.A) ? 1.0 : 0.0);
+		var forward = (PhysicalKeys.isDown("KeyW") ? 1.0 : 0.0) - (PhysicalKeys.isDown("KeyS") ? 1.0 : 0.0);
+		var strafe = (PhysicalKeys.isDown("KeyD") ? 1.0 : 0.0) - (PhysicalKeys.isDown("KeyA") ? 1.0 : 0.0);
 		model.update(dt, forward, strafe);
 		placeCamera();
 		pulseWorld();
 		updateReadout();
 	}
 
+	/**
+		Everything here goes through `game.PhysicalKeys` (physical
+		`KeyboardEvent.code`) rather than `hxd.Key`'s layout-labelled codes,
+		so the harness works on AZERTY and QWERTY alike without detecting the
+		layout — the same reason `game.Keybinds` already binds the game's own
+		movement that way. An earlier version of this file used `hxd.Key.W`
+		and `hxd.Key.NUMBER_1`, which put movement on the wrong physical keys
+		and made the digits unreachable without Shift on AZERTY.
+	**/
 	function handleInput():Void {
-		if (hxd.Key.isPressed(hxd.Key.NUMBER_1)) {
+		if (PhysicalKeys.isPressed("Digit1")) {
 			model.requestBody(Walker);
 		}
-		if (hxd.Key.isPressed(hxd.Key.NUMBER_2)) {
+		if (PhysicalKeys.isPressed("Digit2")) {
 			model.requestBody(Glider);
 		}
-		if (hxd.Key.isPressed(hxd.Key.NUMBER_3)) {
+		if (PhysicalKeys.isPressed("Digit3")) {
 			model.requestBody(Oscillator);
 		}
-		if (hxd.Key.isPressed(hxd.Key.NUMBER_4)) {
+		if (PhysicalKeys.isPressed("Digit4")) {
 			model.requestBody(StillLife);
 		}
 		// Discrete steering for the bodies that turn on the beat; tapped,
 		// not held, so a queued turn is an explicit decision.
-		if (hxd.Key.isPressed(hxd.Key.LEFT)) {
+		if (PhysicalKeys.isPressed("ArrowLeft")) {
 			model.queueTurn(-1);
 		}
-		if (hxd.Key.isPressed(hxd.Key.RIGHT)) {
+		if (PhysicalKeys.isPressed("ArrowRight")) {
 			model.queueTurn(1);
 		}
 	}
@@ -233,7 +243,7 @@ class BecomeApp extends hxd.App {
 			case Oscillator: "3 OSCILLATOR — hops on the beat only";
 			case StillLife: "4 STILL LIFE — rooted; can still look";
 		};
-		var lines = ["1/2/3/4 change body   left/right queue a turn   WASD walker only   mouse looks",
+		var lines = ["1/2/3/4 change body   left/right queue a turn   WASD (ZQSD) walker only   mouse looks",
 			"",
 			model.switching ? ">>> SWITCHING (costs one beat) <<<" : name,
 			"",

@@ -1998,3 +1998,39 @@ server is rooted there — so the bare URL *is* the harness and the game is
 not reachable from that port at all (verified: `game.js` 404s on 8082).
 Both targets also now print the URL and controls in a banner before
 starting the server.
+
+## 2026-08-12 — Phase 0 harnesses: AZERTY-broken input, fixed
+
+Reported on trying `make become`: keyboard trouble on AZERTY, and a
+suspicion the digits would be affected too. Both correct, and both my
+bug — this project had already solved the problem and I did not use the
+solution.
+
+`game.PhysicalKeys` has existed for exactly this since the movement work:
+it tracks keys by physical `KeyboardEvent.code`, so `"KeyW"` is whatever
+sits in QWERTY's W position regardless of layout, and `game.Keybinds`
+binds the game's own strafe/forward through it. Both harnesses instead
+used `hxd.Key.W/A/S/D` and `hxd.Key.NUMBER_1..4`, which are
+layout-*labelled* — so on AZERTY movement landed on the wrong physical
+keys, and the digit row (`&é"'` unshifted) could not select a body at
+all.
+
+**The game itself was never affected**: its only letter binds are `E`,
+`L` and `P`, which sit in the same position on both layouts, and its
+movement already went through `PhysicalKeys`.
+
+`PhysicalKeys` only had `isDown`, so it gained **`isPressed`** — needed
+for the body-switch and turn-queue keys. Two details worth keeping:
+
+- **Idempotent within a frame**, keyed on `hxd.Timer.frameCount`. The
+  obvious version (return the pending flag, clear it) would let the first
+  caller in a frame see a press and every later caller miss it — a trap
+  that stays invisible until a second reader of the same key appears.
+- **The answer is frame-stamped, not the keydown.** A DOM keydown fires
+  *between* frames, so the frame number at press time is ambiguous;
+  the frame at read time never is.
+- Auto-repeat keydown is ignored unless the key genuinely transitioned,
+  so holding a key is one press, not a stream.
+
+Both harnesses now route every key through `PhysicalKeys`, arrows
+included, so there is one input path rather than two.

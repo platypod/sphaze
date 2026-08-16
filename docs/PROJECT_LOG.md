@@ -2561,3 +2561,60 @@ fourteen — labels looked truncated when they were being occluded. And
 labels drop the design's leading "The", because `LabelTexture` scales
 text to fit a fixed-width sign, so the longest name rendered at a
 quarter the size of "wind".
+
+## 2026-08-16 — The Knot, and all nine spaces walkable
+
+`biomes.knot.KnotBiome`: a closed hyperbolic surface of genus 2. **This
+completes the design's nine spaces** — every one of them can now be
+walked in the game.
+
+`geometry.DeckGroups.genusTwo` is the `{8,8}` tiling with opposite sides
+identified: four hyperbolic translations by twice the octagon's
+inradius, along alternate side-midpoint directions. The octagon's
+interior angles are all `2π/8`, which is what lets eight meet at a
+vertex and collapses all eight of its own vertices to one point; Euler
+then fixes the genus at 2.
+
+**Deferring this from the framework's first commit was the right call,
+and the verification is why.** It is checked by computation rather than
+by confidence in a half-remembered presentation:
+
+- the orbit of the origin **matches the face centres of
+  `HyperbolicTiling(8, 8)`**, built by entirely different means and
+  independently tested against known ring populations;
+- the action is **free** — as many elements as orbit points — so the
+  quotient is a smooth surface rather than an orbifold;
+- the element count matches a **Gauss-Bonnet** estimate derived from
+  geometry alone (octagon area `4π`, disc area `2π(cosh R - 1)`, so
+  about `(cosh R - 1)/2` octagons within `R`);
+- each generator carries the *opposite* side onto the one it crossed,
+  which is what makes it an identification rather than a neighbour step.
+
+The biome reuses the Sprawl's spatial and rendering approach unchanged;
+the only new thing is which group the copies come from. The consequence
+showed up in the first screenshot: **the same landmark repeating in
+several directions at once**, which is the design's legibility law
+rendered rather than described. The landmark is asymmetric and
+off-centre on purpose — with identical content in every image,
+orientation is the only readable information.
+
+**Caught before committing:** the first version called
+`DeckGroup.elementsWithin` from `tick` and again from every fold — a
+breadth-first search over the group, sixty times a second. The set never
+changes, so it is enumerated once in the constructor.
+
+### Where the direction stands
+
+All nine spaces walkable: Still Life, Fold, Weft, Repeat, Turn, Defect,
+Ribbon, Sprawl, Knot. What remains is no longer geometry — it is
+content, and content wants mechanics confirmed by playing:
+
+- the Turn's chirality puzzle, gated on whether repeated traversal is
+  pleasant (that space's own stated kill criterion);
+- the Repeat's composite mark, gated on whether comparison is satisfying;
+- the Defect's socket and the Knot's braid, both gated on `CARRY`, which
+  does not exist;
+- the Weft's authored puzzle, which needs its own generator (carve,
+  complement, repair) since the opposite-rule destroys connectivity;
+- a seamless cone renderer for the Defect, the one place a legibility law
+  is knowingly bent.

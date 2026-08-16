@@ -623,6 +623,28 @@ group rather than a point.
 **Story function:** late-game mastery. The space that proves you have
 learned to think in geometries rather than in maps.
 
+**Exists: `biomes.knot.KnotBiome`, walkable in the game since
+2026-08-16** — the last of the nine to be built, and the piece
+deliberately held back when the quotient framework landed, since it is
+real hyperbolic geometry rather than a parameter change.
+
+`geometry.DeckGroups.genusTwo` is the `{8,8}` tiling with opposite sides
+identified. It is verified by computation rather than by assertion: the
+group's orbit of the origin matches the face centres of an
+independently-built `HyperbolicTiling(8, 8)`, the action is free (so the
+quotient is a surface, not an orbifold), and the element count matches a
+Gauss-Bonnet estimate derived from the geometry alone.
+
+The first screenshot delivers this entry's legibility law without a word
+of explanation: **the same landmark repeating in several directions at
+once**, because there is one room here and you are looking at many
+images of it. The landmark is asymmetric on purpose — with identical
+content everywhere, orientation is the only readable information.
+
+The `braid` mechanic is unbuilt. Distinguishing the two independent
+families of loop is the content this space exists for, and it wants a
+closed surface confirmed to read as closed first.
+
 ---
 
 ### 9. The Garden — the endgame

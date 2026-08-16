@@ -91,29 +91,72 @@ frequency-11 sphere, `GeodesicVentrellaState`, the confirmed traveling
 glider, the coarse maze, wall reactivity, and the pentagon-composing
 engraving built this week. This space is *done* to prototype standard.
 
+**To explore:** add relief to the sphere, with various heights levels,
+maybe making the maze more complex. Could also be made into a 3D maze
+altogether, breaking the 2-dimensionality of the sphere.
+
 ---
 
-### 2. The Weft — the closed positive-curvature weave *(κ > 0, quotiented)*
+### 2. The Weft — the sphere, wired to itself *(κ > 0)*
 
-**Geometry:** a spherical space with antipodal identification — the
-projective plane, walkable. Go straight far enough and you arrive at your
-own start, *mirrored*, having travelled half as far as you expected.
+> **Corrected 2026-08-12, in conversation.** The first version of this
+> entry called the Weft "the projective plane, walkable" — a genuine
+> quotient manifold, points literally identified, half the walkable area
+> of a sphere. That doesn't cohere with the mechanic actually attached to
+> it: **remove/add, opposite** (chosen the same conversation) needs two
+> *distinct* walls to be opposite to each other, and a true quotient has
+> only one wall per identified edge — there is nothing for it to be
+> opposite *to*. Caught by asking what the player's own antipodal image
+> should physically do, which has no good answer under a real quotient
+> (there's no second body to ask the question of) and an easy one under
+> the corrected model below. Left visible rather than silently fixed, same
+> as the thesis correction in [README.md](README.md).
 
-**Teaches:** **identification** — that two places can be declared the same
-place, and that this is a thing space can do to you rather than a trick.
+**Geometry:** an ordinary sphere — the same one the Fold walks — with no
+manifold-level trick at all. What's authored is a **rule laid over it**:
+every wall has a partner at its geometric antipode, and toggling one
+toggles the other to the *opposite* state. Nothing is glued; there are
+always two distinct, independently-existing locations. The player has
+exactly one body and it is never anywhere but where you'd expect.
 
-**Legibility law:** every object appears twice, once at each of two
-antipodes, and you cannot tell which of the two you are looking at. The
-world lies by telling the truth twice.
+**Legibility law:** stand still and look toward your own antipode, and you
+see a **reflection** — a non-solid rendering of what's there, not a second
+body, not a second you, no collision, nothing you can ever touch. It
+exists purely so you can read the far side of a pairing without walking
+to it, the same "see far, not near" instrument the Fold already trades
+in, aimed specifically at your own paired location instead of the world
+in general.
 
-**Verb:** disambiguate.
+That reflection is also the tell for the *opposite* rule, for free: watch
+your own echo glide cleanly through a gate the instant you close yours,
+and you've just watched the rule work rather than been told about it.
 
-**Story function:** the first hint that the geometry was *chosen*. A
-quotient is an act — someone glued this.
+**Verb:** pair, opposite. Close a wall here; its antipodal partner opens.
+The puzzle is route-planning against your own actions at a distance —
+closing the door in front of you may be the only way to open the one you
+actually need, on the far side of the world.
+
+**Story function:** the first hint that the geometry was *chosen* — not
+because the manifold was glued (it wasn't), but because *this specific
+correspondence*, wall to distant wall, is an authored rule with no
+geometric necessity behind it. Someone decided these two things would
+answer to each other.
+
+**A cheap beat worth keeping from the original pitch:** walk specifically
+*toward your own reflection* rather than any arbitrary direction, and
+"arriving" at it can be staged to feel like coming home — mirrored,
+familiar — even though you've genuinely walked a quarter or half
+circumference to a real, distant place. The illusion of identification,
+without needing the real manifold to produce it.
 
 **Exists:** the antipode-pairs backlog entry is exactly this space's
 mechanic, already worked out including the key transform and the pole
-edge case. Promote it here.
+edge case (`theta → pi - theta`, `phi → phi + pi`), and it already
+specifically names "opposite" as "the more interesting puzzle and the
+more dangerous one." Promote it here. The reflection rendering is new —
+cheap, since it's the same geometry pass the Fold's own far-side
+visibility already needs, just aimed at one fixed antipodal point instead
+of the whole hemisphere.
 
 ---
 

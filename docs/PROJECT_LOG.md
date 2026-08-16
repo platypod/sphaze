@@ -1689,3 +1689,33 @@ amenability is precisely the property that makes freedom expensive.
 
 Errors left visible behind correction notes rather than quietly
 overwritten, same discipline as the `{7,3}` neighbour-count fix.
+
+## 2026-08-12 — The Weft corrected: paired walls on an ordinary sphere, not a quotient
+
+Caught in conversation, not by review this time. Asked to walk through
+the Weft's design; picked **remove/add, opposite** as its wall verb; then
+asked what the player's own antipodal image should physically do if a
+wall closes at its far location. That question had no good answer under
+what `world-and-threads.md` actually described — "the projective plane,
+walkable", a genuine quotient manifold with points literally identified.
+A true quotient has exactly one wall per identified edge, so "opposite"
+has nothing to be opposite *to*, and there is no second body to ask the
+physicality question of in the first place.
+
+Rewrote the entry around the model that actually supports the chosen
+verb: an ordinary sphere, no manifold trick, wall pairs linked by an
+authored rule (open here → closed there). The player has one body and one
+collision check, always. What appears at the antipode is a non-solid
+**reflection** — pure rendering, no physics — so "phase through a closed
+gate" isn't a bug to prevent, it's the reflection working as intended, and
+it doubles as the mechanic's own tutorial: watch your echo glide through
+a gate the instant you close yours, and you've watched the "opposite" rule
+happen rather than been told about it. Kept one beat from the original
+pitch at near-zero cost: walking toward your own reflection and
+"arriving" can be staged to feel like coming home, without the manifold
+that used to be required to produce that feeling.
+
+Error left visible behind a correction note, same discipline as the
+thesis correction — this one caught by the question itself proving
+unanswerable, which is usually the first sign a design has quietly
+committed to two incompatible models at once.

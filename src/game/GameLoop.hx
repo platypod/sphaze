@@ -17,6 +17,7 @@ import biomes.ribbon.RibbonBiome;
 import biomes.sprawl.SprawlBiome;
 import biomes.turn.TurnBiome;
 import biomes.twosided.TwoSidedBiome;
+import biomes.weft.WeftBiome;
 import biomes.wind.WindBiome;
 import entities.hourglass.HourglassModel;
 import entities.player.Camera;
@@ -132,6 +133,10 @@ class GameLoop {
 		// unlike MobiusBiome's embedded twisted strip, which is not flat.
 		// Both are kept; see TurnModel's own class doc.
 		biomeRegistry.register(new TurnBiome());
+		// The Fold's own sphere with an authored rule laid over it: every
+		// wall answers to its antipode, in the opposite state. Nothing is
+		// glued — see WeftModel's own class doc.
+		biomeRegistry.register(new WeftBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it

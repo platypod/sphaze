@@ -2070,3 +2070,72 @@ implementation, and **all three were confirmed to fail against the old
 behaviour** before being kept: `testStrafingGoesToScreenRight`,
 `testTurningRightSweepsTheWorldToScreenLeft`,
 `testStrafingRightLeavesTheOriginOnYourLeft`. 39,841 assertions.
+
+## 2026-08-12 — BECOME cut after playtest; the Ascent becomes the Reconstruction
+
+Phase 0's second existential risk came back **negative**, and the verdict
+went further than the kill criterion anticipated. Not "the bodies need
+tuning" but: *"I don't think the player will find it fun to become a
+glider. Rather, let's say we are a cell that evolved further ahead. We
+will still play around and discover the basic rules, states and patterns,
+but only to retroactively understand what we are and how we came to be.
+But let's not replay the early days."* Plus, on switching: **"switching at
+all is the wrong verb."**
+
+**Two of my own errors made the harness harsher than the idea deserved**,
+recorded so the next spike avoids them:
+
+1. **All three bodies were strictly worse than the walker** I put beside
+   them as a control. The glider was *slower* than walking and could not
+   stop — I had even written that its advantage was "commitment and
+   reach, never raw pace", then gave it no reach and no advantage. So the
+   test offered one dominant option and three punishments.
+2. **It tested them kinesthetically in a world with no rules.**
+   `systems.md`'s own case for the bodies was always *relational* —
+   barriers opening on a period, terrain that needs a platform. None
+   existed in the harness, so switching cost a beat and bought literally
+   nothing.
+
+The result stands regardless, and the replacement is better and simpler.
+
+**What changed, agreed in the same conversation:**
+
+- **`BECOME` is cut.** Verb count 8 → 7. The harness is deleted (git
+  history keeps it); `game.PhysicalKeys.isPressed`, added for it, stays
+  since `make walk` uses it.
+- **You are already past the primitives.** Gliders, oscillators and still
+  lifes stay everywhere and stay central, but as *subject matter*, not
+  costumes. The inversion: **primitive life is subject to the rule; you
+  operate it.**
+- **Thread 1: The Ascent → The Reconstruction.** Not a climb, an
+  archaeology. Each primitive form understood is a recovered piece of
+  your own origin, and the last thing reconstructed is that the chain
+  *does not reach you*.
+- **This makes Thread 2 land much harder.** If you are past those rungs
+  and everything you meet is stuck on one, the world is not a tutorial —
+  it is a **graveyard of arrested development**, and the terrain is made
+  of the ones who stopped.
+- **Progression = knowledge + perception unlocks** (chosen over
+  knowledge-only and over instruments). Retroactive by nature, and it
+  finally gives the backlog's own "retroactive rediscovery via a gained
+  sense" entry a home in the spine rather than as a loose idea.
+- **The no-journal answer improved:** was "your body is the log", now
+  **"the world is the log"** — because progression is perception,
+  everything understood is visible outward. Nothing to display even in
+  principle.
+- **Movement: free and modern**, plus one or two *permanent* traversal
+  abilities, never modal.
+
+**`first-hour.md`'s two closing beats rewritten.** Minute 42-52 was the
+gap that forced a body swap; it is now a **return** — you walk back past
+somewhere already visited and it reads differently because *you* changed,
+which teaches the game's real progression grammar the old version never
+did. And the reveal stops being "I am one too" (five cells, same as the
+glider) and becomes **"what am I, then?"** — you pull back and find
+yourself enormous and intricate beside the simple blinking things you
+spent an hour learning to read. The hour now ends on the question that
+runs the game rather than on an answer.
+
+**Phase 0 is complete.** One risk validated, one killed cheaply. That is
+exactly the outcome the phase was designed to produce, and it cost one
+harness rather than a year of building a world around an untested core.

@@ -46,16 +46,6 @@ walk:     ## Phase 0 harness: the bare hyperbolic {7,3} room, served at http://l
 	@echo ""
 	cd bin/walk && python3 -m http.server 8081
 
-become:   ## Phase 0 harness: the BECOME bodies on flat ground, served at http://localhost:8082
-	@mkdir -p bin/become
-	haxe become.hxml
-	cp become.html bin/become/index.html
-	@echo ""
-	@echo "  >>> BECOME body harness:  http://localhost:8082"
-	@echo "      1/2/3/4 change body, left/right queue a turn, WASD walker only. Ctrl+C to stop."
-	@echo ""
-	cd bin/become && python3 -m http.server 8082
-
 serve:    ## Build, then serve bin/ at http://localhost:8080 (Ctrl+C to stop)
 	$(MAKE) build
 	cd bin && python3 -m http.server 8080
@@ -64,4 +54,4 @@ help:     ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: fmt fmt-check lint check test build walk become bake-geodesic search-gliders report-ventrella search-ventrella serve help
+.PHONY: fmt fmt-check lint check test build walk bake-geodesic search-gliders report-ventrella search-ventrella serve help

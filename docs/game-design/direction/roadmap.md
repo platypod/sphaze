@@ -51,10 +51,19 @@ tolerable. The direction's first existential risk is retired; comfort
 stays a standing design constraint rather than a settings-menu
 afterthought.
 
-**Risk 8 is the other half of Phase 0, and is still open.** `make become`
-builds the three-bodies-on-flat-ground harness — deliberately flat, so
-curvature and body-feel cannot confound each other. Same treatment
-needed: ten minutes, plus other people.
+**Risk 8: ANSWERED, and the answer was no (2026-08-12).** The
+three-bodies harness was built and played. `BECOME` is **cut** — the
+bodies were unconvincing to control and switching was judged the wrong
+verb outright. The harness has been deleted (it is in git history);
+`game.PhysicalKeys.isPressed`, added for it, stays. What replaced the
+system is in [systems.md](systems.md) and Thread 1 of
+[world-and-threads.md](world-and-threads.md): the player is already past
+the primitives, progression is knowledge plus perception unlocks, and
+movement is free.
+
+**Phase 0 is therefore complete.** Both existential risks are retired —
+one validated, one killed cheaply, which is exactly the outcome the phase
+was designed to produce.
 
 **Status: waiting on a playtest.** The room renders correctly (verified
 by screenshot: heptagonal floor, home spire at the origin, columns
@@ -87,8 +96,12 @@ a sample of one is not a sample.
 Scope:
 - **The Fold** (exists) and **The Sprawl** (new), plus the transition
   between them — the game's entire thesis is that transition
-- `BECOME` with three bodies: still life, oscillator, glider
-- `READ` (learn by watching), `TICK`, `SEED`, `ZOOM`
+- `READ` (learn by watching) as the progression spine, plus `TICK`,
+  `SEED`, `ZOOM`
+- One or two **perception unlocks**, at least one of them retroactive
+  over a space already visited — the thing that has to prove progression
+  works without a moveset
+- Free movement, plus at most one permanent traversal ability
 - One Thread 2 beat: **the ghost** — the whole of
   [first-hour.md](first-hour.md), essentially
 - Art direction proven on two curvature bands
@@ -115,7 +128,8 @@ Phase 3 when it is desperate.
 **~18 months.**
 
 - All nine spaces
-- The full Ascent (Thread 1) — all six bodies
+- Thread 1 (The Reconstruction) end to end, including the beat where the
+  archaeology fails
 - All four threads' beats placed and interlocked
 - The knowledge web tuned: every gate an understanding, none a flag
 - The endgame and its three endings
@@ -149,7 +163,7 @@ moments.
 | 5 | **"The simulation is honest" is expensive** | medium | decide *how* honest explicitly — see open questions |
 | 6 | **Engine bet** | medium | named revisit trigger in [architecture.md](architecture.md); do not relitigate otherwise |
 | 7 | **Solo burnout over 3-5 years** | high | Phase 1 ships; visible progress; the hub gaining curvature is a progress bar for the *developer* too |
-| 8 | **`BECOME` may not be fun** — the core system, never played | **existential** (*added on review*) | moved into Phase 0; **harness built 2026-08-12** (`make become`), awaiting the same playtest treatment the walking question got |
+| 8 | ~~**`BECOME` may not be fun**~~ | **RETIRED 2026-08-12** | played in Phase 0 and the answer was no; the system was cut rather than fixed. See [systems.md](systems.md) for what carries progression instead |
 | 9 | **Repeated-traversal locomotion may be boring** — the Turn specifically needs the loop walked more than once, on purpose | high (*added 2026-08-12*) | see [world-and-threads.md](world-and-threads.md)'s own Turn entry: either the movement itself has to be a *Race the Sun*-grade pleasure, or every lap needs its own improvable skill. Unresolved; blocks judging that space's chirality mechanism at all |
 
 ### Risk 2, in detail — because it is the one that hides
@@ -238,9 +252,11 @@ guessing would have been worse than asking.
    which is which.** But this is a values question about the game's soul.
 
 2. **Is there a visible body?** First-person with no body is cheap and
-   standard; seeing your own configuration is thematically loaded and
-   makes `BECOME` legible. A shadow that shows your current configuration
-   might be the whole answer.
+   standard; seeing your own configuration is thematically loaded. Now
+   sharper than when written, since Thread 1 turns on *what you are* being
+   a mystery: showing the player their own configuration is showing them
+   the answer, so it may want to be withheld, glimpsed, or only available
+   at pattern scale via `ZOOM`.
 
 3. **Are the three endings equal?** I wrote them as genuinely equal
    (autonomy / legacy / rest) and refused to rank them. Some games are
@@ -316,6 +332,27 @@ bodies, flat ground, no art, no simulation. Can you enjoy being a glider
 for ten minutes? Kill criterion: if committed-direction movement is merely
 annoying rather than interesting, `BECOME` needs redesigning **before**
 the world is designed around it, because six of the nine spaces assume it.
+
+> **Outcome, 2026-08-12: built, played, and the answer was no.** The
+> criterion above fired. `BECOME` was not redesigned but **cut** — the
+> verdict went further than the kill criterion anticipated, rejecting not
+> just committed movement but the premise that the player should wear
+> these bodies at all: *"switching at all is the wrong verb."*
+>
+> Two of my own errors made the test harsher than it needed to be, and
+> are worth recording so the next spike avoids them: the harness offered
+> a plain walker alongside three bodies that were each **strictly worse**
+> than it (the glider was slower than walking *and* could not stop), so
+> there was a dominant option and three punishments; and it tested the
+> bodies **kinesthetically in a world with no rules**, when
+> `systems.md`'s own case for them was always *relational* — barriers
+> that open on a period, terrain that needs a platform. Switching cost a
+> beat and bought nothing.
+>
+> Even so, the result stands: the direction that replaced it is better
+> and simpler, and the whole exchange cost one harness rather than a
+> year. **This is the clearest example in the project of a Phase 0
+> earning its keep.**
 
 ## The single most important sentence in this folder
 

@@ -188,13 +188,17 @@ one is new and expensive, one is demoted.
    **Learning to read a space is the gameplay.** The old pillar isn't
    weakened — it's revealed as the first instance of a bigger rule.
 
-3. **Knowledge is the only key, and your body is the record.** *(new,
-   replaces nothing)* Nothing is locked by an item or a flag; doors are
-   locked by not understanding. Where Outer Wilds banks understanding in a
-   ship log, ours is banked in **what you can be** — see the `BECOME`
-   system in [systems.md](systems.md). Look at yourself to see what you
-   know. This is how the game keeps pillar 4 while still having
-   progression.
+3. **Knowledge is the only key, and the world is the record.** *(new,
+   replaces nothing; second clause revised 2026-08-12)* Nothing is locked
+   by an item or a flag; doors are locked by not understanding. Where
+   Outer Wilds banks understanding in a ship log, ours is banked in **what
+   you can perceive** — progression is knowledge plus a few perception
+   unlocks, so everything you have understood is visible *in the world
+   itself*: a space that would not read before now reads. You look
+   outward to see what you know, not at an inventory. (This clause
+   originally read "your body is the record", banking knowledge in the
+   `BECOME` moveset; that system was played in Phase 0 and cut — see
+   [systems.md](systems.md).)
 
 4. **Diegetic absolutely.** *(sharpened)* Was "diegetic over UI chrome";
    the brief says no menu, so this hardens from a preference to a
@@ -226,7 +230,7 @@ one does, and it is more specific than noir: hue encodes curvature.
 | File | What it holds |
 |---|---|
 | [world-and-threads.md](world-and-threads.md) | The geometries, what each teaches, and the four story threads that run through them; the endgame and its three endings |
-| [systems.md](systems.md) | Moment-to-moment gameplay: the verbs, the `BECOME` system, how knowledge gates progress without a journal |
+| [systems.md](systems.md) | Moment-to-moment gameplay: the verbs, the perception unlocks that carry progression, how knowledge gates progress without a journal |
 | [architecture.md](architecture.md) | The technical plan — why the current `Space` abstraction provably cannot hold this game, what replaces it, and the engine decision with its revisit trigger |
 | [art-and-audio.md](art-and-audio.md) | Art and audio direction, written as briefs a contractor could be handed |
 | [roadmap.md](roadmap.md) | Phases, honest timeline, risk register, and the questions I could not answer alone |

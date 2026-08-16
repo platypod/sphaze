@@ -104,25 +104,39 @@ met an oscillator, that an oscillator is a pattern that survived by
 looping, and that looping costs you the ability to learn. Right now it is
 just a slightly upsetting thing in a hole.
 
-### 42-52 min · The gap — "I can be something else"
+### 42-52 min · The return — "I have been here before"
 
-The path ends at a gap. Too wide to walk. There is no bridge, no switch,
-no key.
+> **Replaced 2026-08-12.** This beat used to be "The gap — *I can be
+> something else*", where a chasm forced the player into a glider body and
+> taught that bodies are trades. `BECOME` was cut after Phase 0, so the
+> lesson had to change. What went in its place teaches the game's *actual*
+> progression grammar, which the old version never did.
 
-But you know a shape that crosses ground on its own.
+The path loops back past somewhere you have already been — the socket, or
+the hollow with the looping thing in it. Nothing here has changed.
 
-Switching is physical: you cycle, wearing each configuration you know for
-a moment. There are two. You take the one that travels.
+**You have.**
 
-**And you cannot stop.** You cross the gap and keep going, because a
-glider that stops is not a glider — and you overshoot, and have to loop
-the long way round on a closed surface to come back.
+The pattern you watched complete its cycle at minute 30 is running here
+too, and now you can see that it is the *same* pattern. Not similar:
+identical, on a different clock. You could not have seen that an hour ago
+because you had not yet watched one long enough to know its shape.
 
-*Taught, as a mistake rather than a tutorial: bodies are trades. This is
-the single most important lesson in the game and it costs the player
-ninety embarrassing seconds.*
+Nothing was unlocked. Nothing was awarded. A place you already walked
+through has simply become **legible**, because you understand more than
+you did.
 
-### 52-60 min · The reveal — "I am one too"
+*Taught, and this is the single most important lesson in the game: the
+world does not open up, you do. Every gate in the next fourteen hours
+works exactly like this one.*
+
+### 52-60 min · The reveal — "what am I, then?"
+
+> **Also revised 2026-08-12.** The reveal used to be "I am one too" —
+> the camera pulls back and you are five cells, the same kind of object as
+> the glider you drew. That was true under `BECOME`, where the player
+> climbed the taxonomy from the bottom. Now the player is *far past* the
+> primitives, so the same camera move has to deliver a much better beat.
 
 Somewhere high, or at the antipode, or wherever the level design has been
 patiently steering you: a vantage.
@@ -130,12 +144,19 @@ patiently steering you: a vantage.
 The camera pulls back. Past the walking scale. Past the point where you
 are a figure.
 
-The world resolves into cells — and so do **you**. Five of them. The exact
-configuration you have been steering. The thing you drew at the socket and
-the thing you have been *being* are the same kind of object, and always
-were.
+The world resolves into cells — and so do **you**. But where the thing you
+drew at the socket was five cells, you are... not. You are enormous.
+Intricate. Structured in ways nothing else in view comes close to, and
+plainly made of exactly the same substance as the blinking simple things
+you have spent an hour learning to read.
 
-The hour ends there, on the premise, earned rather than announced.
+The hour does not end on an answer. It ends on the question that runs the
+rest of the game:
+
+> **How does something like me come out of rules like these?**
+
+Earned rather than announced — and every primitive form the player has
+just learned to recognise is now, retroactively, a piece of evidence.
 
 ---
 
@@ -143,22 +164,24 @@ The hour ends there, on the premise, earned rather than announced.
 
 | | |
 |---|---|
-| **Mechanically** | walk, look, tick, seed, read, become, zoom — 7 of 8 verbs, none explained |
+| **Mechanically** | walk, look, tick, seed, read, zoom — 6 of 7 verbs, none explained |
 | **Geometrically** | closed space; one global clock; things travel; the far side is legible and the near side is not |
-| **Narratively** | you can write; what you write escapes you; someone was here before and something is wrong with them; you are made of the same stuff as everything else |
-| **Emotionally** | curiosity, one embarrassment, one small dread |
+| **Narratively** | you can write; what you write escapes you; someone was here before and something is wrong with them; you are made of the same stuff as everything else — and vastly more of it |
+| **Emotionally** | curiosity, one small dread, one unanswerable question |
 
-**Nothing has been locked**, and nothing has been unlocked. The gap at
-minute 42 was passable from the first minute by anyone who already knew a
-travelling configuration. That is Pillar 3 working: the only thing that
-changed is that the player understands more.
+**Nothing has been locked, and nothing has been unlocked** — literally
+nothing, in this version. Every place the player reached was reachable
+from minute one, and the only thing that changed in an hour is what they
+can *see* when they get there. That is Pillar 3 in its strongest form,
+and it is why minute 42 is a *return* rather than a gate.
 
 ## Where the real game opens
 
 The hour closes the tutorial the player never noticed and opens the actual
-question, which is not *what am I* but *what am I allowed to be*. The
-sphere is warm, closed, kind, and finite; the player has just found out
-they are a pattern in it; and the next thing they should find — within
+question, which is not *what am I* but **how did something like me get
+here**. The sphere is warm, closed, kind, and finite; the player has just
+found out they are a pattern in it, and a far more complicated one than
+anything around them; and the next thing they should find — within
 another hour — is the first evidence that the warmth is deliberate.
 
 That is Thread 3, and the answer is that the prison is a cradle.

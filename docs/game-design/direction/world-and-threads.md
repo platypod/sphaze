@@ -294,7 +294,8 @@ Whichever way this goes (or both), it needs building and playing before
 the chirality mechanism above can be judged at all — a bad ribbon kills a
 good mechanic here. See [roadmap.md](roadmap.md)'s Risk 8, which this
 sharpens rather than duplicates: that risk was about whether `BECOME`'s
-bodies are fun to control at all; this is specifically about whether
+bodies were fun to control (answered: no, and the system was cut); this
+is specifically about whether
 *this one space's own* repetition budget can be sustained regardless.
 
 **Set aside, deliberately:** the backlog's "one side affects the other"
@@ -340,8 +341,8 @@ this space distinct from the Turn's own path-dependent trick rather than
 being the same idea told twice.
 
 The goal it drives: a socket that only accepts a carried pattern (a
-`CARRY`-ed structure, or your own `BECOME` body if it has a facing)
-arriving at one exact orientation. Critically, **there is no in-place
+`CARRY`-ed structure, or your own orientation) arriving at one exact
+facing. Critically, **there is no in-place
 editing tool here** — unlike the Fold's pentagon engraving, you cannot
 nudge the orientation once you arrive. It has to already be correct,
 which means it was set by *how you routed* on the way in. That is the
@@ -553,20 +554,52 @@ Braided, not sequenced. Any of them can be pulled at any time; each gates
 on understanding rather than on permission. No journal — see
 [systems.md](systems.md) for how the game remembers without a UI.
 
-### Thread 1 — The Ascent *(the mechanical spine)*
+### Thread 1 — The Reconstruction *(the spine)*
 
-Climbing the real taxonomy of cellular-automaton life, each rung a body
-you can take (`BECOME`, [systems.md](systems.md)):
+> **Replaced "The Ascent", 2026-08-12, after Phase 0.** The original
+> version had the player *climb* the taxonomy, wearing each rung as a body
+> (`BECOME`). That was played and rejected — the bodies were unconvincing
+> to control, and the verdict was that the player should be *"a cell that
+> evolved further ahead… we will still play around and discover the basic
+> rules, states and patterns, but only to retroactively understand what we
+> are and how we came to be. But let's not replay the early days."* This
+> is that, and it is a better thread.
 
-**still life → oscillator → glider → spaceship → gun → orphan**
+You do not climb the taxonomy. **You are already past it** — a
+configuration far more complex than anything you will meet, with no
+memory of how it got that way.
 
-Each rung is simultaneously a movement ability, a lesson about the rule,
-and a step in the story. This is the only thread with a fixed order,
-because the taxonomy has one, and it is the thread that gates physical
-reach.
+So the taxonomy becomes an **archaeology instead of a career**. The
+primitive forms are everywhere, and every one you come to understand is a
+recovered piece of your own origin:
 
-It ends at a rung that is not a movement at all. The first five let you
-*do* something. The sixth changes what you *are*.
+**still life · oscillator · glider · spaceship · gun → what am I?**
+
+Read in that direction it stops being a ladder and becomes a question,
+which is the point: *how does something like me arise from rules like
+these?* The player's growing fluency with the primitives is the only
+instrument for answering it, and the answer arrives in pieces, out of
+order, from wherever they happened to look.
+
+**This is also what makes Thread 2 land.** If you are past those rungs
+and the things you meet are stuck on them, then the world is not a
+tutorial — it is a **graveyard of arrested development**. The ghosts are
+oscillators that never got further. The terrain is still lifes that
+stopped at the first rung. You are walking on the ones who didn't make
+it, and the distance between you and them is exactly the thing you are
+trying to explain.
+
+**Where it ends.** The last thing reconstructed is not another rung. It
+is that your own configuration has **no predecessor at all** — that the
+chain you have been assembling does not reach you, and never did. The
+thread's final beat is the discovery that the archaeology fails, and
+*why* that is the most important fact about you.
+
+**What carries progression**, now that bodies don't: knowledge, plus a
+handful of **perception unlocks** — see
+[systems.md](systems.md)'s own section. Each one re-reads everywhere you
+have already been, which is precisely how a thread about *retroactive*
+understanding should advance.
 
 ### Thread 2 — The Predecessors *(who was here before)*
 
@@ -629,8 +662,8 @@ curvature, where the same freedom costs nobody anything.
 ### Thread 4 — The Rule *(can it change)*
 
 The latest thread and the most dangerous. The rule is editable — locally,
-slowly, at the sockets. But **your body is only stable under the current
-rule**, so editing the rule is self-modification with lethal stakes. A
+slowly, at the sockets. But **your own configuration is only stable under
+the current rule**, so editing the rule is self-modification with lethal stakes. A
 change that makes a new pattern possible may make *you* impossible.
 
 This thread is what turns the endgame into a choice rather than a

@@ -2,7 +2,7 @@
 
 What the player actually *does*, minute to minute. This is the file that
 answers "pale prototype" — the current game has a hook, a simulation and
-no verbs; this proposes eight, of which **five already have working
+no verbs; this proposes seven, of which **four already have working
 prototypes in the repo**.
 
 ## The two scales
@@ -27,69 +27,93 @@ a fact about scale rather than distance. The Garden of Eden candidate
 already noticed this ("a glider is only a glider from afar"); making zoom
 a verb is what turns the observation into a mechanic.
 
-## The eight verbs
+## The seven verbs
+
+> **`BECOME` was cut 2026-08-12, after being played.** It was the eighth
+> verb and this file called it "the core system". Its Phase 0 harness
+> (Risk 8) came back negative — the bodies were unconvincing to control
+> and, in the words of the verdict, *"switching at all is the wrong
+> verb."* What replaced it is below, and the change is recorded rather
+> than tidied away because a document that quietly forgets its own
+> rejected core cannot be trusted about the rest.
 
 | # | Verb | What it is | State in repo |
 |---|---|---|---|
-| 1 | **Walk** | first-person movement on a curved surface | **built** |
+| 1 | **Walk** | first-person movement on a curved surface — free and unrestricted | **built**, and hyperbolic walking **validated by playtest 2026-08-12** |
 | 2 | **Look** | read a space by its own legibility law | **built** (sphere's law) |
-| 3 | **Become** | change which configuration you are | **new — the core system** |
-| 4 | **Tick** | control the rate the rule runs at | **built** (`HourglassModel`) |
-| 5 | **Seed** | write cells into the substrate at a socket | **built this week** (pentagon engraving) |
-| 6 | **Read** | learn a configuration by watching it | **new** |
-| 7 | **Carry** | move a pattern between geometries | backlog (cross-biome displacement) |
-| 8 | **Zoom** | shift between walking and pattern scale | backlog (zoom-between-biomes) |
+| 3 | **Tick** | control the rate the rule runs at | **built** (`HourglassModel`) |
+| 4 | **Seed** | write cells into the substrate at a socket | **built** (pentagon engraving) |
+| 5 | **Read** | learn a configuration by watching it | **new**, and now the progression spine |
+| 6 | **Carry** | move a pattern between geometries | backlog (cross-biome displacement) |
+| 7 | **Zoom** | shift between walking and pattern scale | backlog (zoom-between-biomes) |
 
-Five of eight already exist in some form. The game is much closer than
-"pale prototype" suggests — what it lacks is not mechanisms but a **spine
-that makes them one system**, which is what [README.md](README.md)
-provides.
+Four of seven already exist. The game is much closer than "pale
+prototype" suggests — what it lacks is not mechanisms but a **spine that
+makes them one system**, which is what [README.md](README.md) provides.
 
 ---
 
-## 3. BECOME — morphology as moveset
+## What you are, and why there is no `BECOME`
 
-**The core system, and the one that makes this a game rather than a
-walking simulator.**
+You are **a pattern that has already evolved well past the primitives** —
+not a still life learning to be an oscillator, not a glider hoping to
+become a spaceship. That climb is behind you and the game never replays
+it.
 
-You are a configuration. You can hold a library of configurations and take
-any of them. They are not upgrades — they are **bodies**, each with a real
-cost, and the game is largely the tactical problem of choosing which to
-wear.
+Which inverts the relationship the old design had backwards:
 
-| Body | What you gain | What it costs you | Its geometry lesson |
-|---|---|---|---|
-| **Still life** | stable under the rule; nothing can disrupt you; you become standable terrain | you cannot move at all | the only truly safe state is indistinguishable from having stopped |
-| **Oscillator** | you act on the world's tick; you can pass barriers that open on your own period | you are on a clock you don't control; you return to exactly yourself every *p* generations | persistence without change |
-| **Glider** | translation — real movement across the world | **you cannot stop.** A glider that stops is not a glider | commitment; direction as a thing you spend |
-| **Spaceship** | faster translation, greater range | longer commitment; harder to place precisely | speed costs precision |
-| **Gun** | emit gliders — act at a distance, scout, deliver | you are immobile while firing; what you send is gone | influence without presence |
-| **Orphan** | *no predecessor* | see [world-and-threads.md](world-and-threads.md) — this one is not a movement ability | the endgame |
+> **Primitive life is *subject to* the rule. You *operate* it.**
 
-### How a glider actually plays
+Gliders, oscillators, still lifes and guns remain everywhere and remain
+central — but as **subject matter**, not as costumes. You study them,
+seed them, carry them, and read them. You are never one of them, and the
+distance between you and them is the point: it is the evidence that
+something happened to you, and working out *what* is the game (see Thread
+1 in [world-and-threads.md](world-and-threads.md)).
 
-The most important thing in this document to get right, because it's the
-one that proves the whole "you are a pattern" conceit can be a *control
-scheme* rather than a fiction.
+**Movement is free and modern**: unrestricted from the first minute, no
+modal states, no committed directions, nothing to switch into. Plus **one
+or two permanent traversal abilities** — lasting gains, never modes, and
+never something you toggle. What makes traversal interesting here is that
+space is strange, not that your legs are complicated.
 
-A glider translates one cell diagonally every *p* generations, and it is
-only itself at phase 0. So, in first person: **you move continuously at a
-fixed speed, and you may only change direction at phase boundaries.** In
-between you are committed.
+---
 
-That is a genuinely distinctive movement mode — closer to a chess knight
-or a momentum-puzzle than to a shooter — it derives entirely from the
-mathematics, and it converts the world's tick into something the player
-feels in their hands. It also makes the `Tick` verb immediately
-meaningful: slowing the world down lengthens the gap between decisions.
+## Perception unlocks — what progression is made of
 
-### Switching
+With `BECOME` gone, this carries the progression spine. Agreed
+2026-08-12: **knowledge, plus a small number of capabilities that change
+what you can *perceive*** — never what you can do to things, and never a
+mode you enter.
 
-Switching bodies takes one generation, can be done anywhere, and is
-physically visible: you cycle through the shapes you know, wearing each
-briefly. There is no list and no menu — **the act of switching is the
-inventory display.** The vulnerability of that one generation is the cost
-that stops switching from being free.
+Why perception rather than power:
+
+- **It is retroactive by nature.** A new way of seeing re-reads
+  everywhere you have already been. That is the single strongest fit with
+  "interconnected, not a level select" available, and it was already filed
+  independently in [../ideas-backlog.md](../ideas-backlog.md) as
+  "retroactive rediscovery via a gained sense" before this direction
+  existed.
+- **It cannot make the game easier in a boring way.** More reach, more
+  speed and more damage all flatten a world; more *sight* deepens it.
+- **It is diegetically exact for what you are.** You are a pattern that
+  evolved past the primitives. What that plausibly buys you is
+  discrimination — the ability to notice structure a simpler
+  configuration could not.
+
+Candidates, roughly in the order they would be earned:
+
+| Unlock | What it changes | Where it re-reads |
+|---|---|---|
+| **Colour** | the world starts desaturated; gaining colour reveals routes that were always physically there | every earlier space at once — the flagship retroactive moment |
+| **Pattern scale** | `Zoom` — seeing the cellular truth under the walking-scale view | everywhere; the first use is a story beat |
+| **Period sight** | reading an oscillator's period on sight instead of by counting | the ghosts, who become legible as what they are |
+| **Reverse reading** | running the rule *backwards* over what you can see | the Sprawl, where it is the only way to notice a pattern has no predecessor |
+| **Ring sense** | counting hyperbolic distance by ear, per [art-and-audio.md](art-and-audio.md) | the Sprawl's navigation problem |
+
+Nothing here is an item and nothing is a menu entry: each is a change to
+how the world is drawn or heard, so it is inspected by *looking at the
+world*, not at yourself.
 
 ---
 
@@ -101,8 +125,9 @@ join:
 > **You learn a configuration by watching it complete one full cycle.**
 
 Observation *is* acquisition. Sit and watch a glider travel one period and
-you have it — you can now become it. Watch an oscillator return to itself
-and it is yours.
+you have it — you can name it, recognise it elsewhere, seed it yourself,
+and predict what it will do. Watch an oscillator return to itself and its
+period is yours.
 
 This is the best idea in this file for four reasons:
 
@@ -114,18 +139,27 @@ This is the best idea in this file for four reasons:
 4. **It makes the world teach by running.** Every space is a lecture that
    delivers itself whether or not anyone is present.
 
-And it is the answer to "where's the ship log": **your body is the log.**
-What you know and what you can do are the same list, and you inspect it by
-looking at yourself.
+And it is the answer to "where's the ship log": **the world is the log.**
+
+That answer changed on 2026-08-12 and improved. It used to be "your body
+is the log" — what you knew and what you could *be* were the same list.
+With `BECOME` cut there is no such list, and the replacement is better:
+because progression is perception, **everything you have understood is
+visible in the world itself.** A space you could not read before now
+reads. A pattern you could not name is now named. You know what you know
+by looking outward, not at an inventory — which is a stronger form of the
+same no-UI discipline, since there is nothing to display even in
+principle.
 
 ### The knowledge web
 
 Gates are understanding, never permission. Concretely, in the shape Outer
 Wilds proved and this game arrives at differently:
 
-- A wall in the Fold opens only on even generations → you need an
-  oscillator body with the right period → you must have watched one → the
-  nearest is in the Repeat → which needs no body at all, just the walk.
+- A wall in the Fold opens only on even generations → you have to *read*
+  its period, which means recognising the oscillator driving it → the
+  clearest example to learn one from is in the Repeat → which needs
+  nothing but the walk and the patience to watch.
 - The Sprawl's centre cannot be found by looking → you need the algorithm
   → the algorithm is *demonstrated* by a raven's flight path, if you
   watch one long enough from the Fold's far side — concretely, ring
@@ -148,8 +182,8 @@ run.
 The world advances in generations. The hourglass (built) sets the rate,
 globally, and this is now a primary verb rather than a curiosity:
 
-- **Slow** — thinking time, precise placement, longer gaps between glider
-  decisions.
+- **Slow** — thinking time, precise placement, and the only way to watch
+  a fast structure closely enough to read it.
 - **Fast** — make a long propagation actually happen; skip to the far end
   of a chain reaction you have already reasoned out.
 - **Stop** — safe, and useless. Nothing can hurt you and nothing can
@@ -179,9 +213,10 @@ looks like, and they are the argument against simply enduring.
 ## Failure
 
 Cheap, informative, and rare. If your configuration is disrupted you
-**decay to your most stable body** and reform at the last socket. You lose
-the moment, never knowledge — knowledge is understanding, and understanding
-cannot be taken back.
+**reform at the last socket**, losing the moment and nothing else. You
+never lose knowledge — knowledge is understanding, and understanding
+cannot be taken back — and since progression is perception rather than
+possessions, there is literally nothing else to drop.
 
 This suits the scale of game agreed (8-15h exploration): death as
 punctuation, not as punishment.
@@ -190,13 +225,13 @@ punctuation, not as punishment.
 
 ## The other verbs, briefly
 
-**5. SEED.** Write cells into the substrate at a socket — the pentagon
+**SEED.** Write cells into the substrate at a socket — the pentagon
 engraving built this week, generalised. Sockets are the tiling's *defects*
 (the Fold's 12 pentagons; the Defect's cone point), which is why they are
 writable: regularity is what makes a space unwritable, and a defect is a
 place where the space admits it was made.
 
-**7. CARRY.** Move a pattern from one geometry to another. The core
+**CARRY.** Move a pattern from one geometry to another. The core
 puzzle: **a glider that works on the Fold may not survive in the Sprawl**,
 because the neighbour count differs (6 on the hex sphere, 7 on the
 heptagrid) and a rule tuned to one is not tuned to the other. That is a
@@ -204,14 +239,16 @@ genuine, already-measured property of this project's own simulation work,
 and it turns "take this over there" into a real question rather than
 fetch-carrying.
 
-**8. ZOOM.** Inspection. Hold to see the cellular truth. Some things are
+**ZOOM.** Inspection. Hold to see the cellular truth. Some things are
 legible only zoomed (a glider is only a glider from outside); some only at
 walking scale (the Defect's rotation is invisible from above). Scale is a
 second axis of the legibility pillar.
 
-**1-2. WALK and LOOK.** Built. What changes is that `Look` becomes
-plural — each space's legibility law is its own instrument, and the game's
-skill curve is largely the accumulation of *reading* techniques.
+**WALK and LOOK.** Built. `Walk` is free and unrestricted, plus one or
+two permanent traversal abilities and nothing modal. `Look` becomes
+plural — each space's legibility law is its own instrument, and the
+game's skill curve is largely the accumulation of *reading* techniques,
+which is also where the perception unlocks land.
 
 ---
 
@@ -228,5 +265,9 @@ For honesty about what the direction costs, three existing things go:
 - **The fall counter / tower.** No home in this direction as it stands.
   Keep the biome, lose the counter, or repurpose the tower as a fibered
   space (a circle's worth of stacked flat layers) — genuinely open.
+- **`BECOME`, and Thread 1 as a climb.** Cut 2026-08-12 after its Phase 0
+  harness was played — see the note at the top of this file, and Thread 1
+  in [world-and-threads.md](world-and-threads.md) for what the spine
+  became instead.
 - **"Noir-leaning" as an art brief.** Replaced by something specific in
   [art-and-audio.md](art-and-audio.md).

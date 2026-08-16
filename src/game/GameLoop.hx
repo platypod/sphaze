@@ -12,6 +12,7 @@ import biomes.mobius.MobiusBiome;
 import biomes.mobius.MobiusForestGenerator;
 import biomes.tower.TowerBiome;
 import biomes.tower.TowerGenerator;
+import biomes.repeat.RepeatBiome;
 import biomes.ribbon.RibbonBiome;
 import biomes.sprawl.SprawlBiome;
 import biomes.twosided.TwoSidedBiome;
@@ -122,6 +123,10 @@ class GameLoop {
 		// The only biome that does not tick: its ground is a finished
 		// history rather than a running one — see RibbonBiome's own class doc.
 		biomeRegistry.register(new RibbonBiome());
+		// Deliberately NOT a quotient, despite geometry.DeckGroup existing:
+		// a true torus has one tile and nothing to compare — see
+		// RepeatModel's own class doc.
+		biomeRegistry.register(new RepeatBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it

@@ -1719,3 +1719,43 @@ Error left visible behind a correction note, same discipline as the
 thesis correction — this one caught by the question itself proving
 unanswerable, which is usually the first sign a design has quietly
 committed to two incompatible models at once.
+
+## 2026-08-12 — The Repeat rebuilt around a mechanism, not a mood
+
+Asked directly for "riddles and tricks, not a contemplative game" — the
+first pass gave the Repeat a legibility law (learn the period, discount
+the echoes) but nothing to *do*. Rebuilt in conversation, converging on
+two of four floated options (deliberately breaking symmetry to open a
+door; marking your own tile as ground truth) getting dropped in favour of
+a synthesis of the other two: spot pre-existing divergence, and let
+finding it be the unlock rather than a separate step.
+
+Same geometric reframe the Weft needed, for the same reason: a true
+quotient (one simulated region, rendered by wraparound) leaves nothing to
+compare, so this space needs the looser model too — many separately
+simulated tiles, kept identical only by determinism (same seed, same
+rule, same future, unless something intervened).
+
+The mechanism: walk one measured period, compare the tile you're in
+against the one you remember, and treat any difference as a door — the
+divergence itself is standable/reachable ground the reference tile
+doesn't have, so recognising it and reaching it are the same act, not two
+steps. Solve a handful of tiles and the individual differences stop
+reading as noise and compose into a **mark that isn't the player's own** —
+reusing `MarkModel`/`entities.painting` rendering rather than inventing
+new geometry, and cross-linked to the existing "someone messes with the
+marks" backlog entry so the reveal has somewhere to plug into rather than
+landing as an isolated cutscene.
+
+Story payoff: the game's first hard evidence, this early, that the player
+isn't the first pattern here — Thread 2 material, planted before the
+ghosts or ravens make it explicit. Loneliness beat kept, sharpened rather
+than discarded: most of the space really is alone; the proof that some of
+it isn't is now something the player builds themselves out of checkable
+facts, not something they're told.
+
+Not flagged as a correction (unlike the Weft) — the original entry wasn't
+wrong, it was underbuilt. Worth noting: this makes the Repeat a much
+stronger candidate for the roadmap's core-five cut than it was when the
+recommendation to defer it was written; not revisited here, left for
+whoever owns that call.

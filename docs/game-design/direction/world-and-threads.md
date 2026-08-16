@@ -162,26 +162,73 @@ of the whole hemisphere.
 
 ### 3. The Repeat — the flat torus *(κ = 0)*
 
-**Geometry:** the classic cellular-automaton universe: a flat plane with
-wraparound in both axes.
+> **Revised 2026-08-12, in conversation.** The original entry gave this
+> space a legibility law (learn the period, discount the echoes) and no
+> mechanism — a thing to notice, not a thing to do. Not an error like the
+> Weft's, so no correction callout, just a straightforward rewrite: asked
+> directly for "riddles and tricks" rather than a contemplative read, and
+> for a way to *create or reveal differences by doing something*. This
+> replaces the passive version with an active one.
 
-**Teaches:** **flatness, and infinite regress.** Look in any direction and
-you see copies of yourself, receding forever, because the light goes
-around. This is the geometry every Life simulation you have ever seen
-actually runs on, presented from the inside.
+**Geometry:** not a single simulated region rendered many times by
+wraparound — **many separate tiles**, each genuinely its own simulation,
+that happen to have started from the same seed under the same rule.
+Determinism is what keeps them identical: same initial state, same rule,
+same future, forever — unless something has actually intervened. Walking
+a straight line and arriving somewhere indistinguishable from home isn't
+identification, it's just two places that have never had reason to
+differ. (Same fork the Weft hit: a true quotient would mean there's only
+ever one tile, nothing to compare. This space needs the looser model for
+the same reason "opposite" needed it there.)
 
-**Legibility law:** you can see infinitely far and learn nothing, because
-everything you can see is *you*. The opposite failure mode to the Fold:
-there, distance carries information; here, distance carries only echo.
+**Teaches:** that *sameness is evidence of a shared cause*, not a property
+in itself — and that it's fragile. Two tiles stay identical only as long
+as nothing has touched either of them; the instant one diverges,
+"identical" stops meaning "the same place" and starts meaning "still
+innocent." The whole game's causation theme, rehearsed at space #2
+instead of saved for the ending.
 
-**Verb:** recognise — tell your own copy from a genuine other.
+**Legibility law:** the far view tells you nothing — sameness carries no
+information, the opposite failure mode from the Fold, where distance is
+legible. The only place information lives here is in a *comparison*: hold
+what you remember of one tile against what's actually in front of you in
+the next. Reading this space is an act of memory, not of sight.
 
-**Story function:** the loneliness beat. The first space that looks
-populated and isn't.
+**Verb:** compare. Walk exactly one measured period and, instead of
+finding a copy, look for what isn't one.
 
-**Exists:** nothing directly, but it is the cheapest of the nine to build
-(flat geometry, existing `FlatSpace`, wraparound is a modulo) and the
-copies are a rendering problem, not a simulation one.
+**The mechanism.** Each divergence you correctly find isn't just noticed,
+it's *opened*: whatever changed that tile's own history left it
+standable, reachable, or open somewhere the reference tile is not — a
+wall that's a live block here and dead there, a passage a settled cell
+closed on the way you came from but never closed here. Recognising the
+difference and reaching the new ground are the same act; there's no
+separate puzzle bolted on top of noticing.
+
+Do that across a handful of tiles and the individual differences stop
+reading as noise. Overlaid, they compose into something specific — **a
+mark, not the player's own**, deliberate rather than incidental, the same
+object this project's own mark mechanic already knows how to render and
+(per [ideas-backlog.md](../ideas-backlog.md)'s "someone messes with the
+marks" entry) already knows how to make feel like it belongs to somebody.
+Each solved tile contributes one fragment; enough of them and the shape
+resolves into unmistakable intent. That's the proof — not a cutscene, a
+picture the player assembles themselves out of several checkable facts
+about the cell states.
+
+**Story function:** the first hard evidence, this early, that you are not
+the first pattern to have been here — Thread 2 material, planted well
+before the ghosts or the ravens make it explicit. The loneliness beat
+survives, sharpened rather than replaced: most of what surrounds you
+really is alone, running unattended and identical since whenever it
+started. But not all of it. Something else once stood exactly where
+you're standing, and left a mark specifically so it could be found this
+way.
+
+**Exists:** nothing yet. Cheapest new pieces: per-tile "solved" state (the
+same shape the pentagon engraving already keeps per socket) and the
+composite-mark reveal, which can reuse `entities.painting`/`MarkModel`
+rendering wholesale rather than inventing new geometry.
 
 ---
 

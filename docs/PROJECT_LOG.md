@@ -1759,3 +1759,21 @@ wrong, it was underbuilt. Worth noting: this makes the Repeat a much
 stronger candidate for the roadmap's core-five cut than it was when the
 recommendation to defer it was written; not revisited here, left for
 whoever owns that call.
+
+## 2026-08-12 — Per-biome visual dialect, and the Repeat's first one
+
+Asked directly for graphical variation from one biome to the next, beyond
+hue-encodes-curvature — "very low level design, nearly no texture, only
+geometric shapes." New "Per-biome visual dialect" section in
+`art-and-audio.md`: hue and the material language stay universal
+constants (they're what makes the whole system teach anything), and each
+space additionally gets its own silhouette dialect on top, argued from
+what that space teaches rather than assigned by taste.
+
+First entry: **the Repeat as a low-poly cell city**, Manifold Garden's own
+register. Not just a palette pick — it reinforces the space's own
+mechanism from the same day's earlier rebuild: a city's hard edges and
+repeated units give divergence somewhere obvious to hide (a mis-lit
+window, an extra storey, a rooftop one degree off), in a way organic
+terrain doesn't offer for free. Cross-linked both directions between
+`world-and-threads.md`'s Repeat entry and the new table.

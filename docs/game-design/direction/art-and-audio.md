@@ -98,6 +98,29 @@ Everything is made of the same substance, because it is:
   cheap and it is also the point: a defect is where a space admits it was
   made.
 
+## Per-biome visual dialect
+
+Hue-encodes-curvature and the material language above are **universal
+constants** — they hold in every space, without exception, or the whole
+system stops teaching anything. That leaves room, and a need, for each
+space to also have its own *dialect* on top: a distinct silhouette
+language that makes it recognisable at a glance beyond its colour
+temperature, the same way [world-and-threads.md](world-and-threads.md)
+gives each space its own legibility law rather than reusing the Fold's.
+
+Asked for directly (2026-08-12): variation from one biome to the next,
+"very low level design, nearly no texture, only geometric shapes." Seeded
+so far:
+
+| Space | Dialect |
+|---|---|
+| **The Repeat** | a **cell city** — Manifold Garden's own register: blocky, low-poly, almost no texture, silhouette carrying everything. Buildings, not terrain. This isn't just a palette choice — it *reinforces* [world-and-threads.md](world-and-threads.md)'s own mechanism for this space. An urban dialect gives divergence somewhere obvious to hide (a window lit differently, a storey the reference block doesn't have, a rooftop shape one degree off) in a way organic terrain doesn't offer for free; spot-the-difference wants hard edges and repeated units, and a city is made of exactly those. |
+
+The rest are open — this table is meant to fill in space by space as each
+one's own mechanism gets worked out, the same way the world doc itself
+grew. A dialect should be argued from what that space *teaches*, the way
+the Repeat's was, not assigned by taste alone.
+
 ## Landmark language
 
 The single hardest navigation problem: in hyperbolic space you cannot see

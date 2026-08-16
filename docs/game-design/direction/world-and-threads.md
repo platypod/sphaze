@@ -230,6 +230,11 @@ same shape the pentagon engraving already keeps per socket) and the
 composite-mark reveal, which can reuse `entities.painting`/`MarkModel`
 rendering wholesale rather than inventing new geometry.
 
+**Visual dialect:** [art-and-audio.md](art-and-audio.md)'s own "Per-biome
+visual dialect" table — a low-poly cell city, Manifold Garden's register,
+chosen specifically because a city's hard edges and repeated units give
+divergence somewhere obvious to hide.
+
 ---
 
 ### 4. The Turn — the Möbius band *(κ = 0, non-orientable)*

@@ -2306,3 +2306,55 @@ uses.
 **Still open, and not checkable from here:** whether the history reads
 *as* a history while walking it, rather than as abstract terrain. The
 screenshots say it is legible; they cannot say it is meaningful.
+
+## 2026-08-16 — The quotient framework
+
+`geometry.DeckGroup` and `geometry.DeckGroups`: a discrete group of
+isometries acting on the universal cover, which is how three of the
+design's spaces stop being three separate builds. The Repeat is E²
+modulo a lattice, the Turn is E² modulo a glide reflection, the Knot is
+H² modulo the genus-2 surface group. Same machinery, different matrices.
+
+**The design bet this pays off.** `roadmap.md` claimed "nine geometries
+are nine parameter sets, not nine hand-built levels". This is where most
+of that is actually collected: each space contributes four or fewer
+matrices and gets folding, enumeration and rendering copies for free.
+
+**The player never leaves the cover.** Movement, collision and rendering
+happen in the unwrapped plane, where everything is ordinary. The
+quotient shows up in exactly two places — `canonicalise` (fold a
+position back near the origin) and `elementsWithin` (which copies to
+draw). A torus therefore needs no special case anywhere in movement.
+
+`Isometry` gained two things. `reflection`, the first
+orientation-reversing element in the package and unavoidable for a
+non-orientable quotient, since every product of translations and
+rotations has determinant +1. And a general `invert`, exact by group
+structure rather than by matrix inversion — `J·Mᵀ·J` for sphere and
+hyperbolic, with its own case for flat, where `J = diag(1,1,0)` is
+singular and that identity says nothing. `HyperbolicView.invert` now
+delegates to it, and its walker-agreement tests passing unchanged is
+independent evidence the general version is correct.
+
+**A mutation test disproved my own documentation.** I wrote that the
+glide reflection's composition order mattered — that reversing it gave a
+half-turn and a silently orientable quotient. Swapping the operands
+changed nothing at all, because a reflection commutes with a translation
+along its own axis. The real hazard is the *axis*: reflecting about `y`
+instead of `x` fails three tests. Collapsing the torus lattice onto a
+single axis fails four. Corrected in place, with the false hazard
+replaced by the true one.
+
+**Genus-2 is deliberately absent.** The framework is curvature-generic
+and takes it unchanged, but constructing the octagon's side-pairing
+transformations correctly is real hyperbolic geometry and deserves its
+own verification pass — not to be smuggled in beside two flat groups
+whose correctness can be checked exhaustively against a direct lattice
+count.
+
+**Also noted, and not acted on:** `biomes.mobius.MobiusBiome` embeds a
+twisted strip in ℝ³, which has real curvature everywhere. The Turn is
+filed under κ = 0. A flat strip quotiented by a glide reflection is the
+honest model — flat, non-orientable, with the twist in the
+identification rather than in the geometry — and that is what
+`DeckGroups.mobiusBand` provides when the Turn is built.

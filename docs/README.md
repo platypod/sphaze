@@ -31,7 +31,7 @@ The whole-game direction. All nine of its spaces are built and walkable.
 | [first-hour.md](game/first-hour.md) | The opening hour, beat by beat, with nothing explained |
 | [mathematics.md](game/mathematics.md) | Every geometric and automaton idea the game uses, with figures |
 | [art-and-audio.md](game/art-and-audio.md) | Art and audio direction, written as briefs |
-| [names.md](game/names.md) | The game is not called sphaze any more. Candidates |
+| [names.md](game/names.md) | The game is not called unbegotten any more. Candidates |
 | [inspirations.md](game/inspirations.md) | External references, and the specific lesson each carries |
 
 ## 2. rules — what we must respect

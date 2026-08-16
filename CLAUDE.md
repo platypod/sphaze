@@ -1,4 +1,4 @@
-# Project guideline — sphaze
+# Project guideline — unbegotten
 
 A 3D maze wrapped onto the inside of a sphere: the player walks the interior surface, and can raise their head to see clear across to the far side — but not what's in their immediate vicinity. Built in Haxe + Heaps, primarily vibe-coded (Claude does most of the writing, hooman directs and reviews).
 

@@ -12,7 +12,7 @@ This exploration tests whether **alternative hexagonal rulesets produce richer s
 
 - **Source**: Research literature documents this rule producing **period-8 gliders with multi-unit-per-period movement** on hexagonal grids.
 - **Structure expectation**: Richer than B2/S34h because birth conditions are looser (two separate thresholds instead of one), potentially supporting more diverse metastability.
-- **Tradeoff**: May be noisier/denser; less well-studied in the sphaze context.
+- **Tradeoff**: May be noisier/denser; less well-studied in the unbegotten context.
 
 ### B35/S2 (Birth at 3,5; Survive at 2)
 

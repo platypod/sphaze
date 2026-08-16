@@ -22,7 +22,7 @@ Hand-drawn house style, authored as text so they diff and edit like code:
 ## Screenshots
 
 There's a capture key in the game: **press `P`** and the current view downloads
-as `sphaze-<biome>-<date>-<time>.png`. It fires inside the render frame, in
+as `unbegotten-<biome>-<date>-<time>.png`. It fires inside the render frame, in
 `Main.render` → `GameLoop.captureIfRequested`, rather than where the key is read.
 That split is necessary, and measured rather than assumed: Heaps builds its
 WebGL context without `preserveDrawingBuffer`, and a `toDataURL` taken outside

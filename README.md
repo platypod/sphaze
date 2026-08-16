@@ -1,4 +1,4 @@
-# sphaze
+# unbegotten
 
 3D maze wrapped onto the interior surface of a sphere: raise your head and you
 can see clear across to the far side, but not what's in your immediate
@@ -46,7 +46,7 @@ behind Authelia SSO like the rest of the homelab.
 
 Pushing a git tag triggers [`.github/workflows/build.yml`](.github/workflows/build.yml),
 which builds a multi-arch image (`linux/amd64` + `linux/arm64`, via Docker
-Buildx) and pushes it to `ghcr.io/platypod/sphaze:<tag>` (+ `:latest`).
+Buildx) and pushes it to `ghcr.io/platypod/unbegotten:<tag>` (+ `:latest`).
 [`Dockerfile`](Dockerfile) is a two-stage build — `haxe:4.3.7-alpine` compiles
 `bin/` (matching `make build`'s output exactly), then `nginx:alpine` serves
 it with no language runtime in the shipped image. Same pattern as
@@ -55,7 +55,7 @@ step.
 
 **First tag only — make the GHCR package public.** GitHub creates new GHCR
 packages as **private**. After the first tag push, set it public once:
-`github.com/orgs/platypod/packages` → `sphaze` → *Package settings* →
+`github.com/orgs/platypod/packages` → `unbegotten` → *Package settings* →
 *Danger Zone* → *Change visibility* → **Public**. Persists across all future
 versions. There's no REST API for changing package visibility (a GitHub
 limitation), so it's a one-time manual step — same as every other platypod

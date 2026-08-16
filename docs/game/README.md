@@ -226,7 +226,7 @@ one does, and it is more specific than noir: hue encodes curvature.
 | [architecture.md](../rules/architecture.md) | The technical plan — how the spatial core represents curvature, what Hilbert's theorem does and does not forbid, and the engine decision with its revisit trigger |
 | [art-and-audio.md](art-and-audio.md) | Art and audio direction, written as briefs a contractor could be handed |
 | [roadmap.md](../building/roadmap.md) | Phases, honest timeline, risk register, and the questions I could not answer alone |
-| [names.md](names.md) | The game is not called sphaze any more. Candidates, with a recommendation |
+| [names.md](names.md) | Why the game is called UNBEGOTTEN, and what lost |
 
 ## Sources
 

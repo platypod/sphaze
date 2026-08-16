@@ -456,7 +456,7 @@ class GameLoop {
 		var canvas = @:privateAccess hxd.Window.getInstance().canvas;
 		var anchor:js.html.AnchorElement = cast js.Browser.document.createElement("a");
 		anchor.href = canvas.toDataURL("image/png");
-		anchor.download = 'sphaze-${currentBiome.id()}-${DateTools.format(Date.now(), "%Y%m%d-%H%M%S")}.png';
+		anchor.download = 'unbegotten-${currentBiome.id()}-${DateTools.format(Date.now(), "%Y%m%d-%H%M%S")}.png';
 		anchor.click();
 	}
 

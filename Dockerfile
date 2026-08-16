@@ -10,7 +10,7 @@ RUN haxe build.hxml && cp index.html bin/index.html
 # --- Static server ---
 FROM nginx:alpine
 
-LABEL org.opencontainers.image.source=https://github.com/platypod/sphaze
+LABEL org.opencontainers.image.source=https://github.com/platypod/unbegotten
 
 COPY --from=builder /app/bin /usr/share/nginx/html
 

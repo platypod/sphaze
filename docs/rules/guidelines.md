@@ -223,6 +223,6 @@ Traefik itself doesn't change: it's a reverse proxy/router, not a web or file se
 **Access control:** the game sits behind Authelia SSO, same as every other service in the `games` module — reachable only by authenticated platypod accounts, consistent with the rest of the homelab rather than a public exception.
 
 ### 6.3 Release & deploy process
-Matches the org's existing pattern for `mediarvester`/`prompt-meter`: pushing a git tag triggers a GitHub Actions workflow that builds a multi-arch (`linux/amd64` + `linux/arm64`) image via Docker Buildx and pushes it to `ghcr.io/platypod/sphaze:<tag>` (+ `:latest`). No cluster credentials are involved in this step.
+Matches the org's existing pattern for `mediarvester`/`prompt-meter`: pushing a git tag triggers a GitHub Actions workflow that builds a multi-arch (`linux/amd64` + `linux/arm64`) image via Docker Buildx and pushes it to `ghcr.io/platypod/unbegotten:<tag>` (+ `:latest`). No cluster credentials are involved in this step.
 
 **Deploying that image to prod is intentionally left open** — see `README.md` for the deploy-automation options under consideration (manual `make deploy MODULE=games ENV=prd`, a GitOps/Flux pull-based setup, or a scoped webhook receiver) and why "store a kubeconfig in GitHub Actions secrets" was ruled out. Revisit and log the decision here once made.

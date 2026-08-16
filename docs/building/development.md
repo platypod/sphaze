@@ -1,6 +1,6 @@
 # Development & build tooling
 
-The sphaze build system is a self-documented `Makefile`. Run `make help` to see all targets and their descriptions.
+The unbegotten build system is a self-documented `Makefile`. Run `make help` to see all targets and their descriptions.
 
 ## Prerequisites
 

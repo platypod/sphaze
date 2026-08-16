@@ -52,7 +52,7 @@ Two more topics: local pre-commit enforcement, and how the game reaches players 
 - **Mobile controls: deferred.** 3D games assume mouse-look + WASD, which don't exist on a touchscreen; decided to build desktop/mouse-keyboard first and treat touch controls as a later, dedicated design pass rather than guessing at a control scheme before there's a game to control. Logged in `docs/rules/guidelines.md` §1.8.
 - **Access control: behind Authelia SSO**, matching every other service in platypod's `games` module (`pokeclicker`, `rommapp`) rather than a public exception.
 - **Container:** inspected `platypod/pokeclicker`'s deployment (Node.js wrapper) and the `games` Helm module's `Deployment`/`Service`/`IngressRoute` templates as reference. Our case is simpler — Heaps' web output is static files, so the shipped container is a static file server (nginx/Caddy) with no language runtime, built via a multi-stage Dockerfile.
-- **Release build:** matches `mediarvester`/`prompt-meter` — a git tag push triggers GitHub Actions to build a multi-arch image (buildx, `linux/amd64`+`linux/arm64`) and push it to `ghcr.io/platypod/sphaze`. No cluster credentials touch GitHub at this step.
+- **Release build:** matches `mediarvester`/`prompt-meter` — a git tag push triggers GitHub Actions to build a multi-arch image (buildx, `linux/amd64`+`linux/arm64`) and push it to `ghcr.io/platypod/unbegotten`. No cluster credentials touch GitHub at this step.
 - **Deploying to prod on release: deliberately left open.** hooman doesn't want any cluster credential stored in GitHub. Three options were laid out — manual `make deploy MODULE=games ENV=prd` (matches the org today, zero new infra, zero GitHub-side credentials), adopting GitOps (Flux CD pulling new tags from GHCR from inside the cluster — genuinely credential-free on the GitHub side, but real infrastructure work spanning the `stack`/`infra` repos), or a small self-hosted webhook receiver (narrower secret than a kubeconfig, but custom code to maintain). Decision deferred — see `README.md` "Deployment" section for the write-up, to be resolved and logged here later.
 
 ---
@@ -145,11 +145,11 @@ Fixed by removing theta/phi from `Player`'s state entirely. It now stores `pos` 
 
 ## 2026-07-16 — Release build: Dockerfile + tag-triggered GitHub Actions
 
-First deployment piece: `Dockerfile` and `.github/workflows/build.yml`, matching `mediarvester`/`prompt-meter`'s pattern exactly rather than inventing a new one — `docker/setup-qemu-action` + `docker/setup-buildx-action` + `docker/build-push-action`, triggered on any tag push, building `linux/amd64` + `linux/arm64` and pushing to `ghcr.io/platypod/sphaze:<tag>` + `:latest`. No cluster credentials touch GitHub in this flow.
+First deployment piece: `Dockerfile` and `.github/workflows/build.yml`, matching `mediarvester`/`prompt-meter`'s pattern exactly rather than inventing a new one — `docker/setup-qemu-action` + `docker/setup-buildx-action` + `docker/build-push-action`, triggered on any tag push, building `linux/amd64` + `linux/arm64` and pushing to `ghcr.io/platypod/unbegotten:<tag>` + `:latest`. No cluster credentials touch GitHub in this flow.
 
 `Dockerfile` is a two-stage build: `haxe:4.3.7-alpine` (confirmed via Docker Hub's API to actually exist at that exact tag before committing to it — `haxe:4.3.7-alpine3.24`/`haxe:4.3.7-alpine` both do) runs `haxelib install heaps` and `haxe build.hxml`, matching `make build`'s output exactly; `nginx:alpine` then serves the resulting `bin/` with no language runtime in the shipped image. `haxelib install` needed no `haxelib setup` step first — confirmed by actually running `docker run haxe:4.3.7-alpine haxelib install heaps` locally rather than assuming. Built the full image locally afterward (`docker build` + `docker run` + loaded it in-browser) before writing anything into CI — confirmed it renders identically to the local dev build, walls connected, no console errors.
 
-**One manual step ahead, flagged per hooman's request rather than acted on now:** the first tag push will create the `sphaze` GHCR package as **private** (GitHub's default for new packages, and there's no REST API to change visibility — a platform limitation, not a platypod choice). After that first push, someone needs to manually set it public once via `github.com/orgs/platypod/packages` → `sphaze` → Package settings → Danger Zone → Change visibility → Public. Same one-time step `mediarvester`'s README documents; copied the same note into `sphaze`'s README rather than let this be tribal knowledge again.
+**One manual step ahead, flagged per hooman's request rather than acted on now:** the first tag push will create the `unbegotten` GHCR package as **private** (GitHub's default for new packages, and there's no REST API to change visibility — a platform limitation, not a platypod choice). After that first push, someone needs to manually set it public once via `github.com/orgs/platypod/packages` → `unbegotten` → Package settings → Danger Zone → Change visibility → Public. Same one-time step `mediarvester`'s README documents; copied the same note into `unbegotten`'s README rather than let this be tribal knowledge again.
 
 Next: a service in `stack`'s `games` module to actually deploy the image to prod (`Deployment` + `Service` + `IngressRoute`, same shape as `pokeclicker`/`rommapp`) — the prod-deploy-automation question itself (manual vs. Flux vs. webhook) stays deliberately deferred, per README's "Prod deploy" section.
 
@@ -596,7 +596,7 @@ Feedback on `graphics.shaders.TileRingGlow` once the ring/radial-seam glow itsel
 
 Swapped every one of those 9 terms for a Gaussian, `exp(-(d*d) / haloWidthSq)` with `haloWidthSq = 1.96` (i.e. a `1.4`-unit halo width) — same peak brightness exactly on the seam, but the falloff only asymptotes toward zero, spreading the glow softly onto the tile surface on both sides of a seam instead of confining it to a thin band. Bumped `GLOW_MAX_BRIGHTNESS` `0.4` → `0.45` alongside it, since the wider spread reads slightly dimmer at its own peak than the old hard-edged band did at the same nominal brightness.
 
-Verified with the usual static technique: temp-forced `TowerModel.fallGlowIntensity` to a fixed return (`1.0`, then `0.15`) and temp-pointed `GameLoop`'s initial `enterBiome` at `TowerBiome.ID`, rebuilt, screenshotted a fresh browser tab against `localhost:8099` (this project's own `sphaze-dev` preview server) at both extremes, then reverted both temp edits. At full intensity the seams read as a broad, soft wash rather than bright threads; at low intensity the innermost ring boundary is a dim, gently-spreading glow rather than a crisp faint line — both read as light sitting near the seam, not a mark on top of it. `make fmt`/`lint`/`check`/`test` all clean (one `HourglassModelTest` failure seen mid-session turned out to be a stale `bin/test.js` from an interrupted rebuild, not a regression — a clean rerun afterward passed all 3205 assertions).
+Verified with the usual static technique: temp-forced `TowerModel.fallGlowIntensity` to a fixed return (`1.0`, then `0.15`) and temp-pointed `GameLoop`'s initial `enterBiome` at `TowerBiome.ID`, rebuilt, screenshotted a fresh browser tab against `localhost:8099` (this project's own `unbegotten-dev` preview server) at both extremes, then reverted both temp edits. At full intensity the seams read as a broad, soft wash rather than bright threads; at low intensity the innermost ring boundary is a dim, gently-spreading glow rather than a crisp faint line — both read as light sitting near the seam, not a mark on top of it. `make fmt`/`lint`/`check`/`test` all clean (one `HourglassModelTest` failure seen mid-session turned out to be a stale `bin/test.js` from an interrupted rebuild, not a regression — a clean rerun afterward passed all 3205 assertions).
 
 Raised, not yet actioned: the same message also floated "we could eventually make the whole tower dimmer, so it lights up more when we touch grounds" — dimming the tower's own base/ambient lighting so the glow's contrast reads more dramatically as the fall counter climbs. Framed as a tentative, later idea rather than part of this round's ask; left alone pending confirmation on scope (it'd touch the tower's base rendering broadly, not just this one shader) rather than assumed into this pass.
 
@@ -903,7 +903,7 @@ kubeconfig). Worth noting for the future: prod was still running **v0.10.0** —
 `v0.11.0` and `v0.12.0` had been tagged but never deployed, which is exactly
 the gap the manual-deploy choice in `README.md` leaves open. Three releases'
 worth of changes went live at once. Verified: rollout complete, old pod gone,
-`sphaze.platypod.ovh` serving 200.
+`unbegotten.platypod.ovh` serving 200.
 
 **Two-sided maze** (`biomes.twosided.TwoSidedBiome`), hooman's own idea, asked
 for as "write it down and prototype it". One layout, walked from both sides of
@@ -1465,7 +1465,7 @@ score; and the antagonist being the world *settling* — which is the
 disappointment this project already measured in 2026-07-29 turned into a
 theme. A beat-by-beat first hour is written as the falsification test.
 
-**The name should change.** `sphaze` names the prototype's gimmick, and
+**The name should change.** `unbegotten` names the prototype's gimmick, and
 in this direction the sphere is the starting cage. Recommendation:
 **UNBEGOTTEN**, with ORPHAN a close second — the field's own vocabulary
 is already theological ("Garden of Eden", "orphan"), so the register is

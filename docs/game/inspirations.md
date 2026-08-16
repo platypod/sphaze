@@ -31,7 +31,7 @@ great-circle, inverse-legibility and centre-shadow entries pass it hardest;
 
 ### [HyperRogue](https://www.roguetemple.com/z/hyper/) — 72 lands, one geometry
 
-The closest structural match to sphaze's problem, and the reason for the
+The closest structural match to unbegotten's problem, and the reason for the
 rule above. Every one of its lands exists to demonstrate a *different
 property of the hyperbolic plane*: Camelot is a huge circle whose centre you
 cannot find with Euclidean intuition (you have to derive an algorithm);
@@ -57,7 +57,7 @@ Feeds: the "one verb per biome" discipline noted on most backlog entries.
 ### [The Witness](https://gameranx.com/features/id/36898/article/the-witness-puzzle-types-and-rules-guide/) — an area whose lesson is a deleted rule
 
 The elimination-mark area teaches that one rule you had been relying on can
-be cancelled. That's a biome generator on its own, because sphaze has
+be cancelled. That's a biome generator on its own, because unbegotten has
 explicit rules to delete: see-far-not-near (→ candlelight), "exactly one
 path between any two cells" (→ braided mazes, where a dead end no longer
 *proves* a wrong branch), wall permanence (→ corridors that close), the

@@ -1932,3 +1932,50 @@ level) rather than a cull edge.
 `make walk` and ten minutes of walking is the gate on everything else in
 `direction/`. Get other people to try it too — motion tolerance varies
 enormously and a sample of one is not a sample.
+
+## 2026-08-12 — Hyperbolic walking VALIDATED; Risk 8's harness built
+
+**Phase 0's first existential question is answered: yes.** Walking in
+hyperbolic space was played and confirmed tolerable. The direction's
+biggest risk is retired — comfort now demotes from "might kill this
+project" to a standing design constraint. Everything downstream of that
+assumption in `direction/` is unblocked.
+
+**Phase 0 is not finished, though**, and the reason is written into the
+roadmap: Risk 8 (`BECOME` may not be fun) was rated existential and
+explicitly moved *into* Phase 0 — "three bodies on flat ground, ten
+minutes, before any world is designed around it." Six of the nine spaces
+assume it. None of it had been played. So that harness got built rather
+than skipping ahead to Phase 1.
+
+**`tools.become.BecomeModel`** — headless, pure, 17 assertions. Four
+bodies: `Walker` (the control), `Glider` (translates continuously, **has
+no input term at all** so it genuinely cannot be stopped, turns queued
+and applied on the beat), `Oscillator` (motionless between beats, hops on
+them) and `StillLife` (cannot translate, can still look — perception is
+not movement). A global beat drives all of it, and **switching bodies
+costs a beat** with nothing moving during it, taken straight from
+`systems.md` and modelled rather than skipped precisely because it is the
+part most likely to feel bad.
+
+Tests pin the *rules*, which is as far as tests can reach: a glider
+advances with no input and cannot be halted by reverse input; its turns
+land on the beat and are buffered rather than dropped; an oscillator
+doesn't drift between beats; a still life never translates; stopping a
+glider genuinely requires becoming something else; a long frame still
+drains its beats. Whether any of that is *fun* is the open question and
+only a person with the harness can answer it.
+
+**`tools.become.BecomeApp`** (`make become`) — flat Euclidean hex field,
+columns for parallax, the whole field lifting slightly as each beat
+approaches so the boundary can be anticipated rather than surprising.
+Flat on purpose: curvature is separately validated now, and testing both
+at once would make a bad answer ambiguous.
+
+Verified by screenshot only (renders correctly, proper linear flat-space
+horizon — a useful contrast against the hyperbolic harness's compressed
+rim). Input still cannot be delivered in this environment, so the feel is
+unplayed.
+
+Third standalone harness now, all on the `GeodesicPreview` precedent:
+`make walk`, `make become`, none of them touching the real game.

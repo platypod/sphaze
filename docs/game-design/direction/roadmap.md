@@ -46,6 +46,16 @@ Build:
   geometry you can walk — **built 2026-08-12**:
   `tools.hyperbolic.HyperbolicWalkApp`, standalone, `make walk`
 
+**Hyperbolic walking: VALIDATED 2026-08-12.** Played and confirmed
+tolerable. The direction's first existential risk is retired; comfort
+stays a standing design constraint rather than a settings-menu
+afterthought.
+
+**Risk 8 is the other half of Phase 0, and is still open.** `make become`
+builds the three-bodies-on-flat-ground harness — deliberately flat, so
+curvature and body-feel cannot confound each other. Same treatment
+needed: ten minutes, plus other people.
+
 **Status: waiting on a playtest.** The room renders correctly (verified
 by screenshot: heptagonal floor, home spire at the origin, columns
 crowding to a horizon that is genuinely the horizon rather than a cull
@@ -139,7 +149,7 @@ moments.
 | 5 | **"The simulation is honest" is expensive** | medium | decide *how* honest explicitly — see open questions |
 | 6 | **Engine bet** | medium | named revisit trigger in [architecture.md](architecture.md); do not relitigate otherwise |
 | 7 | **Solo burnout over 3-5 years** | high | Phase 1 ships; visible progress; the hub gaining curvature is a progress bar for the *developer* too |
-| 8 | **`BECOME` may not be fun** — the core system, never played | **existential** (*added on review*) | moved into Phase 0; three bodies on flat ground, ten minutes, before any world is designed around it |
+| 8 | **`BECOME` may not be fun** — the core system, never played | **existential** (*added on review*) | moved into Phase 0; **harness built 2026-08-12** (`make become`), awaiting the same playtest treatment the walking question got |
 | 9 | **Repeated-traversal locomotion may be boring** — the Turn specifically needs the loop walked more than once, on purpose | high (*added 2026-08-12*) | see [world-and-threads.md](world-and-threads.md)'s own Turn entry: either the movement itself has to be a *Race the Sun*-grade pleasure, or every lap needs its own improvable skill. Unresolved; blocks judging that space's chirality mechanism at all |
 
 ### Risk 2, in detail — because it is the one that hides

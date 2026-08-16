@@ -41,6 +41,7 @@ import geometry.CurvedSpaceTest;
 import geometry.HyperbolicProjectionTest;
 import geometry.HyperbolicTilingTest;
 import geometry.HyperbolicWalkerTest;
+import tools.become.BecomeModelTest;
 import tools.geodesic.GeodesicCoarseMazeTest;
 import tools.geodesic.GeodesicCollisionTest;
 import tools.geodesic.GeodesicDualTest;
@@ -71,6 +72,7 @@ class TestMain {
 		runner.addCase(new HyperbolicTilingTest());
 		runner.addCase(new HyperbolicProjectionTest());
 		runner.addCase(new HyperbolicWalkerTest());
+		runner.addCase(new BecomeModelTest());
 		runner.addCase(new SphereMathTest());
 		runner.addCase(new GridModelTest());
 		runner.addCase(new MazeGeneratorTest());

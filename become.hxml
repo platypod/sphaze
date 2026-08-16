@@ -1,0 +1,7 @@
+-cp src
+-lib heaps
+-main tools.become.BecomeApp
+-js bin/become.js
+-D analyzer-optimize
+-D resourcesPath=res
+--macro nullSafety("src", Strict)

@@ -2139,3 +2139,54 @@ runs the game rather than on an answer.
 **Phase 0 is complete.** One risk validated, one killed cheaply. That is
 exactly the outcome the phase was designed to produce, and it cost one
 harness rather than a year of building a world around an untested core.
+
+## 2026-08-12 — The spatial refactor is far smaller than architecture.md claimed
+
+Asked to start the refactor rather than build more harnesses. Surveyed
+the blast radius first, and two findings collapsed most of it.
+
+**Finding 1: `Space` has exactly one consumer.** All `space.upAt` /
+`space.moveAlong` calls are inside `PlayerModel`. Every other file reads
+`player.pos` / `forward` / `surfaceUp`. So the abstraction is fully
+encapsulated and can be changed — or extended — without touching the 22
+files that read player state.
+
+**Finding 2, the important one: the "provable blocker" was overstated,
+and I proved it by building past it.** `architecture.md`'s headline
+technical fact was that `Space` *cannot* hold hyperbolic space, because
+Hilbert's theorem forbids an isometric embedding of H² in ℝ³. The theorem
+is right; the conclusion conflated an **isometric embedding** with a
+**coordinate model**. `Space`'s signature never says `h3d.Vector` means
+an ambient Euclidean point — it says three floats, and those can be
+hyperboloid coordinates on `⟨p,p⟩ = -1` under the Minkowski form, which
+is an intrinsic and singularity-free description of H² in exactly three
+numbers.
+
+The tell was there the whole time: **`SphereSpace`'s own `pos` is a unit
+3-vector, and unit 3-vectors *are* the natural model of S²** rather than
+an embedding of it. `GeodesicLookup` has been doing intrinsic spherical
+geometry since it was written. Hyperbolic is the same trick with one sign
+flipped.
+
+New `biomes.common.space.hyperbolic.HyperbolicSpace` implements the
+**existing, unmodified `Space` interface**: `moveAlong` is a Lorentz
+boost with the same structure as `SphereSpace`'s rotation (circular
+functions swapped for hyperbolic ones, `forward` split into its
+along-direction component and an untouched perpendicular remainder), and
+`upAt` returns render-space up — correct rather than a fudge, since the
+game's spaces are products (H²×ℝ) and height is not expressible in the
+three surface coordinates. `FlatSpace` already returns a constant for the
+same reason.
+
+Seven tests, including **agreement with `geometry.CurvedSpace`** — two
+implementations written days apart landing on the same number, which is
+stronger evidence than either passing its own suite. Also re-checks
+holonomy through the `Space` interface so a bug here cannot hide behind
+correct primitives elsewhere. 39,927 assertions, `make fmt lint check
+test` clean, and the existing game is untouched.
+
+**What is genuinely still required**, now that the scope is honest:
+hyperbolic collision and mesh building are new code (they cannot reuse
+ℝ³ distance), and gravity written against `upAt` needs to know it is
+getting render-space up. That is a real but ordinary body of work — not
+a rewrite of the spatial core.

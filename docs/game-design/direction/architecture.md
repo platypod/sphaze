@@ -40,6 +40,38 @@ isometric immersion of the hyperbolic plane into ℝ³. Not "hard", not
 > space, and no amount of engineering will make it. This is the single
 > most important technical fact in this document.
 
+> **Corrected 2026-08-12, by building it.** The theorem above is right;
+> the conclusion drawn from it was **too strong**, and the refactor it
+> demanded turned out to be far smaller than this section claims.
+>
+> `Space`'s signature never actually says `h3d.Vector` means *"a point in
+> ambient Euclidean 3-space"*. It says three floats. Nothing stops those
+> being **hyperboloid model coordinates** — a point on `⟨p,p⟩ = -1` under
+> the Minkowski form — which is an intrinsic, singularity-free description
+> of H² needing exactly three numbers. Hilbert forbids an *isometric
+> embedding*; it says nothing about a *coordinate model*, and the two got
+> conflated here.
+>
+> The tell was available all along: **`SphereSpace`'s `pos` is a unit
+> 3-vector, and unit 3-vectors *are* the natural model of S²**, not an
+> embedding of it. `GeodesicLookup` has been doing intrinsic spherical
+> geometry this whole time. Hyperbolic is the same trick with one sign
+> flipped.
+>
+> `biomes.common.space.hyperbolic.HyperbolicSpace` implements the
+> **existing, unmodified `Space` interface** and is tested, including
+> agreement with the independently-tested `geometry.CurvedSpace`. The
+> "~41 files materially affected" figure below stands as a measurement of
+> `h3d.Vector` usage, but most of it is not blocked: **`Space` has exactly
+> one consumer, `PlayerModel`**, and everything else reads
+> `player.pos`/`forward`/`surfaceUp`, which keep working unchanged.
+>
+> What is genuinely still required is narrower than "rewrite the spatial
+> core": hyperbolic *collision* and *mesh building* are new code (they
+> cannot reuse ℝ³ distance), and `upAt` returns render-space up, which is
+> correct for a product geometry but worth knowing before writing gravity
+> against it.
+
 Everything below follows from taking that seriously rather than looking
 for a workaround.
 

@@ -7,6 +7,7 @@ import biomes.common.maze.MazeCarverTest;
 import biomes.common.grid.GridMeshTest;
 import biomes.common.grid.GridModelTest;
 import biomes.common.space.flat.FlatSpaceTest;
+import biomes.common.space.hyperbolic.HyperbolicSpaceTest;
 import biomes.common.space.mobius.MobiusMathTest;
 import biomes.common.space.mobius.MobiusSpaceTest;
 import biomes.common.space.sphere.SphereMathTest;
@@ -71,6 +72,7 @@ class TestMain {
 		runner.addCase(new HyperbolicTilingTest());
 		runner.addCase(new HyperbolicProjectionTest());
 		runner.addCase(new HyperbolicWalkerTest());
+		runner.addCase(new HyperbolicSpaceTest());
 		runner.addCase(new SphereMathTest());
 		runner.addCase(new GridModelTest());
 		runner.addCase(new MazeGeneratorTest());

@@ -108,7 +108,7 @@ language that makes it recognisable at a glance beyond its colour
 temperature, the same way [world-and-threads.md](world-and-threads.md)
 gives each space its own legibility law rather than reusing the Fold's.
 
-Asked for directly (2026-08-12): variation from one biome to the next,
+The brief: variation from one biome to the next,
 "very low level design, nearly no texture, only geometric shapes." Seeded
 so far:
 
@@ -225,7 +225,7 @@ object will be miserable here, and it is kinder to say so in the job post.
   the same mathematical reason. This should be genuinely oppressive and it
   should resolve to clarity the moment you look at what is close.
 
-  **A real instrument, not only atmosphere (2026-08-12)** — worked out
+  **A real instrument, not only atmosphere** — worked out
   alongside [world-and-threads.md](world-and-threads.md)'s own Sprawl
   navigation mechanism, which needs exactly this: a consistent audible
   pulse or timbre shift exactly at ring boundaries (the same rings

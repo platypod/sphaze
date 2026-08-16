@@ -20,60 +20,38 @@ Positions are `h3d.Vector` — points in ambient Euclidean 3-space — and
 (`SphereSpace`, `FlatSpace`, `MobiusSpace`, `SphereExteriorSpace`) works
 because its surface is **isometrically embedded in ℝ³**.
 
-**How far that assumption reaches, measured rather than guessed** (an
-earlier version of this line said "53 of 122 source files", which
-conflated *mentions* `h3d.Vector` with *depends on the embedding* and
-overstated the blast radius): 54 files mention `h3d.Vector`; **41 do
-spatial reasoning with it** (transport, collision, tangent-frame maths)
-and are genuinely affected; 16 are mesh builders using it as a vertex
-sink, which mostly survive a change of what feeds them. So the honest
-figure is *roughly 40 files materially affected, of which the collision
-and lookup code is the hard part* — still a deep change, but a third
-smaller than first stated and much more concentrated.
-
 The hyperbolic plane admits no such embedding. **Hilbert's theorem**
 (1901), sharpened by **Hilbert–Efimov**: there is no complete C²
-isometric immersion of the hyperbolic plane into ℝ³. Not "hard", not
-"not yet found" — impossible, proved, 125 years old.
+isometric immersion of the hyperbolic plane into ℝ³. Not "hard", not "not
+yet found" — impossible, proved, 125 years old. See
+[mathematics.md](mathematics.md) §3.
 
-> The current architecture cannot represent the game's most important
-> space, and no amount of engineering will make it. This is the single
-> most important technical fact in this document.
+**What the theorem does and does not forbid.** It forbids an isometric
+*embedding*. It says nothing about a *coordinate model*, and conflating
+the two is the trap here: `Space`'s signature never says `h3d.Vector`
+means "a point in ambient Euclidean 3-space". It says three floats, and
+those can be **hyperboloid coordinates** — a point on `⟨p,p⟩ = −1` under
+the Minkowski form, an intrinsic, singularity-free description of H²
+needing exactly three numbers.
 
-> **Corrected 2026-08-12, by building it.** The theorem above is right;
-> the conclusion drawn from it was **too strong**, and the refactor it
-> demanded turned out to be far smaller than this section claims.
->
-> `Space`'s signature never actually says `h3d.Vector` means *"a point in
-> ambient Euclidean 3-space"*. It says three floats. Nothing stops those
-> being **hyperboloid model coordinates** — a point on `⟨p,p⟩ = -1` under
-> the Minkowski form — which is an intrinsic, singularity-free description
-> of H² needing exactly three numbers. Hilbert forbids an *isometric
-> embedding*; it says nothing about a *coordinate model*, and the two got
-> conflated here.
->
-> The tell was available all along: **`SphereSpace`'s `pos` is a unit
-> 3-vector, and unit 3-vectors *are* the natural model of S²**, not an
-> embedding of it. `GeodesicLookup` has been doing intrinsic spherical
-> geometry this whole time. Hyperbolic is the same trick with one sign
-> flipped.
->
-> `biomes.common.space.hyperbolic.HyperbolicSpace` implements the
-> **existing, unmodified `Space` interface** and is tested, including
-> agreement with the independently-tested `geometry.CurvedSpace`. The
-> "~41 files materially affected" figure below stands as a measurement of
-> `h3d.Vector` usage, but most of it is not blocked: **`Space` has exactly
-> one consumer, `PlayerModel`**, and everything else reads
-> `player.pos`/`forward`/`surfaceUp`, which keep working unchanged.
->
-> What is genuinely still required is narrower than "rewrite the spatial
-> core": hyperbolic *collision* and *mesh building* are new code (they
-> cannot reuse ℝ³ distance), and `upAt` returns render-space up, which is
-> correct for a product geometry but worth knowing before writing gravity
-> against it.
+The sphere had been using the same trick all along: `SphereSpace`'s `pos`
+is a unit 3-vector, and unit 3-vectors *are* the natural model of S², not
+an embedding of it. Hyperbolic is that with one sign flipped.
 
-Everything below follows from taking that seriously rather than looking
-for a workaround.
+So the migration below is **narrower than a rewrite of the spatial core**.
+`biomes.common.space.hyperbolic.HyperbolicSpace` implements the existing,
+unmodified `Space` interface. `Space` has exactly one consumer,
+`PlayerModel`; everything else reads `player.pos`/`forward`/`surfaceUp`
+and is untouched. What genuinely had to be new was hyperbolic *collision*
+and *mesh building* — neither can reuse ℝ³ distance — and turning, which
+had never been in `Space` at all.
+
+For scale, measured rather than guessed: 54 files mention `h3d.Vector`;
+41 do spatial reasoning with it and 16 use it as a vertex sink. That
+figure stands as a measurement of usage, not of blocked work.
+
+Everything below follows from taking the theorem seriously without
+overreading it.
 
 ## The replacement: one representation, parameterised by curvature
 
@@ -310,7 +288,7 @@ has been *played*.
 ## Measured since writing this
 
 `geometry.CurvedSpace`/`Isometry`/`HyperbolicTiling` and their tests were
-built in the same session — steps 1 and part of 5 of the plan above — so
+built — steps 1 and part of 5 of the plan above — so
 the claims here are demonstrated rather than asserted. Two results worth
 reading before implementing anything else:
 [../notes/hyperbolic-simulation-findings.md](../notes/hyperbolic-simulation-findings.md).

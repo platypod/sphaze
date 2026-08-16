@@ -1,8 +1,9 @@
-# Candidate — The Painter's House
+# Forsaken — The Painter's House
 
-**Parked (alive, not leading).** See [README.md](README.md) for how this
-fits against the other candidates, and the requirements every candidate has
-to meet.
+**Not chosen.** [garden-of-eden.md](garden-of-eden.md) is the storyline;
+see [README.md](README.md) for why. Kept because the material is
+salvageable, and a reader deciding whether to reopen it should be able to
+read what it actually was.
 
 The player is a cat in the house of a painter who is gone — dead, or lost
 inside their own work; never said outright. The hub sphere is the house;

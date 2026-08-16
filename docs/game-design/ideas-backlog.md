@@ -332,7 +332,7 @@ partway through, so biomes already solved turn out to have had an obvious
 path invisible to the player's own eye the whole time.**
 
 Raised directly (2026-08-10), alongside the
-[Garden of Eden candidate](storylines/candidate-garden-of-eden.md)'s own
+[Garden of Eden candidate](storylines/garden-of-eden.md)'s own
 "each stage a gameplay unlock" driver — colour vision reads there as an
 evolution stage aimed at *reading* rather than *moving*, the way `gun`
 is aimed at scouting and `spaceship` at speed. This entry is the
@@ -793,7 +793,7 @@ Four variants raised together, not mutually exclusive:
 
 **Story reading added (2026-08-10, hooman).** The same activate →
 propagate → wall-opens loop this entry already scopes, reread as the
-[Garden of Eden candidate](storylines/candidate-garden-of-eden.md)'s
+[Garden of Eden candidate](storylines/garden-of-eden.md)'s
 glider evolution stage made literal: the reward for solving the maze this
 way is framed as **new information plus a new gameplay mechanism** —
 i.e. whatever the taxonomy's next stage (spaceship/gun) unlocks, not a

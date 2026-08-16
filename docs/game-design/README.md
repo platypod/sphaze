@@ -4,12 +4,11 @@ The design documentation, split by lifecycle. Each file holds one kind of
 content, and content *moves* between them as its status changes — the rules of
 movement are the contract.
 
-> **Read [direction/](direction/README.md) first if you are new here, or
-> returning after 2026-08-11.** It proposes a step change for the whole
-> project — the cellular automaton, the non-euclidean geometry and the
-> Garden-of-Eden story turn out to be one idea rather than three, and the
-> rest of this folder is written from before that was noticed. Nothing in
-> it is agreed yet.
+> **Start with [direction/](direction/README.md).** It is what this game
+> *is*: the cellular automaton, the non-euclidean geometry and the
+> Garden-of-Eden story are one idea rather than three, and all nine of its
+> spaces are built and walkable. The rest of this folder predates it and
+> is kept for the material it still holds.
 
 ```mermaid
 flowchart LR
@@ -18,18 +17,19 @@ flowchart LR
     philosophy -->|cuts against a pillar| discuss([raise it explicitly])
     backlog -->|built| code[/the code +<br/>PROJECT_LOG.md/]
     backlog -->|outgrows 25 lines| notes[notes/<br/><i>one design note</i>]
-    story[storylines/<br/><i>candidate-*.md, current story state</i>] -->|"winner: drop prefix"| story2[the story]
-    story -->|"loser"| records[(design-decisions-records.md<br/><i>append-only</i>)]
-    story -->|changes a pillar| philosophy
+    story[storylines/<br/><i>the chosen story</i>] --> direction[direction/<br/><i>what the game is</i>]
+    story -->|forsaken alternatives| records[(design-decisions-records.md<br/><i>append-only</i>)]
+    direction -->|changes a pillar| philosophy
+    direction -->|becomes buildable| backlog
     inspirations[[inspirations.md<br/><i>external references</i>]] -.->|feeds| backlog
     code -.->|what it settled| backlog
 ```
 
 | File | Holds | Moves |
 |---|---|---|
-| [direction/](direction/README.md) | **The whole-game direction** — what this game *is*, above any single mechanic. Written 2026-08-11; **proposed, not adopted** | Feeds [ideas-backlog.md](ideas-backlog.md) when a piece becomes buildable; proposes pillar changes to [philosophy.md](philosophy.md) rather than assuming them; decisions land in [design-decisions-records.md](design-decisions-records.md) |
+| [direction/](direction/README.md) | **The whole-game direction** (including [mathematics.md](direction/mathematics.md), the technical reference) — what this game *is*, above any single mechanic. All nine of its spaces are built | Feeds [ideas-backlog.md](ideas-backlog.md) when a piece becomes buildable; pillar changes go to [philosophy.md](philosophy.md); decisions land in [design-decisions-records.md](design-decisions-records.md) |
 | [philosophy.md](philosophy.md) | Design pillars — what this game is trying to be | Changes rarely; when a decision changes a pillar, update it and record why in [design-decisions-records.md](design-decisions-records.md) |
-| [storylines/](storylines/README.md) | The **current state** of the story: one `candidate-*.md` file per live/parked candidate, plus a `README.md` with the map and requirements | When a story decision lands, the winner's file drops its `candidate-` prefix (and its pillar consequences fold into philosophy.md); losers' files are deleted and their content moves to design-decisions-records.md with the why |
+| [storylines/](storylines/README.md) | The **chosen story** — Garden of Eden — and the two forsaken alternatives, kept for the material they still hold | Settled. The story now lives as [direction/](direction/README.md); this folder is its statement of premise and its record of what lost |
 | [ideas-backlog.md](ideas-backlog.md) | Not-yet-implemented ideas, checked against philosophy.md before entering | When implemented, **delete the entry** — the implementation plus `../PROJECT_LOG.md` is the record from then on. Keep only whatever part is still open |
 | [design-decisions-records.md](design-decisions-records.md) | Decision records: what was decided, what was rejected, and why | Append-only; entries never leave |
 | [inspirations.md](inspirations.md) | External references (games, design writing) with the specific lesson each carries, and which backlog entry it feeds | Entries stay after the idea they fed ships — unlike backlog entries — since "why is it shaped like this" outlives the shipping |

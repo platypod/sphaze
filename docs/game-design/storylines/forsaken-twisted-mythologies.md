@@ -1,7 +1,9 @@
-# Candidate — Twisted mythologies
+# Forsaken — Twisted mythologies
 
-**In play (engine).** See [README.md](README.md) for how this fits against
-the other candidates, and the requirements every candidate has to meet.
+**Not chosen.** [garden-of-eden.md](garden-of-eden.md) is the storyline;
+see [README.md](README.md) for why. Kept because the material is
+salvageable, and a reader deciding whether to reopen it should be able to
+read what it actually was.
 
 Not one more storyline but an engine the surviving candidates can plug
 into. Premise: real myths (Greek, Egyptian, Norse, anywhere — famous or

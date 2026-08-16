@@ -106,12 +106,6 @@ just a slightly upsetting thing in a hole.
 
 ### 42-52 min · The return — "I have been here before"
 
-> **Replaced 2026-08-12.** This beat used to be "The gap — *I can be
-> something else*", where a chasm forced the player into a glider body and
-> taught that bodies are trades. `BECOME` was cut after Phase 0, so the
-> lesson had to change. What went in its place teaches the game's *actual*
-> progression grammar, which the old version never did.
-
 The path loops back past somewhere you have already been — the socket, or
 the hollow with the looping thing in it. Nothing here has changed.
 
@@ -131,12 +125,6 @@ world does not open up, you do. Every gate in the next fourteen hours
 works exactly like this one.*
 
 ### 52-60 min · The reveal — "what am I, then?"
-
-> **Also revised 2026-08-12.** The reveal used to be "I am one too" —
-> the camera pulls back and you are five cells, the same kind of object as
-> the glider you drew. That was true under `BECOME`, where the player
-> climbed the taxonomy from the bottom. Now the player is *far past* the
-> primitives, so the same camera move has to deliver a much better beat.
 
 Somewhere high, or at the antipode, or wherever the level design has been
 patiently steering you: a vantage.

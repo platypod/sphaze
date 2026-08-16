@@ -24,7 +24,7 @@ is about, and it happens to be the theological term for the same idea
 Eden" as the field's own borrowed vocabulary.
 
 - **Exact.** It states the win condition and the theme in one word.
-- **Ownable, though not virgin** — checked 2026-08-12, after the first
+- **Ownable, though not virgin** — checked after the first
   version of this file asserted "essentially zero competition" without
   looking. There is an obscure 2016 TV movie
   ([tt5660230](https://www.imdb.com/title/tt5660230/)) and a 1984 Lin
@@ -53,7 +53,7 @@ recommendation — decide it with a trademark and store search, not taste
 alone.
 
 ### AMENABLE
-**Strengthened by the 2026-08-12 thesis correction**, and now genuinely
+**Strengthened by the corrected thesis**, and now genuinely
 close to the recommendation. Amenability is the exact property that makes
 freedom *expensive* — a world that balances its books, where every
 exception is paid for by an erasure. In ordinary English the word means

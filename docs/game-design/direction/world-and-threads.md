@@ -57,9 +57,9 @@ endgame the "safe room" is itself a non-euclidean space you had to learn
 to read, and the player who returns will realise they walked into it
 without noticing. That is the progress bar, and it is diegetic.
 
-**Exists:** `biomes.hub.HubBiome`, the paintings-as-doorways decision
-(2026-07-17), the hourglass. All reusable; the paintings become windows
-onto other curvatures.
+**Built — `biomes.hub.HubBiome`**, with the paintings-as-doorways
+mechanic and the hourglass. The curvature accumulation described above is
+not built.
 
 ---
 
@@ -86,10 +86,10 @@ places where the tiling's regularity breaks, and they are therefore the
 only places you can write into the substrate: they are the **sockets** of
 the world.
 
-**Exists:** essentially all of it. `tools.geodesic.*` — the baked
+**Built — `tools.geodesic.*`**, and to the highest standard of the nine: the baked
 frequency-11 sphere, `GeodesicVentrellaState`, the confirmed traveling
 glider, the coarse maze, wall reactivity, and the pentagon-composing
-engraving built this week. This space is *done* to prototype standard.
+engraving.
 
 **To explore:** add relief to the sphere, with various heights levels,
 maybe making the maze more complex. Could also be made into a 3D maze
@@ -98,19 +98,6 @@ altogether, breaking the 2-dimensionality of the sphere.
 ---
 
 ### 2. The Weft — the sphere, wired to itself *(κ > 0)*
-
-> **Corrected 2026-08-12, in conversation.** The first version of this
-> entry called the Weft "the projective plane, walkable" — a genuine
-> quotient manifold, points literally identified, half the walkable area
-> of a sphere. That doesn't cohere with the mechanic actually attached to
-> it: **remove/add, opposite** (chosen the same conversation) needs two
-> *distinct* walls to be opposite to each other, and a true quotient has
-> only one wall per identified edge — there is nothing for it to be
-> opposite *to*. Caught by asking what the player's own antipodal image
-> should physically do, which has no good answer under a real quotient
-> (there's no second body to ask the question of) and an easy one under
-> the corrected model below. Left visible rather than silently fixed, same
-> as the thesis correction in [README.md](README.md).
 
 **Geometry:** an ordinary sphere — the same one the Fold walks — with no
 manifold-level trick at all. What's authored is a **rule laid over it**:
@@ -149,8 +136,7 @@ familiar — even though you've genuinely walked a quarter or half
 circumference to a real, distant place. The illusion of identification,
 without needing the real manifold to produce it.
 
-**Exists: `biomes.weft.WeftBiome`, walkable in the game since
-2026-08-16.** The pairing, the opposite-state invariant, toggling the
+**Built — `biomes.weft.WeftBiome`.** The pairing, the opposite-state invariant, toggling the
 wall you are facing, and the echo standing at your antipode. What is
 *not* built is the puzzle — no gate yet specifically requires reaching
 through the antipode, because that is level design and wants a mechanic
@@ -175,14 +161,6 @@ Three findings, none predictable from the design:
 ---
 
 ### 3. The Repeat — the flat torus *(κ = 0)*
-
-> **Revised 2026-08-12, in conversation.** The original entry gave this
-> space a legibility law (learn the period, discount the echoes) and no
-> mechanism — a thing to notice, not a thing to do. Not an error like the
-> Weft's, so no correction callout, just a straightforward rewrite: asked
-> directly for "riddles and tricks" rather than a contemplative read, and
-> for a way to *create or reveal differences by doing something*. This
-> replaces the passive version with an active one.
 
 **Geometry:** not a single simulated region rendered many times by
 wraparound — **many separate tiles**, each genuinely its own simulation,
@@ -239,8 +217,7 @@ started. But not all of it. Something else once stood exactly where
 you're standing, and left a mark specifically so it could be found this
 way.
 
-**Exists: `biomes.repeat.RepeatBiome`, walkable in the game since
-2026-08-16.** The cell city, tiled deterministically; divergences that
+**Built — `biomes.repeat.RepeatBiome`.** The cell city, tiled deterministically; divergences that
 remove exactly one building and open the ground under it; a fragment
 standing in the gap; per-tile solved state. What is *not* built is the
 composite-mark reveal — the payload — deliberately held until the
@@ -286,7 +263,7 @@ own reflection annihilates.** That's a real Life behaviour, a real
 non-orientability consequence, and a puzzle verb, all at once — the
 geometry-is-content pillar at its cleanest.
 
-**Mechanism, kept but unresolved (2026-08-12).** The direction, agreed:
+**Mechanism, kept but unresolved .** The direction, agreed:
 your handedness is set by *how you route*, not just whether you loop —
 send a glider around an odd number of times and it arrives mirrored, even
 and it doesn't, so the path you choose determines what arrives. Somewhere
@@ -300,8 +277,7 @@ part this space is trying to avoid. The marks-as-reference idea
 (legibility law, above) is the leading candidate, not a settled answer —
 revisit once there's something to playtest.
 
-**Locomotion has to be pleasurable, not merely present — flagged
-directly (2026-08-12), and it's the harder problem than the chirality
+**Locomotion has to be pleasurable, not merely present — and it's the harder problem than the chirality
 mechanism itself.** This space's entire premise is *doing the loop more
 than once*, deliberately, to test and then to spend your own state. That
 is a much higher tolerance for repeated traversal than any other space in
@@ -338,8 +314,7 @@ makes it distinct from both.
 **Story function:** the first space that changes *you* rather than
 obstructing you.
 
-**Exists: `biomes.turn.TurnBiome`, walkable in the game since
-2026-08-16** — a flat strip quotiented by a glide reflection, built
+**Built — `biomes.turn.TurnBiome`**, a flat strip quotiented by a glide reflection, built
 against this entry's own stated ordering (the ribbon first, since a bad
 ribbon kills a good mechanic). It moves at 2.4x walking speed with a
 rhythm of obstacles to weave, taking *both* of the ways out named above
@@ -380,7 +355,7 @@ yourself turned.
 **Verb:** circle — loop a defect deliberately, to rotate yourself or a
 carried pattern into an orientation you could not otherwise reach.
 
-**The mechanism, worked out 2026-08-12.** Unlike the Turn's flip, this
+**The mechanism.** Unlike the Turn's flip, this
 rotation is **continuous, not binary**: loop the same defect twice and you
 get twice the angle; loop a second defect with a different angle and the
 two compose. That's a real dial, not a coin flip — the thing that keeps
@@ -425,8 +400,7 @@ on the Fold are cone points too. The player should realise this
 themselves, and it should land hard: **the sockets on your home world are
 the same thing as the puzzle here.**
 
-**Exists: `biomes.defect.DefectBiome`, walkable in the game since
-2026-08-16.** The cone chart, the seam, the holonomy, and the markers to
+**Built — `biomes.defect.DefectBiome`.** The cone chart, the seam, the holonomy, and the markers to
 read a rotation against — a meridian, concentric rings, a spire on the
 apex. The socket is *not* built: it needs `CARRY`, which does not exist.
 
@@ -477,8 +451,7 @@ a museum or a graveyard rather than a place with weather. Elementary
 evidence lives — Rule 110 is Turing-complete, and a player who has spent
 ten hours in a cellular world should be allowed to *see* that.
 
-**Exists: `biomes.ribbon.RibbonBiome`, walkable in the game since
-2026-08-16.** Rule 110's spacetime diagram as terrain, a monolith on
+**Built — `biomes.ribbon.RibbonBiome`.** Rule 110's spacetime diagram as terrain, a monolith on
 generation 0, and nothing that ticks. The predecessor content the story
 function calls for is not built — the monolith is a placeholder for it.
 
@@ -505,7 +478,7 @@ around each vertex. Margenstern's own environment for hyperbolic cellular
 automata, so the simulation side rests on developed literature rather than
 improvisation.
 
-**Not the exterior of anything, clarified 2026-08-12** — asked directly,
+**Not the exterior of anything** — asked directly,
 worth being precise about. Curvature is a property of a surface itself,
 not which side you stand on; the outside of a sphere is still positively
 curved, still amenable, already a different built biome
@@ -547,7 +520,7 @@ Camelot problem is the model: you cannot find the centre of a large circle
 by Euclidean intuition, you have to *derive a procedure* and execute it.
 Getting lost is not a failure state here, it is the ambient condition.
 
-**The algorithm, worked out 2026-08-12.** Finding a location genuinely
+**The algorithm.** Finding a location genuinely
 needs two components, not one — the real structure of the problem, not a
 hand-wave:
 
@@ -587,8 +560,7 @@ entire payoff of the preceding hours.
 And: you cannot yet become one. You've seen the door. You're the wrong
 shape.
 
-**Exists: `biomes.sprawl.SprawlBiome`, walkable in the game since
-2026-08-16.** A `{7,3}` floor, columns for parallax, and one amber home
+**Built — `biomes.sprawl.SprawlBiome`.** A `{7,3}` floor, columns for parallax, and one amber home
 tile that returns to the hub — the geometry is real and nothing else is.
 Under it: `geometry.HyperbolicTiling` (ring populations and φ² growth
 tested), `HyperbolicProjection`, `HyperbolicSpace`, and
@@ -623,8 +595,7 @@ group rather than a point.
 **Story function:** late-game mastery. The space that proves you have
 learned to think in geometries rather than in maps.
 
-**Exists: `biomes.knot.KnotBiome`, walkable in the game since
-2026-08-16** — the last of the nine to be built, and the piece
+**Built — `biomes.knot.KnotBiome`**, the last of the nine, and the piece
 deliberately held back when the quotient framework landed, since it is
 real hyperbolic geometry rather than a parameter change.
 
@@ -666,15 +637,6 @@ on understanding rather than on permission. No journal — see
 [systems.md](systems.md) for how the game remembers without a UI.
 
 ### Thread 1 — The Reconstruction *(the spine)*
-
-> **Replaced "The Ascent", 2026-08-12, after Phase 0.** The original
-> version had the player *climb* the taxonomy, wearing each rung as a body
-> (`BECOME`). That was played and rejected — the bodies were unconvincing
-> to control, and the verdict was that the player should be *"a cell that
-> evolved further ahead… we will still play around and discover the basic
-> rules, states and patterns, but only to retroactively understand what we
-> are and how we came to be. But let's not replay the early days."* This
-> is that, and it is a better thread.
 
 You do not climb the taxonomy. **You are already past it** — a
 configuration far more complex than anything you will meet, with no

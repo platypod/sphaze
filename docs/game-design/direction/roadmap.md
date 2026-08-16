@@ -36,22 +36,22 @@ Everything in this folder is worthless if the answer is the second one.
 Build:
 - `CurvedSpace` + `Isometry`, headless, tested against closed-form
   identities (steps 1-2 of the migration plan in
-  [architecture.md](architecture.md)) — **built 2026-08-11**
-- the projection — **built 2026-08-12** as tested CPU-side Haxe
+  [architecture.md](architecture.md)) — **built**
+- the projection — **built** as tested CPU-side Haxe
   (`geometry.HyperbolicProjection`) rather than an HxSL fragment, on
   purpose: the maths can be unit-tested, a shader cannot be verified in
   this environment at all. Port to HxSL once the room is confirmed to
   look right.
 - **one bare `{7,3}` room**, no art, no simulation, no content — just
-  geometry you can walk — **built 2026-08-12**:
+  geometry you can walk — **built**:
   `tools.hyperbolic.HyperbolicWalkApp`, standalone, `make walk`
 
-**Hyperbolic walking: VALIDATED 2026-08-12.** Played and confirmed
+**Hyperbolic walking: VALIDATED.** Played and confirmed
 tolerable. The direction's first existential risk is retired; comfort
 stays a standing design constraint rather than a settings-menu
 afterthought.
 
-**Risk 8: ANSWERED, and the answer was no (2026-08-12).** The
+**Risk 8: ANSWERED, and the answer was no.** The
 three-bodies harness was built and played. `BECOME` is **cut** — the
 bodies were unconvincing to control and switching was judged the wrong
 verb outright. The harness has been deleted (it is in git history);
@@ -65,16 +65,8 @@ movement is free.
 one validated, one killed cheaply, which is exactly the outcome the phase
 was designed to produce.
 
-**Status: waiting on a playtest.** The room renders correctly (verified
-by screenshot: heptagonal floor, home spire at the origin, columns
-crowding to a horizon that is genuinely the horizon rather than a cull
-edge). Motion and comfort are **unverified and unverifiable here** — this
-environment cannot deliver input to the canvas. Running `make walk` and
-walking it is the whole of what remains, and it is the gate on
-everything else in this folder.
-
-**Kill criteria, decided in advance so they cannot be rationalised away
-later:**
+**The kill criteria it was judged against**, decided in advance so they
+could not be rationalised away afterwards:
 
 - If hyperbolic first-person walking is nauseating for the developer
   within 10 minutes, and no amount of FOV, movement-speed or turn-rate
@@ -163,19 +155,10 @@ moments.
 | 5 | **"The simulation is honest" is expensive** | medium | decide *how* honest explicitly — see open questions |
 | 6 | **Engine bet** | medium | named revisit trigger in [architecture.md](architecture.md); do not relitigate otherwise |
 | 7 | **Solo burnout over 3-5 years** | high | Phase 1 ships; visible progress; the hub gaining curvature is a progress bar for the *developer* too |
-| 8 | ~~**`BECOME` may not be fun**~~ | **RETIRED 2026-08-12** | played in Phase 0 and the answer was no; the system was cut rather than fixed. See [systems.md](systems.md) for what carries progression instead |
+| 8 | ~~**`BECOME` may not be fun**~~ | **RETIRED** | played in Phase 0 and the answer was no; the system was cut rather than fixed. See [systems.md](systems.md) for what carries progression instead |
 | 9 | **Repeated-traversal locomotion may be boring** — the Turn specifically needs the loop walked more than once, on purpose | high (*added 2026-08-12*) | see [world-and-threads.md](world-and-threads.md)'s own Turn entry: either the movement itself has to be a *Race the Sun*-grade pleasure, or every lap needs its own improvable skill. Unresolved; blocks judging that space's chirality mechanism at all |
 
 ### Risk 2, in detail — because it is the one that hides
-
-> **Corrected 2026-08-11, same session.** The first version of this entry
-> claimed `{7,3}` gives *three* neighbours per cell and a rule space of
-> only ~256, and rated the risk "high". That was wrong, and wrong in the
-> direction of alarm. **"Ternary" names three tiles around a *vertex*, not
-> three neighbours per cell** — a `{7,3}` cell is a heptagon with **seven**
-> edge-neighbours. The corrected entry stands below; the error is left
-> visible because a design doc that quietly rewrites its own risk register
-> cannot be trusted.
 
 The Sprawl runs on `{7,3}`: **seven neighbours per cell.** A two-state
 outer-totalistic rule there has a rule space of roughly 2⁸ × 2⁸ = 65,536
@@ -220,7 +203,7 @@ would be catastrophic.
 **Severity after correction: medium, not high.** Still the second risk
 worth spiking early, but no longer a plausible project-killer.
 
-**Partially spiked, same session — see
+**Partially spiked — see
 [../notes/hyperbolic-simulation-findings.md](../notes/hyperbolic-simulation-findings.md).**
 `{7,3}` sustains life *easily*: 972 sampled rules survived 120 generations
 without dying or saturating, many churning every generation — a markedly
@@ -284,7 +267,7 @@ guessing would have been worse than asking.
 
 ---
 
-## Added on review (2026-08-12): two judgements the first pass ducked
+## Two judgements this roadmap initially ducked
 
 ### Cut the world from nine spaces to five
 
@@ -333,7 +316,7 @@ for ten minutes? Kill criterion: if committed-direction movement is merely
 annoying rather than interesting, `BECOME` needs redesigning **before**
 the world is designed around it, because six of the nine spaces assume it.
 
-> **Outcome, 2026-08-12: built, played, and the answer was no.** The
+> **Outcome: built, played, and the answer was no.** The
 > criterion above fired. `BECOME` was not redesigned but **cut** — the
 > verdict went further than the kill criterion anticipated, rejecting not
 > just committed movement but the premise that the player should wear

@@ -1,6 +1,6 @@
 # Direction
 
-The whole-game direction, written 2026-08-11 in one long session, from a
+The whole-game direction, from a
 brief that asked for a step change: *from the pale prototype it currently
 is towards a real video game* — Garden-of-Eden lines, non-euclidean
 geometry as sculpting material, several story threads, no menu, Outer
@@ -21,8 +21,8 @@ This folder is a new slot in it, and it needs its own movement rule:
 |---|---|
 | **Holds** | The whole-game direction: what this game *is*, at a level above any single mechanic. Changes rarely and deliberately. |
 | **Feeds** | [../ideas-backlog.md](../ideas-backlog.md) — when a piece of direction becomes something you could actually build next, it gets a backlog entry with the usual shape (*Fits*/*Unproven*/*Cost*), and this folder keeps only the *why*. |
-| **Answers to** | [../philosophy.md](../philosophy.md) — where direction and pillars disagree, that's a decision to make explicitly, not silently. This document proposes pillar changes rather than assuming them (see below). |
-| **Records** | Decisions land in [../design-decisions-records.md](../design-decisions-records.md) as usual. Nothing here is a decision yet — it is a *proposal*, in full, ready to be argued with. |
+| **Answers to** | [../philosophy.md](../philosophy.md) — where direction and pillars disagree, that's a decision to make explicitly, not silently. Where this direction changes a pillar, it says so explicitly (see below). |
+| **Records** | Decisions land in [../design-decisions-records.md](../design-decisions-records.md) as usual. |
 
 **Status: proposed, not adopted.** Nothing in this folder has been agreed.
 It's written as though committed because a direction hedged at every
@@ -48,15 +48,6 @@ They are the same thing. Here is the sentence that joins them:
 That is not a metaphor. It is a theorem, and it is the whole game.
 
 ### The theorem
-
-> **Corrected 2026-08-12.** The first version of this section claimed
-> *"uncaused existence is available only in negative curvature"*. That is
-> **false**, and it was the headline of this entire folder. Gardens of
-> Eden exist perfectly well in flat space — Conway's Life on ℤ² has had
-> known orphans since 1971 — and ℤ² is amenable. What actually fails in
-> non-amenable space is subtler, truer, and makes a better game. The
-> corrected version stands below; the error is left visible for the same
-> reason the risk register's is.
 
 A **Garden of Eden** (or **orphan**) is a configuration with no
 predecessor — not an unknown parent, but *no possible* parent. If one
@@ -189,7 +180,7 @@ one is new and expensive, one is demoted.
    weakened — it's revealed as the first instance of a bigger rule.
 
 3. **Knowledge is the only key, and the world is the record.** *(new,
-   replaces nothing; second clause revised 2026-08-12)* Nothing is locked
+   replaces nothing)* Nothing is locked
    by an item or a flag; doors are locked by not understanding. Where
    Outer Wilds banks understanding in a ship log, ours is banked in **what
    you can perceive** — progression is knowledge plus a few perception
@@ -229,9 +220,10 @@ one does, and it is more specific than noir: hue encodes curvature.
 
 | File | What it holds |
 |---|---|
+| [mathematics.md](mathematics.md) | Every geometric and automaton idea the game uses: what it is, why it is here, where it lives in the code, with figures |
 | [world-and-threads.md](world-and-threads.md) | The geometries, what each teaches, and the four story threads that run through them; the endgame and its three endings |
 | [systems.md](systems.md) | Moment-to-moment gameplay: the verbs, the perception unlocks that carry progression, how knowledge gates progress without a journal |
-| [architecture.md](architecture.md) | The technical plan — why the current `Space` abstraction provably cannot hold this game, what replaces it, and the engine decision with its revisit trigger |
+| [architecture.md](architecture.md) | The technical plan — how the spatial core represents curvature, what Hilbert's theorem does and does not forbid, and the engine decision with its revisit trigger |
 | [art-and-audio.md](art-and-audio.md) | Art and audio direction, written as briefs a contractor could be handed |
 | [roadmap.md](roadmap.md) | Phases, honest timeline, risk register, and the questions I could not answer alone |
 | [names.md](names.md) | The game is not called sphaze any more. Candidates, with a recommendation |

@@ -29,14 +29,6 @@ a verb is what turns the observation into a mechanic.
 
 ## The seven verbs
 
-> **`BECOME` was cut 2026-08-12, after being played.** It was the eighth
-> verb and this file called it "the core system". Its Phase 0 harness
-> (Risk 8) came back negative — the bodies were unconvincing to control
-> and, in the words of the verdict, *"switching at all is the wrong
-> verb."* What replaced it is below, and the change is recorded rather
-> than tidied away because a document that quietly forgets its own
-> rejected core cannot be trusted about the rest.
-
 | # | Verb | What it is | State in repo |
 |---|---|---|---|
 | 1 | **Walk** | first-person movement on a curved surface — free and unrestricted | **built**, and hyperbolic walking **validated by playtest 2026-08-12** |
@@ -82,7 +74,7 @@ space is strange, not that your legs are complicated.
 ## Perception unlocks — what progression is made of
 
 With `BECOME` gone, this carries the progression spine. Agreed
-2026-08-12: **knowledge, plus a small number of capabilities that change
+**Knowledge, plus a small number of capabilities that change
 what you can *perceive*** — never what you can do to things, and never a
 mode you enter.
 
@@ -141,7 +133,7 @@ This is the best idea in this file for four reasons:
 
 And it is the answer to "where's the ship log": **the world is the log.**
 
-That answer changed on 2026-08-12 and improved. It used to be "your body
+It is not "your body
 is the log" — what you knew and what you could *be* were the same list.
 With `BECOME` cut there is no such list, and the replacement is better:
 because progression is perception, **everything you have understood is
@@ -265,7 +257,7 @@ For honesty about what the direction costs, three existing things go:
 - **The fall counter / tower.** No home in this direction as it stands.
   Keep the biome, lose the counter, or repurpose the tower as a fibered
   space (a circle's worth of stacked flat layers) — genuinely open.
-- **`BECOME`, and Thread 1 as a climb.** Cut 2026-08-12 after its Phase 0
+- **`BECOME`, and Thread 1 as a climb.** Cut after its Phase 0
   harness was played — see the note at the top of this file, and Thread 1
   in [world-and-threads.md](world-and-threads.md) for what the spine
   became instead.

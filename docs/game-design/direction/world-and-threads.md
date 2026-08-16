@@ -225,10 +225,26 @@ started. But not all of it. Something else once stood exactly where
 you're standing, and left a mark specifically so it could be found this
 way.
 
-**Exists:** nothing yet. Cheapest new pieces: per-tile "solved" state (the
-same shape the pentagon engraving already keeps per socket) and the
-composite-mark reveal, which can reuse `entities.painting`/`MarkModel`
-rendering wholesale rather than inventing new geometry.
+**Exists: `biomes.repeat.RepeatBiome`, walkable in the game since
+2026-08-16.** The cell city, tiled deterministically; divergences that
+remove exactly one building and open the ground under it; a fragment
+standing in the gap; per-tile solved state. What is *not* built is the
+composite-mark reveal — the payload — deliberately held until the
+comparison mechanic is confirmed to read, since authoring content for a
+mechanic that might not work is the expensive mistake.
+
+Two findings from building it:
+
+- **The city has to be low-rise.** The first version had towers up to
+  110 units with twelve-unit streets, which is a slot canyon. This
+  space's mechanic is comparison against a remembered **skyline**, and
+  a city you cannot see across does not have one. Manifold Garden's
+  register is big legible geometry seen whole, not a street view.
+- **`geometry.DeckGroup` is deliberately unused here**, one commit
+  after being built for exactly this shape. The design's own insistence
+  on separate-but-identical tiles rules out the quotient, and that is
+  right — but it means the framework's first real customer is the Turn,
+  not the Repeat.
 
 **Visual dialect:** [art-and-audio.md](art-and-audio.md)'s own "Per-biome
 visual dialect" table — a low-poly cell city, Manifold Garden's register,

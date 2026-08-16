@@ -2358,3 +2358,48 @@ filed under κ = 0. A flat strip quotiented by a glide reflection is the
 honest model — flat, non-orientable, with the twist in the
 identification rather than in the geometry — and that is what
 `DeckGroups.mobiusBand` provides when the Turn is built.
+
+## 2026-08-16 — The Repeat, and a framework deliberately not used
+
+`biomes.repeat.RepeatBiome`: a low-poly cell city tiled across the
+plane, in which every tile carries the same layout and a few are missing
+exactly one building. The gap is walkable ground the last tile did not
+have, with a fragment standing in it.
+
+**Sameness is structural, not maintained.** The generator reads only a
+plot's position *within* a tile — the tile's own coordinates are
+deliberately absent from the hash — so two tiles cannot differ unless
+something explicitly makes them. That is the determinism argument the
+design rests the whole mechanic on, expressed as code rather than as
+discipline.
+
+**`geometry.DeckGroup` is not used here, one commit after building it
+for exactly this shape.** `world-and-threads.md` is explicit that a true
+quotient has one tile rendered many times, so there is nothing to
+compare and no mechanic. The framework's first real customer will be the
+Turn. Worth recording because the omission would otherwise read as an
+oversight by anyone who saw the two commits next to each other.
+
+Divergences only ever *remove* a building. An addition is a difference
+you can only look at; the design requires recognising it and reaching
+new ground to be the same act.
+
+**Two things were wrong when looked at, and both were invisible to a
+green test suite.** Towers to 110 units with twelve-unit streets made a
+slot canyon — fatal here specifically, since the mechanic is comparison
+against a remembered skyline and there was no skyline to remember. And
+the spawn searched outward in whole-plot steps from the tile's centre,
+which (plot centres being at half-plot offsets) put every candidate on a
+plot *boundary* nine units from a wall, filling half the first frame
+with a building.
+
+`game.BoxBatch` was extracted from `RibbonMesh` on the second use,
+carrying the 16-bit index-buffer splitting that silently ate the
+Ribbon's terrain. **The Ribbon was re-screenshotted after the move**
+rather than trusted to its tests: its original bug rendered an empty
+plane with every test passing, so a green suite is not evidence about
+that biome's geometry. It came back pixel-identical.
+
+**Still open:** whether walking one period and comparing is actually
+satisfying, which is the only question that matters here and cannot be
+answered from a screenshot.

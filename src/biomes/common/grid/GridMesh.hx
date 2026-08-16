@@ -89,13 +89,7 @@ class GridMesh {
 		@param wallsOutward whether walls extrude *away* from the sphere's centre instead of toward it — for a biome walked on the shell's outside (`biomes.exterior.ExteriorBiome`). The floor shell itself needs no flag: it's the same surface either way, and both its faces already render (`culling = None`).
 	**/
 	public static function build(maze:GridData, parent:h3d.scene.Object, wallsOutward:Bool = false):Void {
-		var floorPoints:Array<h3d.Vector> = [];
-		var floorIdx = new hxd.IndexBuffer();
-		var floorUvs:Array<h3d.prim.UV> = [];
-		addFloor(floorPoints, floorIdx, floorUvs);
-		var floorPrim = new h3d.prim.Polygon(floorPoints, floorIdx);
-		floorPrim.uvs = floorUvs;
-		var floorMesh = new h3d.scene.Mesh(floorPrim, parent);
+		var floorMesh = new h3d.scene.Mesh(buildFloorPrim(), parent);
 		var grassTexture = hxd.Res.textures.grass.toTexture();
 		grassTexture.wrap = Repeat;
 		floorMesh.material.mainPass.addShader(new UnlitTexture(grassTexture, FLOOR_TILE_U, FLOOR_TILE_V));
@@ -115,15 +109,45 @@ class GridMesh {
 		@param wallsOutward whether walls extrude away from the sphere's centre — see `build`.
 	**/
 	public static function buildWalls(maze:GridData, parent:h3d.scene.Object, wallsOutward:Bool = false):Void {
+		var wallMesh = new h3d.scene.Mesh(buildWallPrim(maze, wallsOutward), parent);
+		var wallTexture = hxd.Res.textures.wall_stone.toTexture();
+		wallTexture.wrap = Repeat;
+		wallMesh.material.mainPass.addShader(new UnlitTexture(wallTexture));
+		wallMesh.material.mainPass.culling = None;
+	}
+
+	/**
+		Just the floor's own geometry, with no material applied — the piece
+		`biomes.weft.WeftMesh` needs: identical verified vertex/UV
+		construction (`addFloor`, including its row-boundary seam handling),
+		but a flat colour instead of the grass texture `build` hard-codes,
+		since the Weft's own dialect is cells, not grass. Independent of
+		`maze`, same as `addFloor` itself — see that function's own doc.
+		@return the floor's own polygon, no material.
+	**/
+	public static function buildFloorPrim():h3d.prim.Polygon {
+		var floorPoints:Array<h3d.Vector> = [];
+		var floorIdx = new hxd.IndexBuffer();
+		var floorUvs:Array<h3d.prim.UV> = [];
+		addFloor(floorPoints, floorIdx, floorUvs);
+		var floorPrim = new h3d.prim.Polygon(floorPoints, floorIdx);
+		floorPrim.uvs = floorUvs;
+		return floorPrim;
+	}
+
+	/**
+		Just the walls' own geometry, with no material applied — see
+		`buildFloorPrim`'s own doc for why this exists.
+		@param maze the layout to build walls for.
+		@param wallsOutward whether walls extrude away from the sphere's centre — see `build`.
+		@return the walls' own polygon, no material.
+	**/
+	public static function buildWallPrim(maze:GridData, wallsOutward:Bool = false):h3d.prim.Polygon {
 		var wallBuilder = new WallBuilder(maze, wallsOutward);
 		eachCell((row, col) -> wallBuilder.addWallsAround(row, col));
 		var wallPrim = new h3d.prim.Polygon(wallBuilder.points, wallBuilder.idx);
 		wallPrim.uvs = wallBuilder.uvs;
-		var wallTexture = hxd.Res.textures.wall_stone.toTexture();
-		wallTexture.wrap = Repeat;
-		var wallMesh = new h3d.scene.Mesh(wallPrim, parent);
-		wallMesh.material.mainPass.addShader(new UnlitTexture(wallTexture));
-		wallMesh.material.mainPass.culling = None;
+		return wallPrim;
 	}
 
 	/**

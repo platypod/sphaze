@@ -169,4 +169,28 @@ class Colours {
 
 	/** `biomes.common.tree.TreeMesh`'s own foliage, at the very tip (`graphics.shaders.HeightGradient`'s own tip color) — lighter/yellower than `TREE_FOLIAGE_BASE`, catching more light at the canopy's own top. **/
 	public static inline final TREE_FOLIAGE_TIP:Int = 0xFF3D7A45;
+
+	/**
+		`biomes.weft.WeftMesh`'s own floor — dim warm umber, matte. Replaces
+		the grass texture the Weft inherited from `GridMesh` (the pre-
+		direction maze prototype): grass is the one material in the game
+		that reads as organic rather than as a cell, and its own hue carries
+		no relation to curvature at all — both direct violations of
+		`docs/game/art-and-audio.md`'s two universal constants ("everything
+		is cells", "hue encodes curvature"). Amber/ember/brass, per that
+		doc's κ>0 family — the same sign of curvature as the Fold, since
+		nothing here is glued and the Weft is walking the same sphere.
+	**/
+	public static inline final WEFT_FLOOR:Int = 0xFF2A1D12;
+
+	/**
+		`biomes.weft.WeftMesh`'s own walls — same warm family as
+		`WEFT_FLOOR`, deliberately brighter rather than a different hue: the
+		wall is the thing the player actually acts on (`WeftModel.toggle`),
+		the floor is not, and "no other system may use hue as its primary
+		channel" (art-and-audio.md) rules out marking that distinction with
+		a second hue the way `CONWAY_WALL_GLOW`'s cyan marks Conway's walls
+		against its own blue-black floor. Value carries it here instead.
+	**/
+	public static inline final WEFT_WALL:Int = 0xFF9C6A38;
 }

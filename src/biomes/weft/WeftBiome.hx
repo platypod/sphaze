@@ -4,7 +4,6 @@ import biomes.common.Biome;
 import biomes.common.Gravity;
 import biomes.common.grid.GridCollision;
 import biomes.common.grid.GridGeometry;
-import biomes.common.grid.GridMesh;
 import biomes.common.grid.GridModel;
 import biomes.common.grid.GridModel.GridData;
 import biomes.common.grid.GridModel.GridNode;
@@ -18,31 +17,48 @@ import entities.player.Camera.CameraOverride;
 import entities.player.PlayerModel;
 
 /**
-	**The Weft** — the same sphere the Fold walks, wired to itself. See
+	**The Weft** — an ordinary sphere, wired to itself. See
 	[the design](../../../docs/game/world.md)'s
 	own entry (`### 2. The Weft`).
 
 	Every wall answers to the wall at its antipode and the two are always
 	in opposite states, so **closing the door in front of you opens one on
 	the far side of the world** — see `WeftModel`, which holds the rule and
-	the geometry that limits where it can apply.
+	the geometry that limits where it can apply, including *how* the
+	invariant is generated: the northern hemisphere is carved freely and
+	the southern hemisphere is forced to its exact opposite, which is what
+	makes the far side read as a legible negative rather than an unrelated
+	tangle — see `WeftModel.enforceOpposite`'s own doc.
+
+	**Not the Fold's sphere**, despite an earlier version of this comment
+	claiming it was: this reuses `biomes.common.grid` and `biomes.maze`,
+	the lat/long grid and generic spanning-tree maze that predate
+	[the direction](../../../docs/game/world.md) entirely (see that
+	document's own note on which biomes are pre-direction) — not
+	`biomes.conway`, the icosahedral automaton sphere the numbered Fold
+	actually is. Both are κ>0 spheres, which is the sense in which "the
+	same sphere" was true; the geometry, generator and (until `WeftMesh`)
+	the render were the maze prototype's, not the Fold's.
 
 	**The echo.** The design gives this space a legibility law: look toward
 	your own antipode and see a reflection of what is there, so you can
 	read the far side of a pairing without walking to it. Here that is a
 	pale marker standing at `-pos`, moving as the player moves, passing
-	through walls it has no business colliding with — which was settled in
-	conversation ("phase through") and is what makes it an image rather
-	than a second body. It is the instrument the whole space is read with:
-	act on a wall, watch the echo's surroundings change.
+	through walls it has no business colliding with — settled as "phase
+	through," which is what makes it an image rather than a second body.
+	It is the instrument the whole space is read with: act on a wall,
+	watch the echo's surroundings change.
 
-	**What this reuses, and what that says.** The sphere, the grid, the
-	maze carve, the collision, the wall mesh and the exit painting are all
-	the Fold's, untouched. What is new is `WeftModel` — one file of
-	pairing rules — plus the echo. That ratio is the design's own claim
-	about this space made concrete: *nothing is glued*, and the difference
-	between the Fold and the Weft is entirely an authored correspondence
-	laid over identical geometry.
+	**What this reuses, and what that says.** The grid, the collision and
+	the exit painting are the maze prototype's, untouched — this space
+	needed no new topology, only a rule laid over an existing one. The
+	render is not reused: `WeftMesh` replaces the prototype's grass and
+	stone with this space's own flat, hue-correct dialect, once that
+	mismatch with [art-and-audio.md](../../../docs/game/art-and-audio.md)
+	was flagged directly ("no... coherence with our new Artistic
+	Direction"). What is new, in total: `WeftModel` (the pairing rule and
+	the hemisphere generation it now performs), `WeftMesh` (the dialect),
+	and the echo.
 
 	**Not built yet:** the puzzle. There is no gate that specifically
 	requires reaching through the antipode, because that is level design
@@ -98,7 +114,7 @@ class WeftBiome implements Biome {
 		return GRAVITY;
 	}
 
-	/** Warm, like the Fold — this is the same sphere and the same positive curvature, and hue carries only that. **/
+	/** Warm — κ>0, and hue carries only that (see `WeftMesh` for the rest of the palette this sits behind). **/
 	public function backgroundColor():Int {
 		return 0x1A1512;
 	}
@@ -124,7 +140,7 @@ class WeftBiome implements Biome {
 			return; // not built yet
 		}
 		container.removeChildren();
-		GridMesh.build(maze, container);
+		WeftMesh.build(maze, container);
 	}
 
 	public function spawnPlayer(returning:Bool, fromBiomeId:Null<String>):PlayerModel {

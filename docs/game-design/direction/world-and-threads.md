@@ -332,14 +332,55 @@ yourself turned.
 **Verb:** circle — loop a defect deliberately, to rotate yourself or a
 carried pattern into an orientation you could not otherwise reach.
 
+**The mechanism, worked out 2026-08-12.** Unlike the Turn's flip, this
+rotation is **continuous, not binary**: loop the same defect twice and you
+get twice the angle; loop a second defect with a different angle and the
+two compose. That's a real dial, not a coin flip — the thing that keeps
+this space distinct from the Turn's own path-dependent trick rather than
+being the same idea told twice.
+
+The goal it drives: a socket that only accepts a carried pattern (a
+`CARRY`-ed structure, or your own `BECOME` body if it has a facing)
+arriving at one exact orientation. Critically, **there is no in-place
+editing tool here** — unlike the Fold's pentagon engraving, you cannot
+nudge the orientation once you arrive. It has to already be correct,
+which means it was set by *how you routed* on the way in. That is the
+mechanical version of the story beat below, not just flavour text: the
+Fold's sockets are the convenience version of what this space makes you
+do the hard way.
+
+The gain is the reward shape every socket in this set already uses (new
+information plus a new mechanism), plus a meta-gain unique to this space:
+this is where the player understands *why* the Fold's twelve pentagons
+are special at all. Euler's formula forces exactly twelve defects on that
+tiling; this space turns "there happen to be twelve odd cells" into "oh —
+those are cone points, and I know exactly what those do now." A
+retroactive payoff over something the player already spent hours using,
+in the Outer Wilds sense — not new information about a new place, new
+information about an old one.
+
+**What's actually new here, honestly.** Sound geometry — a cone point's
+holonomy is textbook, the local case of Gauss-Bonnet, nothing hand-waved
+— but it is not free. `CurvedSpace`/`Isometry` (built this week) only
+cover the three *uniform*-curvature geometries; a cone point is curvature
+concentrated at a single spot in an otherwise flat plane, a genuinely
+different construction, unbuilt. Structurally close to how `MobiusSpace`
+already handles its own seam (wrap the parameter, apply a transform on
+crossing it) — a good precedent to build from, not a shortcut around
+building it. "Nearly free to implement," under **Teaches** above, meant
+cheap *relative to the hyperbolic tiling* — still true, just not
+literally free.
+
 **Story function:** curvature becomes a *substance* — something that can
 be placed, concentrated, and (Thread 4) eventually moved. The 12 pentagons
 on the Fold are cone points too. The player should realise this
 themselves, and it should land hard: **the sockets on your home world are
 the same thing as the puzzle here.**
 
-**Exists:** nothing, and it barely needs anything — this is the cheapest
-big idea in the document.
+**Exists:** nothing. Cheap next to the hyperbolic tiling, not literally
+free — see "What's actually new here, honestly," above: a new cone-chart
+geometry primitive, unbuilt, though `MobiusSpace`'s own seam handling is
+a real precedent for the shape of the work.
 
 ---
 

@@ -1803,3 +1803,36 @@ Also formally set aside the backlog's "one side affects the other"
 spatial-pairing shape the Weft and the Repeat already cover; keeping the
 Turn about a travelling pattern's own history is what keeps it distinct
 from both.
+
+## 2026-08-12 — The Defect worked out: a continuous dial, not a coin flip
+
+Written up as discussed, no coherence issue this time — a cone point's
+holonomy is sound, textbook Gauss-Bonnet, unlike the Weft's original
+claim. What was missing was the mechanism, goal and gain, now added.
+
+The distinction from the Turn that keeps both spaces earning their place:
+the Turn's chirality is binary (flipped or not); the Defect's rotation is
+**continuous and composable** — loop the same defect twice for double the
+angle, combine defects of different angles, and you have an actual dial.
+The goal it drives is a socket that only accepts a carried pattern at one
+exact orientation, deliberately with **no in-place editing tool** (unlike
+the Fold's pentagon engraving) — the orientation has to already be
+correct on arrival, set by how the player routed beforehand. That
+absence is the mechanical version of the story beat: the Fold's sockets
+are the convenience version of what this space makes you do the hard way.
+
+Meta-gain kept from the original entry and sharpened: this is where the
+player learns *why* the Fold's twelve pentagons are cone points at all
+(Euler's formula forces exactly twelve on that tiling) — a retroactive
+payoff over a mechanic they already spent hours using, not new
+information about a new place.
+
+Corrected one overclaim from the original entry in the same pass: "nearly
+free to implement" undersold the work. `CurvedSpace`/`Isometry` (built
+this week) only cover the three uniform-curvature geometries; a cone
+point is curvature concentrated at a single spot in an otherwise flat
+plane, a different, unbuilt construction. `MobiusSpace`'s own seam
+handling (wrap the parameter, apply a transform on crossing it) is a real
+precedent for the shape of that work, not a shortcut around doing it.
+Left both the original "cheap" claim and the correction visible, same
+discipline as every other pass today.

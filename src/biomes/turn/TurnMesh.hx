@@ -10,7 +10,7 @@ import geometry.Isometry;
 
 	**The two rails read differently, and that is the mechanic rather than
 	decoration.**
-	`docs/game-design/direction/world-and-threads.md` gives this space a
+	`docs/game/world.md` gives this space a
 	legibility law — your handedness is readable *only relative to
 	something you left behind* — and leaves open, explicitly, "how the
 	player actually discovers their own current state cheaply enough that
@@ -124,7 +124,7 @@ class TurnMesh {
 		*which edge am I next to?* Value alone nearly failed on the first
 		build, where the darker rail vanished against the void. Silhouette
 		is also what
-		`docs/game-design/direction/art-and-audio.md` says should carry a
+		`docs/game/art-and-audio.md` says should carry a
 		flat biome, and a dashed edge has the side benefit of visibly
 		streaming past, which a smooth wall does not.
 

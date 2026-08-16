@@ -13,7 +13,7 @@ import geometry.Isometry;
 	not.** That biome embeds a strip in ℝ³ and twists it, which looks
 	right and *is not flat* — an embedded twisted strip carries real
 	curvature everywhere, so walking it teaches the wrong lesson for a
-	space `docs/game-design/direction/world-and-threads.md` files under
+	space `docs/game/world.md` files under
 	κ = 0. Quotienting a flat strip by a glide reflection puts the twist
 	in the **identification** rather than in the geometry: intrinsically
 	flat, genuinely non-orientable, which is exactly the distinction the

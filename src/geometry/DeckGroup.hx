@@ -12,7 +12,7 @@ import geometry.CurvedSpace.ModelPoint;
 	surface is not built; it is *quotiented*. You take a plane, pick a
 	group of isometries, and declare points in the same orbit to be the
 	same point. Every space in
-	`docs/game-design/direction/world-and-threads.md` that repeats,
+	`docs/game/world.md` that repeats,
 	reverses or wraps is that construction with a different group:
 
 	| Space | Cover | Group |
@@ -23,7 +23,7 @@ import geometry.CurvedSpace.ModelPoint;
 
 	So the interesting work happens once, here, and each space supplies
 	four or fewer matrices. That is the same bet the rest of `geometry`
-	makes — `docs/game-design/direction/roadmap.md`'s "nine geometries are
+	makes — `docs/building/roadmap.md`'s "nine geometries are
 	nine parameter sets, not nine hand-built levels" — and this class is
 	where most of it is actually collected.
 

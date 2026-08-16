@@ -5,7 +5,7 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 /**
 	The concrete checks a generated `GeodesicSphereData` has to pass before
 	it's trusted enough to bake — see
-	`docs/game-design/notes/geodesic-sphere-engineering.md`'s own Phase 1
+	`docs/building/notes/geodesic-sphere-engineering.md`'s own Phase 1
 	"exit check" for why these specific things. A broader cell-uniformity
 	score (area/edge-length variance) is still an open follow-up, not
 	implemented here — this only checks the invariants that were already

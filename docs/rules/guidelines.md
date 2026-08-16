@@ -1,6 +1,6 @@
 # Guidelines — full detail
 
-This is the detailed reference behind `CLAUDE.md`. `CLAUDE.md` states the rules; this document explains why, and gives enough specifics to apply them consistently. See `docs/PROJECT_LOG.md` for how we got here and for anything decided after this document was last updated.
+This is the detailed reference behind `CLAUDE.md`. `CLAUDE.md` states the rules; this document explains why, and gives enough specifics to apply them consistently. See `docs/archive/project-log.md` for how we got here and for anything decided after this document was last updated.
 
 ## 1. Architecture
 
@@ -37,7 +37,7 @@ Systems that need to react to something happening elsewhere (player reveals a ma
 Apply only where profiling (or obvious high-frequency spawn/destroy) shows it's needed. Don't pool speculatively — it adds complexity that's wasted if the object type isn't actually a hot path.
 
 ### 1.8 Mobile input — deferred by design
-The game targets both desktop and phone browsers (see §6), but 3D games are normally played with mouse-look + WASD, neither of which exists on a touchscreen. Decision: **build for mouse/keyboard first; treat touch controls as a later iteration**, not a day-one architecture decision — designing a control scheme (virtual joystick, drag-to-look, tap/swipe gestures) before there's a game to control would be guessing. When it's time to address this, it's a gameplay/UX design pass (candidates: on-screen virtual joystick + drag-to-look, or redesigning interaction around simpler touch gestures given the maze's "look across the sphere" mechanic might not need full free-look at all) — revisit and log the decision in `docs/PROJECT_LOG.md` when it happens, and update this section.
+The game targets both desktop and phone browsers (see §6), but 3D games are normally played with mouse-look + WASD, neither of which exists on a touchscreen. Decision: **build for mouse/keyboard first; treat touch controls as a later iteration**, not a day-one architecture decision — designing a control scheme (virtual joystick, drag-to-look, tap/swipe gestures) before there's a game to control would be guessing. When it's time to address this, it's a gameplay/UX design pass (candidates: on-screen virtual joystick + drag-to-look, or redesigning interaction around simpler touch gestures given the maze's "look across the sphere" mechanic might not need full free-look at all) — revisit and log the decision in `docs/archive/project-log.md` when it happens, and update this section.
 
 ## 2. Haxe language standards
 
@@ -95,7 +95,7 @@ project/
 ├── .githooks/         # versioned pre-commit hook, see §5.2
 └── .vscode/
 ```
-MVC-*flavored naming* (Model/Mesh/Collision/Biome suffixes), not MVC-*flavored folders*: a biome's model, rendering, and collision are coupled by construction (`GridMesh`/`GridCollision` must agree on wall geometry pixel-for-pixel), so splitting them into distant `model/`/`view/`/`controller/` trees would scatter exactly what belongs physically together. Reshaped from the original single-biome sketch once a second biome (the hub) needed to become a peer rather than a special case, once the maze's own grid/collision math needed separating from its biome-specific generation algorithm, and once a full-tree pass settled on this MVC-naming/`biomes.common` structure — see `docs/PROJECT_LOG.md`'s multi-biome restructuring entry.
+MVC-*flavored naming* (Model/Mesh/Collision/Biome suffixes), not MVC-*flavored folders*: a biome's model, rendering, and collision are coupled by construction (`GridMesh`/`GridCollision` must agree on wall geometry pixel-for-pixel), so splitting them into distant `model/`/`view/`/`controller/` trees would scatter exactly what belongs physically together. Reshaped from the original single-biome sketch once a second biome (the hub) needed to become a peer rather than a special case, once the maze's own grid/collision math needed separating from its biome-specific generation algorithm, and once a full-tree pass settled on this MVC-naming/`biomes.common` structure — see `docs/archive/project-log.md`'s multi-biome restructuring entry.
 Subject to revision once real code exists — treat as a starting point, not dogma.
 
 ### 3.2 `hxd.Res`
@@ -211,7 +211,7 @@ Paired with an `index.html` containing a `<canvas id="webgl">`; Heaps' own refer
 
 **Local dev:** the HashLink target remains useful for fast iteration/debugging even though the shipped build is JS — faster compiles, native debugging, no browser round-trip. Keep both `.hxml` files (`hl.hxml` for dev, `web.hxml` for the shipped build) rather than developing directly against the JS target.
 
-**Correction (2026-07-15): not wired up yet on Apple Silicon.** Homebrew's `hashlink` formula ships no `hl` (JIT VM) on ARM Macs — only HashLink/C native compilation is supported there ([hashlink#557](https://github.com/HaxeFoundation/hashlink/issues/557)), which is a slower compile-to-C-then-native loop, not the fast one described above. Until that's set up, there's a single `build.hxml` targeting JS, used for `make check`/`make build` alike (tests run the same JS output via `node`, see `test.hxml`) — no separate `hl.hxml`/`web.hxml` split yet. Revisit once HL/C wiring or a non-ARM dev box makes the fast loop worth adding; see `docs/PROJECT_LOG.md`.
+**Correction (2026-07-15): not wired up yet on Apple Silicon.** Homebrew's `hashlink` formula ships no `hl` (JIT VM) on ARM Macs — only HashLink/C native compilation is supported there ([hashlink#557](https://github.com/HaxeFoundation/hashlink/issues/557)), which is a slower compile-to-C-then-native loop, not the fast one described above. Until that's set up, there's a single `build.hxml` targeting JS, used for `make check`/`make build` alike (tests run the same JS output via `node`, see `test.hxml`) — no separate `hl.hxml`/`web.hxml` split yet. Revisit once HL/C wiring or a non-ARM dev box makes the fast loop worth adding; see `docs/archive/project-log.md`.
 
 ### 6.2 Container & platypod stack integration
 platypod's `stack` repo already has a `games` module (`src/games/`, currently `pokeclicker` and `rommapp`) with a consistent Helm pattern we'll follow: a `Deployment` + `Service` + Traefik `IngressRoute`, gated by `.Values.<service>.enable`, image pulled from `ghcr.io/platypod/<name>`.

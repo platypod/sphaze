@@ -59,7 +59,7 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 	what "gliders gliding forevermore" asked for. `GeodesicGliderTracker`'s
 	pentagon-side spawn points use these anyway, explicitly as a scripted
 	stand-in rather than a claim of finding a real long-range traveler — see
-	its own doc, and `docs/game-design/ideas-backlog.md`'s own entry for
+	its own doc, and `docs/open/ideas-backlog.md`'s own entry for
 	widening this search (larger seed radius, more rules) as real follow-up
 	work.
 **/

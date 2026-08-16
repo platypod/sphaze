@@ -2,9 +2,9 @@
 
 External references worth borrowing from, each with the *specific*
 transferable lesson rather than a general "this game is good" — and, where
-it applies, which [ideas-backlog.md](ideas-backlog.md) entry it feeds. Added
+it applies, which [ideas-backlog.md](../open/ideas-backlog.md) entry it feeds. Added
 after a 2026-07-29 research pass looking for ways to make each biome's maze
-feel like its own thing (see `../PROJECT_LOG.md`).
+feel like its own thing (see [`../archive/project-log.md`](../archive/project-log.md)).
 
 Rule for this file: an entry earns its place by carrying a lesson we can
 actually act on. If a reference only justifies something we'd have done
@@ -20,7 +20,7 @@ The load-bearing takeaway from the whole pass, mostly from HyperRogue:
 > on it.** If the mechanic would work unchanged in a flat rectangular maze,
 > it's a reskin, not a biome.
 
-This isn't (yet) a pillar in [philosophy.md](philosophy.md) — it's a strong
+This isn't (yet) a pillar in [philosophy.md](../rules/philosophy.md) — it's a strong
 candidate for one, deliberately parked here until it's been used to judge a
 few real biome ideas rather than promoted on the strength of one research
 session. It already sorts the backlog usefully, though: the antipode-pairs,

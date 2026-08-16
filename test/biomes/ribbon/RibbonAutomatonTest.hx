@@ -9,7 +9,7 @@ import utest.Test;
 
 	This matters more here than the file's size suggests. The Ribbon's
 	entire claim — the reason
-	`docs/game-design/direction/world-and-threads.md` puts a
+	`docs/game/world.md` puts a
 	Turing-complete rule under the player's feet — is that the ground is
 	*really* Rule 110. A neighbourhood indexed backwards, or an off-by-one
 	at the edges, would produce a diagram that still looked like a

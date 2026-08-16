@@ -6,7 +6,7 @@ import utest.Test;
 /**
 	Checks that `HyperbolicTiling` really produces the `{p,q}` tilings it
 	claims, and — the point of the exercise — measures the growth rate that
-	the whole direction in `docs/game-design/direction/` rests on.
+	the whole direction in `docs/game/` rests on.
 
 	This is the headless half of Risk 2's Phase 0 spike: before designing a
 	biome around an automaton on `{7,3}`, establish that the tiling can be

@@ -40,7 +40,7 @@ class CameraTest extends Test {
 		// up drifts toward parallel with the view as pitch increases,
 		// collapsing the camera's effective horizontal FOV toward zero well
 		// before the pitch clamp (this is exactly the bug that made the far
-		// side unreachable — see docs/PROJECT_LOG.md).
+		// side unreachable — see docs/archive/project-log.md).
 		var player = PlayerModel.spawnAt(Math.PI / 2, 0, 0.6, 50);
 		var camera = new h3d.Camera();
 
@@ -57,7 +57,7 @@ class CameraTest extends Test {
 		// Without this, the camera sits exactly on the floor mesh —
 		// pitching up then grazes along/through the floor it's embedded in
 		// instead of clearing it, so raising your head never actually
-		// reveals the far side (see docs/PROJECT_LOG.md). "Up" here means
+		// reveals the far side (see docs/archive/project-log.md). "Up" here means
 		// toward the sphere's center, so the eye is closer to the center
 		// than the floor is — a *smaller* radius, not a larger one.
 		var radius = 50.0;

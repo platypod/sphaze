@@ -11,7 +11,7 @@ import entities.player.PlayerModel;
 /**
 	**The Ribbon** — a world that is a *line*, whose second walkable axis
 	is time. See
-	[the design](../../../docs/game-design/direction/world-and-threads.md)'s
+	[the design](../../../docs/game/world.md)'s
 	own entry (`### 6. The Ribbon`).
 
 	The ground is the spacetime diagram of an elementary cellular
@@ -73,7 +73,7 @@ class RibbonBiome implements Biome {
 		return GRAVITY;
 	}
 
-	/** Neutral and unlit — κ = 0 is bone/slate/ash per `docs/game-design/direction/art-and-audio.md`, and this is the flattest thing in the game in both senses. **/
+	/** Neutral and unlit — κ = 0 is bone/slate/ash per `docs/game/art-and-audio.md`, and this is the flattest thing in the game in both senses. **/
 	public function backgroundColor():Int {
 		return 0x16181B;
 	}

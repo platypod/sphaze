@@ -7,7 +7,7 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 	Conway Game of Life over a `GeodesicSphereData`'s own adjacency — the
 	node-id-keyed counterpart to `biomes.conway.ConwayState`, generalized
 	off `(row, col)` string keys per Phase 5 of
-	`docs/game-design/notes/geodesic-sphere-engineering.md`'s own build
+	`docs/building/notes/geodesic-sphere-engineering.md`'s own build
 	order. Every mechanic `ConwayState` already has (rolling per-node
 	activity, per-node age, a small per-generation mutation chance) carries
 	over unchanged in spirit; the address type (a plain `Int` node id
@@ -37,7 +37,7 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 	reads this layer's activity to move walls around — the coupling runs
 	one way (life shapes the maze) rather than both. Whether a rule exists
 	that stays alive *while* being wall-gated is a genuinely open question
-	and a live backlog item; see `docs/game-design/ideas-backlog.md`'s
+	and a live backlog item; see `docs/open/ideas-backlog.md`'s
 	"maze-compatible life rule" entry. Nothing here forecloses it — the
 	gate would come back as a change to this one method.
 

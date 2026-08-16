@@ -3,7 +3,7 @@ package game;
 /**
 	Minimal update/pause/parent-child tree — the foundation CLAUDE.md's
 	Architecture section commits to, kept deliberately small (see
-	docs/GUIDELINES.md §1.3): fixed-timestep propagation and pausing, and
+	docs/rules/guidelines.md §1.3): fixed-timestep propagation and pausing, and
 	nothing else. Not a scene graph (that's `h3d.scene.Object`) and not an
 	ECS scheduler — just "this thing ticks on the fixed step, can have
 	children that tick with it, and pausing it pauses them too."

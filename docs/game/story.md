@@ -2,7 +2,7 @@
 
 **This is the story.** It outgrew this folder: the full treatment — the
 world, the threads, the systems, the endings — is
-[../direction/](../direction/README.md). This file states the premise and
+[../direction/](README.md). This file states the premise and
 holds the two ideas that belong to the storyline rather than to any one
 space.
 
@@ -23,8 +23,8 @@ The player walks that scale from one end to the other. What looks like a
 journey through geometries is a search for somewhere they are allowed to
 have come from nowhere.
 
-See [../direction/mathematics.md](../direction/mathematics.md) for the
-theorem, and [../direction/README.md](../direction/README.md) for what the
+See [../direction/mathematics.md](mathematics.md) for the
+theorem, and [../direction/README.md](README.md) for what the
 game makes of it.
 
 ## Evolution as progression
@@ -46,7 +46,7 @@ cut: controlling a glider is worse than walking in every respect, and
 switching bodies turned out to be the wrong verb entirely. What survives
 is the ladder as *subject matter* — the player is already far past the
 primitives, and spends the game learning to read the things they are made
-of. See [../direction/systems.md](../direction/systems.md).
+of. See [../direction/systems.md](systems.md).
 
 ## Perception as a rung
 
@@ -88,4 +88,4 @@ survive on stone, grass and forest. It wants a rendering language that
 reads as *substrate* rather than as landscape, and it invites expectations
 of cellular and generative visuals — a larger rendering commitment than a
 painterly world would have been. The art direction that answers this is
-[../direction/art-and-audio.md](../direction/art-and-audio.md).
+[../direction/art-and-audio.md](art-and-audio.md).

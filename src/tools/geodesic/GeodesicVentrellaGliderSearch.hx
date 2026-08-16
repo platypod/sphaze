@@ -69,7 +69,7 @@ class GeodesicVentrellaGliderSearch {
 		— this run is specifically testing the hypothesis that `Literal`'s
 		own stricter, unbucketed reading is what the source paper's own
 		evolution process actually selected against. The killed first run of
-		this search (`Clamp`, `docs/game-design/design-decisions-records.md`
+		this search (`Clamp`, `docs/archive/decisions.md`
 		has the numbers) found only bounded shuttles; see
 		`GeodesicVentrellaState.NeighborCountMode.Literal`'s own doc for why
 		this is a materially different rule, not just a third variant of the

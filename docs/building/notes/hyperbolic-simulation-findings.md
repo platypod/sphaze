@@ -1,7 +1,7 @@
 # Simulating a cellular automaton in hyperbolic space — first findings
 
 Measured 2026-08-11, in the same session that produced
-[../direction/](../direction/README.md). Written as a note rather than a
+[../direction/](../../game/README.md). Written as a note rather than a
 backlog entry because it carries two results that will otherwise be
 rediscovered expensively: one encouraging, one that changes how the
 Sprawl has to be built.
@@ -22,7 +22,7 @@ still lifes.
 That is a markedly better starting position than this project's history
 on the hex sphere, where the recorded experience was that random soup
 *"evaporates within a few dozen generations into scattered still lifes
-and blinkers"* ([../ideas-backlog.md](../ideas-backlog.md), 2026-07-29)
+and blinkers"* ([../ideas-backlog.md](../../open/ideas-backlog.md), 2026-07-29)
 and where a multi-rule search found **zero** confirmed travellers across
 2166 candidates.
 
@@ -45,7 +45,7 @@ headline suggests.** Three caveats, all real:
 1. **Sustained churn is not a travelling structure.** No glider hunt has
    been run, and the harder question — *do compact, persistent,
    translating patterns exist in negative curvature?* — remains exactly as
-   open as [../direction/roadmap.md](../direction/roadmap.md) says.
+   open as [../direction/roadmap.md](../roadmap.md) says.
 2. **The scored region was tiny: 85 cells.** With a fixed dead boundary
    only two rings away, activity near the edge can leak inward and
    masquerade as sustained interior dynamics. A patch this small cannot
@@ -82,7 +82,7 @@ Three ways out, in the order they should be considered:
    construction rather than being mitigated.
 
    The design already contains this: **The Knot**
-   ([../direction/world-and-threads.md](../direction/world-and-threads.md))
+   ([../direction/world-and-threads.md](../../game/world.md))
    is a genus-2 surface, filed there as a late-game exotic space. This
    finding promotes it — it is not only a good biome, it is *the*
    technically correct way to run a hyperbolic simulation. Strong
@@ -91,7 +91,7 @@ Three ways out, in the order they should be considered:
 
    **The honest caveat**, which the design should own rather than gloss:
    the amenability argument in
-   [../direction/README.md](../direction/README.md) is a statement about
+   [../direction/README.md](../../game/README.md) is a statement about
    *infinite* groups. A compact surface has finitely many cells, so the
    strict theorem applies to its infinite universal cover, not to the
    finite thing being simulated. What survives on a compact surface is

@@ -36,7 +36,7 @@ Everything in this folder is worthless if the answer is the second one.
 Build:
 - `CurvedSpace` + `Isometry`, headless, tested against closed-form
   identities (steps 1-2 of the migration plan in
-  [architecture.md](architecture.md)) — **built**
+  [architecture.md](../rules/architecture.md)) — **built**
 - the projection — **built** as tested CPU-side Haxe
   (`geometry.HyperbolicProjection`) rather than an HxSL fragment, on
   purpose: the maths can be unit-tested, a shader cannot be verified in
@@ -56,8 +56,8 @@ three-bodies harness was built and played. `BECOME` is **cut** — the
 bodies were unconvincing to control and switching was judged the wrong
 verb outright. The harness has been deleted (it is in git history);
 `game.PhysicalKeys.isPressed`, added for it, stays. What replaced the
-system is in [systems.md](systems.md) and Thread 1 of
-[world-and-threads.md](world-and-threads.md): the player is already past
+system is in [systems.md](../game/systems.md) and Thread 1 of
+[world-and-threads.md](../game/world.md): the player is already past
 the primitives, progression is knowledge plus perception unlocks, and
 movement is free.
 
@@ -95,7 +95,7 @@ Scope:
   works without a moveset
 - Free movement, plus at most one permanent traversal ability
 - One Thread 2 beat: **the ghost** — the whole of
-  [first-hour.md](first-hour.md), essentially
+  [first-hour.md](../game/first-hour.md), essentially
 - Art direction proven on two curvature bands
 - Audio system proven (the automaton playing an instrument)
 - **Comfort options as first-class features**, not a checkbox
@@ -110,7 +110,7 @@ project with a real audience, real feedback on whether non-euclidean
 walking works for *other people*, and something to point at when hiring or
 funding. If the response is flat, that is worth knowing in year one.
 
-**Budget the tooling here.** [architecture.md](architecture.md) names the
+**Budget the tooling here.** [architecture.md](../rules/architecture.md) names the
 engine's real weakness: no editor. This world needs parameter tooling and
 in-game debug authoring. Build it in Phase 1, when it is cheap, not in
 Phase 3 when it is desperate.
@@ -153,10 +153,10 @@ moments.
 | 3 | **Navigational frustration** — lost stops being wonder and becomes rage | high | landmark alphabet; hue-encodes-curvature; teach every skill in the safe warm sphere before removing it |
 | 4 | **Scope** — 8-15h is enormous for this genre | high | geometries are procedural; concentrate authored content in ~30 thread beats; Phase 1 ships standalone |
 | 5 | **"The simulation is honest" is expensive** | medium | decide *how* honest explicitly — see open questions |
-| 6 | **Engine bet** | medium | named revisit trigger in [architecture.md](architecture.md); do not relitigate otherwise |
+| 6 | **Engine bet** | medium | named revisit trigger in [architecture.md](../rules/architecture.md); do not relitigate otherwise |
 | 7 | **Solo burnout over 3-5 years** | high | Phase 1 ships; visible progress; the hub gaining curvature is a progress bar for the *developer* too |
-| 8 | ~~**`BECOME` may not be fun**~~ | **RETIRED** | played in Phase 0 and the answer was no; the system was cut rather than fixed. See [systems.md](systems.md) for what carries progression instead |
-| 9 | **Repeated-traversal locomotion may be boring** — the Turn specifically needs the loop walked more than once, on purpose | high (*added 2026-08-12*) | see [world-and-threads.md](world-and-threads.md)'s own Turn entry: either the movement itself has to be a *Race the Sun*-grade pleasure, or every lap needs its own improvable skill. Unresolved; blocks judging that space's chirality mechanism at all |
+| 8 | ~~**`BECOME` may not be fun**~~ | **RETIRED** | played in Phase 0 and the answer was no; the system was cut rather than fixed. See [systems.md](../game/systems.md) for what carries progression instead |
+| 9 | **Repeated-traversal locomotion may be boring** — the Turn specifically needs the loop walked more than once, on purpose | high (*added 2026-08-12*) | see [world-and-threads.md](../game/world.md)'s own Turn entry: either the movement itself has to be a *Race the Sun*-grade pleasure, or every lap needs its own improvable skill. Unresolved; blocks judging that space's chirality mechanism at all |
 
 ### Risk 2, in detail — because it is the one that hides
 
@@ -204,7 +204,7 @@ would be catastrophic.
 worth spiking early, but no longer a plausible project-killer.
 
 **Partially spiked — see
-[../notes/hyperbolic-simulation-findings.md](../notes/hyperbolic-simulation-findings.md).**
+[../notes/hyperbolic-simulation-findings.md](notes/hyperbolic-simulation-findings.md).**
 `{7,3}` sustains life *easily*: 972 sampled rules survived 120 generations
 without dying or saturating, many churning every generation — a markedly
 better starting position than the hex sphere ever gave. Travelling
@@ -250,7 +250,7 @@ guessing would have been worse than asking.
    the tone, but it is a big commitment and you should confirm it rather
    than inherit it.
 
-5. **The name.** [names.md](names.md) recommends **UNBEGOTTEN** with
+5. **The name.** [names.md](../game/names.md) recommends **UNBEGOTTEN** with
    **ORPHAN** a close second. It is your game and this one is taste plus a
    trademark search.
 
@@ -292,7 +292,7 @@ second-act decision. The Turn (Möbius) hurts most to lose since it already
 exists — but "already exists" is a sunk cost, not a reason.
 
 This is a recommendation, not a rewrite: the nine remain described in
-[world-and-threads.md](world-and-threads.md), and the cut is a decision
+[world-and-threads.md](../game/world.md), and the cut is a decision
 for whoever owns the project.
 
 ### "Is BECOME actually fun?" belongs in Phase 0, not Phase 1
@@ -300,7 +300,7 @@ for whoever owns the project.
 The first pass rated exactly one existential risk (motion sickness) and
 put the `BECOME` system in Phase 1 as though it were a build task. That
 was an inconsistency: `BECOME` is asserted throughout
-[systems.md](systems.md) to be "the core system, and the one that makes
+[systems.md](../game/systems.md) to be "the core system, and the one that makes
 this a game rather than a walking simulator", and **no part of it has ever
 been played.**
 

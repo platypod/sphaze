@@ -24,7 +24,7 @@ The hyperbolic plane admits no such embedding. **Hilbert's theorem**
 (1901), sharpened by **Hilbert–Efimov**: there is no complete C²
 isometric immersion of the hyperbolic plane into ℝ³. Not "hard", not "not
 yet found" — impossible, proved, 125 years old. See
-[mathematics.md](mathematics.md) §3.
+[mathematics.md](../game/mathematics.md) §3.
 
 **What the theorem does and does not forbid.** It forbids an isometric
 *embedding*. It says nothing about a *coordinate model*, and conflating
@@ -81,7 +81,7 @@ sin_κ(d) = sin(√κ·d)/√κ | d | sinh(√−κ·d)/√−κ
 
 so **one code path handles all three geometries, with κ as a number.**
 This is what HyperRogue does, and it is the reason the world map in
-[world-and-threads.md](world-and-threads.md) can be a curvature scale:
+[world-and-threads.md](../game/world.md) can be a curvature scale:
 in the code it genuinely *is* one scalar.
 
 The hyperboloid (Minkowski) model specifically, rather than Poincaré or
@@ -128,7 +128,7 @@ The player's state stops being `(pos, forward)` and becomes **a single
 isometry** — the frame that takes the origin to where the player is,
 facing where they face. Movement is matrix composition. This also
 quietly deletes a whole bug class: the pole-singularity problems recorded
-at length in `PROJECT_LOG.md` were symptoms of coordinates, and an
+at length in the project log were symptoms of coordinates, and an
 isometry has no coordinates to be singular in.
 
 ## What survives, and it is the valuable part
@@ -202,7 +202,7 @@ light falloff in the Sprawl is exponential rather than inverse-square.
 
 **Darkness closes in exponentially, for real physical reasons, and that is
 exactly the legibility law that space needed** ("see near, not far", see
-[world-and-threads.md](world-and-threads.md)). The correct renderer and
+[world-and-threads.md](../game/world.md)). The correct renderer and
 the design intent produce the same image. Do not fake this; derive it.
 
 ## Engine decision: stay on Haxe + Heaps, rewrite the spatial core
@@ -274,7 +274,7 @@ speculatively.
    start, and cheap.
 2. **The HxSL projection fragment**, and one bare `{7,3}` room to walk.
    **This is Phase 0 of the roadmap and the project's kill criterion** —
-   see [roadmap.md](roadmap.md).
+   see [roadmap.md](../building/roadmap.md).
 3. **Port collision** to the intrinsic metric.
 4. **Port `GeodesicLookup`** (point → cell) into model coordinates.
 5. **Re-tune the CA rule** for the heptagrid's 3 neighbours, reusing the
@@ -291,7 +291,7 @@ has been *played*.
 built — steps 1 and part of 5 of the plan above — so
 the claims here are demonstrated rather than asserted. Two results worth
 reading before implementing anything else:
-[../notes/hyperbolic-simulation-findings.md](../notes/hyperbolic-simulation-findings.md).
+[../notes/hyperbolic-simulation-findings.md](../building/notes/hyperbolic-simulation-findings.md).
 The second one (**a finite hyperbolic patch is mostly boundary, and gets
 worse with size**) argues for running the simulation on a *compact*
 hyperbolic surface rather than a patch, which is an architectural

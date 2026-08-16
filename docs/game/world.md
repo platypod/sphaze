@@ -201,7 +201,7 @@ Do that across a handful of tiles and the individual differences stop
 reading as noise. Overlaid, they compose into something specific — **a
 mark, not the player's own**, deliberate rather than incidental, the same
 object this project's own mark mechanic already knows how to render and
-(per [ideas-backlog.md](../ideas-backlog.md)'s "someone messes with the
+(per [ideas-backlog.md](../open/ideas-backlog.md)'s "someone messes with the
 marks" entry) already knows how to make feel like it belongs to somebody.
 Each solved tile contributes one fragment; enough of them and the shape
 resolves into unmistakable intent. That's the proof — not a cutscene, a
@@ -298,7 +298,7 @@ not mutually exclusive, both open:
 
 Whichever way this goes (or both), it needs building and playing before
 the chirality mechanism above can be judged at all — a bad ribbon kills a
-good mechanic here. See [roadmap.md](roadmap.md)'s Risk 8, which this
+good mechanic here. See [roadmap.md](../building/roadmap.md)'s Risk 8, which this
 sharpens rather than duplicates: that risk was about whether `BECOME`'s
 bodies were fun to control (answered: no, and the system was cut); this
 is specifically about whether
@@ -501,7 +501,7 @@ navigation has to be an algorithm rather than a place to look for.
 
 **Teaches:** **exponential growth, and non-amenability.** The number of
 cells within *n* steps grows exponentially — measured, not asserted, in
-[../notes/hyperbolic-simulation-findings.md](../notes/hyperbolic-simulation-findings.md):
+[../notes/hyperbolic-simulation-findings.md](../building/notes/hyperbolic-simulation-findings.md):
 ring populations grow by a factor of φ² each step. There is no useful
 notion of "the area around here". Every region's boundary is proportional
 to its own interior — **there are no Følner sets, so everywhere is edge.**
@@ -513,7 +513,7 @@ the sphere you could see the whole world and not your feet. Here you can
 see your feet and nothing else. The player who has spent hours learning to
 navigate by the far side arrives here and finds that skill *deleted* —
 which is exactly The Witness's lesson, already in
-[../inspirations.md](../inspirations.md).
+[../inspirations.md](inspirations.md).
 
 **Verb:** navigate by algorithm rather than by memory. HyperRogue's
 Camelot problem is the model: you cannot find the centre of a large circle

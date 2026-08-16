@@ -9,7 +9,7 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 	`GeodesicGliderTracker` spawn-site mechanic, now that there's an actual
 	long-range traveler to spawn instead of a bounded shuttle. Same
 	underlying philosophy as that earlier mechanic ("I want only the
-	spawned gliders," `docs/game-design/design-decisions-records.md`'s own
+	spawned gliders," `docs/archive/decisions.md`'s own
 	2026-08-07 entry) — deliberate spawns, no ambient soup — just built on
 	a rule where that philosophy finally has something worth spawning.
 

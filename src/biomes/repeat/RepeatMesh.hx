@@ -8,7 +8,7 @@ import game.MeshBuilder;
 	standing wherever a tile diverges from the reference.
 
 	**The visual dialect is doing mechanical work, not decorating.**
-	`docs/game-design/direction/art-and-audio.md` assigns this space
+	`docs/game/art-and-audio.md` assigns this space
 	Manifold Garden's register — blocky, low-poly, almost no texture,
 	silhouette carrying everything — and argues it from the mechanic
 	rather than from taste: spot-the-difference needs hard edges and

@@ -71,7 +71,7 @@ interface Space {
 		every existing biome; a space with no ambient cross product to take
 		(`hyperbolic.HyperbolicSpace`) therefore returns the vector matching
 		this same inverted convention, so that one negation in `GameLoop`
-		keeps working unchanged. Logged as a wart in `docs/bug-tracker.md`.
+		keeps working unchanged. Logged as a wart in `docs/open/bug-tracker.md`.
 		@param pos the position to find "right" at.
 		@param forward the current unit tangent.
 		@param up the local "up", as `entities.player.PlayerModel.surfaceUp` maintains it — see `turn`'s own parameter doc.

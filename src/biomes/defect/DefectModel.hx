@@ -9,7 +9,7 @@ package biomes.defect;
 	package covers the three *uniform*-curvature geometries; a cone is
 	curvature **concentrated at a single point** in an otherwise flat
 	plane, which is a genuinely different construction —
-	`docs/game-design/direction/world-and-threads.md` says so, and it was
+	`docs/game/world.md` says so, and it was
 	right. It is also not a `geometry.DeckGroup` quotient: the group would
 	be rotations about the apex, which have a *fixed point*, so
 	`elementsWithin` (which prunes by how far an element moves the origin)

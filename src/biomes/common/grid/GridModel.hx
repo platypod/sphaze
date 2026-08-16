@@ -3,7 +3,7 @@ package biomes.common.grid;
 /**
 	A latitude/longitude grid over the sphere — the substrate any grid-based
 	biome walks on (today: the maze; likely reused as-is by a future compass
-	or candlelight biome, per docs/game-design/ideas-backlog.md's backlog, since those read
+	or candlelight biome, per docs/open/ideas-backlog.md's backlog, since those read
 	as mechanic variations on the same corridors, not a different layout).
 	The two pole rows would otherwise collapse into COLS degenerate slivers
 	meeting at a point, so each pole is a single merged node that every cell
@@ -56,7 +56,7 @@ class GridModel {
 		width stays roughly consistent everywhere instead of shrinking
 		toward the poles (a column's physical width is proportional to
 		`sin(theta)`, which shrinks toward the poles, while a fixed column
-		count doesn't compensate — see docs/PROJECT_LOG.md for the actual
+		count doesn't compensate — see docs/archive/project-log.md for the actual
 		numbers this band scheme was tuned against).
 
 		Banded by `d`, the row's distance in rows from the nearer pole:

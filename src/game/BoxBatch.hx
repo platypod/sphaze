@@ -14,7 +14,7 @@ package game;
 	else in the codebase guards against it.
 
 	Extracted here once a second biome (`biomes.repeat.RepeatBiome`)
-	needed the same thing, per `docs/GUIDELINES.md`'s rule about waiting
+	needed the same thing, per `docs/rules/guidelines.md`'s rule about waiting
 	for the second use case rather than generalising on the first.
 
 	Stateful, unlike `MeshBuilder`'s own static helpers: the whole point

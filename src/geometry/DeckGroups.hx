@@ -34,7 +34,7 @@ class DeckGroups {
 		twists it, which is a fine thing to look at and is *not flat*: the
 		embedded surface has real curvature everywhere, so walking it
 		teaches the wrong lesson for a space
-		`docs/game-design/direction/world-and-threads.md` files under
+		`docs/game/world.md` files under
 		κ = 0. Quotienting a flat strip by a glide reflection gives a
 		genuinely flat, genuinely non-orientable band, with the twist
 		living in the identification rather than in the geometry — which is
@@ -88,7 +88,7 @@ class DeckGroups {
 		rather than merely a neighbour step. `DeckGroup` supplies the
 		inverses, giving all eight side-pairings.
 
-		**Deferred once, deliberately** (see `docs/PROJECT_LOG.md`): this is
+		**Deferred once, deliberately** (see `docs/archive/project-log.md`): this is
 		real hyperbolic geometry rather than a parameter change, and it was
 		held back from the framework's first commit so it could be verified
 		on its own rather than smuggled in beside two flat groups. What

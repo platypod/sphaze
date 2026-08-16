@@ -33,7 +33,7 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 	**A true glider gun — a structure that emits gliders on its own,
 	forever, the way Conway's Gosper gun does — is still not what this is.**
 	This class re-seeds by timer instead — a scripted stand-in, not an
-	emergent one. See `docs/game-design/ideas-backlog.md`'s own entry.
+	emergent one. See `docs/open/ideas-backlog.md`'s own entry.
 
 	**Traveler anchors need real clearance from a pentagon, not proximity to
 	one.** `placeKnownSpaceship`'s own walk can reach 6 hex-steps out from

@@ -9,7 +9,7 @@ package graphics;
 	Deliberately a *texture* rather than a `h2d` overlay: an overlay would be
 	the easy answer, but it would also be the project's first piece of UI
 	chrome, which the diegetic-over-chrome pillar
-	(`docs/game-design/philosophy.md`) exists to avoid. A rendered sign is a
+	(`docs/rules/philosophy.md`) exists to avoid. A rendered sign is a
 	thing in the world, and it reuses `entities.painting.PaintingModel`'s own
 	quad building unchanged. (The pillar is about the *game*; a dev-only hub
 	could get away with chrome. Doing it this way costs one small class and

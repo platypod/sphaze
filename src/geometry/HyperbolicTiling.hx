@@ -8,7 +8,7 @@ import geometry.CurvedSpace.ModelPoint;
 	faces, `q` of them around every vertex — produced as **an adjacency
 	graph**, which is the only thing a cellular automaton needs.
 
-	Built to answer Risk 2 in `docs/game-design/direction/roadmap.md`: the
+	Built to answer Risk 2 in `docs/building/roadmap.md`: the
 	Sprawl biome would run its automaton on `{7,3}`, and before designing a
 	world around that it is worth knowing the tiling can actually be
 	generated and behaves the way the theory says. It is also the first

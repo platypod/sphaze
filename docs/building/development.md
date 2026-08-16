@@ -25,7 +25,7 @@ Lint Haxe code with `haxe-checkstyle` (ruleset in `checkstyle.json`).
 
 - **When**: Before every commit (pre-commit hook).
 - **CI**: Runs on every push.
-- **If it fails**: Usually a violation of the conventions in [CLAUDE.md](../CLAUDE.md) or `checkstyle.json`. Read the error and fix the source.
+- **If it fails**: Usually a violation of the conventions in [CLAUDE.md](../../CLAUDE.md) or `checkstyle.json`. Read the error and fix the source.
 
 ### `make check`
 
@@ -147,7 +147,7 @@ Bake tool build: Compiles `tools.geodesic.GeodesicBake` to neko bytecode.
 ### `make lint` fails with a style violation
 
 - Read the error message — it names the file and line.
-- Check [CLAUDE.md](../CLAUDE.md) §2 (Haxe code standards) to see if the violation is intentional.
+- Check [CLAUDE.md](../../CLAUDE.md) §2 (Haxe code standards) to see if the violation is intentional.
 - If unintentional, fix it. If intentional (e.g., you deviated to solve a specific problem), add a comment explaining why (per CLAUDE.md).
 - Run `make fmt` to auto-fix formatting issues.
 
@@ -155,7 +155,7 @@ Bake tool build: Compiles `tools.geodesic.GeodesicBake` to neko bytecode.
 
 - Read the assertion failure message — it usually names the failing value.
 - Add a `trace()` or examine the test code to understand what went wrong.
-- Unit tests cover game logic (math, state machines, data parsing), not rendering or interaction. If the failure looks like it needs interactive verification, check [CLAUDE.md](../CLAUDE.md)'s "Manual/interactive verification" section.
+- Unit tests cover game logic (math, state machines, data parsing), not rendering or interaction. If the failure looks like it needs interactive verification, check [CLAUDE.md](../../CLAUDE.md)'s "Manual/interactive verification" section.
 
 ### `make build` fails: Large file or memory error
 
@@ -171,6 +171,6 @@ Bake tool build: Compiles `tools.geodesic.GeodesicBake` to neko bytecode.
 
 ## Further reading
 
-- [CLAUDE.md](../CLAUDE.md): Project guidelines, architecture, coding standards, workflow/verification.
-- [GUIDELINES.md](GUIDELINES.md): Detailed design principles and rationale for each architectural choice.
-- [game-design/](game-design/): Philosophy, story, design decisions, technical notes.
+- [CLAUDE.md](../../CLAUDE.md): Project guidelines, architecture, coding standards, workflow/verification.
+- [rules/guidelines.md](../rules/guidelines.md): Detailed design principles and rationale for each architectural choice.
+- [docs/README.md](../README.md): the whole documentation map, sorted by how much it binds you.

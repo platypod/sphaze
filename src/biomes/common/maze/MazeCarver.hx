@@ -14,7 +14,7 @@ import biomes.common.maze.MazeTopology.RectangularTopology;
 	algorithms here only ever touch node keys, adjacency, and (for
 	`AxisBiased`) an edge's axis, so every style lands on every present and
 	future topology at once. Which style suits which biome is a design
-	question, parked in `docs/game-design/ideas-backlog.md`, not decided here.
+	question, parked in `docs/open/ideas-backlog.md`, not decided here.
 
 	Every style produces a **perfect** maze — a spanning tree, exactly one
 	path between any two nodes — except where braiding is asked for on top,

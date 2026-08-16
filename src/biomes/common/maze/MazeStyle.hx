@@ -5,7 +5,7 @@ package biomes.common.maze;
 	same grid feel like different places without touching geometry,
 	rendering, or collision. Each style has a recognizable signature in play,
 	which is the actual reason this enum exists (see
-	`docs/game-design/inspirations.md` on identity coming from restriction):
+	`docs/game/inspirations.md` on identity coming from restriction):
 
 	- `RandomizedDfs` — long snaking corridors, few branches, low dead-end
 	  density. The original (and default) carve: what every existing maze in

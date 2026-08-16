@@ -40,7 +40,7 @@ class MazeGenerator {
 		design question ("what should this biome's corridors feel like")
 		reaches the algorithms without every biome writing its own carve.
 		Which biome should use which recipe is still open (see
-		`docs/game-design/ideas-backlog.md`).
+		`docs/open/ideas-backlog.md`).
 		@param style which algorithm to carve with.
 		@param braidFraction what fraction of dead ends to open into loops, in [0, 1] — 0 leaves a perfect maze.
 		@param random source of randomness in [0, 1); defaults to Math.random.

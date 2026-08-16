@@ -13,21 +13,21 @@ hireable**, **engine choice open**.
 
 ## Where this sits in the doc lifecycle
 
-[../README.md](../README.md) defines a lifecycle where each file holds one
+[../README.md](README.md) defines a lifecycle where each file holds one
 kind of content and content *moves* between files as its status changes.
 This folder is a new slot in it, and it needs its own movement rule:
 
 | | |
 |---|---|
 | **Holds** | The whole-game direction: what this game *is*, at a level above any single mechanic. Changes rarely and deliberately. |
-| **Feeds** | [../ideas-backlog.md](../ideas-backlog.md) — when a piece of direction becomes something you could actually build next, it gets a backlog entry with the usual shape (*Fits*/*Unproven*/*Cost*), and this folder keeps only the *why*. |
-| **Answers to** | [../philosophy.md](../philosophy.md) — where direction and pillars disagree, that's a decision to make explicitly, not silently. Where this direction changes a pillar, it says so explicitly (see below). |
-| **Records** | Decisions land in [../design-decisions-records.md](../design-decisions-records.md) as usual. |
+| **Feeds** | [../ideas-backlog.md](../open/ideas-backlog.md) — when a piece of direction becomes something you could actually build next, it gets a backlog entry with the usual shape (*Fits*/*Unproven*/*Cost*), and this folder keeps only the *why*. |
+| **Answers to** | [../philosophy.md](../rules/philosophy.md) — where direction and pillars disagree, that's a decision to make explicitly, not silently. Where this direction changes a pillar, it says so explicitly (see below). |
+| **Records** | Decisions land in [../design-decisions-records.md](../archive/decisions.md) as usual. |
 
 **Status: proposed, not adopted.** Nothing in this folder has been agreed.
 It's written as though committed because a direction hedged at every
 sentence is unreadable and unarguable — but every load-bearing choice is
-flagged where it's genuinely open, and [roadmap.md](roadmap.md) ends with
+flagged where it's genuinely open, and [roadmap.md](../building/roadmap.md) ends with
 the questions I could not answer alone.
 
 ## The thesis
@@ -149,7 +149,7 @@ Three checks, because a premise this tidy deserves suspicion:
   by the curvature you stand in. The join is the new thing, not either
   half.
 - **Does it use what exists?** Yes, and more than expected — see
-  [architecture.md](architecture.md). The cellular-automaton work is
+  [architecture.md](../rules/architecture.md). The cellular-automaton work is
   graph-based, and a graph does not care about curvature, so all of it
   ports to hyperbolic tilings unchanged. That is the single largest
   investment in the repo and it survives whole.
@@ -158,15 +158,15 @@ Three checks, because a premise this tidy deserves suspicion:
 
 ## Proposed pillars
 
-Against the current [../philosophy.md](../philosophy.md). Three survive
-sharpened, one is promoted from [../inspirations.md](../inspirations.md),
+Against the current [../philosophy.md](../rules/philosophy.md). Three survive
+sharpened, one is promoted from [../inspirations.md](inspirations.md),
 one is new and expensive, one is demoted.
 
 1. **Geometry is content, not setting.** *(promotion)* Already written in
-   [../inspirations.md](../inspirations.md) as the distilled HyperRogue
+   [../inspirations.md](inspirations.md) as the distilled HyperRogue
    rule — "a biome's mechanic should be a corollary of the sphere, not a
    decoration on it" — and parked pending real use. It has now judged an
-   entire world (see [world-and-threads.md](world-and-threads.md)) and it
+   entire world (see [world-and-threads.md](world.md)) and it
    earned promotion. Generalised past the sphere: *every space exists to
    demonstrate a property of its own curvature or topology. If the mechanic
    works unchanged in a flat rectangular room, it is a reskin, not a place.*
@@ -201,7 +201,7 @@ one is new and expensive, one is demoted.
    in the same space everywhere — no scripted set-piece wearing emergence
    as a costume. This is a promise to the player that the world will reward
    being reasoned about. It is also the most costly commitment in this
-   document, and [roadmap.md](roadmap.md) flags the honest question of how
+   document, and [roadmap.md](../building/roadmap.md) flags the honest question of how
    absolute to make it.
 
 6. **Prototype unproven mechanics before committing.** *(kept verbatim)*
@@ -221,11 +221,11 @@ one does, and it is more specific than noir: hue encodes curvature.
 | File | What it holds |
 |---|---|
 | [mathematics.md](mathematics.md) | Every geometric and automaton idea the game uses: what it is, why it is here, where it lives in the code, with figures |
-| [world-and-threads.md](world-and-threads.md) | The geometries, what each teaches, and the four story threads that run through them; the endgame and its three endings |
+| [world-and-threads.md](world.md) | The geometries, what each teaches, and the four story threads that run through them; the endgame and its three endings |
 | [systems.md](systems.md) | Moment-to-moment gameplay: the verbs, the perception unlocks that carry progression, how knowledge gates progress without a journal |
-| [architecture.md](architecture.md) | The technical plan — how the spatial core represents curvature, what Hilbert's theorem does and does not forbid, and the engine decision with its revisit trigger |
+| [architecture.md](../rules/architecture.md) | The technical plan — how the spatial core represents curvature, what Hilbert's theorem does and does not forbid, and the engine decision with its revisit trigger |
 | [art-and-audio.md](art-and-audio.md) | Art and audio direction, written as briefs a contractor could be handed |
-| [roadmap.md](roadmap.md) | Phases, honest timeline, risk register, and the questions I could not answer alone |
+| [roadmap.md](../building/roadmap.md) | Phases, honest timeline, risk register, and the questions I could not answer alone |
 | [names.md](names.md) | The game is not called sphaze any more. Candidates, with a recommendation |
 
 ## Sources
@@ -240,5 +240,5 @@ than trusted:
 - [Cellular Automata in Hyperbolic Spaces](https://link.springer.com/rwe/10.1007/978-3-642-27737-5_53-5) (Margenstern) — CAs on the pentagrid and ternary heptagrid are a real, developed field
 - [A weakly universal cellular automaton in the heptagrid](https://arxiv.org/pdf/1606.09488) — universality on {7,3}
 - [Hilbert's theorem on immersion of the hyperbolic plane](https://math.uchicago.edu/~may/REU2020/REUPapers/Dewhurst.pdf) — why the current architecture cannot hold hyperbolic space
-- [Hyperboloid model](https://en.wikipedia.org/wiki/Hyperboloid_model) — the representation [architecture.md](architecture.md) proposes
-- [HyperRogue: Playing with Hyperbolic Geometry](https://www.archive.bridgesmathart.org/2017/bridges2017-9.pdf) — already in [../inspirations.md](../inspirations.md); the prior art for both the rendering and the design rule
+- [Hyperboloid model](https://en.wikipedia.org/wiki/Hyperboloid_model) — the representation [architecture.md](../rules/architecture.md) proposes
+- [HyperRogue: Playing with Hyperbolic Geometry](https://www.archive.bridgesmathart.org/2017/bridges2017-9.pdf) — already in [../inspirations.md](inspirations.md); the prior art for both the rendering and the design rule

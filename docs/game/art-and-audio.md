@@ -37,11 +37,11 @@ Why this is the right decision and not a preference:
   will *know* the Sprawl is different the instant they see it, and only
   understand why hours later.
 - **It makes the world map visible from inside it.** The curvature scale
-  in [world-and-threads.md](world-and-threads.md) becomes a colour
+  in [world-and-threads.md](world.md) becomes a colour
   gradient the player is walking along.
 - **Precedent that it works:** Manifold Garden colour-codes gravity
   direction, and it is the single reason that game is playable rather than
-  bewildering. Already in [../inspirations.md](../inspirations.md) for a
+  bewildering. Already in [../inspirations.md](inspirations.md) for a
   different lesson; this is the second one.
 - **It gives the endgame its image for free.** The journey from amber to
   black is the story, drawn on every frame.
@@ -57,7 +57,7 @@ once a month.
 In hyperbolic space the area of a geodesic sphere grows **exponentially**
 with radius, so physically correct light falloff there is exponential
 rather than inverse-square (Coulon et al. —
-[architecture.md](architecture.md)).
+[architecture.md](../rules/architecture.md)).
 
 **Do not fake this, and do not fight it.** It means darkness closes in
 exponentially in the Sprawl, for real physical reasons, which is exactly
@@ -75,7 +75,7 @@ these spaces, and a fake sun would be the one asset in the game that lies
 about the geometry. Light comes from the world: emissive cells, sockets,
 the pentagons, and ambient. This is also a production saving — no shadow
 maps to fight in curved space, which is one of the systems
-[architecture.md](architecture.md) notes big engines would have forced us
+[architecture.md](../rules/architecture.md) notes big engines would have forced us
 to reimplement anyway.
 
 ## Material language
@@ -105,7 +105,7 @@ constants** — they hold in every space, without exception, or the whole
 system stops teaching anything. That leaves room, and a need, for each
 space to also have its own *dialect* on top: a distinct silhouette
 language that makes it recognisable at a glance beyond its colour
-temperature, the same way [world-and-threads.md](world-and-threads.md)
+temperature, the same way [world-and-threads.md](world.md)
 gives each space its own legibility law rather than reusing the Fold's.
 
 The brief: variation from one biome to the next,
@@ -114,7 +114,7 @@ so far:
 
 | Space | Dialect |
 |---|---|
-| **The Repeat** | a **cell city** — Manifold Garden's own register: blocky, low-poly, almost no texture, silhouette carrying everything. Buildings, not terrain. This isn't just a palette choice — it *reinforces* [world-and-threads.md](world-and-threads.md)'s own mechanism for this space. An urban dialect gives divergence somewhere obvious to hide (a window lit differently, a storey the reference block doesn't have, a rooftop shape one degree off) in a way organic terrain doesn't offer for free; spot-the-difference wants hard edges and repeated units, and a city is made of exactly those. |
+| **The Repeat** | a **cell city** — Manifold Garden's own register: blocky, low-poly, almost no texture, silhouette carrying everything. Buildings, not terrain. This isn't just a palette choice — it *reinforces* [world-and-threads.md](world.md)'s own mechanism for this space. An urban dialect gives divergence somewhere obvious to hide (a window lit differently, a storey the reference block doesn't have, a rooftop shape one degree off) in a way organic terrain doesn't offer for free; spot-the-difference wants hard edges and repeated units, and a city is made of exactly those. |
 
 The rest are open — this table is meant to fill in space by space as each
 one's own mechanism gets worked out, the same way the world doc itself
@@ -226,7 +226,7 @@ object will be miserable here, and it is kinder to say so in the job post.
   should resolve to clarity the moment you look at what is close.
 
   **A real instrument, not only atmosphere** — worked out
-  alongside [world-and-threads.md](world-and-threads.md)'s own Sprawl
+  alongside [world-and-threads.md](world.md)'s own Sprawl
   navigation mechanism, which needs exactly this: a consistent audible
   pulse or timbre shift exactly at ring boundaries (the same rings
   `geometry.HyperbolicTiling`'s BFS already numbers), so a player counting

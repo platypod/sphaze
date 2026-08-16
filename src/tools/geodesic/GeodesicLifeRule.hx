@@ -7,7 +7,7 @@ package tools.geodesic;
 	own square-grid B3/S23 could be expressed the same way), but the four
 	named instances below are specifically this package's own 6-neighbor
 	candidates — see
-	`docs/game-design/notes/geodesic-sphere-engineering.md`'s "Life rule
+	`docs/building/notes/geodesic-sphere-engineering.md`'s "Life rule
 	candidates" section for how they were derived (proportional scaling
 	from B3/S23's own 8-neighbor thresholds) and `GeodesicLifeRules.DEFAULT`'s
 	own doc for which one actually got picked, and why.
@@ -85,7 +85,7 @@ class GeodesicLifeRules {
 		The still-standing finding from round 2 remains true and
 		unaffected by this: every rule, `B2/S34` included, dies within ~5
 		generations on a *bare* carved maze with no open edges at all —
-		see `docs/game-design/notes/geodesic-sphere-engineering.md`'s own
+		see `docs/building/notes/geodesic-sphere-engineering.md`'s own
 		Phase 5 entry for that table. Wall-gating Life itself is still
 		removed for the same reason as always; this round only ever
 		concerned which rule drives the *unrestricted* fine simulation.

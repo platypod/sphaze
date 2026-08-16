@@ -4,7 +4,7 @@ import utest.Test;
 import utest.Assert;
 import entities.hourglass.Hourglass.TriggerSide;
 
-/** Covers HourglassModel's own pure tilt/sand/time-scale state — see docs/GUIDELINES.md §1.4/§5.4 for why this is unit-tested while Hourglass's own mesh-building isn't. **/
+/** Covers HourglassModel's own pure tilt/sand/time-scale state — see docs/rules/guidelines.md §1.4/§5.4 for why this is unit-tested while Hourglass's own mesh-building isn't. **/
 class HourglassModelTest extends Test {
 	static inline final MID_TIME_SCALE:Float = (HourglassModel.MIN_TIME_SCALE + HourglassModel.MAX_TIME_SCALE) / 2;
 

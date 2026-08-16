@@ -4,7 +4,7 @@ import tools.geodesic.GeodesicSphere.GeodesicSphereData;
 
 /**
 	The player-composed pattern at each of the sphere's 12 pentagons — see
-	`docs/game-design/ideas-backlog.md`'s "Deliberate pentagon activation"
+	`docs/open/ideas-backlog.md`'s "Deliberate pentagon activation"
 	entry, "The composing interface" for the full design: the player zooms
 	into a pentagon's own floor engraving, toggles cells on/off, and every
 	`RESTAMP_INTERVAL_TICKS` ticks the composed pattern is force-written
@@ -38,7 +38,7 @@ class GeodesicPentagonEngraving {
 		wider range of config, say, three cells radius"). Safe against
 		overlapping a neighboring pentagon's own footprint: the checked-in
 		sphere is baked at frequency `11`
-		(`docs/game-design/design-decisions-records.md`'s own "Geodesic
+		(`docs/archive/decisions.md`'s own "Geodesic
 		sphere for Conway" entry), so the *closest* two pentagons — which
 		are always icosahedron vertices, and only ever share a subdivided
 		icosahedral edge — are `11` hops apart, more than three times

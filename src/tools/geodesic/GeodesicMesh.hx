@@ -76,7 +76,7 @@ import tools.geodesic.GeodesicWallSimplifier.WallSegment;
 	independently-collision-relevant, independently-reactive edges — not
 	bugs in the merge itself. Every wall segment here is still exactly one
 	graph edge, one quad, matching `biomes.conway.ConwayMesh`'s own
-	original correspondence. See `docs/game-design/design-decisions-records.md`'s
+	original correspondence. See `docs/archive/decisions.md`'s
 	own entry for what's being tried next.
 **/
 class GeodesicMesh {

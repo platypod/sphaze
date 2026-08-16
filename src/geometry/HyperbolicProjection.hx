@@ -13,7 +13,7 @@ import geometry.CurvedSpace.ModelPoint;
 	lines*, so a hyperbolic polygon projects to a Euclidean polygon and the
 	rasteriser's own assumptions survive intact. Poincaré would bend every
 	wall into an arc and force curved-primitive rendering; Klein keeps
-	triangles triangles. This is why `docs/game-design/direction/architecture.md`
+	triangles triangles. This is why `docs/rules/architecture.md`
 	recommends it for the shipping renderer.
 
 	**Two facts worth knowing before looking at output:**
@@ -25,7 +25,7 @@ import geometry.CurvedSpace.ModelPoint;
 	  lands at Klein radius `tanh(d) < 1`, so the *entire infinite plane*
 	  fits inside a unit disk and everything far away piles up against its
 	  rim. That is not a rendering artifact to fight — it is
-	  [the Sprawl's own legibility law](../../docs/game-design/direction/world-and-threads.md)
+	  [the Sprawl's own legibility law](../../docs/game/world.md)
 	  ("see near, not far") arriving for free out of correct mathematics.
 	  Depth ordering still works, because `tanh` is monotonic in `d`.
 

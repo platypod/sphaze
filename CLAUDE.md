@@ -2,7 +2,22 @@
 
 A 3D maze wrapped onto the inside of a sphere: the player walks the interior surface, and can raise their head to see clear across to the far side — but not what's in their immediate vicinity. Built in Haxe + Heaps, primarily vibe-coded (Claude does most of the writing, hooman directs and reviews).
 
-This file holds the non-negotiables. Full rationale and details live in `docs/GUIDELINES.md`; project history and past decisions live in `docs/PROJECT_LOG.md`; game design lives in the `docs/game-design/` folder (start at its `README.md` — philosophy, story-line, ideas-backlog, design-decisions-records, inspirations, each with movement rules between them); known bugs live in `docs/bug-tracker.md`; fixed bugs live in `docs/CHANGELOG.md`. Read those when you need the "why," the history, or the design intent — this file is just the "what."
+This file holds the non-negotiables — the "what". Everything else lives
+under [`docs/`](docs/README.md), which is sorted by how much it binds you:
+
+- **[`docs/game/`](docs/game/README.md) — what this game *is*.** Read
+  [`docs/game/README.md`](docs/game/README.md) first if you are new, and
+  [`docs/game/world.md`](docs/game/world.md) before touching any biome.
+- **[`docs/rules/`](docs/rules/philosophy.md) — what must be respected**:
+  the design pillars, the full engineering guidelines (this file is their
+  short version), and the spatial architecture.
+- **[`docs/building/`](docs/building/development.md)** — setup, roadmap,
+  engineering notes.
+- **[`docs/open/`](docs/open/ideas-backlog.md)** — the ideas backlog and
+  the bug tracker. Nothing there is decided.
+- **[`docs/archive/`](docs/archive/project-log.md)** — history: the
+  project log, the decision records, the changelog. Read only to answer
+  "why is it like this".
 
 ## Architecture
 
@@ -13,7 +28,7 @@ This file holds the non-negotiables. Full rationale and details live in `docs/GU
 - Game/UI flow and any per-entity behavior modes use explicit state machines, not boolean-flag soup.
 - Systems communicate through events/signals, not direct cross-references.
 - Object pooling only where profiling shows it's needed (bullets, particles, high-frequency spawns) — don't pool by default.
-- Mobile input (touch controls) is a later iteration, not a day-one architecture decision — build for mouse/keyboard first (see `docs/GUIDELINES.md` §1.8).
+- Mobile input (touch controls) is a later iteration, not a day-one architecture decision — build for mouse/keyboard first (see `docs/rules/guidelines.md` §1.8).
 
 ## Haxe code standards
 
@@ -43,14 +58,14 @@ This file holds the non-negotiables. Full rationale and details live in `docs/GU
 ## Design & bug tracking
 
 - New feature/mechanic ideas that aren't being implemented right now go in
-  `docs/game-design/ideas-backlog.md` — check them against
-  `docs/game-design/philosophy.md` first; an idea that cuts against a
+  `docs/open/ideas-backlog.md` — check them against
+  `docs/rules/philosophy.md` first; an idea that cuts against a
   pillar is a reason to raise it explicitly rather than add it silently.
   Design decisions (chosen + rejected alternatives + why) are recorded in
-  `docs/game-design/design-decisions-records.md`.
-- A bug found but not fixed immediately goes in `docs/bug-tracker.md`.
-- When a bug gets fixed: remove its entry from `docs/bug-tracker.md` and add
-  one to `docs/CHANGELOG.md` (date, one-line description, fixing commit).
+  `docs/archive/decisions.md`.
+- A bug found but not fixed immediately goes in `docs/open/bug-tracker.md`.
+- When a bug gets fixed: remove its entry from `docs/open/bug-tracker.md` and add
+  one to `docs/archive/changelog.md` (date, one-line description, fixing commit).
 
 ## Workflow / verification loop
 
@@ -62,7 +77,7 @@ Before considering any non-trivial change done:
 
 **Pre-commit hook (local, blocking):** `.githooks/pre-commit` (wired via `git config core.hooksPath .githooks`) runs `make fmt lint check test` before every commit — the same targets CI runs. A failing pre-commit blocks the commit; use `git commit --no-verify` only for genuinely exceptional cases.
 
-When touching multiple files or anything architectural, check `docs/GUIDELINES.md` first — don't improvise a pattern that contradicts it. If a task seems to require breaking one of the rules above (especially the macro rule), stop and ask rather than proceeding.
+When touching multiple files or anything architectural, check `docs/rules/guidelines.md` first — don't improvise a pattern that contradicts it. If a task seems to require breaking one of the rules above (especially the macro rule), stop and ask rather than proceeding.
 
 ## Manual/interactive verification
 

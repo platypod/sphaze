@@ -5,7 +5,7 @@ package geometry;
 
 	The whole point of naming these as one type is that they are *one*
 	geometry with a parameter, not three special cases — see
-	`docs/game-design/direction/architecture.md`. Every formula in this
+	`docs/rules/architecture.md`. Every formula in this
 	package is written once, in terms of `sigmaOf`/`cosK`/`sinK`, and
 	specialises to the right thing for each constructor.
 **/
@@ -33,7 +33,7 @@ enum Curvature {
 	an angle at the origin and an arc length is different — `sin` on a
 	sphere, the identity on a plane, `sinh` in hyperbolic space. Naming that
 	family once means `Isometry.translation` is a single formula instead of
-	a three-way branch, and it is why `docs/game-design/direction/` can talk
+	a three-way branch, and it is why `docs/game/` can talk
 	about "walking down the curvature scale" and have that be a literal
 	description of a parameter rather than a metaphor.
 **/

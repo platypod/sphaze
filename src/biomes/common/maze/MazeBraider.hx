@@ -9,7 +9,7 @@ import biomes.common.maze.MazeTopology.MazeLayout;
 	the perfect-maze property they each guarantee).
 
 	The design reason it's worth having, per
-	`docs/game-design/inspirations.md`: in a perfect maze a dead end *proves*
+	`docs/game/inspirations.md`: in a perfect maze a dead end *proves*
 	a wrong branch, so the maze can be solved by elimination from inside it.
 	Braid it and that stops working — the player has to actually read the
 	layout from across the sphere instead of exhausting it up close, which is

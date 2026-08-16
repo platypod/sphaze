@@ -14,7 +14,7 @@ import biomes.common.space.sphere.SphereMath;
 	upstream is following the maze's own solution, and no line of sight is
 	needed to do it.
 
-	The design intent, per `docs/game-design/ideas-backlog.md`'s perception
+	The design intent, per `docs/open/ideas-backlog.md`'s perception
 	entry: one tuft of grass tells the player nothing (it just leans), but the
 	whole sphere's grass seen from across it is a flow field converging on one
 	point. Illegible up close, legible at distance — the game's core

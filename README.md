@@ -11,8 +11,8 @@ and mobile) with HashLink for fast local dev/debugging.
 
 Coding standards, architecture decisions, and the git/commit workflow are in
 [`CLAUDE.md`](CLAUDE.md) (short version) and
-[`docs/GUIDELINES.md`](docs/GUIDELINES.md) (full detail + rationale).
-[`docs/PROJECT_LOG.md`](docs/PROJECT_LOG.md) has the chronological history of
+[`docs/rules/guidelines.md`](docs/rules/guidelines.md) (full detail + rationale).
+[`docs/archive/project-log.md`](docs/archive/project-log.md) has the chronological history of
 how the project got here, and is where new decisions get logged as the
 project continues.
 
@@ -31,10 +31,10 @@ make build   # production web build -> bin/ (self-contained static web root)
 **HashLink caveat:** Homebrew's `hashlink` formula ships no `hl` (JIT VM) on
 Apple Silicon — only HashLink/C native compilation is supported on ARM
 ([hashlink#557](https://github.com/HaxeFoundation/hashlink/issues/557)). The
-"fast HL dev loop" `docs/GUIDELINES.md` §6.1 describes isn't wired up yet as a
+"fast HL dev loop" `docs/rules/guidelines.md` §6.1 describes isn't wired up yet as a
 result; `make check`/`make test`/`make build` all currently target JS (run via
 `node` for tests), which needs no extra toolchain. See
-`docs/PROJECT_LOG.md` for the full note.
+`docs/archive/project-log.md` for the full note.
 
 ## Deployment
 
@@ -104,19 +104,21 @@ that with "deploy on release":
 
 **Current state: staying on option 1 (manual) until there's a real reason to
 invest in 2 or 3.** Revisit this section and log the decision in
-`docs/PROJECT_LOG.md` when that happens.
+`docs/archive/project-log.md` when that happens.
 
 ## Design, backlog & bug tracking
 
-- [`docs/game-design/`](docs/game-design/README.md) — design docs split by
-  lifecycle: [philosophy](docs/game-design/philosophy.md) (what this game
-  is trying to be), [storylines](docs/game-design/storylines/README.md)
-  (current state of the story, one file per candidate),
-  [ideas-backlog](docs/game-design/ideas-backlog.md)
-  (not-yet-implemented ideas),
-  [design-decisions-records](docs/game-design/design-decisions-records.md)
-  (decisions with their rejected alternatives and why), and
-  [inspirations](docs/game-design/inspirations.md) (external references and
-  the specific lesson each one carries).
-- [`docs/bug-tracker.md`](docs/bug-tracker.md) — known bugs not yet fixed.
-- [`docs/CHANGELOG.md`](docs/CHANGELOG.md) — bugs that have been fixed.
+- [**`docs/game/`**](docs/game/README.md) — **what this game is.** The
+  premise and pillars, the nine spaces, the systems, the opening hour, the
+  mathematics it exploits, and the art direction.
+- [`docs/rules/`](docs/rules/philosophy.md) — what must be respected: the
+  design pillars, the engineering guidelines, the spatial architecture.
+- [`docs/building/`](docs/building/development.md) — setup, roadmap and
+  engineering notes.
+- [`docs/open/`](docs/open/ideas-backlog.md) — the ideas backlog and known
+  bugs. Nothing there is decided.
+- [`docs/archive/`](docs/archive/project-log.md) — history: project log,
+  decision records, changelog.
+
+Start at [`docs/README.md`](docs/README.md), which sorts all of it by how
+much it binds you.

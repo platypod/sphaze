@@ -74,7 +74,7 @@ typedef CellCorners = {
 class GridMesh {
 	// Doubled from 6 on request, for taller, more prominent walls — a
 	// deliberate departure from the earlier "present but not dominant" FOV-
-	// subtense tuning noted in prior sessions (see docs/PROJECT_LOG.md),
+	// subtense tuning noted in prior sessions (see docs/archive/project-log.md),
 	// not an oversight to reconcile back to that ratio later.
 	public static inline final WALL_HEIGHT:Float = 12;
 

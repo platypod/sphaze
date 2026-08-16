@@ -12,7 +12,7 @@ import geometry.Isometry;
 /**
 	**Phase 0's kill-criterion harness: a bare `{7,3}` room you can walk.**
 
-	`docs/game-design/direction/roadmap.md` names exactly one existential
+	`docs/building/roadmap.md` names exactly one existential
 	risk for the whole direction — *is walking in hyperbolic space pleasant,
 	or is it nauseating?* — and states that nothing else should be built
 	until that has been answered by *playing* it. This is the thing to play.

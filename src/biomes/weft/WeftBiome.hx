@@ -19,7 +19,7 @@ import entities.player.PlayerModel;
 
 /**
 	**The Weft** — the same sphere the Fold walks, wired to itself. See
-	[the design](../../../docs/game-design/direction/world-and-threads.md)'s
+	[the design](../../../docs/game/world.md)'s
 	own entry (`### 2. The Weft`).
 
 	Every wall answers to the wall at its antipode and the two are always

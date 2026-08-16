@@ -28,7 +28,7 @@ import entities.player.PlayerModel;
 	appearance, used as a revelation rather than developed: a permanent
 	"outside" biome would just be a normal maze with a nice skybox. Parked as
 	such rather than designed further — see
-	`docs/game-design/ideas-backlog.md`.
+	`docs/open/ideas-backlog.md`.
 
 	Structurally it cost almost nothing, which was the interesting part. It
 	reuses `GridModel`/`GridGeometry`/`GridCollision` untouched, because that

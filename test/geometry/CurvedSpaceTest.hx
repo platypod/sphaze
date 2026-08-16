@@ -10,7 +10,7 @@ import utest.Test;
 	geometries and not a plausible-looking approximation of them.
 
 	These tests matter more than their size suggests. The direction proposed
-	in `docs/game-design/direction/` rests on a mathematical claim — that
+	in `docs/game/` rests on a mathematical claim — that
 	in non-amenable space a pattern can be uncaused *without anything being
 	erased to balance it* — and the code underneath it therefore has to be
 	*actually* hyperbolic, not "bendy". Every test below checks a
@@ -121,7 +121,7 @@ class CurvedSpaceTest extends Test {
 	/**
 		The same walk does **not** close under curvature — the holonomy that
 		makes `The Defect` a biome (see
-		`docs/game-design/direction/world-and-threads.md`). Walk a loop in a
+		`docs/game/world.md`). Walk a loop in a
 		curved space and you come back turned, having never turned extra:
 		parallel transport is path-dependent, which is what curvature *is*.
 	**/
@@ -166,7 +166,7 @@ class CurvedSpaceTest extends Test {
 		nothing there can be fully accounted for, and therefore — via the
 		Garden of Eden theorem — why an uncaused pattern there need not be
 		paid for by an erasure, as it must be in amenable space. See
-		`docs/game-design/direction/README.md`.
+		`docs/game/README.md`.
 	**/
 	function testCircumferenceGrowsExponentiallyOnlyInHyperbolicSpace():Void {
 		var ratioOf = (k:Curvature) -> CurvedSpace.circleCircumference(k, 2.0) / CurvedSpace.circleCircumference(k, 1.0);

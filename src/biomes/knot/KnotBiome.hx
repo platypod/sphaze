@@ -18,7 +18,7 @@ import geometry.Isometry;
 
 /**
 	**The Knot** — a closed hyperbolic surface of genus 2. See
-	[the design](../../../docs/game-design/direction/world-and-threads.md)'s
+	[the design](../../../docs/game/world.md)'s
 	own entry (`### 8. The Knot`), which files it as late-game mastery:
 	the space that proves you have learned to think in geometries rather
 	than in maps.
@@ -132,7 +132,7 @@ class KnotBiome implements Biome {
 		return 60;
 	}
 
-	/** Cold and violet — κ < 0, per `docs/game-design/direction/art-and-audio.md`, and pushed further from the Sprawl's blue since this is the deeper end of the same scale. **/
+	/** Cold and violet — κ < 0, per `docs/game/art-and-audio.md`, and pushed further from the Sprawl's blue since this is the deeper end of the same scale. **/
 	public function backgroundColor():Int {
 		return 0x0B0814;
 	}

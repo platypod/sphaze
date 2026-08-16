@@ -1,7 +1,7 @@
 # Forsaken — Twisted mythologies
 
-**Not chosen.** [garden-of-eden.md](garden-of-eden.md) is the storyline;
-see [README.md](README.md) for why. Kept because the material is
+**Not chosen.** [garden-of-eden.md](../../game/story.md) is the storyline;
+see [README.md](../../game/README.md) for why. Kept because the material is
 salvageable, and a reader deciding whether to reopen it should be able to
 read what it actually was.
 

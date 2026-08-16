@@ -3,7 +3,7 @@ package game;
 import utest.Test;
 import utest.Assert;
 
-/** Covers Process's update/pause/parent-child propagation — see docs/GUIDELINES.md §1.3. **/
+/** Covers Process's update/pause/parent-child propagation — see docs/rules/guidelines.md §1.3. **/
 class ProcessTest extends Test {
 	function testFixedUpdateTicksChildren():Void {
 		var parent = new CountingProcess();

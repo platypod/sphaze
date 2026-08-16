@@ -14,7 +14,7 @@ import tools.geodesic.Vec3.Vec3Math;
 	coordinates to a real cell.
 
 	**Two things this class does differently from the plan in
-	`docs/game-design/notes/geodesic-sphere-engineering.md`, both found
+	`docs/building/notes/geodesic-sphere-engineering.md`, both found
 	while actually building it, not anticipated on paper:**
 
 	1. That note describes picking the *single* nearest face by face-center

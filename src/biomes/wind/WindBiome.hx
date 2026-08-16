@@ -41,7 +41,7 @@ import graphics.shaders.GrassWind;
 	   sub-pixel blade has no readable shape at all.
 
 	Why this one first, of the ten perception ideas parked in
-	`docs/game-design/ideas-backlog.md`: it needs no new mechanism at all. The
+	`docs/open/ideas-backlog.md`: it needs no new mechanism at all. The
 	grass, the sway shader, the grid, the collision and the exit-wall painting
 	all already exist; what's new is one breadth-first search and a per-blade
 	direction. That makes it the cheapest possible answer to the question the

@@ -9,7 +9,7 @@ import tools.geodesic.GeodesicVentrellaRule.GeodesicVentrellaRules;
 	over a `GeodesicSphereData`'s own adjacency — `GeodesicConwayBiome`'s
 	live simulation layer as of 2026-08-09, replacing `GeodesicLifeState`'s
 	2-state birth/survival engine there. See
-	`docs/game-design/design-decisions-records.md` for why: that engine's
+	`docs/archive/decisions.md` for why: that engine's
 	own exhaustive 2-ring search (`GeodesicGliderSearchMultiRule`) found
 	zero confirmed travelers under any of three candidate 2-state rules in
 	the 3-5 cell range, where this rule's own source paper demonstrates

@@ -23,7 +23,7 @@ typedef ModelPoint = {
 /**
 	Constant-curvature 2D geometry, in one implementation parameterised by
 	`Curvature` — the replacement for `biomes.common.space.common.Space`
-	proposed in `docs/game-design/direction/architecture.md`.
+	proposed in `docs/rules/architecture.md`.
 
 	**The model.** Points live in ℝ³ carrying the bilinear form
 
@@ -136,7 +136,7 @@ class CurvedSpace {
 		and therefore why the boundary of any region there is as large as
 		its interior, and therefore why nothing in it can be fully
 		accounted for — which is what lets an uncaused pattern there go
-		unpaid-for. See `docs/game-design/direction/README.md`.
+		unpaid-for. See `docs/game/README.md`.
 		@param k the curvature.
 		@param r a geodesic radius.
 		@return the circumference of that circle.

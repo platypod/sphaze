@@ -10,7 +10,7 @@ package biomes.hub;
 	This used to also carry a central octagonal column, kept purely to
 	mount each biome's to-biome painting on one of its faces — removed
 	entirely once paintings moved into freestanding buildings instead (see
-	`docs/PROJECT_LOG.md`'s entry on the redesign). The column's own
+	`docs/archive/project-log.md`'s entry on the redesign). The column's own
 	near-pole mounting turned out to be a genuine, numerically-confirmed
 	squeeze between the rising floor and the column's own end cap, fought
 	across several rounds of retuning; an ordinary building standing

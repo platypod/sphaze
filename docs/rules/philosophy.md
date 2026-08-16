@@ -2,7 +2,7 @@
 
 Design pillars, distilled from the core concept (see the repo
 [`README.md`](../../README.md)) and decisions made so far. Check new ideas
-against these before adding them to [ideas-backlog.md](ideas-backlog.md);
+against these before adding them to [ideas-backlog.md](../open/ideas-backlog.md);
 an idea that cuts against a pillar is a reason to discuss it explicitly
 (with hooman) rather than add it anyway.
 
@@ -13,7 +13,7 @@ an idea that cuts against a pillar is a reason to discuss it explicitly
   legible from a distance. Don't add something that just hands the player a
   normal map.
 - **Diegetic over UI chrome.** Decided for the menu/hub
-  (`../PROJECT_LOG.md`, 2026-07-17): when a system can plausibly exist *in*
+  ([`../archive/project-log.md`](../archive/project-log.md)): when a system can plausibly exist *in*
   the world (menus, travel between levels), prefer that over a 2D overlay. A
   modal menu is the one moment that would break the sphere-interior
   viewpoint that's the game's whole hook.

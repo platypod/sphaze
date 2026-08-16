@@ -27,7 +27,7 @@ typedef WallSegment = {
 	not a flaw in the algorithm below, which does exactly what it's
 	documented to do, but a mismatch between "merge geometry across
 	several edges" and "collision and reactivity are both per-edge." See
-	`docs/game-design/design-decisions-records.md`'s own retraction entry.
+	`docs/archive/decisions.md`'s own retraction entry.
 	The class and its own tests stay, in case a future approach needs a
 	correct topological chain-collapse as a building block.
 

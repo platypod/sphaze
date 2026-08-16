@@ -25,7 +25,7 @@ import entities.Entity;
 
 	An `Entity` (CLAUDE.md "Architecture") — the first one, now that
 	cross-biome creatures and NPCs are the second use case the foundation
-	was deferred pending (see docs/GUIDELINES.md §1.3). Doesn't override
+	was deferred pending (see docs/rules/guidelines.md §1.3). Doesn't override
 	`onFixedUpdate`: its own movement stays driven by `GameLoop`'s explicit
 	input handling, not automatic per-tick behavior, so being an `Entity`
 	today only means it can be parented in a `Process` tree — nothing about

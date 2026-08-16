@@ -17,11 +17,11 @@ import geometry.Isometry;
 /**
 	**The Sprawl** — the hyperbolic plane, and the first biome in the game
 	whose floor is not a surface sitting in ordinary space. See
-	[the design](../../../docs/game-design/direction/world-and-threads.md)'s
+	[the design](../../../docs/game/world.md)'s
 	own entry (`### 7. The Sprawl`), which calls it the turn of the game.
 
 	This is a **prototype**, in the sense
-	`docs/game-design/philosophy.md` uses: the geometry is real and the
+	`docs/rules/philosophy.md` uses: the geometry is real and the
 	rest is not. What's here is a `{7,3}` floor you can walk, columns for
 	parallax, and one bright home tile that takes you back to the hub.
 	What is deliberately absent is everything the design asks of the place
@@ -161,7 +161,7 @@ class SprawlBiome implements Biome {
 		return GRAVITY;
 	}
 
-	/** Cold and dark, against the Fold's own warmth — `docs/game-design/direction/art-and-audio.md` ties colour temperature to curvature, and this is the first negatively-curved place in the game. **/
+	/** Cold and dark, against the Fold's own warmth — `docs/game/art-and-audio.md` ties colour temperature to curvature, and this is the first negatively-curved place in the game. **/
 	public function backgroundColor():Int {
 		return 0x0A1018;
 	}

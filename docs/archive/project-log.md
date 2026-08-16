@@ -1,6 +1,6 @@
 # Project log
 
-Chronological record of decisions and major events for this project — the "why" behind `CLAUDE.md` / `docs/GUIDELINES.md`, and a history to look back on. New entries get appended at the bottom, oldest first. Each entry: date, short title, what happened/was decided, and why (briefly — full detail lives in `docs/GUIDELINES.md`, `README.md`, or a linked doc where relevant).
+Chronological record of decisions and major events for this project — the "why" behind `CLAUDE.md` / `docs/rules/guidelines.md`, and a history to look back on. New entries get appended at the bottom, oldest first. Each entry: date, short title, what happened/was decided, and why (briefly — full detail lives in `docs/rules/guidelines.md`, `README.md`, or a linked doc where relevant).
 
 ---
 
@@ -29,9 +29,9 @@ Went through the decision points one at a time. Final calls:
 
 Turned the decisions above into two working documents:
 - **`CLAUDE.md`** (project root) — concise, imperative rules for day-to-day AI-assisted work: the non-negotiables, no rationale, meant to be short enough to actually be followed.
-- **`docs/GUIDELINES.md`** — full detail and rationale behind each rule in `CLAUDE.md`, organized by architecture / Haxe standards / Heaps specifics / tooling.
+- **`docs/rules/guidelines.md`** — full detail and rationale behind each rule in `CLAUDE.md`, organized by architecture / Haxe standards / Heaps specifics / tooling.
 
-This log (`docs/PROJECT_LOG.md`) started alongside them, to keep a reviewable history as the project continues.
+This log (`docs/archive/project-log.md`) started alongside them, to keep a reviewable history as the project continues.
 
 ## 2026-07-15 — Git workflow rule: commit everything, platypod-style messages
 
@@ -39,17 +39,17 @@ hooman asked for two things: every modification must be committed (for traceabil
 
 Confirmed pattern: `type(scope): lowercase description`, types in practice being `feat`/`fix`/`refactor`/`doc` (singular — a deliberate org-wide deviation from the spec's `docs`)/`release`, scope sometimes a comma-separated list, optional body explaining *why* for non-trivial changes. Notably, `platypod/prompt-meter` (itself an AI-usage-metrics tool) already uses a `Co-Authored-By: Claude <model> <noreply@anthropic.com>` trailer on Claude-authored commits — adopted here too, since it's directly relevant to a vibe-coded project.
 
-Added a "Git workflow" section to `CLAUDE.md` and a full "Git workflow & commit conventions" section to `docs/GUIDELINES.md`, with the actual commit examples pulled from the org as reference.
+Added a "Git workflow" section to `CLAUDE.md` and a full "Git workflow & commit conventions" section to `docs/rules/guidelines.md`, with the actual commit examples pulled from the org as reference.
 
 ## 2026-07-15 — Pre-commit hooks & web deployment
 
 Two more topics: local pre-commit enforcement, and how the game reaches players on prod.
 
-**Pre-commit:** confirmed no repo in the platypod org uses a pre-commit framework (`pre-commit`/`husky`/`lefthook`) — every repo drives quality gates through a self-documented `Makefile` (targets like `lint`, `test`, `build`, called identically by CI). Followed suit: a `Makefile` with `fmt`/`lint`/`check`/`test`/`build` targets, plus a versioned `.githooks/pre-commit` (wired via `git config core.hooksPath .githooks`, not the unversioned `.git/hooks/`) that runs `make fmt lint check test` and blocks the commit on failure. Documented in `docs/GUIDELINES.md` §5.
+**Pre-commit:** confirmed no repo in the platypod org uses a pre-commit framework (`pre-commit`/`husky`/`lefthook`) — every repo drives quality gates through a self-documented `Makefile` (targets like `lint`, `test`, `build`, called identically by CI). Followed suit: a `Makefile` with `fmt`/`lint`/`check`/`test`/`build` targets, plus a versioned `.githooks/pre-commit` (wired via `git config core.hooksPath .githooks`, not the unversioned `.git/hooks/`) that runs `make fmt lint check test` and blocks the commit on failure. Documented in `docs/rules/guidelines.md` §5.
 
 **Deployment:** confirmed the plan is a browser-playable web build, reachable from both desktop and phone, deployed onto platypod's prod stack (Kubernetes/Helmfile, `platypod.ovh`). Findings and decisions:
 - Heaps compiles straight to JS/WebGL — no separate engine/wrapper needed for the web build. WebGL (not WebGPU) is the right call for mobile reach: WebGPU is still fragmented across mobile browsers, while WebGL2 is ubiquitous.
-- **Mobile controls: deferred.** 3D games assume mouse-look + WASD, which don't exist on a touchscreen; decided to build desktop/mouse-keyboard first and treat touch controls as a later, dedicated design pass rather than guessing at a control scheme before there's a game to control. Logged in `docs/GUIDELINES.md` §1.8.
+- **Mobile controls: deferred.** 3D games assume mouse-look + WASD, which don't exist on a touchscreen; decided to build desktop/mouse-keyboard first and treat touch controls as a later, dedicated design pass rather than guessing at a control scheme before there's a game to control. Logged in `docs/rules/guidelines.md` §1.8.
 - **Access control: behind Authelia SSO**, matching every other service in platypod's `games` module (`pokeclicker`, `rommapp`) rather than a public exception.
 - **Container:** inspected `platypod/pokeclicker`'s deployment (Node.js wrapper) and the `games` Helm module's `Deployment`/`Service`/`IngressRoute` templates as reference. Our case is simpler — Heaps' web output is static files, so the shipped container is a static file server (nginx/Caddy) with no language runtime, built via a multi-stage Dockerfile.
 - **Release build:** matches `mediarvester`/`prompt-meter` — a git tag push triggers GitHub Actions to build a multi-arch image (buildx, `linux/amd64`+`linux/arm64`) and push it to `ghcr.io/platypod/sphaze`. No cluster credentials touch GitHub at this step.
@@ -71,10 +71,10 @@ First real code: `src/`, `test/`, `build.hxml`, `test.hxml`, `Makefile`, `.githo
 
 Also committed `old/` (the abandoned TS+Babylon prototype) to git — it had never actually been committed, just sitting on disk. Its maze-generation and sphere-math logic is genuinely reusable reference for the eventual Haxe port, so it's kept rather than deleted.
 
-Three findings that changed the plan from what `docs/GUIDELINES.md` originally described:
+Three findings that changed the plan from what `docs/rules/guidelines.md` originally described:
 
-1. **HashLink's JIT VM isn't available at all on Apple Silicon via Homebrew** — only HashLink/C (compile-to-C-then-native) is supported on ARM ([hashlink#557](https://github.com/HaxeFoundation/hashlink/issues/557)). The "fast `hl.hxml` dev loop" §6.1 describes doesn't work as written on this machine. For now there's a single `build.hxml` targeting JS, used for both the compile-check and the production build; `test.hxml` also targets JS and tests run via `node`. Revisit if HL/C wiring or a non-ARM dev box makes the split worth adding. Corrected in `docs/GUIDELINES.md` §6.1.
-2. **`checkstyle`'s default ruleset (generated via `--default-config`) contradicts `CLAUDE.md`'s own explicit-type-annotation rule** — it warns on explicit `Void` returns and pushes to omit type hints on locals. Tuned two checks to match (`Return.enforceReturnType: true`, `VarTypeHint` disabled), and turned off `EmptyLines`' require-blank-line-after-class rule since `haxe-formatter` strips that blank line by default and the two tools disagreeing would break `make fmt` → `make lint` every time. Logged in `docs/GUIDELINES.md` §5.3.
+1. **HashLink's JIT VM isn't available at all on Apple Silicon via Homebrew** — only HashLink/C (compile-to-C-then-native) is supported on ARM ([hashlink#557](https://github.com/HaxeFoundation/hashlink/issues/557)). The "fast `hl.hxml` dev loop" §6.1 describes doesn't work as written on this machine. For now there's a single `build.hxml` targeting JS, used for both the compile-check and the production build; `test.hxml` also targets JS and tests run via `node`. Revisit if HL/C wiring or a non-ARM dev box makes the split worth adding. Corrected in `docs/rules/guidelines.md` §6.1.
+2. **`checkstyle`'s default ruleset (generated via `--default-config`) contradicts `CLAUDE.md`'s own explicit-type-annotation rule** — it warns on explicit `Void` returns and pushes to omit type hints on locals. Tuned two checks to match (`Return.enforceReturnType: true`, `VarTypeHint` disabled), and turned off `EmptyLines`' require-blank-line-after-class rule since `haxe-formatter` strips that blank line by default and the two tools disagreeing would break `make fmt` → `make lint` every time. Logged in `docs/rules/guidelines.md` §5.3.
 3. **`index.html` needs to live next to `game.js`** — Heaps' HTML5 target loads a canvas by id (`#webgl`) and the built JS is a sibling `<script src="game.js">`, but `haxe build.hxml` only emits into `bin/`. `make build` now copies `index.html` into `bin/` after compiling, so `bin/` is a complete, self-contained static web root — matching what §6.2's container step expects to copy into `nginx`/`caddy`.
 
 No gameplay code yet — next slice is porting `old/`'s maze generation and sphere math to Haxe with `utest` coverage, per the "Scaffold + port maze/sphere math" discussion.
@@ -89,13 +89,13 @@ Two implementation notes:
 - **Test RNG isn't old/'s mulberry32.** `MazeNode`'s tests need a deterministic seeded PRNG for the spanning-tree checks, same as the original. mulberry32 needs 32-bit-wraparound multiply (`Math.imul` in JS), which isn't portable across Haxe targets without target-specific code; since this is test-only plumbing (not shipped gameplay RNG) and doesn't need to match the original's exact sequence, `test/MazeTest.hx` uses a small xorshift32 instead (needs only bitwise ops, which Haxe guarantees as 32-bit on every target).
 - **Haxe enum values need `Type.enumEq`, not `==`, for structural comparison.** `Array.contains`/`indexOf` use `==`, which for parameterized enum constructors (`RingNode(row, col)`) is reference equality, not structural — caught by `testColumnsWrapAround` failing until switched to `Lambda.exists(..., (a, b) -> Type.enumEq(a, b))`.
 
-**checkstyle ruleset tuning, round 2** (see `docs/GUIDELINES.md` §5.3 for the full list): `MemberName` was applying lowerCamelCase to enum constructors (Haxe convention is UpperCamelCase there, now codified in `CLAUDE.md`); `AvoidTernaryOperator` disabled (fights idiomatic, already-used style); `OperatorWhitespace.oldFunctionTypePolicy` set to `none` to match `haxe-formatter`'s tight `Void->Float` output (a same-token, different-context sibling of the `arrowFunctionPolicy` that already worked for real lambdas). `TypeDocComment`/`FieldDocComment`'s hardcoded 3-line-minimum isn't configurable — left as accepted Info-level noise for genuinely one-line-worthy docs, same treatment as `MagicNumber` on test literals.
+**checkstyle ruleset tuning, round 2** (see `docs/rules/guidelines.md` §5.3 for the full list): `MemberName` was applying lowerCamelCase to enum constructors (Haxe convention is UpperCamelCase there, now codified in `CLAUDE.md`); `AvoidTernaryOperator` disabled (fights idiomatic, already-used style); `OperatorWhitespace.oldFunctionTypePolicy` set to `none` to match `haxe-formatter`'s tight `Void->Float` output (a same-token, different-context sibling of the `arrowFunctionPolicy` that already worked for real lambdas). `TypeDocComment`/`FieldDocComment`'s hardcoded 3-line-minimum isn't configurable — left as accepted Info-level noise for genuinely one-line-worthy docs, same treatment as `MagicNumber` on test literals.
 
 ## 2026-07-15 — First pixels: camera, maze mesh, player movement
 
 Three requested slices landed in one pass — the first time anything actually renders. All verified in-browser (screenshots + real keyboard events), not just compiled/tested.
 
-**Camera** (`entities/Player.hx`): holds spherical position (theta, phi) and a facing angle, applies that state to an `h3d.Camera` each fixed step — "up" points toward the sphere's center (matches the "raise your head, see the far side" mechanic), forward is `thetaTangentAt` rotated by `facing`. Standalone rather than an `Entity` subclass — no Process/Entity foundation exists yet, and one use case isn't reason enough to build it (`docs/GUIDELINES.md` §1.3). `maze/MazeGeometry.hx` centralizes the grid→sphere mapping (radius, theta/phi per row/col) so both the camera and the mesh use the same one.
+**Camera** (`entities/Player.hx`): holds spherical position (theta, phi) and a facing angle, applies that state to an `h3d.Camera` each fixed step — "up" points toward the sphere's center (matches the "raise your head, see the far side" mechanic), forward is `thetaTangentAt` rotated by `facing`. Standalone rather than an `Entity` subclass — no Process/Entity foundation exists yet, and one use case isn't reason enough to build it (`docs/rules/guidelines.md` §1.3). `maze/MazeGeometry.hx` centralizes the grid→sphere mapping (radius, theta/phi per row/col) so both the camera and the mesh use the same one.
 
 **Maze mesh** (`maze/MazeMesh.hx`): a floor quad per ring cell, and a wall wherever `Maze.isOpen` is false — walls are a simplified approximation (a perpendicular quad at the midpoint between two blocked cells, not exact cell-boundary geometry), good enough to read clearly, uniform across row/column/pole adjacency without per-edge-type math. Hit and fixed one real bug during this: per-vertex colors attached to a single `h3d.prim.Polygon` never showed up, because Heaps' default material shader doesn't read a vertex-color stream on its own — split into two meshes (floor, walls), each with a uniform `material.color`, which is what actually worked (same approach the earlier debug wireframe already used). Both meshes are unlit (`enableLights = false`, no scene lights exist yet) and double-sided (`culling = None`).
 
@@ -260,20 +260,20 @@ hooman had been sitting on an undecided question: build the usual menu/options s
 
 **Decided: diegetic.** Rejected the standard overlay specifically because this game's whole hook is *not* breaking out of the sphere-interior viewpoint — a modal 2D menu would be the one moment the game drops that premise, for the single system (options/navigation) that's arguably easiest to keep in-world instead.
 
-**The concrete shape:** a **hub** — its own sphere, separate from any generated maze/biome, serving the role `docs/GUIDELINES.md` §1.5's FSM already reserves for a `Menu` state, except the state *is* a place rather than a screen. Paintings scattered through every biome's walls are the doorways back to the hub, reachable near-anywhere without a dedicated pause keypress. Inside the hub, paintings of every biome discovered so far let the player travel back into any of them. This is also the first concrete use of two previously-parked README backlog ideas — "Paintings mechanics" and "Various levels... paintings could be the link between biomes/levels" — landing as the menu/navigation system itself rather than a separate gameplay layer bolted on later.
+**The concrete shape:** a **hub** — its own sphere, separate from any generated maze/biome, serving the role `docs/rules/guidelines.md` §1.5's FSM already reserves for a `Menu` state, except the state *is* a place rather than a screen. Paintings scattered through every biome's walls are the doorways back to the hub, reachable near-anywhere without a dedicated pause keypress. Inside the hub, paintings of every biome discovered so far let the player travel back into any of them. This is also the first concrete use of two previously-parked README backlog ideas — "Paintings mechanics" and "Various levels... paintings could be the link between biomes/levels" — landing as the menu/navigation system itself rather than a separate gameplay layer bolted on later.
 
 Nothing implemented yet — this entry records the decision and its rejected alternative before the implementation plan (walked through separately with hooman) lands.
 
 ## 2026-07-18 — Multi-biome restructuring: Biome contract, Space seam, BiomeRegistry, Entity foundation
 
-hooman flagged that the codebase — one hardcoded maze biome plus a hardcoded hub, wired together in `Main` by a binary `SceneKind` switch — wouldn't hold up once several more biomes exist (compass, candlelight, wind, ... per `docs/game-design/ideas-backlog.md`'s backlog), each with shared mechanisms (collision) and entities (traveling NPCs, spawned creatures) reused across them. Talked through the shape before touching code, including whether future biomes are guaranteed to be sphere-shaped (no — explicit freedom for a genuinely different topology later) and whether the hub is conceptually different from a biome (no — it already had everything a biome has, just special-cased).
+hooman flagged that the codebase — one hardcoded maze biome plus a hardcoded hub, wired together in `Main` by a binary `SceneKind` switch — wouldn't hold up once several more biomes exist (compass, candlelight, wind, ... per `docs/open/ideas-backlog.md`'s backlog), each with shared mechanisms (collision) and entities (traveling NPCs, spawned creatures) reused across them. Talked through the shape before touching code, including whether future biomes are guaranteed to be sphere-shaped (no — explicit freedom for a genuinely different topology later) and whether the hub is conceptually different from a biome (no — it already had everything a biome has, just special-cased).
 
 **Decided, in four ordered steps (see the restructuring plan discussed with hooman for the full reasoning):**
 
 1. **`game.Space`/`game.SphereSpace`** — extracted `Player`'s rotation-around-axis math (hardcoded "sphere centered at the world origin") behind an interface. Only one implementation exists; this is the seam a non-spherical biome would need later, not a second topology built speculatively.
 2. **`game.Biome`, `biomes.MazeBiome`, `biomes.HubBiome`** — the hub became a peer `Biome` implementation, not a second `SceneKind`. Rejected keeping the hub special-cased: it already had its own build/collision/spawn/painting, so treating it differently was the same hardcoded-single-case problem the maze had, one level up. `hub.Painting`'s `ToHub`/`ToBiome` enum — which only existed because the hub was special-cased — collapsed into a plain `destinationBiomeId:String`, symmetric in both directions.
 3. **`world.BiomeRegistry`** — closed the "discovered biomes" gap this file's own 2026-07-17 entry flagged. A biome is a single shared instance per world, not regenerated per player/party (relevant once multiplayer — a real future goal, just not imminent — puts several players in different biomes at once). `world.Painting` moved out of `hub/`, since it's genuinely biome-agnostic now.
-4. **`game.Process`/`entities.Entity`, `world.CreatureSpawnTable`, `world.NpcRegistry`** — built the `Process`/`Entity` foundation `CLAUDE.md`'s Architecture section already committed to (deferred pending a second use case; cross-biome entities are that use case), with `Player` migrated onto it as the first real `Entity`. Two different entity lifecycles were named explicitly rather than conflated: spawned creatures (data-driven, per-biome, ephemeral — `CreatureSpawnTable`) versus traveling NPCs (persistent `{biomeId, pos}`, fixed/triggered location only, no background simulation — `NpcRegistry`). Neither is wired into a biome's `build()` yet: there's no actual creature/NPC `Entity` type to instantiate, and building that integration against fabricated placeholder content would be exactly the kind of premature design `docs/game-design/philosophy.md`'s "prototype unproven mechanics before committing" pillar warns against.
+4. **`game.Process`/`entities.Entity`, `world.CreatureSpawnTable`, `world.NpcRegistry`** — built the `Process`/`Entity` foundation `CLAUDE.md`'s Architecture section already committed to (deferred pending a second use case; cross-biome entities are that use case), with `Player` migrated onto it as the first real `Entity`. Two different entity lifecycles were named explicitly rather than conflated: spawned creatures (data-driven, per-biome, ephemeral — `CreatureSpawnTable`) versus traveling NPCs (persistent `{biomeId, pos}`, fixed/triggered location only, no background simulation — `NpcRegistry`). Neither is wired into a biome's `build()` yet: there's no actual creature/NPC `Entity` type to instantiate, and building that integration against fabricated placeholder content would be exactly the kind of premature design `docs/rules/philosophy.md`'s "prototype unproven mechanics before committing" pillar warns against.
 
 **Explicitly deferred, not forgotten:** persistence (save state, eventually "join another's world" — backlogged, no urgency); a second `Space` implementation; any simulation/rendering split for multiplayer (state stays data-driven/event-driven so this remains possible, but nothing beyond that is built now); the first actual second biome (compass/candlelight/etc.) — the `Biome` contract is what makes that a small, isolated addition once it's actually designed, not part of this restructuring itself.
 
@@ -296,7 +296,7 @@ Split into `grid/` (new: `Grid`, `GridGeometry`, `GridMesh`, `GridCollision` —
 
 ## 2026-07-18 — SPACE retired from camera tilt, freed for jump
 
-Kicking off jump + a new vertical tower biome (design discussion, not yet built past this first slice). First decision: `GameLoop.updateSpaceTilt` already bound held-SPACE to tilting the camera up toward the sphere's center — the "see far, not near" pillar mechanic (`docs/game-design/philosophy.md`) — with an auto-release-while-moving quirk on top. hooman's call: retire that mechanic entirely rather than find a tap/hold split, and hand SPACE to jump outright.
+Kicking off jump + a new vertical tower biome (design discussion, not yet built past this first slice). First decision: `GameLoop.updateSpaceTilt` already bound held-SPACE to tilting the camera up toward the sphere's center — the "see far, not near" pillar mechanic (`docs/rules/philosophy.md`) — with an auto-release-while-moving quirk on top. hooman's call: retire that mechanic entirely rather than find a tap/hold split, and hand SPACE to jump outright.
 
 This doesn't actually cost the pillar mechanic itself: mouse-look already drives `player.lookUp` independently (`GameLoop.onMouseMove`), so raising your head to see across the sphere still works exactly as before — only the keyboard-only forced-tilt-with-auto-release variant is gone. Removed `spaceHoldTime`/`spaceTiltReleased`/`SPACE_TILT_RELEASE_AFTER`/`PITCH_SPEED`/`updateSpaceTilt`/`isMoveKeyDown` from `GameLoop`, and `Keybinds.TILT_UP` — SPACE is unbound to anything until jump claims it in the next slice.
 
@@ -314,7 +314,7 @@ Unlike the hub/maze's cosmetic hop, the tower's own `TowerCollision.applyGravity
 
 Reaching the bottom (`TowerModel.GOAL_LEVELS`, tracked as `deepestLayerReached` — a running max, so jumping back upward mid-fall never un-gates it once earned) unlocks a return painting mounted on the outer wall right there. Making that possible needed one more generalization: `Biome.exitPainting():PaintingModel` became `exitPaintings():Array<PaintingModel>`, read fresh every tick instead of cached at entry (the tower's own painting appears mid-visit), and the hub's own single hardcoded to-biome face became a `DESTINATIONS` list (`HubBiome`) so it could mount a second painting — to the tower — alongside the maze's, with `spawnPlayer` gaining a `fromBiomeId` parameter so a returning player lands in front of whichever face they actually came from.
 
-All of the tower's own numbers (level count, radii, ring/tile counts, the density curve, gravity) are first-pass — expected to be retuned by feel once this is actually playable, same discipline `GridGeometry`'s own constants went through. The secret one-time-painting-swap idea discussed alongside this (going back up through the tower's own entrance instead of descending) is logged in `docs/game-design/ideas-backlog.md`'s backlog, not built.
+All of the tower's own numbers (level count, radii, ring/tile counts, the density curve, gravity) are first-pass — expected to be retuned by feel once this is actually playable, same discipline `GridGeometry`'s own constants went through. The secret one-time-painting-swap idea discussed alongside this (going back up through the tower's own entrance instead of descending) is logged in `docs/open/ideas-backlog.md`'s backlog, not built.
 
 ## 2026-07-18 — Tower visuals: real textures, real relief, a second painting
 
@@ -418,9 +418,9 @@ Verified in-browser: the shrine's walls show real thickness at their own corners
 
 ## 2026-07-19 — The backlog's own hourglass, built as a third hub landmark
 
-`docs/game-design/ideas-backlog.md`'s backlog had an unimplemented "Hourglass game-speed control (hub)" entry, flagged unproven ("unclear yet what tilting it should actually affect... whether it's fun rather than just a novelty"). hooman asked for it directly: a tiltable hourglass on a pedestal, tilting right when walked up to from the left (and vice versa), fake white/blue sand mostly pooled at the top with a little at the bottom and a flowing-down effect, reversing that flow and snapping back to normal speed if slowed enough, and — read as its own pair of facts about the tilt itself, not the player's side — "on the left, it will slow the game; on the right, it will accelerate it."
+`docs/open/ideas-backlog.md`'s backlog had an unimplemented "Hourglass game-speed control (hub)" entry, flagged unproven ("unclear yet what tilting it should actually affect... whether it's fun rather than just a novelty"). hooman asked for it directly: a tiltable hourglass on a pedestal, tilting right when walked up to from the left (and vice versa), fake white/blue sand mostly pooled at the top with a little at the bottom and a flowing-down effect, reversing that flow and snapping back to normal speed if slowed enough, and — read as its own pair of facts about the tilt itself, not the player's side — "on the left, it will slow the game; on the right, it will accelerate it."
 
-**New `biomes.hub.HourglassModel`/`Hourglass`**, split the same way `docs/GUIDELINES.md` §1.4/§5.4 already splits every other biome object: `HourglassModel` is pure tilt/sand/time-scale state (unit-tested, `HourglassModelTest`), `Hourglass` is the scene-graph build plus the pure `blocksMovement`/`lean` queries (`HourglassTest`, same split `MazeShrine`/`TowerReplica` already use). Anchored via `HubStructure` like the other two landmarks, but *not* at one of their 120-degree slots — it isn't a to-biome portal needing even spacing, so it sits directly ahead of the fixed spawn point instead (`HubBiome.HOURGLASS_THETA`), somewhere worth seeing on arrival.
+**New `biomes.hub.HourglassModel`/`Hourglass`**, split the same way `docs/rules/guidelines.md` §1.4/§5.4 already splits every other biome object: `HourglassModel` is pure tilt/sand/time-scale state (unit-tested, `HourglassModelTest`), `Hourglass` is the scene-graph build plus the pure `blocksMovement`/`lean` queries (`HourglassTest`, same split `MazeShrine`/`TowerReplica` already use). Anchored via `HubStructure` like the other two landmarks, but *not* at one of their 120-degree slots — it isn't a to-biome portal needing even spacing, so it sits directly ahead of the fixed spawn point instead (`HubBiome.HOURGLASS_THETA`), somewhere worth seeing on arrival.
 
 **Rebuilt every tick rather than animated via scene-graph transforms or a shader.** `GrassWind`'s own precedent (a shader-driven sway) would have meant a bespoke rotate-around-an-arbitrary-world-axis vertex shader just for one small object; instead `Hourglass.buildDynamic` reuses this project's existing "build geometry from world-space points off a local frame" style (`HubStructure.worldPoint`), fed a *tilted* copy of the basis (`tiltedBasis`, rotating `up`/`uAxis` around `vAxis` by the current tilt via `SphereMath.rotateAroundAxis`) each tick. Cheap enough at this triangle count, and reads far more consistently with `MazeShrine`/`TowerReplica` than a new shader would have.
 
@@ -428,7 +428,7 @@ Verified in-browser: the shrine's walls show real thickness at their own corners
 
 **Resolving "on the left it slows, on the right it accelerates" against the sentence right before it** ("tilts right when walked up to from the left, and vice versa") was a real ambiguity: does "left"/"right" in the second sentence mean the *player's* side, or the *tilt's* own direction? Read as two independent, sequential facts about the object itself (tilt-left → slow, tilt-right → accelerate) rather than chaining through the player's side, which is what `HourglassModel.timeScale` implements — the indirect consequence (approaching from the left tilts it right, which *accelerates* the game, not slows it) reads a little unintuitive stated baldly, but it's what the text says taken at face value, and nothing about "which of the two readings is actually more fun" is answerable without playtesting anyway (this is still exactly the unproven prototype the backlog entry always was).
 
-**The reverse-and-reset is a self-correcting safety valve, not the real mechanic yet** — tilt it far enough left for long enough (`HourglassModel.reversing`) and it forces its own tilt back to neutral while the sand visibly drains backward, then resumes normal speed. Deliberately driven by real `dt`, never by the `timeScale()` it itself produces (a self-referential scale would be a feedback loop — the hourglass slowing down its own rate as it slows the game). The "reverse the animation" visual costs no extra flag at all: the stream's grain positions are already a function of `sandPhase` advancing forward; letting `sandPhase` itself run backward while reversing makes the grains cycle the other way for free. Per the ask, this reversal is meant to eventually read as "time is flowing backward" and gate a real mechanic elsewhere — logged as its own new backlog entry in `docs/game-design/ideas-backlog.md`, not built here.
+**The reverse-and-reset is a self-correcting safety valve, not the real mechanic yet** — tilt it far enough left for long enough (`HourglassModel.reversing`) and it forces its own tilt back to neutral while the sand visibly drains backward, then resumes normal speed. Deliberately driven by real `dt`, never by the `timeScale()` it itself produces (a self-referential scale would be a feedback loop — the hourglass slowing down its own rate as it slows the game). The "reverse the animation" visual costs no extra flag at all: the stream's grain positions are already a function of `sandPhase` advancing forward; letting `sandPhase` itself run backward while reversing makes the grains cycle the other way for free. Per the ask, this reversal is meant to eventually read as "time is flowing backward" and gate a real mechanic elsewhere — logged as its own new backlog entry in `docs/open/ideas-backlog.md`, not built here.
 
 Verified: `make check`/`make test` clean (`HourglassModelTest`/`HourglassTest` both fully green), `make fmt`/`make lint` clean (info-level noise only, same as every other file in this project).
 
@@ -448,7 +448,7 @@ Since curving removed that constraint entirely (see the entry above), there was 
 
 ## 2026-07-19 — The tower's own fall counter, and a guaranteed tile at the entrance
 
-`docs/game-design/ideas-backlog.md`'s backlog had an unimplemented "Falls counter" entry: every distinct layer the player stands on in the tower should count once, cueing the player toward threading gaps rather than landing on every floor — precision, not speed. Built the counter and its diegetic cue (no HUD number, per this project's "Diegetic over UI chrome" pillar); the actual "reach bottom with the smallest count to unlock something" objective stays in the backlog, unbuilt.
+`docs/open/ideas-backlog.md`'s backlog had an unimplemented "Falls counter" entry: every distinct layer the player stands on in the tower should count once, cueing the player toward threading gaps rather than landing on every floor — precision, not speed. Built the counter and its diegetic cue (no HUD number, per this project's "Diegetic over UI chrome" pillar); the actual "reach bottom with the smallest count to unlock something" objective stays in the backlog, unbuilt.
 
 **`TowerBiome` gained `touchedLayers`/`fallCount`** alongside the existing `deepestLayerReached` — a different running value, not a replacement: `deepestLayerReached` only cares about the deepest point ever reached, while `fallCount` counts *distinct* landings, so re-landing on an already-touched layer (walking back over solid ground, or a jump that lands back where it started) never double-counts. Both reset together in `spawnPlayer`. Detecting an actual landing (not just "currently grounded") needed an edge check in `applyGravity` — `player.grounded` stays `true` for every tick spent resting on a floor, so only the tick where it flips `false → true` is a new landing; without that, resting in place would recount the same layer every single fixed step.
 
@@ -568,7 +568,7 @@ Direct follow-up: "Better. Make it twice as high." `WALL_HEIGHT` `5` → `10`. E
 
 Two asks together: "not satisfied with the hourglass" — first, its code has nothing to do in `biomes`; second, make it *look* like an hourglass (dark wood bases, real glass, optionally a metal spiral), with a reference photo attached for the glass/wood/metal look.
 
-**Move**: `Hourglass`/`HourglassModel` relocated from `biomes.hub` to `entities.hourglass`, the same call already made for `entities.painting.PaintingModel` — a self-contained decorative object, not hub-shape-generation code, even though only the hub places one today. It still imports `biomes.hub.HubStructure` for the local tangent-frame it builds against (the one piece of hub-specific machinery it can't avoid depending on) and the same for the two test files (`test/entities/hourglass/`). Every call site (`HubBiome`, `HubCollision`), the `Colours`/`Biome` doc-comment cross-references, `test/TestMain.hx`'s runner, and the one live reference in `docs/game-design/ideas-backlog.md`'s backlog all updated to the new package; `docs/PROJECT_LOG.md`'s own prior entries left alone (history, not a live reference).
+**Move**: `Hourglass`/`HourglassModel` relocated from `biomes.hub` to `entities.hourglass`, the same call already made for `entities.painting.PaintingModel` — a self-contained decorative object, not hub-shape-generation code, even though only the hub places one today. It still imports `biomes.hub.HubStructure` for the local tangent-frame it builds against (the one piece of hub-specific machinery it can't avoid depending on) and the same for the two test files (`test/entities/hourglass/`). Every call site (`HubBiome`, `HubCollision`), the `Colours`/`Biome` doc-comment cross-references, `test/TestMain.hx`'s runner, and the one live reference in `docs/open/ideas-backlog.md`'s backlog all updated to the new package; `docs/archive/project-log.md`'s own prior entries left alone (history, not a live reference).
 
 **Look**: the previous version had no glass at all — just a flat dark-gray placeholder frame (caps + four corner posts) with sand floating inside it, nothing standing in for the glass envelope itself. Rebuilt as four distinct pieces, all rebuilt fresh every tick alongside the sand (see `Hourglass`'s own class doc for why): `HOURGLASS_WOOD`-colored top/bottom caps (dark brown, replacing the old blue-gray flat fill); an actual glass shell (two mirrored frustums, `GLASS_RIM_RADIUS` at each cap narrowing to a real (non-zero) `GLASS_NECK_RADIUS` at the waist rather than the bulbs meeting at a mathematical point), alpha-blended (`h3d.mat.BlendMode.Alpha`, `depthWrite = false`) at low opacity so the sand/spiral read through it, plus a second, brighter thin-band mesh at the two rims and the neck standing in for a specular glint (this project's flat unlit shading has no real lighting to produce one from — same "traced keyline instead of real relief" discipline `entities.painting.PaintingModel.buildOutline` already uses, brightness instead of a dark line); and a single `HOURGLASS_METAL` ribbon spiraling `SPIRAL_TURNS` times from bottom cap to top, hugging the glass's own profile (`glassRadiusAt`, shared between the glass mesh and the spiral) rather than a fixed cylinder, replacing the old straight corner posts entirely — a real hourglass held together by wire wrap and two wood discs doesn't also need rigid posts. Four new `Colours` entries (`HOURGLASS_WOOD`/`METAL`/`GLASS`/`GLASS_HIGHLIGHT`) replace the retired `HOURGLASS_FRAME`; `HOURGLASS_SAND` untouched.
 
@@ -630,7 +630,7 @@ The biggest ask yet on this object, several pieces together: raise the pedestal 
 
 **Stepped, player-triggered tilt replaces the old continuous lean entirely**: `HourglassModel.tiltSteps` (`-8` to `8`, `10°` each — matches `MAX_TILT_STEPS`/`STEP_ANGLE_DEGREES`) instead of a continuously-approached `tiltAngle` field; `tiltAngle` is now a plain method, `tiltSteps * STEP_ANGLE_RADIANS`, snapped instantly (no smoothing left in — the ask's own "we'll animate this later" scoped that out on purpose). New `Hourglass.triggerSide(basis, playerPos):TriggerSide` (`None`/`Plus`/`Minus`, the enum living in `Hourglass.hx` since it's what that query produces) replaces `lean` — a stateless "how close, how lined-up" check against the pedestal's own collision boundary plus a margin (`SIGN_TRIGGER_DISTANCE_MARGIN`) and an angular tolerance around each sign's own exact bearing (`SIGN_ANGLE_TOLERANCE`). The actual "stop and walk again" rule can't live in that stateless query, though — `HourglassModel.tick` keeps `lastTriggerSide` and only steps on an actual edge (`triggerSide != None && triggerSide != lastTriggerSide`), so holding position against a sign (walked in, still pressed against it) doesn't keep incrementing every tick; leaving the trigger zone and coming back is what re-arms it. `PROXIMITY_RANGE` and the old `MAX_TILT`/`TILT_APPROACH_RATE`/`RESET_RATE`/`REVERSE_TRIGGER_SCALE`/`reversing` all removed outright rather than left dead — none of them had a meaning left once tilt stopped being continuous and proximity-driven.
 
-**The hidden mechanic replaces the old `reversing` safety valve** (same underlying idea `docs/game-design/ideas-backlog.md`'s own "Reverse-time mechanic" backlog entry always named, just a different trigger shape now): new `overdraftCount`, incremented each time a `Minus` trigger lands while `tiltSteps` is already pinned at `-MAX_TILT_STEPS` (and reset to `0` the instant it isn't — either a successful decrement or a `Plus` trigger), and a new `unlocked:Bool`, set permanently once `overdraftCount` reaches `OVERDRAFT_UNLOCK_COUNT` (`10`, "for now" per the ask) — at which point `tiltSteps` snaps back to `0` too. `Hourglass.buildSand` reads `unlocked` to swap both the sand's fill and its glow to new gold variants (`Colours.HOURGLASS_SAND_GOLD`/`_GOLD_GLOW`) rather than the usual icy ones — nothing else reacts to it yet, deliberately, same "prototype the trigger, not the payoff" discipline as everything else backlogged there.
+**The hidden mechanic replaces the old `reversing` safety valve** (same underlying idea `docs/open/ideas-backlog.md`'s own "Reverse-time mechanic" backlog entry always named, just a different trigger shape now): new `overdraftCount`, incremented each time a `Minus` trigger lands while `tiltSteps` is already pinned at `-MAX_TILT_STEPS` (and reset to `0` the instant it isn't — either a successful decrement or a `Plus` trigger), and a new `unlocked:Bool`, set permanently once `overdraftCount` reaches `OVERDRAFT_UNLOCK_COUNT` (`10`, "for now" per the ask) — at which point `tiltSteps` snaps back to `0` too. `Hourglass.buildSand` reads `unlocked` to swap both the sand's fill and its glow to new gold variants (`Colours.HOURGLASS_SAND_GOLD`/`_GOLD_GLOW`) rather than the usual icy ones — nothing else reacts to it yet, deliberately, same "prototype the trigger, not the payoff" discipline as everything else backlogged there.
 
 Full test rewrite for both `HourglassModelTest` (new stepped-tilt/edge-trigger/overdraft cases, replacing every lean/reversing one) and `HourglassTest` (new `triggerSide` cases — on-bearing close-in for both signs, too far, off to the side, and the two angle-tolerance boundary cases — replacing every `lean` one), plus the antipodal-height regression case ported over to `triggerSide` alongside `blocksMovement`'s own copy. `make fmt`/`lint`/`check`/`test` all clean. Not verified in-browser — same tooling limitation as every prior round on this object.
 
@@ -718,7 +718,7 @@ Two direct follow-ups after the first look. "Make it 10 times bigger in every di
 
 ## 2026-07-19 — A forest for the Möbius biome, worked overnight unsupervised
 
-hooman's ask: "make a forest out of the Moëbius Strip Biome... make a model of tree by yourself, like we did with the grass, only with a hitbox. Then sow and grow lots of them." Working overnight without hooman there to check in on, so two questions got asked and answered before starting rather than guessed at: whether "sow and grow" meant a real growth mechanic or a one-time scatter (answer: one-time scatter for now, like grass — real growth deferred, see this file's own `docs/game-design/ideas-backlog.md` backlog entry below for where that's noted for later), and whether the forest should leave a guaranteed clear lane or go fully dense (answer: fully dense, weave required, no guaranteed path).
+hooman's ask: "make a forest out of the Moëbius Strip Biome... make a model of tree by yourself, like we did with the grass, only with a hitbox. Then sow and grow lots of them." Working overnight without hooman there to check in on, so two questions got asked and answered before starting rather than guessed at: whether "sow and grow" meant a real growth mechanic or a one-time scatter (answer: one-time scatter for now, like grass — real growth deferred, see this file's own `docs/open/ideas-backlog.md` backlog entry below for where that's noted for later), and whether the forest should leave a guaranteed clear lane or go fully dense (answer: fully dense, weave required, no guaranteed path).
 
 **The tree itself** (`biomes.common.tree.TreeMesh`, new, in `biomes.common` rather than `biomes.mobius` — topology-agnostic, same reasoning `biomes.common.grass.GrassModel`'s own class doc gives for taking a sphere's `radius`/`isWalkable` as parameters instead of assuming one biome's own geometry): a plain cylindrical trunk plus two stacked, overlapping cones for foliage — the cheapest shape that still reads as a conifer, same "cheapest silhouette that still reads right" discipline the grass tufts' own crossed blades already use. Takes a tree's own local frame (`base`/`up`/`tangent`/`right`) rather than any biome-specific math; `MobiusMath.localFrameAt`'s own `{tu, tv, normal}` slots directly in as `{tangent, right, up}`, already exactly that orthonormal triple. No top/bottom caps (never visible from a player's own eye height) and `culling = None` on the meshes built from it, same call every other solid-looking mesh in this project already makes rather than getting each ring's own winding order exactly right.
 
@@ -736,7 +736,7 @@ New `MobiusForestGeneratorTest` (spacing invariant, edge margin, spawn clearance
 
 - Density/spacing (`MobiusModel.TARGET_TREE_COUNT`/`MIN_TREE_SPACING`) and tree size ranges are first-pass numbers, entirely unverified visually — could read as too sparse, too dense to physically walk through, or comically oversized/undersized against the ribbon.
 - "Fully dense, weave required" was taken literally: no guaranteed clear lane anywhere, including near the entrance spawn and the hub-return trigger (beyond `MobiusModel.TREE_SPAWN_CLEARANCE`/`MobiusBiome.EXIT_ARC_OFFSET`'s own small clearances) — possible a bad random roll leaves an awkward, near-unwalkable pocket somewhere, given no retry-if-a-region-looks-bad logic exists.
-- The real-growth-over-time idea is deferred and noted in `docs/game-design/ideas-backlog.md`'s backlog (tied to the hourglass's own already-global time-scale mechanism, per the ask), not built — confirm that's still the right call before anyone starts on it.
+- The real-growth-over-time idea is deferred and noted in `docs/open/ideas-backlog.md`'s backlog (tied to the hourglass's own already-global time-scale mechanism, per the ask), not built — confirm that's still the right call before anyone starts on it.
 
 ## 2026-07-19 — The forest trees, cleaned up and diversified
 
@@ -752,11 +752,11 @@ hooman, on first look: "the trees are awful... please make them a lot cleaner. M
 
 New `MobiusForestGeneratorTest` cases for species (only ever a known constant, all three actually reachable at default chances) and rotation (stays within a full turn); existing manually-constructed `PlacedTree` literals in `MobiusCollisionTest` updated for the two new required fields. `make fmt`/`lint`/`check`/`test` all clean (18044 assertions). Not verified in-browser — same limitation as ever; this round in particular was reasoned from the geometry math alone, without ever having seen the "awful" result being fixed, so worth a specific second look once hooman can actually check it.
 
-## 2026-07-22 — game-design.md split into a docs/game-design/ folder
+## 2026-07-22 — game-design.md split into a docs/ folder
 
 The single `docs/game-design.md` had grown four jobs with different
 lifecycles — pillars, live story exploration, idea backlog, and rejected
-alternatives. Split by lifecycle into `docs/game-design/`: `philosophy.md`
+alternatives. Split by lifecycle into `docs/`: `philosophy.md`
 (pillars), `story-line.md` (current story state only), `ideas-backlog.md`
 (not-yet-implemented ideas), `design-decisions-records.md` (append-only
 records of decisions with their rejected alternatives and why — hooman's
@@ -775,7 +775,7 @@ turned into a research pass plus four pieces of implementation.
 
 **Research and a new doc.** Looked outside the project for prior art and
 kept the useful links, each with the specific transferable lesson, in a new
-`docs/game-design/inspirations.md` (wired into the folder's `README.md`, this
+`docs/game/inspirations.md` (wired into the folder's `README.md`, this
 repo's `README.md` and `CLAUDE.md`). The load-bearing reference is
 **HyperRogue**: 72 lands whose mechanics each demonstrate a different
 property of the hyperbolic plane — the same situation this game is in with
@@ -941,7 +941,7 @@ all "the player acted here" and none of them should want its own key.
 
 Crossing sides is a **knowing placeholder**: the poles are open, marked with a
 plain disc. The real mechanism is still open, and the candidate worth trying
-first is noted in `docs/game-design/ideas-backlog.md` — a jump from the outside
+first is noted in `docs/open/ideas-backlog.md` — a jump from the outside
 strong enough to leave the surface and land on the inside, which would make the
 two-gravity contrast itself the door. Also still open there: nothing yet
 *requires* a mark, so the loop is a tool without a lock.
@@ -993,7 +993,7 @@ carries an axis, not a direction. Any perception mechanic that means to point
 somewhere has to say how it resolves the 180° ambiguity, and motion is the
 cheapest answer.
 
-## 2026-07-29 — Documentation pass on docs/game-design/
+## 2026-07-29 — Documentation pass on docs/
 
 hooman: the game-design folder is "hardly legible for a reader" and lacks images
 or diagrams. Measured before changing anything, and the measurement moved the
@@ -1011,10 +1011,10 @@ idea to what it changes, its state and its cost; every entry follows one shape
 verticality routes became tables rather than nested bullet lists. Longest
 paragraph is down from 9,225 to 1,930 characters and every internal anchor
 resolves. The rule-driven-walls engineering block moved out to
-`docs/game-design/notes/`, with a new convention: past ~25 lines outside its
+`docs/building/notes/`, with a new convention: past ~25 lines outside its
 details block, an entry is a design note and gets its own file.
 
-**Six hand-drawn diagrams** (`docs/assets/game-design/*.svg`) for the ideas prose
+**Six hand-drawn diagrams** (`docs/open/assets/*.svg`) for the ideas prose
 is worst at: the two-sided shell in cross-section, antipode pairs, great-circle
 corridors, inverse-legibility walls, centre-lit shadows, the rosetta maze.
 Authored as text so they diff like code, on cream paper with ink strokes —
@@ -1039,16 +1039,16 @@ repo. So the game now takes its own — `P` downloads the current view, fired fr
 black (measured: one distinct colour, `0,0,0` — Heaps builds its context without
 `preserveDrawingBuffer`). The keypress-to-file chain is *not* confirmed end to
 end: this browser neither delivers keys to the canvas reliably nor lets downloads
-reach the filesystem. `docs/assets/game-design/README.md` carries the shot list —
+reach the filesystem. `docs/open/assets/README.md` carries the shot list —
 eleven captures with the vantage that makes each legible — and the standing rule
 that a screenshot older than the mechanic it illustrates is a bug.
 
 One thing deliberately left plain: `philosophy.md`. The pillars are short,
 load-bearing text, and precision matters there more than pleasantness.
 
-## 2026-08-10 — story-line.md split into docs/game-design/storylines/, plus a design session
+## 2026-08-10 — story-line.md split into docs/archive/forsaken-storylines/, plus a design session
 
-`story-line.md` moved to `docs/game-design/storylines/`: a `README.md`
+`story-line.md` moved to `docs/archive/forsaken-storylines/`: a `README.md`
 carrying the map and requirements, plus one `candidate-<slug>.md` file per
 candidate (`candidate-garden-of-eden.md`, `candidate-twisted-mythologies.md`,
 `candidate-painters-house.md`), each prefixed `candidate-` until validated —
@@ -1410,7 +1410,7 @@ template, and explicit permission to challenge the oldest directives.
 Targets agreed up front: **8-15 hours**, sellable quality bar (destination
 undecided), artist and composer hireable, engine choice open.
 
-Output is a new `docs/game-design/direction/` folder — seven documents,
+Output is a new `docs/game/` folder — seven documents,
 **proposed, not adopted**. Headlines:
 
 **The three things this project has been carrying separately are one
@@ -1603,7 +1603,7 @@ been run, and Risk 2 stays open until it has.
 ## 2026-08-11 — Ran the rule probe: two findings, one changes the build order
 
 Full write-up in
-[`docs/game-design/notes/hyperbolic-simulation-findings.md`](game-design/notes/hyperbolic-simulation-findings.md).
+[`docs/building/notes/hyperbolic-simulation-findings.md`](../building/notes/hyperbolic-simulation-findings.md).
 
 **Finding 1 — `{7,3}` sustains life easily.** 972 sampled outer-totalistic
 rules survived 120 generations without dying out or saturating, dozens
@@ -2254,7 +2254,7 @@ and remains the real test.**
 Also logged: `Space.rightOf` is named for the opposite of the side it
 returns (Heaps' camera is left-handed; `GameLoop` negates at the strafe
 site). Pre-existing, now spread across one more implementation, and in
-`docs/bug-tracker.md` rather than fixed here — correcting it also flips
+`docs/open/bug-tracker.md` rather than fixed here — correcting it also flips
 `Camera.applyTo`'s pitch axis in every existing biome.
 
 ## 2026-08-16 — The Ribbon, and two things that only a build could tell us

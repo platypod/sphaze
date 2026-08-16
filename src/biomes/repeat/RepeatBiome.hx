@@ -11,7 +11,7 @@ import entities.player.PlayerModel;
 /**
 	**The Repeat** — a city that goes on forever, in which every block is
 	the same block. See
-	[the design](../../../docs/game-design/direction/world-and-threads.md)'s
+	[the design](../../../docs/game/world.md)'s
 	own entry (`### 3. The Repeat`).
 
 	**Not a quotient, on purpose.** `geometry.DeckGroup` exists and would

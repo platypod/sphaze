@@ -14,7 +14,7 @@ import tools.geodesic.Vec3.Vec3Math;
 	line with one empty hex between them, plus one state-3 ("gray") cell
 	adjacent to the second black cell, offset `NW_OFFSET` slots around its
 	own cyclic neighbor order from the same "south" heading used to place
-	it. See `docs/game-design/design-decisions-records.md`'s 2026-08-09
+	it. See `docs/archive/decisions.md`'s 2026-08-09
 	entry for the full derivation and the 4-frame self-verification that
 	confirmed this shape actually travels — chord drift up to `1.812` on a
 	unit sphere (most of the way to antipodal) before looping back around

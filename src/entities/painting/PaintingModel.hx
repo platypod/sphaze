@@ -9,14 +9,14 @@ import graphics.shaders.UnlitTexture;
 /**
 	A painting mounted on a wall — the diegetic warp mechanism: walking
 	close enough triggers the transition, no interact-key confirmation, on
-	purpose (see `docs/PROJECT_LOG.md`'s 2026-07-17 entry — finding one
+	purpose (see `docs/archive/project-log.md`'s 2026-07-17 entry — finding one
 	should still take some searching rather than being telegraphed by a
 	prompt; flagged there as revisitable later).
 
 	Pure data plus the trigger check — actually building a painting's
 	visible quad is scene/rendering code (see `buildQuad`), kept separate so
 	the trigger math itself stays unit-testable without needing a scene
-	graph (`docs/GUIDELINES.md` §1.4/§5.4).
+	graph (`docs/rules/guidelines.md` §1.4/§5.4).
 
 	An `Entity` since it's a thing that exists in the game world with a
 	position — but only the warp-linked shape is built here

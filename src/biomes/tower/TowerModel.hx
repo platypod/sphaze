@@ -26,7 +26,7 @@ typedef TowerData = {
 	keeps from its own generation algorithm — first-pass numbers below,
 	expected to be retuned by feel once this is actually playable (same
 	discipline `biomes.common.grid.GridGeometry`'s own constants went
-	through; see docs/PROJECT_LOG.md).
+	through; see docs/archive/project-log.md).
 
 	`layer` throughout this class is a *physical* layer index, `0` (the
 	topmost layer in the whole shaft) to `TOTAL_LEVELS - 1` (the bottom,

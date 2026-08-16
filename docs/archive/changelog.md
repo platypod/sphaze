@@ -1,10 +1,10 @@
 # Changelog
 
-Bugs that have been fixed, oldest first. When a bug in `docs/bug-tracker.md`
+Bugs that have been fixed, oldest first. When a bug in `docs/open/bug-tracker.md`
 gets fixed, move its entry here and add the date and fixing commit.
 
 Fixes that predate this file live only in git history
-(`git log --grep='^fix'`) and in `docs/PROJECT_LOG.md`'s narrative entries —
+(`git log --grep='^fix'`) and in `docs/archive/project-log.md`'s narrative entries —
 not backfilled here.
 
 ---

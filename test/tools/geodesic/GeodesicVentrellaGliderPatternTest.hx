@@ -8,7 +8,7 @@ import utest.Test;
 	Covers `seed`'s own shape contract (exactly 3 cells, the right states,
 	the right adjacency) — not whether the shape actually travels, which
 	`GeodesicVentrellaFigure2`'s own long-run trace already confirmed by
-	hand (see `docs/game-design/design-decisions-records.md`'s 2026-08-09
+	hand (see `docs/archive/decisions.md`'s 2026-08-09
 	entry) and isn't worth re-proving in a fast unit test.
 **/
 class GeodesicVentrellaGliderPatternTest extends Test {

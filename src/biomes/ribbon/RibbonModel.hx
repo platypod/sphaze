@@ -10,7 +10,7 @@ package biomes.ribbon;
 	time** — decreasing `z` is *earlier*. So walking north walks into the
 	past, generation by generation, and generation `0` (the initial
 	condition somebody typed) sits at `z = 0` with nothing beyond it.
-	`docs/game-design/direction/world-and-threads.md` states the design;
+	`docs/game/world.md` states the design;
 	this class is the two lines of arithmetic that make it literal.
 
 	Kept separate from `RibbonBiome` so the mapping is testable without a
@@ -22,7 +22,7 @@ class RibbonModel {
 		Rule 110 — chosen for what it *is*, not for how it looks: it is the
 		one elementary rule proved Turing-complete (Cook, 2004), which is
 		the evidence
-		`docs/game-design/direction/world-and-threads.md` wants the player
+		`docs/game/world.md` wants the player
 		standing on. It also happens to give the best terrain of the
 		candidates, growing to one side only, so the diagram is a leaning
 		wedge rather than a symmetric cone — asymmetry the player can

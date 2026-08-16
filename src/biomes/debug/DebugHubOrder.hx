@@ -2,7 +2,7 @@ package biomes.debug;
 
 /**
 	The debug room's own view of
-	`docs/game-design/direction/world-and-threads.md`'s numbering — which
+	`docs/game/world.md`'s numbering — which
 	space is `1`, which is `2`, and what each is actually called.
 
 	**Why this exists at all.** The registry knows biome *ids* (`conway`,
@@ -21,7 +21,7 @@ package biomes.debug;
 	older work rather than part of the nine.
 
 	Move this out of `biomes.debug` if anything but the debug room ever
-	needs it — per `docs/GUIDELINES.md`, on the second use case, not the
+	needs it — per `docs/rules/guidelines.md`, on the second use case, not the
 	first.
 **/
 class DebugHubOrder {

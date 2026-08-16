@@ -3,7 +3,7 @@ package entities;
 import utest.Test;
 import utest.Assert;
 
-/** Covers CreatureSpawnTable's JSON parsing — see docs/GUIDELINES.md §1.4/§5.4 (data parsing, not rendering, is the testable target here). **/
+/** Covers CreatureSpawnTable's JSON parsing — see docs/rules/guidelines.md §1.4/§5.4 (data parsing, not rendering, is the testable target here). **/
 class CreatureSpawnTableTest extends Test {
 	function testParsesEntriesInFileOrder():Void {
 		var entries = CreatureSpawnTable.parse('{"creatures": [{"creatureType": "raven", "count": 3}, {"creatureType": "cat", "count": 1}]}');

@@ -41,7 +41,7 @@ typedef RuleOutcome = {
 	wall-gating came out of `GeodesicLifeState` entirely. The sweep is gone
 	with it, since walls no longer touch this simulation and the axis would
 	now be flat by construction. Its numbers are preserved in
-	`docs/game-design/notes/geodesic-sphere-engineering.md`'s own Phase 5
+	`docs/building/notes/geodesic-sphere-engineering.md`'s own Phase 5
 	entry, which is where to look before reintroducing any gate.
 
 	What's left is the comparison this was originally supposed to be: the

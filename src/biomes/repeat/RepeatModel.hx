@@ -7,7 +7,7 @@ package biomes.repeat;
 
 	**This is deliberately not a quotient**, even though
 	`geometry.DeckGroup` exists and would make it one.
-	`docs/game-design/direction/world-and-threads.md` is explicit about
+	`docs/game/world.md` is explicit about
 	the distinction and it is the whole design: a true torus has exactly
 	*one* tile, rendered repeatedly, so there is nothing to compare and no
 	mechanic. What this space needs is **many separate tiles that happen

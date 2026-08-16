@@ -6,7 +6,7 @@ import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubStructure;
 import entities.hourglass.Hourglass.TriggerSide;
 
-/** Covers Hourglass's own pure collision/trigger queries — not `build`/`buildDynamic`'s own scene/rendering side (see docs/GUIDELINES.md §1.4/§5.4). **/
+/** Covers Hourglass's own pure collision/trigger queries — not `build`/`buildDynamic`'s own scene/rendering side (see docs/rules/guidelines.md §1.4/§5.4). **/
 class HourglassTest extends Test {
 	static inline final RADIUS:Float = 70;
 

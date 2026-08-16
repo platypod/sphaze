@@ -5,7 +5,7 @@ import biomes.common.space.common.Space;
 /**
 	The hyperbolic plane as a walkable `Space` — **the first
 	non-embeddable surface in the game, and the reason the spatial
-	refactor in `docs/game-design/direction/architecture.md` exists.**
+	refactor in `docs/rules/architecture.md` exists.**
 
 	**Why this needs no interface change, contrary to that document.**
 	`architecture.md` argued the current `Space` abstraction provably

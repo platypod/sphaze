@@ -6,7 +6,7 @@ import geometry.CurvedSpace.ModelPoint;
 /**
 	A distance-preserving transformation of a constant-curvature space,
 	stored as a 3×3 matrix over the model coordinates — and, in the
-	architecture proposed in `docs/game-design/direction/architecture.md`,
+	architecture proposed in `docs/rules/architecture.md`,
 	**the player's entire spatial state**.
 
 	That is the significant change from the current `PlayerModel`, which
@@ -17,7 +17,7 @@ import geometry.CurvedSpace.ModelPoint;
 	`compose(frame, rotation(θ))`. Position is `apply(frame, origin())`.
 
 	Two things fall out of that for free, and both are recorded in
-	`PROJECT_LOG.md` as problems that cost real debugging time:
+	the project log as problems that cost real debugging time:
 
 	- **No coordinate singularities.** `PlayerModel`'s doc describes ripping
 	  out `(theta, phi)` because latitude coordinates go singular at the
@@ -191,7 +191,7 @@ class Isometry {
 		the matrix already holds it. Only meaningful relative to some other
 		frame at the same point, which is exactly what holonomy measures
 		(see `CurvedSpaceTest`'s own square-walk test, and `The Defect` in
-		`docs/game-design/direction/world-and-threads.md`).
+		`docs/game/world.md`).
 		@param frame the frame to read.
 		@return its rotation component, in radians.
 	**/

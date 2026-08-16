@@ -112,7 +112,7 @@ class GameLoop {
 		biomeRegistry.register(new MobiusBiome(MobiusForestGenerator.generate()));
 		// Geodesic sphere (tools.geodesic), swapped in for the original
 		// lat/long ConwayBiome — see
-		// docs/game-design/notes/geodesic-sphere-engineering.md's own
+		// docs/building/notes/geodesic-sphere-engineering.md's own
 		// "wiring into the real game" step 4. Same registry id
 		// (ConwayBiome.ID), so ConwayWaypoint needed no change.
 		biomeRegistry.register(new GeodesicConwayBiome());
@@ -432,7 +432,7 @@ class GameLoop {
 	/**
 		Downloads a PNG of the current view if the capture key was pressed (P) —
 		the documentation-screenshot tool, so an illustration in
-		`docs/game-design/` can be retaken from the game itself rather than
+		`docs/` can be retaken from the game itself rather than
 		grabbed off someone's desktop.
 
 		**Must be called from inside the render frame**, right after the scene is

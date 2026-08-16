@@ -10,7 +10,7 @@ import entities.painting.PaintingModel;
 	by biome type name: the hub used to be a special-cased second scene kind
 	alongside "the maze," even though it already had everything a biome has
 	(its own build, its own collision, its own spawn point, its own
-	painting) — see docs/PROJECT_LOG.md's restructuring entry. It's a
+	painting) — see docs/archive/project-log.md's restructuring entry. It's a
 	particular biome (the always-present navigation hub), not a different
 	kind of thing.
 **/
@@ -193,7 +193,7 @@ interface Biome {
 
 		**Currently unreachable from a keybind.** `GameLoop` used to expose
 		this via E as a matching export dev tool; E was freed for the
-		pentagon-engraving interaction instead (see `docs/PROJECT_LOG.md`'s
+		pentagon-engraving interaction instead (see `docs/archive/project-log.md`'s
 		2026-08-10 entry) and nothing rebinds export elsewhere yet. Every
 		implementation is left as-is rather than deleted — `restore`/import
 		still depends on the same format, and a future export key just needs

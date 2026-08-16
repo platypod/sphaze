@@ -5,7 +5,7 @@ import utest.Assert;
 import biomes.common.space.sphere.SphereMath;
 import biomes.maze.MazeBiome;
 
-/** Covers MazeShrine's own pure collision/painting-placement queries — not `build`'s own scene/rendering side (see docs/GUIDELINES.md §1.4/§5.4). **/
+/** Covers MazeShrine's own pure collision/painting-placement queries — not `build`'s own scene/rendering side (see docs/rules/guidelines.md §1.4/§5.4). **/
 class MazeShrineTest extends Test {
 	static inline final RADIUS:Float = 70;
 

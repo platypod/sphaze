@@ -1,6 +1,6 @@
 # Design assets — how to make and retake them
 
-Conventions live in [`../../game-design/README.md`](../../game-design/README.md);
+Conventions live in [`../../game/README.md`](../../game/README.md);
 this file is the *how*.
 
 ## Diagrams (the `.svg` files here)

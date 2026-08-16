@@ -20,7 +20,7 @@ import tools.geodesic.Vec3.Vec3Math;
 
 /**
 	The geodesic sphere, wired up as an actual playable `Biome` — steps 2
-	and 4 of `docs/game-design/notes/geodesic-sphere-engineering.md`'s own
+	and 4 of `docs/building/notes/geodesic-sphere-engineering.md`'s own
 	"wiring into the real game" list.
 
 	**Deliberately reuses `ConwayBiome.ID`.** `biomes.hub.ConwayWaypoint`
@@ -41,7 +41,7 @@ import tools.geodesic.Vec3.Vec3Math;
 	checking the coarse layout — so what blocks the player and what's
 	drawn as a wall are the same coarse edge, not approximations of each
 	other. See `GeodesicCoarseMaze`'s own doc for the full reasoning, and
-	`docs/game-design/design-decisions-records.md` for why a first
+	`docs/archive/decisions.md` for why a first
 	attempt (`GeodesicWallSimplifier`, merging wall geometry after the
 	fact) was retracted rather than fixed.
 
@@ -58,7 +58,7 @@ import tools.geodesic.Vec3.Vec3Math;
 	revision).** First tried ambient random seeding (matching what
 	`GeodesicVentrellaState.seed` is built for) — measured badly in play
 	("very much 'not much' happening... random isolated cells birth, then
-	die," `docs/game-design/design-decisions-records.md`'s own entry has
+	die," `docs/archive/decisions.md`'s own entry has
 	the numbers: every density from `0.1` to `1.0` collapsed to `~0.1%`
 	population). The fix wasn't a better density — it was reproducing
 	Ventrella's own documented glider directly (hand-reconstructed from a
@@ -127,7 +127,7 @@ import tools.geodesic.Vec3.Vec3Math;
 
 	**Pentagon composing (2026-08-10).** Player-authored counterpart to
 	`gliderSpawner`'s own ambient shape — see `GeodesicPentagonEngraving`'s
-	own doc for the full mechanic and `docs/game-design/ideas-backlog.md`'s
+	own doc for the full mechanic and `docs/open/ideas-backlog.md`'s
 	"Deliberate pentagon activation" entry for the design conversation
 	behind it. `interact` toggles `editingPentagon` on/off (entering only
 	from a pentagon node itself, per `fineLookup.nodeAt`); `cameraOverride`

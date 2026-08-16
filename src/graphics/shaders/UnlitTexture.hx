@@ -23,7 +23,7 @@ package graphics.shaders;
 	only to the meshes that actually want it, not folded in here where a bug
 	in it could show up anywhere `UnlitTexture` is used at all — which is
 	exactly what happened the first time a version of that glow was tried
-	directly in here (see `docs/PROJECT_LOG.md`'s own entry on it).
+	directly in here (see `docs/archive/project-log.md`'s own entry on it).
 **/
 class UnlitTexture extends hxsl.Shader {
 	static var SRC = {

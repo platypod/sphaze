@@ -12,7 +12,7 @@ import biomes.common.grid.GridModel.GridNode;
 	nothing is glued, there is exactly one of the player, and every
 	location is where you would expect it to be. What is added is a *rule
 	laid over* the geometry, which is precisely what
-	`docs/game-design/direction/world-and-threads.md` says the space is
+	`docs/game/world.md` says the space is
 	for: the correspondence is authored, has no geometric necessity behind
 	it, and is therefore the first evidence in the game that *someone
 	decided these two things would answer to each other*.

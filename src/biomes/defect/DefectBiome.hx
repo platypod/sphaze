@@ -10,7 +10,7 @@ import entities.player.PlayerModel;
 
 /**
 	**The Defect** — a plain that is flat everywhere except one point. See
-	[the design](../../../docs/game-design/direction/world-and-threads.md)'s
+	[the design](../../../docs/game/world.md)'s
 	own entry (`### 5. The Defect`), which calls it the most underrated
 	space in the set, and is right for a reason worth restating: it is the
 	one place that makes a player understand what curvature *is*.

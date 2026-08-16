@@ -13,13 +13,13 @@ import game.MeshBuilder;
 	around a pinned camera. A flat space needs none of that.
 
 	**Colour is doing exactly one job here, and it is not this one.**
-	`docs/game-design/direction/art-and-audio.md` reserves hue for
+	`docs/game/art-and-audio.md` reserves hue for
 	curvature — κ = 0 means neutral bone, slate and ash, and nothing in a
 	flat biome may reach for a hue to make itself noticed. So the live
 	cells, the dead ground and the monolith are separated by **value**
 	alone: three steps of the same grey. That constraint is why this biome
 	looks like a museum rather than a diagram, which is the tone
-	`docs/game-design/direction/world-and-threads.md` asks for.
+	`docs/game/world.md` asks for.
 **/
 class RibbonMesh {
 	/** Dead ground: ash, the darkest of the three values. **/

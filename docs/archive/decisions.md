@@ -2,8 +2,8 @@
 
 Append-only records of design decisions: what was decided or rejected,
 against which alternatives, and why. This is the decision-shaped complement
-to `../PROJECT_LOG.md`'s chronology — when a file in
-[storylines/](storylines/README.md) or [philosophy.md](philosophy.md)
+to `project-log.md`'s chronology — when a file in
+[storylines/](../game/README.md) or [philosophy.md](../rules/philosophy.md)
 changes state, the reasoning lands here so
 the current-state files stay clean. Entries follow this shape:
 
@@ -13,7 +13,7 @@ the current-state files stay clean. Entries follow this shape:
 ## Story-spine exploration (2026-07-22)
 
 Records from the story exploration session; the surviving candidates live
-in [storylines/](storylines/README.md).
+in [storylines/](../game/README.md).
 
 - **2026-07-22 — Story alternative 3, "The Late Resident" (noir /
   self-investigation) — REJECTED.** Recorded because the idea was judged
@@ -55,7 +55,7 @@ in [storylines/](storylines/README.md).
   Night-at-the-Museum's shadow), not on the register. Salvaged: the
   cross-biome "things escape where they don't belong, send them back"
   mechanic, explicitly kept (hooman: "a great idea") — now a
-  story-agnostic entry in [ideas-backlog.md](ideas-backlog.md). One more
+  story-agnostic entry in [ideas-backlog.md](../open/ideas-backlog.md). One more
   fragment noted before dropping the rest: rehanging paintings as
   player-driven re-curation of which doorway leads where — unclaimed by
   any surviving candidate, worth grabbing if a winner can hold it.
@@ -104,7 +104,7 @@ in [storylines/](storylines/README.md).
 - **2026-08-03 — Life-driven walls, option 3 (spanning tree + reactive
   shortcuts) — BUILT.** `biomes.conway.ConwayBiome`'s maze was static
   furniture under a live Life simulation; raised directly as "not
-  interesting" and pointed at [ideas-backlog.md](ideas-backlog.md)'s
+  interesting" and pointed at [ideas-backlog.md](../open/ideas-backlog.md)'s
   "Walls that behave by a rule" entry, which had already flagged the
   raw approach (walls = live cells) as broken — random soup dies back
   into a *mostly open* board within a few dozen generations, so a naive
@@ -120,7 +120,7 @@ in [storylines/](storylines/README.md).
   deliberately, since a field of frozen still lifes has population but
   no activity, and should read as dead the same way the visible board
   does, rather than holding shortcuts open forever on stale density.
-  Per the [engineering note](notes/rule-driven-walls-engineering.md),
+  Per the [engineering note](../building/notes/rule-driven-walls-engineering.md),
   also decided: an edge never closes if it touches the player's current
   cell (refuse-the-close, the simplest of the three offered rules), and
   the rule's phase serializes as part of the existing save (coreEdges
@@ -322,7 +322,7 @@ in [storylines/](storylines/README.md).
 ## Geodesic sphere for Conway (2026-08-04)
 
 - **2026-08-04 — Reversing the lat/long-vs-geodesic call, scoped, not yet
-  built — DECIDED.** `docs/PROJECT_LOG.md` records this exact question
+  built — DECIDED.** `docs/archive/project-log.md` records this exact question
   (lat/long + merged poles vs. a pole-safe cube-sphere/geodesic grid)
   already walked through and deliberately deferred before the maze was
   first built, with an explicit "revisit if pole distortion... turns out
@@ -334,7 +334,7 @@ in [storylines/](storylines/README.md).
   opposite, we will build mechanisms around them" (landed on a pulsing
   beacon rule, modeled as swappable per-node data for future variation).
   Scoped, not started: full design + engineering plan in
-  [notes/geodesic-sphere-engineering.md](notes/geodesic-sphere-engineering.md)
+  [notes/geodesic-sphere-engineering.md](../building/notes/geodesic-sphere-engineering.md)
   (construction method, generate→score→bake pipeline, four candidate hex
   Life rules, a known-good non-brute-force position→cell lookup borrowed
   from Uber H3's own approach, the pentagon `CellRule` model, and a
@@ -531,7 +531,7 @@ in [storylines/](storylines/README.md).
   one method. The open question — whether a genuinely maze-compatible rule
   exists, including softer couplings like halving a walled neighbour's
   contribution or gating birth but not survival — is recorded in
-  [ideas-backlog.md](ideas-backlog.md).
+  [ideas-backlog.md](../open/ideas-backlog.md).
 - **2026-08-06 — Wiring the geodesic sphere into the real game, step 1
   (real mesh rendering) — BUILT.** `GeodesicMesh`, reusing
   `biomes.conway.ConwayMesh`'s own palette and `ConwayWallGlow` shader
@@ -830,7 +830,7 @@ in [storylines/](storylines/README.md).
   cooldown passes. Scoped explicitly as spawn points, not glider guns, per
   direct instruction ("only go for a spawn-point right now, but flag and
   document the need to go for glider guns later on") — see
-  `docs/game-design/ideas-backlog.md`'s own "True glider guns" entry for
+  `docs/open/ideas-backlog.md`'s own "True glider guns" entry for
   that follow-up, blocked on a genuine traveler ever being found.
 
   `GeodesicGliderSearch`'s own `flattestNode`/`localPatterns` helpers were
@@ -851,7 +851,7 @@ in [storylines/](storylines/README.md).
   own scripted spawns and whatever their own birth/survival math grows
   from those.
 
-  This satisfies the shared prerequisite `docs/game-design/ideas-
+  This satisfies the shared prerequisite `docs/ideas-
   backlog.md`'s "deliberate pentagon activation" entry had already named
   (turn the soup off so a spawned structure's own propagation stays
   legible) — noted there, without claiming any of that entry's four actual
@@ -910,7 +910,7 @@ in [storylines/](storylines/README.md).
   shape-signature matching within `TRACK_RADIUS`) needed no changes — it
   was already written generically, not specific to the old 4-cell pattern.
 
-  `docs/game-design/ideas-backlog.md`'s "hex-native structure library"
+  `docs/open/ideas-backlog.md`'s "hex-native structure library"
   entry marked resolved for the core question (a genuine traveler exists);
   "true glider guns" marked half-unblocked (a real payload glider exists
   now, an ejector oscillator still doesn't).
@@ -990,7 +990,7 @@ in [storylines/](storylines/README.md).
 
   Not a dead end, just unstarted further work: population 6-7 in the same
   patch, and anything past a 2-ring footprint, remain untried. No code
-  changed — `docs/game-design/ideas-backlog.md`'s own entry carries the
+  changed — `docs/open/ideas-backlog.md`'s own entry carries the
   result and the open question of whether it's worth the compute to keep
   looking, given the known spaceship already works in play.
 - **2026-08-07 — Shuttles reinstated as their own generator sites, one
@@ -1613,9 +1613,9 @@ in [storylines/](storylines/README.md).
   existing airborne-above-`WALL_HEIGHT` exemption — every pre-thickness
   call site keeps its old all-or-nothing behavior untouched.
 
-  Also closed the one open `docs/bug-tracker.md` entry while verifying
+  Also closed the one open `docs/open/bug-tracker.md` entry while verifying
   this: "walk towards the solitary end of a wall... camera can still enter
-  it a little" — confirmed fixed (moved to `docs/CHANGELOG.md`), a side
+  it a little" — confirmed fixed (moved to `docs/archive/changelog.md`), a side
   effect of `WALL_CLEARANCE`'s own point-to-segment math already covering
   a segment's endpoints, not just its middle.
 

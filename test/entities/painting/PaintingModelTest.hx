@@ -3,7 +3,7 @@ package entities.painting;
 import utest.Test;
 import utest.Assert;
 
-/** Covers PaintingModel's pure trigger/placement math — not its scene/rendering side (see docs/GUIDELINES.md §1.4/§5.4). **/
+/** Covers PaintingModel's pure trigger/placement math — not its scene/rendering side (see docs/rules/guidelines.md §1.4/§5.4). **/
 class PaintingModelTest extends Test {
 	function testMidpointOfIsHalfwayBetweenBothEnds():Void {
 		var a = new h3d.Vector(0, 0, 0);

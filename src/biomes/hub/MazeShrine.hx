@@ -304,7 +304,7 @@ class MazeShrine {
 	/**
 		The maze's own painting as a trigger — floor-level (`midpointOf`),
 		matching every other painting in this project (see
-		`docs/PROJECT_LOG.md`'s own entry on why the hub's former column-face
+		`docs/archive/project-log.md`'s own entry on why the hub's former column-face
 		paintings didn't, until fixed).
 		@param basis the shrine's own local frame.
 		@param destinationBiomeId `biomes.maze.MazeBiome.ID`.

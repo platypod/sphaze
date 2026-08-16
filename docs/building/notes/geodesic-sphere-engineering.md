@@ -4,7 +4,7 @@ Engineering answer to the design conversation on 2026-08-04 about replacing
 `biomes.conway`'s lat/long grid (cells shrink toward the poles, `sin(theta)`
 distortion) with a hexagon-based geodesic sphere, embracing rather than hiding
 the 12 pentagons a sphere always forces. Lives here rather than in
-[ideas-backlog.md](../ideas-backlog.md) for the same reason
+[ideas-backlog.md](../../open/ideas-backlog.md) for the same reason
 [the rule-driven walls note](rule-driven-walls-engineering.md) does — this is
 about the code, not the pitch; the backlog entry links here.
 
@@ -161,7 +161,7 @@ block, and explicitly *no* collision height (`groundHeightAt`-equivalent
 returns `0` for it always) — a beacon is seen, not stood on.
 
 This also happens to fit
-[inspirations.md](../inspirations.md)'s own rule directly: *"a biome's
+[inspirations.md](../../game/inspirations.md)'s own rule directly: *"a biome's
 mechanic should be a corollary of the sphere, not a decoration on it."* The
 12 pentagons aren't a design choice being dressed up with a mechanic after
 the fact — they're forced by the sphere's own topology (Euler's formula), and
@@ -405,7 +405,7 @@ what it's waiting on.
    exists that stays alive *while* wall-gated was never actually
    searched — the four candidates were derived by scaling `B3/S23`, not by
    sweeping the space for something suited to a sparse graph. See
-   `docs/game-design/ideas-backlog.md`'s "A maze-compatible life rule"
+   `docs/open/ideas-backlog.md`'s "A maze-compatible life rule"
    entry, which also notes that a *soft* coupling (walls halving a
    neighbour's contribution, or gating birth but not survival) was never
    tried and might get the design intent without the extinction.
@@ -713,7 +713,7 @@ documented to do), but a mismatch between "merge geometry across several
 edges" and "collision and reactivity are both strictly per-edge."
 `GeodesicMesh` no longer calls it; the class and its own tests stay as a
 correct building block, in case a future approach needs one. See
-`docs/game-design/design-decisions-records.md`'s own retraction entry.
+`docs/archive/decisions.md`'s own retraction entry.
 
 ## Wall straightening, attempt 2: a coarse maze (prototype, 2026-08-06)
 
@@ -911,7 +911,7 @@ since a shuttle never leaves to make room for a new copy — spawns once per
 site rather than on a repeating clock, only retrying after tracking is
 actually lost. Explicitly scoped as *spawn points*, not glider guns
 ("only go for a spawn-point right now, but flag and document the need to
-go for glider guns later on") — see `docs/game-design/ideas-backlog.md`'s
+go for glider guns later on") — see `docs/open/ideas-backlog.md`'s
 "True glider guns" entry, blocked on ever finding a pattern that actually
 travels. Widening the search (larger seed radius, more rule combinations)
 is real unstarted work, not a closed question — a shuttle existing doesn't
@@ -961,6 +961,6 @@ absolute sense (a finite sphere with 12 pinch-points was never going to
 allow that), but genuinely gliding for a real distance before a graceful,
 visible end — which is what was actually asked for.
 
-The still-open half: `docs/game-design/ideas-backlog.md`'s "true glider
+The still-open half: `docs/open/ideas-backlog.md`'s "true glider
 guns" entry — a real payload glider exists now, an ejector oscillator
 whose period lines up to eject one cleanly does not.

@@ -7,15 +7,15 @@ its details only if you're about to build it. Every entry keeps the same shape:
 a one-line pitch, then *Fits* (which pillar it serves), *Unproven* (what a
 prototype has to answer), *Cost*, and a collapsed block for the reasoning.
 
-**House rules.** Check a new entry against [philosophy.md](philosophy.md) before
+**House rules.** Check a new entry against [philosophy.md](../rules/philosophy.md) before
 adding it, and against the geometry-corollary rule in
-[inspirations.md](inspirations.md) — *a biome's mechanic should be a corollary of
+[inspirations.md](../game/inspirations.md) — *a biome's mechanic should be a corollary of
 the sphere, not a decoration on it.* When an idea ships, delete it from here (the
-code plus [`../PROJECT_LOG.md`](../PROJECT_LOG.md) is the record from then on) —
+code plus [the project log](../archive/project-log.md) is the record from then on) —
 keeping only whatever part is still open. If an entry outgrows ~25 lines outside
 its details block, it's a design note: give it its own file under
-[notes/](notes/) and link it, the way
-[the rule-driven walls one](notes/rule-driven-walls-engineering.md) does.
+[notes/](../building/notes) and link it, the way
+[the rule-driven walls one](../building/notes/rule-driven-walls-engineering.md) does.
 
 ## At a glance
 
@@ -98,7 +98,7 @@ the player is currently looking at.
 Pairs naturally with whoever is doing it being a real character: the
 raven/watchdog in the Garden of Eden candidate, or the goblin steering visitors
 in the salvaged Minotaur material (see
-[design-decisions-records.md](design-decisions-records.md)). Don't build the
+[design-decisions-records.md](../archive/decisions.md)). Don't build the
 antagonist before the thing it vandalises.
 </details>
 
@@ -125,7 +125,7 @@ it doesn't belong to — and the player's job is to spot it and take it home.**
 <details><summary>Detail</summary>
 
 Salvaged from the rejected "Night Shift" story alternative (see
-[design-decisions-records.md](design-decisions-records.md)): the storyline died,
+[design-decisions-records.md](../archive/decisions.md)): the storyline died,
 this mechanic was explicitly kept (hooman: "a great idea"). The existing spawn
 scaffolding (`entities.CreatureSpawnTable`,
 `entities.registries.CreaturesRegistry`/`NpcsRegistry`) is already shaped for
@@ -207,13 +207,13 @@ learns to read.** Each variant is its own biome, not a stack of twists in one.
 | Variant | What it does | Notes |
 |---|---|---|
 | **Metronome** | sections rise and fall on the world tick | the hourglass is already a global time-scale dial, so the player's difficulty control is diegetic at no new cost |
-| **Close behind you** | crossing an edge shuts it | strongest "see far, not near" fit in this file: the whole route must be planned before entry. Precedent: Ravensburger's Labyrinth ([inspirations](inspirations.md)) |
+| **Close behind you** | crossing an edge shuts it | strongest "see far, not near" fit in this file: the whole route must be planned before entry. Precedent: Ravensburger's Labyrinth ([inspirations](../game/inspirations.md)) |
 | **Growth** | hedges close over time | shares its clock with [tree growth](#real-tree-growth-möbius-forest) — build both on one mechanism or neither |
-| **Life-driven** | walls follow a cellular automaton | **built**, option 3 below — see [2026-08-03 record](design-decisions-records.md) |
+| **Life-driven** | walls follow a cellular automaton | **built**, option 3 below — see [2026-08-03 record](../archive/decisions.md) |
 
 - *Unproven:* Metronome, Close behind you, Growth — Life-driven shipped its first cut.
 - *Cost:* high — see [the engineering
-  note](notes/rule-driven-walls-engineering.md) for what the codebase needs
+  note](../building/notes/rule-driven-walls-engineering.md) for what the codebase needs
   (short version: one chokepoint already exists; the gaps are rebuild cadence, a
   wall closing on a stationary player, and serializing the rule's phase).
 
@@ -253,7 +253,7 @@ shell, ordinary gravity inside, weak enough outside to jump three walls high,
 marks that pierce the shell and read from either side. What's left is the
 interesting part.
 
-![Cross-section of the shell: inside the sphere a walker under gravity 60 between plain walls with a long sightline; outside, an inverted walker under gravity 4.5 arcing over three hatched walls; a pink post pierces the shell and reads from both faces.](../assets/game-design/two-sided-shell.svg)
+![Cross-section of the shell: inside the sphere a walker under gravity 60 between plain walls with a long sightline; outside, an inverted walker under gravity 4.5 arcing over three hatched walls; a pink post pierces the shell and reads from both faces.](assets/two-sided-shell.svg)
 
 - **How you actually cross.** The poles are simply open today, chosen because
   they're the grid's own degenerate merged cells and need no new geometry —
@@ -294,9 +294,9 @@ see-far-not-near asymmetry instead of alongside it. One per biome, never stacked
 | **Compass** | always know the goal's bearing, never the walls | no |
 | **Drifting fog** | occlusion moves, so surveying is opportunistic | weakest — works in any maze |
 
-![Cross-section of a corridor where wall heights grow toward the goal; a sightline from far out clears the low walls and dies against the tall ones.](../assets/game-design/inverse-legibility.svg)
+![Cross-section of a corridor where wall heights grow toward the goal; a sightline from far out clears the low walls and dies against the tall ones.](assets/inverse-legibility.svg)
 
-![A sphere with a single lamp at its centre; walls on the near interior cast wedge-shaped shadows onto the far side.](../assets/game-design/centre-lit-shadows.svg)
+![A sphere with a single lamp at its centre; walls on the near interior cast wedge-shaped shadows onto the far side.](assets/centre-lit-shadows.svg)
 
 <details><summary>What the first built one (the wind biome) settled — read this before building another</summary>
 
@@ -332,7 +332,7 @@ partway through, so biomes already solved turn out to have had an obvious
 path invisible to the player's own eye the whole time.**
 
 Raised directly (2026-08-10), alongside the
-[Garden of Eden candidate](storylines/garden-of-eden.md)'s own
+[Garden of Eden candidate](../game/story.md)'s own
 "each stage a gameplay unlock" driver — colour vision reads there as an
 evolution stage aimed at *reading* rather than *moving*, the way `gun`
 is aimed at scouting and `spaceship` at speed. This entry is the
@@ -378,7 +378,7 @@ global desaturation pass into.
 the point you see *best*. So pair the maze: what you do to a wall here happens
 to its counterpart there, identically or inverted.**
 
-![A sphere with two cells at opposite ends of a line through the centre; a change at one appears at the other, or its opposite.](../assets/game-design/antipode-pairs.svg)
+![A sphere with two cells at opposite ends of a line through the centre; a change at one appears at the other, or its opposite.](assets/antipode-pairs.svg)
 
 - *Fits:* the geometry-corollary rule, hardest of any entry here. hooman: "I like
   the antipod pairs idea."
@@ -396,7 +396,7 @@ to its counterpart there, identically or inverted.**
   dangerous one — it can wall off a region, so a solvability check (or a rule
   that a pair may never close the last route to a cell) is part of the design.
 - **Carry** a wall: pick one up here and it can only be set down at an antipode
-  — Void Stranger's tile-rod verb ([inspirations](inspirations.md)) with the
+  — Void Stranger's tile-rod verb ([inspirations](../game/inspirations.md)) with the
   sphere supplying the constraint, since choosing what to move means reading the
   far side and then walking half a world with the shape held in memory.
 
@@ -414,7 +414,7 @@ south), since they're the grid's usual special case.
 far enough returns to where it started. Walking "straight" is a loop; the puzzle
 is working out which circle you're on.**
 
-![A sphere with three great circles at different inclinations, dots at their crossings, and a path that returns to its own start.](../assets/game-design/great-circle-corridors.svg)
+![A sphere with three great circles at different inclinations, dots at their crossings, and a path that returns to its own start.](assets/great-circle-corridors.svg)
 
 - *Fits:* up close every corridor looks identically straight, so only distance
   tells them apart — the asymmetry doing load-bearing work.
@@ -431,7 +431,7 @@ build from a small offered hand, under constraints, with incomplete information
 about what's beyond.**
 
 - *Fits:* choosing the layout becomes the gameplay rather than a menu — the Blue
-  Prince lesson ([inspirations](inspirations.md)). In the sphere it also
+  Prince lesson ([inspirations](../game/inspirations.md)). In the sphere it also
   satisfies the story-line's "actions visibly accumulate", by geometry instead of
   props: the half-built maze is visible from across it.
 - *Unproven:* whether the hand is drawn *at* the junction (immediate, tense) or
@@ -500,7 +500,7 @@ player reads about it.**
 - *Waiting for an identity:* recursive division makes rooms and halls rather than
   corridors — which is the mansion level above.
 - *Cost:* low. Wants playtesting per style, not a decision on paper. One further
-  lesson to steal when it happens (Dead Cells, [inspirations](inspirations.md)):
+  lesson to steal when it happens (Dead Cells, [inspirations](../game/inspirations.md)):
   authored skeleton, generated detail, rather than pure procedure everywhere.
 
 ### Geodesic sphere for Conway (hexagons + 12 pentagon beacons)
@@ -521,13 +521,13 @@ no hitbox, technically a cell alive on its own fixed clock rather than by
 neighbor count — with the rule itself modeled as swappable per-pentagon data,
 anticipating other mechanics later.
 
-- *Fits:* [inspirations.md](inspirations.md)'s own rule directly — *"a
+- *Fits:* [inspirations.md](../game/inspirations.md)'s own rule directly — *"a
   biome's mechanic should be a corollary of the sphere, not a decoration on
   it."* The 12 pentagons aren't a design choice dressed up after the fact;
   Euler's formula forces them on any sphere tiled this way, and the beacon
   rule is what happens when that forced structure is read as signal rather
   than defect.
-- *Was already asked once:* [PROJECT_LOG.md](../PROJECT_LOG.md) records the
+- *Was already asked once:* [the project log](../archive/project-log.md) records the
   lat/long-vs-cube-sphere/geodesic question being walked through and
   deliberately deferred before the maze was ever built — *"revisit if pole
   distortion... turns out to matter once the maze is actually walkable."*
@@ -538,7 +538,7 @@ anticipating other mechanics later.
   to one; whether the position→cell lookup's face-boundary tie-break is
   actually clean in practice, not just on paper.
 - *Cost:* high, but scoped — see [the engineering
-  note](notes/geodesic-sphere-engineering.md) for the construction method
+  note](../building/notes/geodesic-sphere-engineering.md) for the construction method
   (icosahedral subdivision → Goldberg dual, density tunable via one
   frequency parameter, 12 pentagons guaranteed and always mutually
   non-adjacent), the generate → score → bake pipeline (checked-in data
@@ -580,7 +580,7 @@ Also measured and rejected as a way out: opening the maze up. `B2/S23` only
 comes alive past ~5 open edges of 6, at which point there is barely a maze
 left; and `MazeBraider` at `fraction = 1` reaches only 2.19, nowhere near.
 
-- *Fits:* the same [inspirations.md](inspirations.md) rule the geodesic
+- *Fits:* the same [inspirations.md](../game/inspirations.md) rule the geodesic
   sphere is built on — a biome's mechanic should be a corollary of the
   sphere. Walls that genuinely constrain the life growing between them is a
   stronger version of that than walls the life merely pushes around.
@@ -601,7 +601,7 @@ left; and `MazeBraider` at `fraction = 1` reaches only 2.19, nowhere near.
 actually work on this sphere's 6-neighbour hex/pentagon grid —
 `biomes.conway.ConwaySeedLibrary`'s own patterns don't transfer, they're
 defined for the square grid's 8-neighbour rule.** Build-order Phase 8 from
-[the engineering note](notes/geodesic-sphere-engineering.md).
+[the engineering note](../building/notes/geodesic-sphere-engineering.md).
 
 **Search actually run, 2026-08-06** (`GeodesicGliderSearch`,
 `GeodesicGliderTrajectory`) — see `GeodesicGliderTracker`'s own doc for the
@@ -671,7 +671,7 @@ Raised explicitly (2026-08-06) so the difference between "spawn point"
 quietly conflated later.
 
 **Updated (2026-08-09):** the live rule changed from B2/S34 to Jeffrey
-Ventrella's own 4-state hex-CA (`docs/game-design/design-decisions-records.md`'s
+Ventrella's own 4-state hex-CA (`docs/archive/decisions.md`'s
 own entry has the full story), and the confirmed traveler changed with it
 — `xq14_0ig5l3z102` (B2/S34, ~8 periods before dissolving at a pentagon) is
 superseded by a Ventrella period-2 glider that traveled a chord distance of
@@ -714,7 +714,7 @@ carried over under a different rule (2026-08-09).** Turn the ambient soup
 off so a spawned structure's own propagation is the only thing happening
 and stays legible. Originally built for B2/S34 (`GeodesicGliderTracker`'s
 own scripted spawn points); after the live rule switched to Ventrella's
-4-state hex-CA (`docs/game-design/design-decisions-records.md`'s own
+4-state hex-CA (`docs/archive/decisions.md`'s own
 2026-08-09 entry), the exact same philosophy carried over onto the new
 engine — `GeodesicConwayBiome` still doesn't seed the board at all, and
 steps `GeodesicVentrellaState` with a `noRandomBirths` source so
@@ -748,7 +748,7 @@ Four variants raised together, not mutually exclusive:
    back to chaotic, ungoverned Life — genuinely alive again rather than a
    player-conducted instrument. Raised with its own caveat attached ("we'd
    have to see how that fits the narrative") — deliberately not resolved
-   here; needs a beat in [storylines/](storylines/README.md) to hang on, not
+   here; needs a beat in [storylines/](../game/README.md) to hang on, not
    invented to fit after the fact.
 4. **Two-sided revisit, Conway-specific.** Exterior cells keep the
    jump-over-wall mechanic; interior cells "just paint the floor" and only
@@ -764,7 +764,7 @@ Four variants raised together, not mutually exclusive:
    inherits that entry's two open questions (how crossing actually works,
    what makes a mark load-bearing) rather than answering them independently.
 
-- *Fits:* [inspirations.md](inspirations.md)'s own geometry-corollary rule
+- *Fits:* [inspirations.md](../game/inspirations.md)'s own geometry-corollary rule
   stays satisfied either way (the pentagons are still the forced topological
   feature the mechanic hangs on); variants 1-2 are the *strongest* fit yet
   for "interconnected, not a level select," since they make the sphere
@@ -793,7 +793,7 @@ Four variants raised together, not mutually exclusive:
 
 **Story reading added (2026-08-10, hooman).** The same activate →
 propagate → wall-opens loop this entry already scopes, reread as the
-[Garden of Eden candidate](storylines/garden-of-eden.md)'s
+[Garden of Eden candidate](../game/story.md)'s
 glider evolution stage made literal: the reward for solving the maze this
 way is framed as **new information plus a new gameplay mechanism** —
 i.e. whatever the taxonomy's next stage (spaceship/gun) unlocks, not a
@@ -850,7 +850,7 @@ storage, footprint, restamp clock) plus the wiring through
 new `biomes.common.Biome` interface methods (`cameraOverride`,
 `onEditClick`) every biome now implements. `Keybinds.INTERACT` moved
 from `F` to `E` for this (freed by retiring the debug export-maze tool
-— see `docs/PROJECT_LOG.md`'s own 2026-08-10 entries). Not yet
+— see `docs/archive/project-log.md`'s own 2026-08-10 entries). Not yet
 persisted across `serialize`/`restore` — an open gap, not a considered
 omission.
 
@@ -863,7 +863,7 @@ The specific form worth naming — **the rosetta maze**: a maze's walls can carr
 *message*, not just a route, because this game already makes things illegible up
 close and legible from afar.
 
-![Two spheres: a dark maze whose eleven blind turns are a string of lefts and rights, and an ordinary maze whose wall pattern draws that same string.](../assets/game-design/rosetta-maze.svg)
+![Two spheres: a dark maze whose eleven blind turns are a string of lefts and rights, and an ordinary maze whose wall pattern draws that same string.](assets/rosetta-maze.svg)
 
 - *Fits:* the knowledge *is* the key — no unlock, no item, no UI.
 - *Unproven:* whether a constrained layout can stay a solvable maze, and whether
@@ -990,7 +990,7 @@ smaller scale, each exit zooms you back up.
 ### Story and lore
 
 We need a main story to knead everything together — the live exploration is in
-[storylines/](storylines/README.md).
+[storylines/](../game/README.md).
 
 ### Cute characters
 
@@ -1003,4 +1003,4 @@ Cats, ghosts, ravens: something with a coherent theme, rather noir.
 ### Mobile controls
 
 Deliberately undesigned until there's a playable desktop version to adapt from —
-see [`../GUIDELINES.md`](../GUIDELINES.md) §1.8.
+see [`../rules/guidelines.md`](../rules/guidelines.md) §1.8.

@@ -12,7 +12,7 @@ package biomes.ribbon;
 
 	**Why elementary rather than the Ventrella rule the Fold uses.** The
 	Ribbon exists to say "this world is really a computation," and
-	`docs/game-design/direction/world-and-threads.md` names the strongest
+	`docs/game/world.md` names the strongest
 	available evidence for that: Rule 110 is Turing-complete (Cook, 2004).
 	A player who has spent hours in a cellular world should be able to walk
 	on a proof rather than be told about one. Elementary rules are also the

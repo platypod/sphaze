@@ -37,7 +37,7 @@ class Keybinds {
 		"Act here" — whatever the current biome does with it, if anything
 		(see `biomes.common.Biome.interact`). `E`, not `F` (2026-08-10) —
 		freed from the debug export-maze tool (`EXPORT_MAZE`, removed the
-		same day; see `docs/PROJECT_LOG.md`'s own entry) specifically so the
+		same day; see `docs/archive/project-log.md`'s own entry) specifically so the
 		pentagon-composing interaction could use the letter it was designed
 		around.
 	**/

@@ -2,7 +2,7 @@
 
 Engineering answer to a design question asked on 2026-07-29 ("do we need to
 change anything to anticipate walls that behave by a rule?"). Lives here rather
-than in [ideas-backlog.md](../ideas-backlog.md) because it's about the code, not
+than in [ideas-backlog.md](../../open/ideas-backlog.md) because it's about the code, not
 the design — the backlog entry links to it. Short version: **much less than
 expected, but not nothing.**
 

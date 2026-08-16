@@ -10,7 +10,7 @@ import entities.player.PlayerModel;
 
 /**
 	**The Turn** — a flat, genuinely non-orientable band. See
-	[the design](../../../docs/game-design/direction/world-and-threads.md)'s
+	[the design](../../../docs/game/world.md)'s
 	own entry (`### 4. The Turn`).
 
 	**Built against the design's own stated ordering.** That entry carries

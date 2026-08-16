@@ -23,7 +23,7 @@ class ConwayState {
 		computed, independent of neighbor count. Raw soup on a board this size
 		reliably dies back into a handful of frozen still lifes/oscillators
 		within a few dozen generations — see the "why raw Conway is a bad wall
-		generator" note in `docs/game-design/ideas-backlog.md`, the same decay
+		generator" note in `docs/open/ideas-backlog.md`, the same decay
 		this fixes, just felt on the visible board instead of the walls it
 		gates. A cosmic-ray-style mutation is the standard fix for a Life board
 		that's too small/bounded to sustain itself: it both plants rare fresh

@@ -61,7 +61,7 @@ central — but as **subject matter**, not as costumes. You study them,
 seed them, carry them, and read them. You are never one of them, and the
 distance between you and them is the point: it is the evidence that
 something happened to you, and working out *what* is the game (see Thread
-1 in [world-and-threads.md](world-and-threads.md)).
+1 in [world-and-threads.md](world.md)).
 
 **Movement is free and modern**: unrestricted from the first minute, no
 modal states, no committed directions, nothing to switch into. Plus **one
@@ -83,7 +83,7 @@ Why perception rather than power:
 - **It is retroactive by nature.** A new way of seeing re-reads
   everywhere you have already been. That is the single strongest fit with
   "interconnected, not a level select" available, and it was already filed
-  independently in [../ideas-backlog.md](../ideas-backlog.md) as
+  independently in [../ideas-backlog.md](../open/ideas-backlog.md) as
   "retroactive rediscovery via a gained sense" before this direction
   existed.
 - **It cannot make the game easier in a boring way.** More reach, more
@@ -156,7 +156,7 @@ Wilds proved and this game arrives at differently:
   → the algorithm is *demonstrated* by a raven's flight path, if you
   watch one long enough from the Fold's far side — concretely, ring
   boundaries crossed at a learnable rate; see
-  [world-and-threads.md](world-and-threads.md)'s own Sprawl entry for the
+  [world-and-threads.md](world.md)'s own Sprawl entry for the
   worked-out mechanism, including its bearing half.
 - A pattern in the Sprawl has no predecessor *and nothing was erased to
   balance it* → you can only recognise that as remarkable if you have
@@ -189,7 +189,7 @@ There are no enemies, and there should not be. The pressure comes from
 what cellular automata actually do, which this project has already
 measured and written down: random soup *"evaporates within a few dozen
 generations into scattered still lifes and blinkers"*
-([../ideas-backlog.md](../ideas-backlog.md), 2026-07-29).
+([../ideas-backlog.md](../open/ideas-backlog.md), 2026-07-29).
 
 That measured disappointment is the theme. **The world is dying by
 settling.** Not violently — it is running out of interesting states,
@@ -259,7 +259,7 @@ For honesty about what the direction costs, three existing things go:
   space (a circle's worth of stacked flat layers) — genuinely open.
 - **`BECOME`, and Thread 1 as a climb.** Cut after its Phase 0
   harness was played — see the note at the top of this file, and Thread 1
-  in [world-and-threads.md](world-and-threads.md) for what the spine
+  in [world-and-threads.md](world.md) for what the spine
   became instead.
 - **"Noir-leaning" as an art brief.** Replaced by something specific in
   [art-and-audio.md](art-and-audio.md).

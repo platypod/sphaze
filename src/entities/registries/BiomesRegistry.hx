@@ -5,7 +5,7 @@ import biomes.common.Biome;
 /**
 	Every biome that exists, keyed by `Biome.id()`, plus whether the player
 	has discovered it yet — closes the "discovered biomes" gap
-	`docs/PROJECT_LOG.md`'s 2026-07-17 entry already flagged. A single
+	`docs/archive/project-log.md`'s 2026-07-17 entry already flagged. A single
 	shared instance per biome id, not one per player/party: a world has
 	exactly one hub, one maze, etc., not a regenerated-per-visitor copy (see
 	the restructuring plan discussed with hooman).

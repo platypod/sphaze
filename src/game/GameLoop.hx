@@ -12,6 +12,7 @@ import biomes.mobius.MobiusBiome;
 import biomes.mobius.MobiusForestGenerator;
 import biomes.tower.TowerBiome;
 import biomes.tower.TowerGenerator;
+import biomes.sprawl.SprawlBiome;
 import biomes.twosided.TwoSidedBiome;
 import biomes.wind.WindBiome;
 import entities.hourglass.HourglassModel;
@@ -112,6 +113,11 @@ class GameLoop {
 		biomeRegistry.register(new WindBiome());
 		biomeRegistry.register(new ExteriorBiome());
 		biomeRegistry.register(new TwoSidedBiome());
+		// The first negatively-curved biome, and the first whose floor is
+		// not a surface in ordinary space at all — see SprawlBiome's own
+		// class doc for how it renders and why it needs its own camera
+		// every frame while walking normally.
+		biomeRegistry.register(new SprawlBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it

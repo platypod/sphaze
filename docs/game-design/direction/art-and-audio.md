@@ -225,6 +225,16 @@ object will be miserable here, and it is kinder to say so in the job post.
   the same mathematical reason. This should be genuinely oppressive and it
   should resolve to clarity the moment you look at what is close.
 
+  **A real instrument, not only atmosphere (2026-08-12)** — worked out
+  alongside [world-and-threads.md](world-and-threads.md)'s own Sprawl
+  navigation mechanism, which needs exactly this: a consistent audible
+  pulse or timbre shift exactly at ring boundaries (the same rings
+  `geometry.HyperbolicTiling`'s BFS already numbers), so a player counting
+  distance from a chosen origin can do it by ear while their eyes are
+  occupied with the illegible near field. This is the half of that
+  mechanism sound is responsible for; sight only ever covers the few cells
+  actually around the player here.
+
 ## Composer brief
 
 Deliverables are a **system**, not a soundtrack:

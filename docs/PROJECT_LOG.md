@@ -1836,3 +1836,37 @@ handling (wrap the parameter, apply a transform on crossing it) is a real
 precedent for the shape of that work, not a shortcut around doing it.
 Left both the original "cheap" claim and the correction visible, same
 discipline as every other pass today.
+
+## 2026-08-12 — The Sprawl: not the exterior of anything, and the algorithm made concrete
+
+Asked directly what geometric object the Sprawl actually is — a real
+question, since "exterior of a sphere" would be a category error:
+curvature is a property of the surface itself, not which side you stand
+on, and the sphere's exterior is already a different, already-built,
+still-amenable biome (`SphereExteriorSpace`). Clarified with the
+heptagon-vs-hexagon-vs-pentagon material-count intuition (7 × ~64° ≈ 449°
+per vertex, too much to lie flat, so the surface ruffles outward forever
+instead of closing) and the standard hyperbolic-crochet/coral/lettuce-leaf
+image. Also noted honestly: a regular `{7,3}` tiling has no forced
+defects, unlike the Fold's twelve pentagons — no natural landmark to
+anchor on, which is exactly why navigation has to be algorithmic.
+
+`systems.md`'s own knowledge-web entry has said since the first pass that
+"the algorithm is demonstrated by a raven's flight path" without ever
+saying what it demonstrates. Made concrete: the problem genuinely has two
+components. **Radius** by ring-counting — real, tested code
+(`geometry.HyperbolicTiling`'s BFS, φ² growth measured in the findings
+note), not a proposal; watching a raven long enough teaches the same
+skill that works in the Sprawl, since it's the same graph-BFS fact either
+place. **Bearing** — the part that actually needs a trick — reuses the
+Sprawl's own audio direction, already written in `art-and-audio.md`, by
+turning its "density rises with distance" atmosphere into an instrument:
+a consistent pulse at ring boundaries, carried by ear while sight is
+occupied with the illegible near field. Cross-linked in both directions
+between the world doc and the audio doc rather than duplicated.
+
+The "treasure map" idea, kept diegetic rather than a UI: reuses the
+Repeat's own evidence-assembly mechanic outright — a predecessor's
+solution, left as fragments, each legible only once the player has
+already proven they can read one. Deliberately not a new system; the same
+skill built two spaces ago, paying off again.

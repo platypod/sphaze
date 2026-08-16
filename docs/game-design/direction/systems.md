@@ -128,7 +128,10 @@ Wilds proved and this game arrives at differently:
   nearest is in the Repeat → which needs no body at all, just the walk.
 - The Sprawl's centre cannot be found by looking → you need the algorithm
   → the algorithm is *demonstrated* by a raven's flight path, if you
-  watch one long enough from the Fold's far side.
+  watch one long enough from the Fold's far side — concretely, ring
+  boundaries crossed at a learnable rate; see
+  [world-and-threads.md](world-and-threads.md)'s own Sprawl entry for the
+  worked-out mechanism, including its bearing half.
 - A pattern in the Sprawl has no predecessor *and nothing was erased to
   balance it* → you can only recognise that as remarkable if you have
   already learned to run the rule *backwards* and to audit what it

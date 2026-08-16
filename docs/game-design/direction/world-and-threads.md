@@ -422,10 +422,33 @@ around each vertex. Margenstern's own environment for hyperbolic cellular
 automata, so the simulation side rests on developed literature rather than
 improvisation.
 
+**Not the exterior of anything, clarified 2026-08-12** — asked directly,
+worth being precise about. Curvature is a property of a surface itself,
+not which side you stand on; the outside of a sphere is still positively
+curved, still amenable, already a different built biome
+(`SphereExteriorSpace`) with nothing to do with this space. The real
+intuition: a hexagon has six neighbours around a shared vertex, exactly
+enough to lie flat (6 × 60° = 360°). A pentagon has five (300°) — a gap,
+and closing it curls the surface inward, which is why the Fold needs
+exactly twelve pentagon defects to close into a sphere at all (Euler's
+formula, the same fact the Defect teaches). A **heptagon has seven**
+(≈449°) — too much material to lie flat, with no way to close the excess
+by curling inward, so the surface ruffles outward instead, everywhere,
+forever. Not a sphere turned inside out: the geometry of a lettuce leaf, a
+coral reef, a hyperbolic crochet piece — every patch saddle-shaped,
+curving away from you in every direction at once, never converging back
+the way a sphere does and never flattening the way a plane does. A
+regular `{7,3}` tiling also has **no forced defects**, unlike the Fold's
+twelve pentagons — every cell has exactly seven neighbours, uniformly,
+everywhere, which is exactly why there's no landmark to anchor on and
+navigation has to be an algorithm rather than a place to look for.
+
 **Teaches:** **exponential growth, and non-amenability.** The number of
-cells within *n* steps grows exponentially. There is no useful notion of
-"the area around here". Every region's boundary is proportional to its
-own interior — **there are no Følner sets, so everywhere is edge.**
+cells within *n* steps grows exponentially — measured, not asserted, in
+[../notes/hyperbolic-simulation-findings.md](../notes/hyperbolic-simulation-findings.md):
+ring populations grow by a factor of φ² each step. There is no useful
+notion of "the area around here". Every region's boundary is proportional
+to its own interior — **there are no Følner sets, so everywhere is edge.**
 
 **Legibility law:** **the Fold's law, inverted.** *See near, not far.*
 Space crowds in: exponentially many things compete for the horizon, so
@@ -441,6 +464,37 @@ Camelot problem is the model: you cannot find the centre of a large circle
 by Euclidean intuition, you have to *derive a procedure* and execute it.
 Getting lost is not a failure state here, it is the ambient condition.
 
+**The algorithm, worked out 2026-08-12.** Finding a location genuinely
+needs two components, not one — the real structure of the problem, not a
+hand-wave:
+
+- **Radius, by ring-counting.** `geometry.HyperbolicTiling`'s own BFS
+  already assigns every cell a ring number from a chosen origin, growing
+  by φ² a step — real, tested code, not a proposal. A traveller moving
+  steadily outward crosses ring boundaries at a learnable, predictable
+  rate. This is what [systems.md](systems.md)'s own knowledge-web entry
+  meant by "the algorithm is demonstrated by a raven's flight path" —
+  made concrete for the first time here: watching one long enough from
+  the Fold's far side teaches the player to count rings by eye. Same
+  skill, unchanged, works here, because it's the same graph-BFS fact
+  either place.
+- **Bearing, the part that actually needs a trick.** Ring number alone
+  narrows an exponential search, it doesn't finish it. Rather than invent
+  a separate system, this reuses the audio direction already written
+  ([art-and-audio.md](art-and-audio.md)'s own "The Sprawl" entry): a
+  consistent audible pulse or timbre shift exactly at ring boundaries,
+  turning what was atmosphere into an instrument — sound carries the
+  radius while the player's eyes are busy with the illegible few cells
+  actually around them.
+
+**The treasure map, diegetically.** Someone else solved this navigation
+problem first — Thread 2 material — and left the solution the way the
+Repeat's predecessor left their mark: not one object to find, but
+fragments, each legible only once the player has already proven they can
+read a piece of it. Reuses the Repeat's own evidence-assembly mechanic
+outright rather than inventing a second one — the same skill the player
+built two spaces ago, paying off again at higher stakes.
+
 **Story function:** **the first non-amenable space — where the theorem
 fails.** Everything the game has taught about cause and effect stops being
 guaranteed. Patterns appear that cannot have come from anywhere. The
@@ -450,8 +504,12 @@ entire payoff of the preceding hours.
 And: you cannot yet become one. You've seen the door. You're the wrong
 shape.
 
-**Exists:** the CA layer ports unchanged (a graph is a graph); the spatial
-layer does not and cannot — see [architecture.md](architecture.md).
+**Exists:** the CA layer ports unchanged (a graph is a graph); the
+spatial/rendering layer does not and cannot — see
+[architecture.md](architecture.md). `geometry.HyperbolicTiling` (built
+and tested — ring populations, φ² growth) is the real foundation the
+ring-counting mechanism above stands on. The ring-boundary audio cue and
+the predecessor-fragment system are both new, unbuilt.
 
 ---
 

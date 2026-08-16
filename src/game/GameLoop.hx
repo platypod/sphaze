@@ -3,6 +3,7 @@ package game;
 import biomes.common.Biome;
 import biomes.common.grid.GridModel;
 import biomes.debug.DebugHubBiome;
+import biomes.defect.DefectBiome;
 import biomes.exterior.ExteriorBiome;
 import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
@@ -137,6 +138,10 @@ class GameLoop {
 		// wall answers to its antipode, in the opposite state. Nothing is
 		// glued — see WeftModel's own class doc.
 		biomeRegistry.register(new WeftBiome());
+		// Flat everywhere except one point — concentrated curvature, and
+		// neither a uniform-curvature space nor a DeckGroup quotient; see
+		// DefectModel's own class doc for why it needed its own primitive.
+		biomeRegistry.register(new DefectBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it

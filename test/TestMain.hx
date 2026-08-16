@@ -8,6 +8,7 @@ import biomes.common.grid.GridMeshTest;
 import biomes.common.grid.GridModelTest;
 import biomes.common.space.flat.FlatSpaceTest;
 import biomes.common.space.hyperbolic.HyperbolicSpaceTest;
+import biomes.defect.DefectModelTest;
 import biomes.repeat.RepeatCollisionTest;
 import biomes.repeat.RepeatModelTest;
 import biomes.turn.TurnCollisionTest;
@@ -84,6 +85,7 @@ class TestMain {
 		runner.addCase(new HyperbolicWalkerTest());
 		runner.addCase(new HyperbolicSpaceTest());
 		runner.addCase(new HyperbolicViewTest());
+		runner.addCase(new DefectModelTest());
 		runner.addCase(new RepeatModelTest());
 		runner.addCase(new RepeatCollisionTest());
 		runner.addCase(new TurnCollisionTest());

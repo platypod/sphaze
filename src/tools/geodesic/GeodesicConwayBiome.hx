@@ -131,9 +131,10 @@ import tools.geodesic.Vec3.Vec3Math;
 	"Deliberate pentagon activation" entry for the design conversation
 	behind it. `interact` toggles `editingPentagon` on/off (entering only
 	from a pentagon node itself, per `fineLookup.nodeAt`); `cameraOverride`
-	dollies the camera in toward it while editing, which is also what
-	`GameLoop` reads to suspend normal movement/turning and switch the
-	mouse out of pointer-lock for clicking; `onEditClick` resolves a click's
+	dollies the camera in toward it while editing, and `capturesInput`
+	reports the engraving being open, which is what `GameLoop` reads to
+	suspend normal movement/turning and switch the mouse out of
+	pointer-lock for clicking; `onEditClick` resolves a click's
 	own ray against the sphere analytically (`raySphereIntersection`)
 	and toggles whichever footprint cell it lands on. `engraving.tickAll`
 	runs every `tick` unconditionally — a composed pentagon keeps
@@ -378,6 +379,15 @@ class GeodesicConwayBiome implements Biome {
 		var inward = center.normalized().scaled(-1);
 		var eyePos = center.add(inward.scaled(ENGRAVING_VIEW_HEIGHT));
 		return {pos: eyePos, target: center, up: engravingViewUp};
+	}
+
+	/**
+		Takes the input exactly while a pentagon engraving is open — see
+		`biomes.common.Biome.capturesInput`'s own doc, including why this is a
+		separate question from `cameraOverride` rather than the same one.
+	**/
+	public function capturesInput():Bool {
+		return editingPentagon != null;
 	}
 
 	/**

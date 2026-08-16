@@ -128,6 +128,79 @@ class HyperbolicSpaceTest extends Test {
 		Assert.floatEquals(0, up.z, EPSILON);
 	}
 
+	/** Turning leaves `forward` a unit tangent — the same invariant walking has to preserve, and just as load-bearing. **/
+	function testTurningKeepsForwardAUnitTangent():Void {
+		var space = new HyperbolicSpace(RADIUS);
+		var pos = space.moveAlong(origin(), eastward(), eastward(), 17.0, RADIUS).pos;
+		var forward = space.moveAlong(origin(), eastward(), eastward(), 17.0, RADIUS).forward;
+
+		for (i in 0...12) {
+			forward = space.turn(pos, forward, space.upAt(pos), 0.53);
+
+			var unit = pos.scaled(1 / RADIUS);
+			Assert.floatEquals(1, HyperbolicSpace.inner(forward, forward), 1e-6, 'forward stopped being unit after turn $i');
+			Assert.floatEquals(0, HyperbolicSpace.inner(unit, forward), 1e-6, 'forward stopped being tangent after turn $i');
+		}
+	}
+
+	/**
+		**Turning agrees with `geometry.HyperbolicWalker`.** Sign conventions
+		for turning cannot be checked by reasoning — the mirrored-controls
+		bug in the Phase 0 harness was exactly a sign nobody could check —
+		so this pins `turn` against the implementation that the *played and
+		validated* room actually turns with.
+	**/
+	function testTurningAgreesWithTheWalker():Void {
+		var space = new HyperbolicSpace(1.0);
+		var pos = new h3d.Vector(0, 0, 1);
+		var forward = eastward();
+		var walker = new geometry.HyperbolicWalker();
+
+		for (step in 0...5) {
+			forward = space.turn(pos, forward, space.upAt(pos), 0.4);
+			var moved = space.moveAlong(pos, forward, forward, 0.6, 1.0);
+			pos = moved.pos;
+			forward = moved.forward;
+
+			walker.turn(0.4);
+			walker.moveForward(0.6);
+
+			var view = HyperbolicView.viewOf(pos, forward, 1.0);
+			for (i in 0...9) {
+				Assert.floatEquals(walker.view.m[i], view.m[i], 1e-7, 'turn disagrees with the walker at step $step (entry $i)');
+			}
+		}
+	}
+
+	/**
+		**Strafing agrees with `geometry.HyperbolicWalker.strafe`**, through
+		the same negation `game.GameLoop` applies to `rightOf` at the strafe
+		site for every other space. This is the test that fixes `rightOf`'s
+		sign; without it the Sprawl would strafe the wrong way and look
+		entirely plausible doing it.
+	**/
+	function testStrafingRightAgreesWithTheWalker():Void {
+		var space = new HyperbolicSpace(1.0);
+		var pos = new h3d.Vector(0, 0, 1);
+		var forward = eastward();
+		var walker = new geometry.HyperbolicWalker();
+
+		for (step in 0...4) {
+			// GameLoop negates rightOf for screen-right — see Space.rightOf's own doc
+			var screenRight = space.rightOf(pos, forward, space.upAt(pos)).scaled(-1);
+			var moved = space.moveAlong(pos, forward, screenRight, 0.5, 1.0);
+			pos = moved.pos;
+			forward = moved.forward;
+
+			walker.strafe(0.5);
+
+			var view = HyperbolicView.viewOf(pos, forward, 1.0);
+			for (i in 0...9) {
+				Assert.floatEquals(walker.view.m[i], view.m[i], 1e-7, 'strafe disagrees with the walker at step $step (entry $i)');
+			}
+		}
+	}
+
 	/** Rotates a tangent within the tangent plane at `pos`, for building test paths that turn. **/
 	function turnInPlace(pos:h3d.Vector, forward:h3d.Vector, angle:Float):h3d.Vector {
 		var unit = pos.scaled(1 / RADIUS);

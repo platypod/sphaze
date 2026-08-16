@@ -1,6 +1,7 @@
 package biomes.common.space.sphere;
 
 import biomes.common.space.common.Space;
+import biomes.common.space.common.AmbientFrame;
 
 /**
 	The only `Space` implementation today: a sphere centered at the world
@@ -34,5 +35,15 @@ class SphereSpace implements Space {
 		var newForward = SphereMath.rotateAroundAxis(forward, axis, angle);
 		var newPos = SphereMath.rotateAroundAxis(posDir, axis, angle).scaled(radius);
 		return {pos: newPos, forward: newForward};
+	}
+
+	/** See `Space.turn` — ambient ℝ³ rotation about the local "up", shared with every other ambient space (`common.AmbientFrame`). **/
+	public function turn(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector, angle:Float):h3d.Vector {
+		return AmbientFrame.turn(forward, up, angle);
+	}
+
+	/** See `Space.rightOf` — including why its screen sense is inverted. Shared with every other ambient space (`common.AmbientFrame`). **/
+	public function rightOf(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector):h3d.Vector {
+		return AmbientFrame.rightOf(forward, up);
 	}
 }

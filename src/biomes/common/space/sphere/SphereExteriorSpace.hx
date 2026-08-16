@@ -1,6 +1,7 @@
 package biomes.common.space.sphere;
 
 import biomes.common.space.common.Space;
+import biomes.common.space.common.AmbientFrame;
 
 /**
 	The sphere walked on from the *outside*: identical to `SphereSpace` in
@@ -36,5 +37,15 @@ class SphereExteriorSpace implements Space {
 	/** See `Space.moveAlong` — delegated to `SphereSpace`: which side of the shell you're on doesn't change what an arc is. **/
 	public function moveAlong(pos:h3d.Vector, forward:h3d.Vector, direction:h3d.Vector, distance:Float, radius:Float):{pos:h3d.Vector, forward:h3d.Vector} {
 		return SphereSpace.INSTANCE.moveAlong(pos, forward, direction, distance, radius);
+	}
+
+	/** See `Space.turn` — ambient ℝ³ rotation about the local "up", shared with every other ambient space (`common.AmbientFrame`). **/
+	public function turn(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector, angle:Float):h3d.Vector {
+		return AmbientFrame.turn(forward, up, angle);
+	}
+
+	/** See `Space.rightOf` — including why its screen sense is inverted. Shared with every other ambient space (`common.AmbientFrame`). **/
+	public function rightOf(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector):h3d.Vector {
+		return AmbientFrame.rightOf(forward, up);
 	}
 }

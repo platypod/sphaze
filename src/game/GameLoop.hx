@@ -282,14 +282,13 @@ class GameLoop {
 		currentBiome.tick(player, dt);
 		var scaledDt = dt * biomeRegistry.globalTimeScale();
 
-		// Non-null exactly while the current biome is showing something
-		// other than the ordinary FPS view (today: GeodesicConwayBiome's
-		// zoomed-in pentagon engraving) — see Biome.cameraOverride's own
-		// doc. Read once per frame, both for the camera itself (below) and
-		// as the "is input capture in effect right now" signal that gates
-		// normal movement/turning and the mouse mode switch.
+		// Two separate questions, and they used to be one: where the camera
+		// goes (cameraView, applied below) and who owns the input (editing).
+		// GeodesicConwayBiome's engraving wants both at once, which hid the
+		// conflation; SprawlBiome wants a camera placement on every frame
+		// while walking normally, which exposed it. See Biome.capturesInput.
 		var cameraView = currentBiome.cameraOverride(player);
-		var editing = cameraView != null;
+		var editing = currentBiome.capturesInput();
 		if (editing != editingEngraving) {
 			// editingEngraving updates BEFORE window.mouseMode is touched, not
 			// after — set_mouseMode calls onMouseModeChange

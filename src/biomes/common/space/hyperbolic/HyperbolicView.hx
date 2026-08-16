@@ -88,8 +88,20 @@ class HyperbolicView {
 	}
 
 	/**
-		The tangent to the player's left: the third leg of the frame, fixed
-		by requiring the frame to be the identity at the origin facing `+x`.
+		The frame's second basis vector — the `+y` leg, fixed by requiring
+		the frame to be the identity at the origin facing `+x`.
+
+		**This is the player's *screen* right**, which is worth stating
+		because the pure-geometry reading says the opposite: in the
+		hyperbolic plane drawn conventionally (`+x` right, `+y` up the
+		page, seen from above) turning toward `+y` is turning *left*. What
+		inverts it is `geometry.HyperbolicProjection.toWorld`, which negates
+		Z for Heaps' left-handed camera — so a player facing `+x` and
+		rotating toward `+y` visibly turns right on screen. That agrees with
+		`geometry.HyperbolicWalker.strafe`, whose own doc commits to
+		"positive is to the right" for the same composition, and it is why
+		`HyperbolicSpace.rightOf` returns the *negative* of this (see that
+		method for the convention it has to match).
 
 		Written as a Minkowski cross product (an ordinary cross with the
 		last component negated) rather than by Gram-Schmidt, because the
@@ -100,7 +112,7 @@ class HyperbolicView {
 		@param f unit tangent at `unitPos`.
 		@return the unit tangent completing the frame.
 	**/
-	static function sideOf(unitPos:h3d.Vector, f:h3d.Vector):h3d.Vector {
+	public static function sideOf(unitPos:h3d.Vector, f:h3d.Vector):h3d.Vector {
 		return new h3d.Vector(unitPos.y * f.z - unitPos.z * f.y, unitPos.z * f.x - unitPos.x * f.z, -(unitPos.x * f.y - unitPos.y * f.x));
 	}
 

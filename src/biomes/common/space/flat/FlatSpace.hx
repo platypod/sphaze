@@ -1,6 +1,7 @@
 package biomes.common.space.flat;
 
 import biomes.common.space.common.Space;
+import biomes.common.space.common.AmbientFrame;
 
 /**
 	The first non-spherical `Space`: an ordinary flat Cartesian topology,
@@ -38,5 +39,15 @@ class FlatSpace implements Space {
 	**/
 	public function moveAlong(pos:h3d.Vector, forward:h3d.Vector, direction:h3d.Vector, distance:Float, radius:Float):{pos:h3d.Vector, forward:h3d.Vector} {
 		return {pos: pos.add(direction.scaled(distance)), forward: forward};
+	}
+
+	/** See `Space.turn` — ambient ℝ³ rotation about the local "up", shared with every other ambient space (`common.AmbientFrame`). **/
+	public function turn(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector, angle:Float):h3d.Vector {
+		return AmbientFrame.turn(forward, up, angle);
+	}
+
+	/** See `Space.rightOf` — including why its screen sense is inverted. Shared with every other ambient space (`common.AmbientFrame`). **/
+	public function rightOf(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector):h3d.Vector {
+		return AmbientFrame.rightOf(forward, up);
 	}
 }

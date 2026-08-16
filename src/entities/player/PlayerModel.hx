@@ -176,7 +176,7 @@ class PlayerModel extends Entity {
 		@return unit tangent at `pos`, perpendicular to `forward`, pointing right.
 	**/
 	public function rightVector():h3d.Vector {
-		return forward.cross(surfaceUp).normalized();
+		return space.rightOf(pos, forward, surfaceUp);
 	}
 
 	/**
@@ -224,12 +224,19 @@ class PlayerModel extends Entity {
 	}
 
 	/**
-		Rotates `forward` by `deltaAngle` radians around the local "up" axis
-		(toward the sphere's center).
-		@param deltaAngle angle to turn by, in radians.
+		Rotates `forward` by `deltaAngle` radians in place; positive turns
+		right.
+
+		Delegated through `space` rather than done here, for the same reason
+		`moveForward` already is — see `biomes.common.space.common.Space.turn`.
+		This used to be `rotateAroundAxis(forward, surfaceUp, deltaAngle)`
+		inline, which is exactly what every ambient-ℝ³ space still does
+		(`biomes.common.space.common.AmbientFrame`), so the four spaces that
+		existed when this moved are unchanged by the move.
+		@param deltaAngle angle to turn by, in radians; positive turns right.
 	**/
 	public function turn(deltaAngle:Float):Void {
-		forward = SphereMath.rotateAroundAxis(forward, surfaceUp, deltaAngle);
+		forward = space.turn(pos, forward, surfaceUp, deltaAngle);
 	}
 
 	/**

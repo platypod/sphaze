@@ -117,12 +117,15 @@ interface Biome {
 		An override for where the camera sits and looks this frame, in place
 		of the normal first-person placement `entities.player.Camera.applyTo`
 		would otherwise compute from the player alone. Non-null exactly while
-		this biome is showing something other than the ordinary FPS view —
-		today, only `tools.geodesic.GeodesicConwayBiome`'s zoomed-in pentagon
-		engraving. `GameLoop` also reads non-null here as "this biome is
-		capturing input right now": normal movement/turning is suspended and
-		the mouse switches out of pointer-lock, for as long as this keeps
-		returning non-null (see `GameLoop.fixedUpdate`'s own doc).
+		this biome is showing something other than the ordinary FPS view.
+
+		**This says nothing about input** — see `capturesInput`, which used
+		to be the same signal and is now separate. Returning a placement
+		here while still walking normally is a legitimate and expected
+		combination: `biomes.sprawl.SprawlBiome` does exactly that, because
+		hyperbolic rendering pins the camera at the origin and moves the
+		world around it, so it needs its own placement on *every* frame
+		while movement carries on as usual.
 
 		Part of the contract rather than a downcast in `GameLoop`, for the
 		same reason `interact` is (see this interface's own class doc). A
@@ -132,6 +135,23 @@ interface Biome {
 		@return a camera placement to use instead of the normal one, or null to use the normal one.
 	**/
 	function cameraOverride(player:PlayerModel):Null<CameraOverride>;
+
+	/**
+		Whether this biome is taking the input this frame: normal
+		movement/turning is suspended, the mouse leaves pointer-lock so
+		there's a real cursor, and clicks arrive at `onEditClick` instead
+		(see `GameLoop.fixedUpdate`). True today only while
+		`tools.geodesic.GeodesicConwayBiome` has a pentagon engraving open.
+
+		**Split out of `cameraOverride` returning non-null**, which carried
+		both meanings until `biomes.sprawl.SprawlBiome` needed one without
+		the other. That conflation was invisible while the engraving was the
+		only user — it wants both — and became wrong the moment a biome
+		needed a camera placement of its own *while walking*. Two questions,
+		asked separately.
+		@return true while this biome owns the input.
+	**/
+	function capturesInput():Bool;
 
 	/**
 		The player clicked while `cameraOverride` was non-null — `GameLoop`

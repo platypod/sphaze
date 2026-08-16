@@ -105,6 +105,11 @@ private class StubBiome implements Biome {
 		return null;
 	}
 
+	/** Never captures input — see `biomes.common.Biome.capturesInput`'s own doc. **/
+	public function capturesInput():Bool {
+		return false;
+	}
+
 	public function onEditClick(ray:h3d.col.Ray):Void {}
 
 	public function backgroundColor():Int {

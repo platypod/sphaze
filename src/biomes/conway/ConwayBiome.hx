@@ -129,6 +129,11 @@ class ConwayBiome implements Biome {
 		return null;
 	}
 
+	/** Never captures input — see `biomes.common.Biome.capturesInput`'s own doc. **/
+	public function capturesInput():Bool {
+		return false;
+	}
+
 	/** Nothing to click on here — see `biomes.common.Biome.onEditClick`'s own doc. **/
 	public function onEditClick(ray:h3d.col.Ray):Void {}
 

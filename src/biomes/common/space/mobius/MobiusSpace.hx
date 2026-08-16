@@ -1,6 +1,7 @@
 package biomes.common.space.mobius;
 
 import biomes.common.space.common.Space;
+import biomes.common.space.common.AmbientFrame;
 
 /**
 	A Möbius ribbon's own `Space`: a twisted band closed into a loop (see
@@ -112,5 +113,15 @@ class MobiusSpace implements Space {
 		var newForward = newFrame.tu.scaled(forwardU).add(newFrame.tv.scaled(forwardV)).add(newFrame.normal.scaled(forwardN));
 		var newPos = MobiusMath.pointAt(newU, newV, twists, this.radius);
 		return {pos: newPos, forward: newForward};
+	}
+
+	/** See `Space.turn` — ambient ℝ³ rotation about the local "up", shared with every other ambient space (`common.AmbientFrame`). **/
+	public function turn(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector, angle:Float):h3d.Vector {
+		return AmbientFrame.turn(forward, up, angle);
+	}
+
+	/** See `Space.rightOf` — including why its screen sense is inverted. Shared with every other ambient space (`common.AmbientFrame`). **/
+	public function rightOf(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector):h3d.Vector {
+		return AmbientFrame.rightOf(forward, up);
 	}
 }

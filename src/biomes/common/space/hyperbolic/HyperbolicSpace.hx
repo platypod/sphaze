@@ -129,6 +129,54 @@ class HyperbolicSpace implements Space {
 		return radius * Math.log(safe + Math.sqrt(safe * safe - 1));
 	}
 
+	/**
+		See `Space.turn`. **The reason `turn` is on the interface at all**:
+		the ambient version rotates `forward` about the local "up" axis,
+		which is correct wherever the model coordinates are ambient ℝ³ and
+		is meaningless here, since `upAt` returns render-space up and has
+		nothing to do with these coordinates.
+
+		A rotation in this space is a rotation *within the Minkowski tangent
+		plane at `pos`* — the ordinary 2D rotation, taken in the basis
+		`(forward, side)` that `HyperbolicView` already fixes. Positive
+		turns right, matching every other space, because
+		`HyperbolicView.sideOf` is screen-right once the projection's
+		handedness flip is applied (see its own doc).
+		@param pos the position being turned at, on the hyperboloid, scaled by this instance's `radius`.
+		@param forward the current unit tangent.
+		@param up ignored — see above.
+		@param angle rotation in radians; positive turns right.
+		@return the rotated unit tangent.
+	**/
+	public function turn(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector, angle:Float):h3d.Vector {
+		var unitPos = pos.scaled(1 / radius);
+		var f = normalizeTangent(forward);
+		var side = HyperbolicView.sideOf(unitPos, f);
+		return f.scaled(Math.cos(angle)).add(side.scaled(Math.sin(angle)));
+	}
+
+	/**
+		See `Space.rightOf`, and in particular its note that the convention
+		is **inverted relative to the screen** and deliberately kept that
+		way. There is no ambient cross product to take here, so this returns
+		the negative of `HyperbolicView.sideOf` — which is screen-right — so
+		that `game.GameLoop`'s single existing negation at the strafe site
+		lands on screen-right in this space too, with no change there.
+
+		Pinned by `HyperbolicSpaceTest`'s own agreement test against
+		`geometry.HyperbolicWalker.strafe` rather than left to this
+		reasoning, because a sign argued in prose is a sign nobody can
+		check.
+		@param pos the position to find "right" at, scaled by this instance's `radius`.
+		@param forward the current unit tangent.
+		@param up ignored — see `turn`.
+		@return the unit tangent perpendicular to `forward`, in the inverted convention `Space.rightOf` documents.
+	**/
+	public function rightOf(pos:h3d.Vector, forward:h3d.Vector, up:h3d.Vector):h3d.Vector {
+		var unitPos = pos.scaled(1 / radius);
+		return HyperbolicView.sideOf(unitPos, normalizeTangent(forward)).scaled(-1);
+	}
+
 	/** Pulls a unit-scale point back onto `⟨p,p⟩ = -1`, undoing the drift that accumulates over many boosts — whose entries grow exponentially with distance, so this matters more here than the sphere's own normalisation ever did. **/
 	static function onSheet(p:h3d.Vector):h3d.Vector {
 		return new h3d.Vector(p.x, p.y, Math.sqrt(1 + p.x * p.x + p.y * p.y));

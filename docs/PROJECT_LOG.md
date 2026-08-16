@@ -2190,3 +2190,69 @@ hyperbolic collision and mesh building are new code (they cannot reuse
 ℝ³ distance), and gravity written against `upAt` needs to know it is
 getting render-space up. That is a real but ordinary body of work — not
 a rewrite of the spatial core.
+
+## 2026-08-16 — The Sprawl becomes a real biome
+
+The hyperbolic plane is walkable in the game rather than in a standalone
+harness (`biomes.sprawl.SprawlBiome`), and shows up in the debug hub's
+portal ring on its own, since that ring is derived from the registry.
+
+Three pieces, in the order they had to happen.
+
+**`HyperbolicView`** bridges the two representations of hyperbolic
+position the project ended up with: `geometry.Isometry` stores a frame
+as a matrix, `PlayerModel` stores a `pos`/`forward` pair. One place
+converts, so nobody re-derives it per rendering site. The inverse is the
+Minkowski adjoint (`J·Mᵀ·J`) rather than general 3×3 inversion — exact,
+no division, and no conditioning problem on a boost whose entries grow
+exponentially with distance.
+
+**Two seams, both corrections to the previous entry's claims.** The
+claim that hyperbolic space needed no interface change held for
+everything `Space` covered — and turning was not one of those things.
+`PlayerModel.turn` was an inline `rotateAroundAxis(forward, surfaceUp,
+angle)`: correct wherever model coordinates *are* ambient ℝ³, and
+meaningless in hyperboloid coordinates, where `upAt` returns
+render-space up. Same for `rightVector`, used to strafe. Both moved into
+`Space`; the four ambient spaces share one implementation
+(`AmbientFrame`) holding the exact expressions moved out, so they are
+unchanged by construction.
+
+Separately, `Biome.cameraOverride` returning non-null meant two things —
+where the camera goes, and who owns the input. The pentagon engraving
+wants both, which hid the conflation. Hyperbolic rendering wants a
+camera placement on *every* frame while walking, which exposed it.
+`Biome.capturesInput` is now its own question.
+
+**Signs are pinned by agreement, not by argument.** Turning and strafing
+are walked in both representations and the view matrices compared
+against `geometry.HyperbolicWalker`, which is what the played-and-
+validated Phase 0 room turns with. A wrong sign here does not crash — it
+mirrors a plausible world, and the harness shipped exactly that bug once
+with every test of the day passing through it. The `HyperbolicView`
+tests were also mutation-checked rather than assumed: flipping the
+frame's third leg fails four of six.
+
+**What the biome reuses that is wrong for it, and why it is not.**
+`PaintingModel.triggeredBy` measures ambient Euclidean distance, which
+is meaningless between two hyperboloid coordinates — but exactly right
+against a painting at the model origin, since rotational symmetry about
+the hyperboloid's axis makes Euclidean distance *to the origin* strictly
+increasing in hyperbolic distance to it. Checked in `SprawlBiomeTest`
+across eight directions and four distances rather than left as prose.
+
+Collision uses `space.distance`; ℝ³ distance between these coordinates
+grows like `cosh` of the real one. It blocks rather than slides, left
+until there are walls worth sliding along.
+
+Verified by screenshot at two spawn distances — home is a distant sliver
+at 2.2 intrinsic units and fills the foreground at 0.55 — which confirms
+the per-frame view isometry is actually applied rather than the world
+being drawn from a fixed origin. **Walking it is still unverifiable here
+and remains the real test.**
+
+Also logged: `Space.rightOf` is named for the opposite of the side it
+returns (Heaps' camera is left-handed; `GameLoop` negates at the strafe
+site). Pre-existing, now spread across one more implementation, and in
+`docs/bug-tracker.md` rather than fixed here — correcting it also flips
+`Camera.applyTo`'s pitch axis in every existing biome.

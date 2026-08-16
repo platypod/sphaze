@@ -505,12 +505,19 @@ entire payoff of the preceding hours.
 And: you cannot yet become one. You've seen the door. You're the wrong
 shape.
 
-**Exists:** the CA layer ports unchanged (a graph is a graph); the
-spatial/rendering layer does not and cannot — see
-[architecture.md](architecture.md). `geometry.HyperbolicTiling` (built
-and tested — ring populations, φ² growth) is the real foundation the
-ring-counting mechanism above stands on. The ring-boundary audio cue and
-the predecessor-fragment system are both new, unbuilt.
+**Exists: `biomes.sprawl.SprawlBiome`, walkable in the game since
+2026-08-16.** A `{7,3}` floor, columns for parallax, and one amber home
+tile that returns to the hub — the geometry is real and nothing else is.
+Under it: `geometry.HyperbolicTiling` (ring populations and φ² growth
+tested), `HyperbolicProjection`, `HyperbolicSpace`, and
+`HyperbolicView`, which bridges the game's own `pos`/`forward` state to
+the view isometry the projection needs.
+
+The CA layer ports unchanged (a graph is a graph). The ring-counting
+mechanism, the ring-boundary audio cue and the predecessor-fragment
+system are all still unbuilt — deliberately, so that "does walking this
+place feel right in the actual game" gets an unambiguous answer before
+anything is layered on it.
 
 ---
 

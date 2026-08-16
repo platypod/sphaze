@@ -375,7 +375,8 @@ class SprawlBiome implements Biome {
 	function addColumn(points:Array<h3d.Vector>, idx:hxd.IndexBuffer, view:Isometry, base:Array<ModelPoint>):Void {
 		var low = [for (p in base) HyperbolicProjection.toWorld(Isometry.apply(view, p), 0)];
 		var high = [
-			for (p in base) HyperbolicProjection.toWorld(Isometry.apply(view, p), COLUMN_HEIGHT)
+			for (p in base)
+				HyperbolicProjection.toWorld(Isometry.apply(view, p), COLUMN_HEIGHT)
 		];
 
 		for (k in 0...4) {

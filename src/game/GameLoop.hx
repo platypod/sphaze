@@ -15,6 +15,7 @@ import biomes.tower.TowerGenerator;
 import biomes.repeat.RepeatBiome;
 import biomes.ribbon.RibbonBiome;
 import biomes.sprawl.SprawlBiome;
+import biomes.turn.TurnBiome;
 import biomes.twosided.TwoSidedBiome;
 import biomes.wind.WindBiome;
 import entities.hourglass.HourglassModel;
@@ -127,6 +128,10 @@ class GameLoop {
 		// a true torus has one tile and nothing to compare — see
 		// RepeatModel's own class doc.
 		biomeRegistry.register(new RepeatBiome());
+		// The flat, intrinsically non-orientable Mobius band — a quotient,
+		// unlike MobiusBiome's embedded twisted strip, which is not flat.
+		// Both are kept; see TurnModel's own class doc.
+		biomeRegistry.register(new TurnBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it

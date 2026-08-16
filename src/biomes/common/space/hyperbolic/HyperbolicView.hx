@@ -68,23 +68,21 @@ class HyperbolicView {
 	}
 
 	/**
-		Inverse of a Minkowski-orthogonal matrix: `J · Mᵀ · J`, with
-		`J = diag(1, 1, -1)`. Entry `(i, j)` is `M(j, i)` with its sign
-		flipped when exactly one of `i`, `j` is the timelike index — which
-		is the whole of the computation, and the reason no division appears.
+		Inverse of a Minkowski-orthogonal matrix — now just
+		`geometry.Isometry.invert` at hyperbolic curvature.
+
+		This was written out here first, then generalised when `DeckGroup`
+		needed the same operation in all three curvatures. Kept as a named
+		method rather than inlined at the call site because `viewOf`'s own
+		doc turns on *which* inversion is being used, and a bare
+		`Isometry.invert(Hyperbolic, ...)` there would read as an
+		incidental detail rather than as the reason the class is shaped
+		this way.
 		@param frame the isometry to invert; assumed to be in O(2,1), as everything this package produces is.
 		@return its exact inverse.
 	**/
 	public static function invert(frame:Isometry):Isometry {
-		var m = frame.m;
-		var out = [for (i in 0...9) 0.0];
-		for (row in 0...3) {
-			for (col in 0...3) {
-				var flip = (row == 2) != (col == 2);
-				out[row * 3 + col] = flip ? -m[col * 3 + row] : m[col * 3 + row];
-			}
-		}
-		return new Isometry(out);
+		return Isometry.invert(Hyperbolic, frame);
 	}
 
 	/**

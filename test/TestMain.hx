@@ -43,6 +43,7 @@ import entities.registries.CreaturesRegistryTest;
 import entities.registries.NpcsRegistryTest;
 import game.ProcessTest;
 import geometry.CurvedSpaceTest;
+import geometry.DeckGroupTest;
 import geometry.HyperbolicProjectionTest;
 import geometry.HyperbolicTilingTest;
 import geometry.HyperbolicWalkerTest;
@@ -73,6 +74,7 @@ class TestMain {
 	static function main():Void {
 		var runner = new Runner();
 		runner.addCase(new CurvedSpaceTest());
+		runner.addCase(new DeckGroupTest());
 		runner.addCase(new HyperbolicTilingTest());
 		runner.addCase(new HyperbolicProjectionTest());
 		runner.addCase(new HyperbolicWalkerTest());

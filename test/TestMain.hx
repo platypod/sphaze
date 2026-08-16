@@ -8,6 +8,8 @@ import biomes.common.grid.GridMeshTest;
 import biomes.common.grid.GridModelTest;
 import biomes.common.space.flat.FlatSpaceTest;
 import biomes.common.space.hyperbolic.HyperbolicSpaceTest;
+import biomes.ribbon.RibbonAutomatonTest;
+import biomes.ribbon.RibbonModelTest;
 import biomes.sprawl.SprawlBiomeTest;
 import biomes.common.space.hyperbolic.HyperbolicViewTest;
 import biomes.common.space.mobius.MobiusMathTest;
@@ -76,6 +78,8 @@ class TestMain {
 		runner.addCase(new HyperbolicWalkerTest());
 		runner.addCase(new HyperbolicSpaceTest());
 		runner.addCase(new HyperbolicViewTest());
+		runner.addCase(new RibbonAutomatonTest());
+		runner.addCase(new RibbonModelTest());
 		runner.addCase(new SprawlBiomeTest());
 		runner.addCase(new SphereMathTest());
 		runner.addCase(new GridModelTest());

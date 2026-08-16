@@ -12,6 +12,7 @@ import biomes.mobius.MobiusBiome;
 import biomes.mobius.MobiusForestGenerator;
 import biomes.tower.TowerBiome;
 import biomes.tower.TowerGenerator;
+import biomes.ribbon.RibbonBiome;
 import biomes.sprawl.SprawlBiome;
 import biomes.twosided.TwoSidedBiome;
 import biomes.wind.WindBiome;
@@ -118,6 +119,9 @@ class GameLoop {
 		// class doc for how it renders and why it needs its own camera
 		// every frame while walking normally.
 		biomeRegistry.register(new SprawlBiome());
+		// The only biome that does not tick: its ground is a finished
+		// history rather than a running one — see RibbonBiome's own class doc.
+		biomeRegistry.register(new RibbonBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it

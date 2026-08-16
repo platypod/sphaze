@@ -2454,3 +2454,55 @@ which is also what the art direction says should carry a flat biome.
 **Still open, and the whole point:** whether going round repeatedly is
 actually pleasant. That is this space's own kill criterion and it cannot
 be answered from a screenshot.
+
+## 2026-08-16 — The Weft, and a presence set that looked like a map
+
+`biomes.weft.WeftBiome`: the Fold's own sphere with an authored rule
+laid over it — every wall answers to the wall at its antipode, always in
+the opposite state. Close the door in front of you and one opens on the
+far side of the world. Nothing is glued; there is exactly one player and
+every place is where you would expect.
+
+The echo — a pale marker at `-pos`, phasing through walls — is the
+instrument the design's legibility law asks for. Verified by pitching
+the spawn camera up toward the antipode: it is standing there on the far
+side, and the far hemisphere reads clearly through the sphere's interior.
+
+**What this reuses says as much as what it adds.** Sphere, grid, carve,
+collision, wall mesh, exit painting: all the Fold's, untouched. New: one
+file of pairing rules plus the echo. That ratio *is* the design's claim
+about this space — the difference between the Fold and the Weft is
+entirely an authored correspondence over identical geometry.
+
+**A real bug, caught by the tests on their first run.**
+`GridData.openEdges` is typed `StringMap<Bool>` and is actually a
+**presence set**: `GridModel.isOpen` asks `exists`, never `get`, so the
+stored boolean is never read. Writing `set(key, false)` to close a wall
+left it reading as open — 469 failing assertions, immediately, with the
+right message ("the wall itself did not flip"). Closing now removes the
+key. Worth knowing beyond this biome: any future code that writes to a
+layout must remove rather than write `false`.
+
+**The pole edge case the design predicted, exactly where it predicted
+it.** Rows nearest each pole carry an odd column count (`COLS/4` = 7),
+and the antipodal map shifts a row by half its columns — landing on a
+cell boundary on an odd row. No fixed-point-free pairing of an odd
+number of cells exists at all, so those rows are unpaired. A test pins
+which rows, so a change to `colsForRow` fails loudly rather than
+silently widening the dead zone.
+
+**A correction to my own comment, disproved by looking.** I wrote that
+`enforceOpposite` takes one hemisphere as authoritative. It chooses per
+antipodal *pair* by edge key, so authoritative edges are scattered over
+the whole sphere. The per-hemisphere result — the far side is the
+photographic negative of the near side — holds anyway.
+
+And a thing I expected to be wrong that was not: I assumed the negative
+hemisphere would be a nearly-open plain. Both sides read as mazes,
+because a spanning-tree carve opens about half a grid's edges and so
+does its complement.
+
+**Left standing:** the rule destroys the carve's connectivity guarantee,
+so the negative side can hold sealed pockets. Survivable, because the
+verb here is opening walls — a player enclosed anywhere paired can
+toggle out. A Weft with an authored puzzle will need its own generator.

@@ -149,14 +149,28 @@ familiar — even though you've genuinely walked a quarter or half
 circumference to a real, distant place. The illusion of identification,
 without needing the real manifold to produce it.
 
-**Exists:** the antipode-pairs backlog entry is exactly this space's
-mechanic, already worked out including the key transform and the pole
-edge case (`theta → pi - theta`, `phi → phi + pi`), and it already
-specifically names "opposite" as "the more interesting puzzle and the
-more dangerous one." Promote it here. The reflection rendering is new —
-cheap, since it's the same geometry pass the Fold's own far-side
-visibility already needs, just aimed at one fixed antipodal point instead
-of the whole hemisphere.
+**Exists: `biomes.weft.WeftBiome`, walkable in the game since
+2026-08-16.** The pairing, the opposite-state invariant, toggling the
+wall you are facing, and the echo standing at your antipode. What is
+*not* built is the puzzle — no gate yet specifically requires reaching
+through the antipode, because that is level design and wants a mechanic
+already known to read.
+
+Three findings, none predictable from the design:
+
+- **The pole edge case landed exactly where this entry predicted.** The
+  rows nearest each pole carry an *odd* column count, and the antipodal
+  map shifts a row by half its columns — which on an odd row lands on a
+  cell boundary. No fixed-point-free pairing of an odd number of cells
+  exists at all, so those rows are simply unpaired.
+- **Both hemispheres still read as mazes.** A spanning-tree carve opens
+  roughly half a grid's edges, so the photographic negative is also
+  roughly half — not the open plain one might expect.
+- **Connectivity is not preserved.** Complementing half the edges
+  destroys the carve's reachability guarantee, so the negative side can
+  hold loops and sealed pockets. Survivable, since the space's verb is
+  *opening walls* — but a Weft with an authored puzzle needs its own
+  generator (carve, complement, repair) rather than the Fold's.
 
 ---
 

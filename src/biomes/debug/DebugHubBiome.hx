@@ -35,11 +35,27 @@ import graphics.shaders.UnlitTexture;
 class DebugHubBiome implements Biome {
 	public static inline final ID:String = "debug-hub";
 
-	/** Half-width of the square floor; the player is clamped inside it (see `tryMove`). **/
-	static inline final ARENA_HALF:Float = 90;
+	/**
+		Half-width of the square floor; the player is clamped inside it
+		(see `tryMove`).
 
-	/** How far from the centre the ring of portals stands. **/
-	static inline final PORTAL_RING:Float = 55;
+		Grown along with `PORTAL_RING` — see there for why.
+	**/
+	static inline final ARENA_HALF:Float = 150;
+
+	/**
+		How far from the centre the ring of portals stands.
+
+		**Sized against the number of biomes, not chosen.** The ring's
+		circumference has to exceed `PORTAL_WIDTH` times the number of
+		signs or they physically overlap in the world — which is exactly
+		what happened once the direction's spaces landed and the count went
+		from nine to fourteen: neighbouring signs cut into each other and
+		labels read as truncated ("The Still Lif") when they were in fact
+		being occluded. At this radius the circumference is about `754`,
+		which fits fourteen `40`-wide signs with room to spare.
+	**/
+	static inline final PORTAL_RING:Float = 120;
 
 	/**
 		Width of one portal sign. Wide and short on purpose: the sign's own
@@ -48,7 +64,7 @@ class DebugHubBiome implements Biome {
 		with a near-square sign carrying a 4:1 texture, squashing "hub" into
 		three unreadable slivers.
 	**/
-	static inline final PORTAL_WIDTH:Float = 44;
+	static inline final PORTAL_WIDTH:Float = 40;
 
 	/** Vertical span a portal sign fills — see `PaintingModel.fillWall`, and `PORTAL_WIDTH` for why it's this short. **/
 	static inline final PORTAL_HEIGHT:Float = 14;
@@ -56,12 +72,13 @@ class DebugHubBiome implements Biome {
 	/** Label texture size, in pixels — proportioned to match the sign quad (see `PORTAL_WIDTH`), not chosen for its own sake. **/
 	static inline final LABEL_WIDTH:Int = 256;
 
-	static inline final LABEL_HEIGHT:Int = 72;
+	/** Proportioned to the sign quad's own `PORTAL_WIDTH`/`PORTAL_HEIGHT` ratio, so glyphs are not stretched — see `PORTAL_WIDTH`. **/
+	static inline final LABEL_HEIGHT:Int = 90;
 
 	/** Same first-pass value as every other biome's — see `biomes.hub.HubBiome.GRAVITY`'s own doc for why each biome states its own. **/
 	static inline final GRAVITY:Float = 60;
 
-	/** Which biomes this room has portals to, in ring order. **/
+	/** Which biomes this room has portals to, in ring order — see `DebugHubOrder.sorted`. **/
 	final destinations:Array<String>;
 
 	/**
@@ -72,10 +89,10 @@ class DebugHubBiome implements Biome {
 	final labels:Map<String, h3d.mat.Texture> = [];
 
 	/**
-		@param destinations the biome ids to place portals to, in ring order — everything registered except this room itself (see `game.GameLoop`).
+		@param destinations the biome ids to place portals to — everything registered except this room itself (see `game.GameLoop`). Re-ordered into the design's own numbering by `DebugHubOrder`, so walking the ring walks the curvature scale.
 	**/
 	public function new(destinations:Array<String>) {
-		this.destinations = destinations;
+		this.destinations = DebugHubOrder.sorted(destinations);
 	}
 
 	public function id():String {
@@ -205,7 +222,7 @@ class DebugHubBiome implements Biome {
 		if (existing != null) {
 			return existing;
 		}
-		var texture = LabelTexture.build(destination, LABEL_WIDTH, LABEL_HEIGHT, Colours.DEBUG_SIGN, Colours.DEBUG_SIGN_TEXT);
+		var texture = LabelTexture.build(DebugHubOrder.labelFor(destination), LABEL_WIDTH, LABEL_HEIGHT, Colours.DEBUG_SIGN, Colours.DEBUG_SIGN_TEXT);
 		labels.set(destination, texture);
 		return texture;
 	}

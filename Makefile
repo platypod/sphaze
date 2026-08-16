@@ -36,6 +36,11 @@ search-ventrella: ## Exhaustive small hand-placed-pattern search for the Ventrel
 	haxe search-ventrella.hxml
 	neko bin/search-ventrella.n
 
+walk:     ## Phase 0 harness: build + serve the bare hyperbolic {7,3} room at http://localhost:8081/walk.html
+	haxe walk.hxml
+	cp walk.html bin/walk.html
+	cd bin && python3 -m http.server 8081
+
 serve:    ## Build, then serve bin/ at http://localhost:8080 (Ctrl+C to stop)
 	$(MAKE) build
 	cd bin && python3 -m http.server 8080
@@ -44,4 +49,4 @@ help:     ## Show this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: fmt fmt-check lint check test build bake-geodesic search-gliders report-ventrella search-ventrella serve help
+.PHONY: fmt fmt-check lint check test build walk bake-geodesic search-gliders report-ventrella search-ventrella serve help

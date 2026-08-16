@@ -1870,3 +1870,65 @@ Repeat's own evidence-assembly mechanic outright — a predecessor's
 solution, left as fragments, each legible only once the player has
 already proven they can read one. Deliberately not a new system; the same
 skill built two spaces ago, paying off again.
+
+## 2026-08-12 — Phase 0 built: a walkable {7,3} room, awaiting the playtest
+
+Asked to refactor per `architecture.md` and implement all nine spaces.
+Declined that scope and said why: Phase 0's kill question ("is walking in
+hyperbolic space pleasant or nauseating?") is a *playtest* question this
+environment cannot answer, three of the nine spaces have no settled
+mechanism (the Turn's locomotion, the Ribbon entirely, the Knot partly),
+and the refactor would break a working game before the direction is
+validated. Agreed instead to build Phase 0 properly.
+
+**New, all headless and tested:** `geometry.HyperbolicProjection` (the
+Beltrami-Klein projection — bearing exact, distance compressed to `tanh`,
+so the whole infinite plane fits inside a unit disk and "see near, not
+far" arrives out of correct maths rather than authoring) and
+`geometry.HyperbolicWalker` (tracks the *view* isometry rather than the
+player's frame, so movement never inverts a matrix — which is exactly
+where precision would go, since boost entries grow exponentially with
+distance). `HyperbolicTiling` gained per-face `frames`, needed by anything
+drawing faces rather than simulating on them. 13 new assertions, 39,813
+total.
+
+**Deliberately CPU-side, not HxSL.** `architecture.md` recommends a shader
+fragment for the shipping renderer and that is still right — but a shader
+cannot be verified here, whereas the arithmetic can. Doing the maths in
+tested Haxe first means a wrong-looking room is a plumbing bug rather
+than an unverifiable shader. Port once the room is confirmed.
+
+**The harness:** `tools.hyperbolic.HyperbolicWalkApp`, `walk.hxml`,
+`walk.html`, `make walk`. Standalone on the `GeodesicPreview` precedent —
+shares no code path with `Main`/`GameLoop`, implements no `Biome`, so a
+Phase 0 answer of "no" costs one file and the working game is never at
+risk while the question is open. No art, no simulation, no goal, on
+purpose: adding any would make a bad answer ambiguous.
+
+**Verified by screenshot** (allowed per `CLAUDE.md`, unlike input): the
+room renders correctly — heptagonal floor with visible seams, amber home
+spire at the origin, columns crowding toward a horizon that is the
+*actual* horizon (at eye height 1.7 the far floor sits ~9.7° below eye
+level) rather than a cull edge.
+
+**Two findings worth keeping:**
+
+1. **First render was flat orange** — the home spire stands at face 0,
+   which is also where the camera spawned, so the view was the inside of
+   the marker. Fixed with a two-cell spawn offset, which also makes
+   `distanceFromOrigin` read as "how far from the thing I can see".
+2. **The browser pane cannot size a Heaps canvas, and this is
+   pre-existing.** `window.innerWidth` reports `0` inside its iframe, so
+   Heaps falls back to a 16×16 canvas and writes it as an *inline* style
+   that overrides the page CSS. Confirmed the **existing game's own
+   `index.html` has exactly the same 16×16 canvas here**, so this is
+   environmental, not something the harness introduced — and it is a
+   large part of why visual verification in this environment has always
+   been so unrewarding. Worked around for screenshots by setting the
+   canvas size from `document.documentElement.clientHeight` and firing a
+   resize. No source change: the same HTML works in a real browser.
+
+**Still unverified, and it is the whole point:** motion and comfort.
+`make walk` and ten minutes of walking is the gate on everything else in
+`direction/`. Get other people to try it too — motion tolerance varies
+enormously and a sample of one is not a sample.

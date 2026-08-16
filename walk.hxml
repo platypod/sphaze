@@ -1,0 +1,7 @@
+-cp src
+-lib heaps
+-main tools.hyperbolic.HyperbolicWalkApp
+-js bin/walk.js
+-D analyzer-optimize
+-D resourcesPath=res
+--macro nullSafety("src", Strict)

@@ -54,6 +54,22 @@ class HyperbolicTiling {
 	/** Which breadth-first ring each face was discovered in — `0` for the seed face. **/
 	public final rings:Array<Int>;
 
+	/**
+		Each face's own frame — the isometry taking the origin to that face's
+		centre, with `+x` pointing at one of its edge midpoints.
+
+		**Safe to keep only the first frame found**, even though welding
+		collapses several arrival paths onto one face: every generator
+		arrives facing back at the parent, which is always *some* edge
+		midpoint, so two paths to the same face give frames differing by a
+		multiple of `2π/p` — exactly the rotations a regular `p`-gon is
+		symmetric under. Corners derived from either frame land in the same
+		places. Needed by anything drawing the faces rather than just
+		simulating on them, since a centre alone does not determine where
+		the corners are.
+	**/
+	public final frames:Array<Isometry>;
+
 	/** The tiling's own `p` (sides per face). **/
 	public final p:Int;
 
@@ -90,6 +106,7 @@ class HyperbolicTiling {
 		centers = [];
 		neighbors = [];
 		rings = [];
+		frames = [];
 		var idByKey = new Map<String, Int>();
 
 		var seed = Isometry.identity();
@@ -127,6 +144,7 @@ class HyperbolicTiling {
 		centers.push(center);
 		neighbors.push([]);
 		rings.push(ring);
+		frames.push(frame);
 		return id;
 	}
 

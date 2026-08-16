@@ -36,10 +36,23 @@ Everything in this folder is worthless if the answer is the second one.
 Build:
 - `CurvedSpace` + `Isometry`, headless, tested against closed-form
   identities (steps 1-2 of the migration plan in
-  [architecture.md](architecture.md))
-- the HxSL projection fragment
+  [architecture.md](architecture.md)) — **built 2026-08-11**
+- the projection — **built 2026-08-12** as tested CPU-side Haxe
+  (`geometry.HyperbolicProjection`) rather than an HxSL fragment, on
+  purpose: the maths can be unit-tested, a shader cannot be verified in
+  this environment at all. Port to HxSL once the room is confirmed to
+  look right.
 - **one bare `{7,3}` room**, no art, no simulation, no content — just
-  geometry you can walk
+  geometry you can walk — **built 2026-08-12**:
+  `tools.hyperbolic.HyperbolicWalkApp`, standalone, `make walk`
+
+**Status: waiting on a playtest.** The room renders correctly (verified
+by screenshot: heptagonal floor, home spire at the origin, columns
+crowding to a horizon that is genuinely the horizon rather than a cull
+edge). Motion and comfort are **unverified and unverifiable here** — this
+environment cannot deliver input to the canvas. Running `make walk` and
+walking it is the whole of what remains, and it is the gate on
+everything else in this folder.
 
 **Kill criteria, decided in advance so they cannot be rationalised away
 later:**

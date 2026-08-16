@@ -2506,3 +2506,58 @@ does its complement.
 so the negative side can hold sealed pockets. Survivable, because the
 verb here is opening walls — a player enclosed anywhere paired can
 toggle out. A Weft with an authored puzzle will need its own generator.
+
+## 2026-08-16 — The Defect, and numbered warp gates
+
+`biomes.defect.DefectBiome`: a plain flat everywhere except one point.
+Loop the apex and you come back turned by a quarter turn, having never
+turned; loop beside it and nothing happens. **Eight of the design's nine
+spaces are now walkable**, the Knot being the exception (it needs the
+genus-2 group deferred from the quotient framework).
+
+**It needed its own primitive, exactly as the design predicted.**
+`CurvedSpace` covers the three uniform-curvature geometries and a cone
+point is none of them. It is also *not* a `DeckGroup` quotient — the
+group would be rotations about the apex, which have a fixed point, so
+`elementsWithin` (pruning by how far an element moves the origin) would
+enumerate infinitely many elements all of displacement zero. That was
+worth discovering rather than assuming, since the framework had just
+absorbed the Turn.
+
+What it *is* structurally is the Möbius seam again, which the design
+named correctly: the cone minus one ray is isometric to a wedge of the
+plane, so the entire non-flat content is one rotation at one ray.
+
+The holonomy is **measured**, not asserted — a circuit of small steps
+carrying the heading, which between crossings is simply held constant
+(in flat space that *is* parallel transport). Two loops give twice the
+angle: the continuous dial the design wants, not a coin flip.
+
+**My first version of that test was wrong, not the code.** It drove the
+player through `2π` of chart angle — but one loop of a cone is
+`CONE_ANGLE` — and it stepped by overwriting the position on a fixed
+circle, discarding each wrap's own rotation of the position. Worth
+recording because a wrong test that *fails* is cheap; the same mistake
+in a test that passed would have been expensive.
+
+**A compromise stated rather than hidden.** This space's legibility law
+is "nothing is visibly bent", and a cone cannot be flattened. Markers
+are drawn in a window centred on the player so everything in view is
+continuous and correct, leaving a marker-free wedge behind the apex; the
+ground is a full disc so there is no hole. A seamless cone renderer is
+real remaining work.
+
+### Numbered warp gates
+
+Asked for directly. The debug room's portals now read "1. Fold", "2.
+Weft" and so on, and the ring is **sorted** by that numbering — a number
+that does not match the order you walk past them in is worse than none.
+Pre-direction biomes keep their plain ids and sort last.
+
+Two things the screenshot caught and the tests could not: the signs
+**physically overlapped**, because the ring's circumference has to
+exceed sign width times sign count and the count had gone from nine to
+fourteen — labels looked truncated when they were being occluded. And
+labels drop the design's leading "The", because `LabelTexture` scales
+text to fit a fixed-width sign, so the longest name rendered at a
+quarter the size of "wind".

@@ -425,10 +425,29 @@ on the Fold are cone points too. The player should realise this
 themselves, and it should land hard: **the sockets on your home world are
 the same thing as the puzzle here.**
 
-**Exists:** nothing. Cheap next to the hyperbolic tiling, not literally
-free — see "What's actually new here, honestly," above: a new cone-chart
-geometry primitive, unbuilt, though `MobiusSpace`'s own seam handling is
-a real precedent for the shape of the work.
+**Exists: `biomes.defect.DefectBiome`, walkable in the game since
+2026-08-16.** The cone chart, the seam, the holonomy, and the markers to
+read a rotation against — a meridian, concentric rings, a spire on the
+apex. The socket is *not* built: it needs `CARRY`, which does not exist.
+
+"Cheap next to the hyperbolic tiling, not literally free" was right, and
+so was naming `MobiusSpace`'s seam as the precedent — the cone minus one
+ray is isometric to a wedge of the plane, so the whole non-flat content
+of the space is one rotation applied at one ray. Two notes from
+building it:
+
+- **It is not a `geometry.DeckGroup` quotient either**, which was worth
+  finding out: the group would be rotations about the apex, and those
+  have a *fixed point*, so the framework's enumeration (which prunes by
+  how far an element moves the origin) would find infinitely many
+  elements all of displacement zero.
+- **The legibility law is bent, and this is the honest statement of
+  it.** "Nothing is visibly bent" cannot be fully delivered, because a
+  cone cannot be flattened. Markers are drawn in a window centred on the
+  player, so everything in view is continuous and correct, and the
+  unavoidable gap sits directly behind the apex; the ground is a full
+  disc so there is no hole. A seamless cone renderer — properly
+  developing the visible neighbourhood — is real remaining work.
 
 ---
 

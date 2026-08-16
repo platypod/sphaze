@@ -98,21 +98,68 @@ class WeftModel {
 	}
 
 	/**
+		Half the grid whose theta is short of the equator — `centerOf`'s own
+		coordinate, so it agrees with everything else that reads a node's
+		position, and small enough that a row-boundary edge spanning rows 6
+		and 7 (the only rows whose average theta lands exactly on π/2) needs
+		its own tie-break rather than a false read from float error.
+	**/
+	static inline final EQUATOR_EPSILON:Float = 1e-6;
+
+	/**
+		Which hemisphere an edge belongs to, by the average theta of its two
+		endpoints — `enforceOpposite`'s own generating/mirrored split. A
+		pole counts as theta 0 or π, same as `GridModel.centerOf` already
+		gives it.
+
+		**Well-defined for every pairable edge but the true equator seam.**
+		`antipodeOf` maps row `r` to row `13 - r`, so a same-row edge or a
+		cross-row edge between rows on the same side of the equator always
+		pairs with an edge entirely on the other side — except the one
+		row-boundary that sits *on* the equator (rows 6 and 7, whose average
+		theta is exactly π/2), which pairs with another edge on that same
+		seam. `null` there rather than an arbitrary true/false, so the
+		caller can fall back to a different, still-deterministic rule
+		instead of silently mislabelling a hemisphere that doesn't apply.
+		@param a one end of the edge.
+		@param b the other end.
+		@return true if north, false if south, null if the edge is the equator seam itself.
+	**/
+	static function isNorthern(a:GridNode, b:GridNode):Null<Bool> {
+		var thetaA = GridModel.centerOf(a).theta;
+		var thetaB = GridModel.centerOf(b).theta;
+		var midpoint = (thetaA + thetaB) / 2;
+		if (Math.abs(midpoint - Math.PI / 2) < EQUATOR_EPSILON) {
+			return null;
+		}
+		return midpoint < Math.PI / 2;
+	}
+
+	/**
 		Forces the invariant across the whole sphere: **a paired wall and
 		its partner are never in the same state.**
 
-		Within each antipodal *pair* one edge is authoritative and the
-		other is made its complement, chosen by edge key so the result does
-		not depend on iteration order. Note that this is per pair, not per
-		hemisphere — the key ordering is arbitrary, so the authoritative
-		edges are scattered over the whole sphere. (An earlier version of
-		this comment said "one hemisphere is taken as authoritative", which
-		is not what the code does.)
+		**The northern hemisphere generates; the southern hemisphere is its
+		mirror.** Within each antipodal pair, the edge in the north (per
+		`isNorthern`) is left exactly as the base carve made it; its
+		southern partner is forced to the opposite. `antipodeOf` maps row
+		`r` to row `13 - r`, so this split is total — a paired edge is
+		always north-with-south, never north-with-north — except the single
+		row boundary sitting exactly on the equator, which pairs with
+		itself in that sense and falls back to comparing edge keys, same as
+		this function used to do everywhere.
 
-		The *result* is per-hemisphere all the same, and is the space's own
-		character rather than a side effect: **the far side of the world is
-		the photographic negative of the near side.** Every corridor here
-		is a wall there.
+		**An earlier version of this split was by edge key alone**, scattered
+		arbitrarily across the whole sphere rather than by hemisphere — technically
+		satisfying the invariant, but with no relationship a player standing
+		anywhere could actually see: the "authoritative" edge near them was
+		as likely to be the one forced from its partner as the one setting
+		it, so the far side read as unrelated noise rather than a legible
+		negative. That was flagged directly ("no symmetry in the maze").
+		The hemisphere split is what the design always described — *the far
+		side of the world is the photographic negative of the near side* —
+		made into the actual generating rule instead of an emergent
+		description of a scattered one.
 
 		Pleasantly, both sides still read as mazes. A spanning-tree carve
 		opens roughly half a grid's edges, so its complement is also
@@ -136,14 +183,19 @@ class WeftModel {
 				if (partner == null) {
 					continue;
 				}
-				var key = GridModel.edgeKey(node, neighbor);
-				var partnerKey = GridModel.edgeKey(partner.a, partner.b);
-				if (key >= partnerKey) {
-					continue; // the other half of the pair is the authoritative one
+				var northern = isNorthern(node, neighbor);
+				var isSouth = northern != null ? !northern : edgeKeyIsHigher(node, neighbor, partner);
+				if (isSouth) {
+					continue; // the antipodal partner is the generating edge; this one is set from it, on that pass
 				}
 				setOpen(grid, partner.a, partner.b, !GridModel.isOpen(grid, node, neighbor));
 			}
 		}
+	}
+
+	/** The equator-seam tie-break `isNorthern` cannot make — same rule this function used everywhere before the hemisphere split. **/
+	static function edgeKeyIsHigher(a:GridNode, b:GridNode, partner:{a:GridNode, b:GridNode}):Bool {
+		return GridModel.edgeKey(a, b) >= GridModel.edgeKey(partner.a, partner.b);
 	}
 
 	/**

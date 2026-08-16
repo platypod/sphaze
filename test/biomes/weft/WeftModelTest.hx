@@ -25,14 +25,24 @@ class WeftModelTest extends Test {
 		return GridModel.nodeKey(node);
 	}
 
-	function freshMaze():GridData {
+	/** Same seeded generator as `freshMaze`, but before `enforceOpposite` — for tests that need to compare the enforced layout against its own raw origin. **/
+	function rawMaze():GridData {
 		var seed = 12345;
-		var maze = MazeGenerator.generate(() -> {
+		return MazeGenerator.generate(() -> {
 			seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF;
 			return seed / 2147483648.0;
 		});
+	}
+
+	function freshMaze():GridData {
+		var maze = rawMaze();
 		WeftModel.enforceOpposite(maze);
 		return maze;
+	}
+
+	/** A node's own hemisphere, by `GridModel.centerOf`'s theta — the same coordinate `WeftModel`'s own (package-private) `isNorthern` reads. **/
+	function isNorthOf(node:GridNode):Bool {
+		return GridModel.centerOf(node).theta < Math.PI / 2;
 	}
 
 	/** The poles answer to each other, which is the one pairing that needs no column arithmetic at all. **/
@@ -133,6 +143,55 @@ class WeftModelTest extends Test {
 					'${key(node)}-${key(neighbor)} matches its partner instead of opposing it');
 			}
 		}
+	}
+
+	/**
+		**The fix for "no symmetry in the maze"**: the northern hemisphere is
+		left exactly as generated, and the southern hemisphere is a legible
+		mirror of it — not two independently-random halves reconciled by an
+		arbitrary edge-key comparison, which is what `enforceOpposite` did
+		before and produced no relationship a player standing anywhere could
+		actually perceive.
+
+		Checked directly against the *raw* pre-`enforceOpposite` layout: a
+		northern paired edge's state must be untouched by enforcement, and a
+		southern paired edge's state must be the exact opposite of its
+		(also-untouched) northern partner's raw state. Equator-seam edges
+		(average theta within `WeftModel.EQUATOR_EPSILON` of π/2, the one
+		row boundary that pairs with itself in this sense) are skipped here
+		for the same reason `enforceOpposite` itself falls back to a
+		different rule there — see that function's own doc.
+	**/
+	function testTheNorthernHemisphereGeneratesAndTheSouthernMirrorsIt():Void {
+		var raw = rawMaze();
+		var enforced = MazeGenerator.deserialize(MazeGenerator.serialize(raw)); // an independent copy to enforce
+		WeftModel.enforceOpposite(enforced);
+
+		var checkedNorth = 0;
+		var checkedSouth = 0;
+		for (node in GridModel.allNodes()) {
+			for (neighbor in GridModel.neighborsOf(node)) {
+				var partner = WeftModel.partnerOf(node, neighbor);
+				if (partner == null) {
+					continue;
+				}
+				var midpoint = (GridModel.centerOf(node).theta + GridModel.centerOf(neighbor).theta) / 2;
+				if (Math.abs(midpoint - Math.PI / 2) < 1e-6) {
+					continue; // the equator seam — not this test's claim, see WeftModel.enforceOpposite
+				}
+
+				if (midpoint < Math.PI / 2) {
+					checkedNorth++;
+					Assert.equals(GridModel.isOpen(raw, node, neighbor), GridModel.isOpen(enforced, node, neighbor),
+						'a northern edge ${key(node)}-${key(neighbor)} was changed by enforcement');
+				} else {
+					checkedSouth++;
+					Assert.equals(!GridModel.isOpen(raw, partner.a, partner.b), GridModel.isOpen(enforced, node, neighbor),
+						'a southern edge ${key(node)}-${key(neighbor)} is not the mirror of its northern partner\'s raw state');
+				}
+			}
+		}
+		Assert.isTrue(checkedNorth > 0 && checkedSouth > 0, "no northern/southern paired edges were found to check");
 	}
 
 	/** **Closing a wall opens its partner**, which is the verb the whole space is built on. **/

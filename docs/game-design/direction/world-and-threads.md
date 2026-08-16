@@ -256,12 +256,61 @@ own reflection annihilates.** That's a real Life behaviour, a real
 non-orientability consequence, and a puzzle verb, all at once — the
 geometry-is-content pillar at its cleanest.
 
+**Mechanism, kept but unresolved (2026-08-12).** The direction, agreed:
+your handedness is set by *how you route*, not just whether you loop —
+send a glider around an odd number of times and it arrives mirrored, even
+and it doesn't, so the path you choose determines what arrives. Somewhere
+a passage is blocked by a glider of one handedness; the only way through
+is to deliberately route its opposite to meet and annihilate it. **Gain:**
+a technique — produce a chosen handedness on demand — not a key, reusable
+wherever the game later wants a chiral counterpart (Thread 1 material).
+**Not yet sold on the setup**: how the player actually *discovers* their
+own current state cheaply enough that testing it isn't itself the boring
+part this space is trying to avoid. The marks-as-reference idea
+(legibility law, above) is the leading candidate, not a settled answer —
+revisit once there's something to playtest.
+
+**Locomotion has to be pleasurable, not merely present — flagged
+directly (2026-08-12), and it's the harder problem than the chirality
+mechanism itself.** This space's entire premise is *doing the loop more
+than once*, deliberately, to test and then to spend your own state. That
+is a much higher tolerance for repeated traversal than any other space in
+the set asks for, and "walk a long, slowly-unspooling ribbon with
+ever-repeating scenery" fails immediately under that much repetition —
+boring is disqualifying here in a way it isn't elsewhere. Two ways out,
+not mutually exclusive, both open:
+
+1. **Make the movement itself the pleasure** — reference point:
+   *Race the Sun*, where traversal alone, well-tuned, carries a whole
+   game with near-zero decoration. If moving through the Turn feels good
+   in the hand at speed, repetition stops being a cost and starts being
+   the loop the rest of the mechanism runs on.
+2. **Give each lap its own skill**, something the player does *every*
+   time through that has its own improvable curve — timing, a rhythm, a
+   precision act tied to the twist itself — so repetition reads as
+   practice rather than backtracking.
+
+Whichever way this goes (or both), it needs building and playing before
+the chirality mechanism above can be judged at all — a bad ribbon kills a
+good mechanic here. See [roadmap.md](roadmap.md)'s Risk 8, which this
+sharpens rather than duplicates: that risk was about whether `BECOME`'s
+bodies are fun to control at all; this is specifically about whether
+*this one space's own* repetition budget can be sustained regardless.
+
+**Set aside, deliberately:** the backlog's "one side affects the other"
+(a wall and its mirror across the strip's own width, linked) is real and
+buildable, but it's a spatial-pairing puzzle — the same shape the Weft
+and the Repeat already cover. Keeping this space about a *travelling
+pattern's own history* rather than *two static places agreeing* is what
+makes it distinct from both.
+
 **Story function:** the first space that changes *you* rather than
 obstructing you.
 
 **Exists:** `biomes.mobius.*` and `MobiusMath`, with the flip identity
-already derived and tested, and the "one side affects the other" backlog
-entry pointing straight at this.
+already derived and tested. The chirality-routing mechanism and the
+locomotion-feel problem above are both new — nothing to reuse for either
+yet.
 
 ---
 

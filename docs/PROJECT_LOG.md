@@ -1777,3 +1777,29 @@ repeated units give divergence somewhere obvious to hide (a mis-lit
 window, an extra storey, a rooftop one degree off), in a way organic
 terrain doesn't offer for free. Cross-linked both directions between
 `world-and-threads.md`'s Repeat entry and the new table.
+
+## 2026-08-12 — The Turn: chirality kept but unresolved, locomotion flagged as its own risk
+
+Discussed and recorded rather than settled. The chirality-routing
+mechanism (loop parity determines a glider's handedness; deliberately
+route the opposite to annihilate a blocking one) stays, but explicitly
+**not sold on the setup** — how the player cheaply discovers their own
+current state without the discovery itself becoming the boring part.
+Marks-as-reference is the leading candidate, not a decision.
+
+Separately, and judged the harder problem: this space specifically
+requires walking its own loop *more than once*, on purpose, which is a
+much higher repetition tolerance than anything else in the set asks for.
+Raised directly, with a named reference (*Race the Sun*, where tuned
+traversal alone carries a whole game): either locomotion here has to be
+that good on its own, or every lap needs its own improvable skill so
+repetition reads as practice rather than backtracking. Neither built.
+Added as Risk 9 in `roadmap.md`, distinguished from Risk 8 (whether
+`BECOME`'s bodies are fun at all) — this one is about whether *this one
+space's own* repetition budget survives regardless of that answer.
+
+Also formally set aside the backlog's "one side affects the other"
+(mirror-paired walls across the strip) for this space specifically — same
+spatial-pairing shape the Weft and the Repeat already cover; keeping the
+Turn about a travelling pattern's own history is what keeps it distinct
+from both.

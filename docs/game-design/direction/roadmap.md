@@ -127,6 +127,7 @@ moments.
 | 6 | **Engine bet** | medium | named revisit trigger in [architecture.md](architecture.md); do not relitigate otherwise |
 | 7 | **Solo burnout over 3-5 years** | high | Phase 1 ships; visible progress; the hub gaining curvature is a progress bar for the *developer* too |
 | 8 | **`BECOME` may not be fun** — the core system, never played | **existential** (*added on review*) | moved into Phase 0; three bodies on flat ground, ten minutes, before any world is designed around it |
+| 9 | **Repeated-traversal locomotion may be boring** — the Turn specifically needs the loop walked more than once, on purpose | high (*added 2026-08-12*) | see [world-and-threads.md](world-and-threads.md)'s own Turn entry: either the movement itself has to be a *Race the Sun*-grade pleasure, or every lap needs its own improvable skill. Unresolved; blocks judging that space's chirality mechanism at all |
 
 ### Risk 2, in detail — because it is the one that hides
 

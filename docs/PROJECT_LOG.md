@@ -2403,3 +2403,54 @@ that biome's geometry. It came back pixel-identical.
 **Still open:** whether walking one period and comparing is actually
 satisfying, which is the only question that matters here and cannot be
 answered from a screenshot.
+
+## 2026-08-16 — The Turn, built in the order the design demanded
+
+`biomes.turn.TurnBiome`: a flat strip quotiented by a glide reflection.
+**The honest Möbius band** — `biomes.mobius.MobiusBiome` embeds a
+twisted strip in ℝ³, which carries real curvature everywhere and so
+teaches the wrong lesson for a space filed under κ = 0. Putting the
+twist in the identification rather than the geometry gives something
+intrinsically flat and genuinely non-orientable. Both are kept.
+
+**The first real customer of `geometry.DeckGroup`.** The Repeat, built
+for the same framework, turned out to need separate-but-identical tiles;
+here the quotient is the point.
+
+**The design's own entry says which problem comes first** — the
+chirality mechanism cannot be judged until traversal is proven, "a bad
+ribbon kills a good mechanic here" — so this build is the ribbon: 2.4x
+speed, obstacles to weave on a rhythm, and that rhythm arriving mirrored
+each lap so the second lap is not the first lap again. The
+glider-annihilation puzzle is deliberately absent.
+
+**A conceptual correction I made to my own work mid-build.** I painted
+the two rails differently and wrote that the bright one "moves to your
+other side" after a lap. That treats the edges as two objects. A Möbius
+band has **one** boundary curve: the glide carries one edge onto the
+other, so what look like two rails are a single curve of twice the
+band's period, and painting its halves differently is a consistent
+decoration of one object. Same visible behaviour, correct reason. The
+top-down diagnostic view — where the rails visibly change places at the
+seam — is that fact rendered. `testTheBandHasASingleBoundaryCurve` pins
+it.
+
+That correction also improves the proposal it belongs to: "which rail is
+beside me" reads out **which lift the player is on**, which is exactly
+the handedness the design wants legible, rather than a coincidence about
+sides.
+
+Mutation-checked: dropping the reflection from the wrap gives a cylinder
+that walks identically and looks identical from any single vantage — the
+space's entire lesson missing with no symptom — and fails three tests.
+
+**Two things were wrong when looked at, both invisible to tests.** The
+spawn sat twenty-five units from an obstacle and dead in line with it,
+so the first frame was a grey slab. And the far rail was invisible
+against a dark floor and darker void, which is fatal for a tell needing
+*two* references; the rails now differ in **shape** as well as value,
+which is also what the art direction says should carry a flat biome.
+
+**Still open, and the whole point:** whether going round repeatedly is
+actually pleasant. That is this space's own kill criterion and it cannot
+be answered from a screenshot.

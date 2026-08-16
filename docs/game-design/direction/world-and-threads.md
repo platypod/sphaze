@@ -324,10 +324,27 @@ makes it distinct from both.
 **Story function:** the first space that changes *you* rather than
 obstructing you.
 
-**Exists:** `biomes.mobius.*` and `MobiusMath`, with the flip identity
-already derived and tested. The chirality-routing mechanism and the
-locomotion-feel problem above are both new — nothing to reuse for either
-yet.
+**Exists: `biomes.turn.TurnBiome`, walkable in the game since
+2026-08-16** — a flat strip quotiented by a glide reflection, built
+against this entry's own stated ordering (the ribbon first, since a bad
+ribbon kills a good mechanic). It moves at 2.4x walking speed with a
+rhythm of obstacles to weave, taking *both* of the ways out named above
+rather than choosing. The chirality-routing puzzle is deliberately not
+built on top of an unproven ribbon.
+
+`biomes.mobius.*` and `MobiusMath` still exist and are **a different
+thing**: that biome embeds a twisted strip in ℝ³, which carries real
+curvature everywhere and is therefore not the κ = 0 space this entry
+describes. Both are kept; the embedded one is prettier to look at.
+
+**A proposal for the open "how does the player read their own state"
+question**, awaiting playtest before it earns a place in this entry: a
+Möbius band has a *single* boundary curve, twice the band's own period
+long. Painting it pale for one period and dashed for the next makes
+"which rail is beside me" a direct readout of which lift you are on —
+one glance, at speed, no instrument and no detour. If it reads as being
+*told* rather than *discovering*, the marks-as-reference idea above is
+still the fallback.
 
 ---
 

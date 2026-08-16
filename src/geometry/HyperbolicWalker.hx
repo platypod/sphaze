@@ -41,7 +41,7 @@ class HyperbolicWalker {
 
 	/**
 		Turn in place.
-		@param angle radians; positive turns the view one way, negative the other (which of the two is a rendering convention, settled by looking, not by this class).
+		@param angle radians; positive turns the view to the right, once `HyperbolicProjection.toWorld` has accounted for the renderer's handedness.
 	**/
 	public function turn(angle:Float):Void {
 		view = Isometry.compose(Isometry.rotation(-angle), view);
@@ -50,12 +50,18 @@ class HyperbolicWalker {
 	/**
 		Step sideways without turning — composed from `turn`/`moveForward`
 		rather than derived separately, so it cannot disagree with them.
-		@param distance arc length to strafe; sign picks the side.
+
+		**Positive is to the right**, matching `turn`'s own positive sense
+		once `HyperbolicProjection.toWorld` has accounted for Heaps' left-
+		handed camera. Committing to a side here rather than leaving it to
+		each caller is what stops the sign being rediscovered (and got
+		wrong) at every input site.
+		@param distance arc length to strafe; positive strafes right.
 	**/
 	public function strafe(distance:Float):Void {
-		turn(-Math.PI / 2);
-		moveForward(distance);
 		turn(Math.PI / 2);
+		moveForward(distance);
+		turn(-Math.PI / 2);
 	}
 
 	/**

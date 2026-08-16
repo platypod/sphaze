@@ -97,6 +97,36 @@ class HyperbolicWalkerTest extends Test {
 		Assert.isTrue(walker.distanceFromOrigin() > 1e-3, "a square should not close in hyperbolic space");
 	}
 
+	/**
+		**Turning right sweeps the world left**, which is the invariant that
+		was silently broken and that no existing test could catch — every
+		one of them was sign-agnostic.
+
+		Heaps' camera is left-handed and looks down `+x`, so screen-right is
+		`-z`. An object dead ahead must therefore move to `+z` when the
+		player turns right.
+	**/
+	function testTurningRightSweepsTheWorldToScreenLeft():Void {
+		var walker = new HyperbolicWalker();
+		var ahead = Isometry.positionOf(Isometry.translation(Hyperbolic, 1.0));
+
+		var before = HyperbolicProjection.toWorld(walker.toCameraFrame(ahead), 0);
+		Assert.floatEquals(0, before.z, EPSILON, "something dead ahead should render dead ahead");
+
+		walker.turn(0.4);
+		var after = HyperbolicProjection.toWorld(walker.toCameraFrame(ahead), 0);
+		Assert.isTrue(after.z > 0, 'turning right should sweep the world to screen left, got z=${after.z}');
+	}
+
+	/** Strafing right leaves what you were standing on to your left — the same convention, checked through the other verb. **/
+	function testStrafingRightLeavesTheOriginOnYourLeft():Void {
+		var walker = new HyperbolicWalker();
+		walker.strafe(1.0);
+
+		var origin = HyperbolicProjection.toWorld(walker.toCameraFrame(CurvedSpace.origin()), 0);
+		Assert.isTrue(origin.z > 0, 'after strafing right the origin should be on the left, got z=${origin.z}');
+	}
+
 	/** Many small steps equal one big step — what makes per-frame movement at a variable frame rate safe. **/
 	function testManySmallStepsMatchOneLargeStep():Void {
 		var stepped = new HyperbolicWalker();

@@ -219,11 +219,9 @@ class BecomeApp extends hxd.App {
 		var eye = new h3d.Vector(model.x, EYE_HEIGHT, model.z);
 		s3d.camera.pos.load(eye);
 		s3d.camera.up.set(0, 1, 0);
-		s3d.camera.target.load(new h3d.Vector(eye.x
-			+ Math.cos(model.heading) * Math.cos(pitch), eye.y
-			+ Math.sin(pitch),
-			eye.z
-			+ Math.sin(model.heading) * Math.cos(pitch)));
+		var flat = Math.cos(pitch);
+		s3d.camera.target.load(new h3d.Vector(eye.x + BecomeModel.dirX(model.heading) * flat, eye.y + Math.sin(pitch),
+			eye.z + BecomeModel.dirZ(model.heading) * flat));
 	}
 
 	/**

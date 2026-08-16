@@ -2034,3 +2034,39 @@ for the body-switch and turn-queue keys. Two details worth keeping:
 
 Both harnesses now route every key through `PhysicalKeys`, arrows
 included, so there is one input path rather than two.
+
+## 2026-08-12 — Phase 0 harnesses: left/right were mirrored
+
+Reported straight after the AZERTY fix: "left is right and right is
+left." Correct, in both harnesses, and from a single cause this project
+had already hit once and documented — **Heaps' camera is left-handed**
+(`s3d.camera.rightHanded == false`), so its on-screen right is the
+*opposite* of the right-handed `forward.cross(up)`. `game.GameLoop`'s own
+strafe code carries a long comment about exactly this. I mapped heading
+to `(cos, sin)`, which is right-handed, and so turning, strafing **and**
+mouse-look all came out mirrored together.
+
+Verified analytically before touching anything (a throwaway script
+computing `-(forward × up)` against the strafe direction and against
+`d(forward)/dheading`): negating the Z component fixes all three at once,
+because all three are the same error.
+
+Fixed at the boundary rather than per-input, one place each:
+
+- **`BecomeModel.dirX`/`dirZ`** — new shared helpers with the `-sin` on Z,
+  used by movement *and* by the camera, so the world and the view can
+  never disagree about which way forward is.
+- **`HyperbolicProjection.toWorld`** — negates Z at the model-to-render
+  boundary, which is where a renderer-handedness concern belongs.
+- **`HyperbolicWalker.strafe`** now commits to *positive is right* rather
+  than its previous "sign picks the side", so the convention is stated
+  once instead of rediscovered at every call site.
+
+**The real lesson is the tests.** Every existing test passed while the
+controls were mirrored, because they were all sign-agnostic — distances
+and magnitudes, never a side. Three tests added that derive screen-right
+independently (`-(forward × up)`) rather than restating the
+implementation, and **all three were confirmed to fail against the old
+behaviour** before being kept: `testStrafingGoesToScreenRight`,
+`testTurningRightSweepsTheWorldToScreenLeft`,
+`testStrafingRightLeavesTheOriginOnYourLeft`. 39,841 assertions.

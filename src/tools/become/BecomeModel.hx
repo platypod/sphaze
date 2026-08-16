@@ -90,6 +90,34 @@ class BecomeModel {
 	public function new() {}
 
 	/**
+		Unit forward direction for a heading, split into its render-axis
+		components — **and the `-sin` on Z is not a typo.**
+
+		Heaps' camera is left-handed (`s3d.camera.rightHanded == false`), so
+		its on-screen right is the *opposite* of the right-handed
+		`forward.cross(up)`. `game.GameLoop`'s own strafe code documents the
+		same gotcha for the real game. With a plain `(cos, sin)` mapping,
+		increasing heading turns the view *left* on screen, `D` strafes left
+		and mouse-right looks left — all three mirrored, from this one cause,
+		which is exactly how it was first reported.
+
+		Negating Z makes increasing heading rotate clockwise on screen, at
+		which point turning, strafing and mouse-look all agree without any
+		per-input sign flips. Used by movement *and* by the camera, so the
+		world and the view can never disagree about which way is forward.
+		@param heading radians.
+		@return the X component of that heading's forward direction.
+	**/
+	public static inline function dirX(heading:Float):Float {
+		return Math.cos(heading);
+	}
+
+	/** The Z component of a heading's forward direction — see `dirX` for why this is negated. **/
+	public static inline function dirZ(heading:Float):Float {
+		return -Math.sin(heading);
+	}
+
+	/**
 		Requests a body change. It does not take effect until the next beat —
 		the deliberate cost from `systems.md`.
 		@param kind the body to become.
@@ -146,11 +174,11 @@ class BecomeModel {
 
 		switch body {
 			case Walker:
-				moveBy(Math.cos(heading) * forward + Math.cos(heading + Math.PI / 2) * strafe,
-					Math.sin(heading) * forward + Math.sin(heading + Math.PI / 2) * strafe, WALK_SPEED * dt);
+				moveBy(dirX(heading) * forward + dirX(heading + Math.PI / 2) * strafe, dirZ(heading) * forward + dirZ(heading + Math.PI / 2) * strafe,
+					WALK_SPEED * dt);
 			case Glider:
 				// no input term at all: a glider that can be stopped is not a glider
-				moveBy(Math.cos(heading), Math.sin(heading), GLIDER_SPEED * dt);
+				moveBy(dirX(heading), dirZ(heading), GLIDER_SPEED * dt);
 			case Oscillator | StillLife:
 				// motionless between beats; the oscillator's own movement happens in onBeat
 		}
@@ -170,7 +198,7 @@ class BecomeModel {
 			queuedTurn = 0;
 		}
 		if (body == Oscillator) {
-			moveBy(Math.cos(heading), Math.sin(heading), HOP_DISTANCE);
+			moveBy(dirX(heading), dirZ(heading), HOP_DISTANCE);
 		}
 	}
 

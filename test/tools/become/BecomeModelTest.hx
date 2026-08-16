@@ -126,6 +126,30 @@ class BecomeModelTest extends Test {
 		Assert.isTrue(model.beatCount >= 3, 'a long frame should count its beats, got ${model.beatCount}');
 	}
 
+	/**
+		**Pins the render handedness**, which nothing else did — the reason
+		turning, strafing and mouse-look all came out mirrored and every test
+		still passed.
+
+		Heaps' camera is left-handed, so screen-right is `-(forward × up)`.
+		This asserts that the direction the model strafes toward (heading +
+		90°) really *is* that vector, rather than its negation. Derived
+		independently here rather than restating `dirX`/`dirZ`, so it can
+		actually fail.
+	**/
+	function testStrafingGoesToScreenRight():Void {
+		for (h in [0.0, 0.7, 2.5, -1.3]) {
+			var fx = BecomeModel.dirX(h);
+			var fz = BecomeModel.dirZ(h);
+			// forward x up, with up = (0,1,0), is (-fz, 0, fx); Heaps' screen right is its negation
+			var rightX = fz;
+			var rightZ = -fx;
+
+			Assert.floatEquals(rightX, BecomeModel.dirX(h + Math.PI / 2), EPSILON, 'strafe X should be screen-right at heading $h');
+			Assert.floatEquals(rightZ, BecomeModel.dirZ(h + Math.PI / 2), EPSILON, 'strafe Z should be screen-right at heading $h');
+		}
+	}
+
 	/** Settles a model into `kind`, past the switch beat, so a test can start from the body it means to check. **/
 	function settledAs(kind:BodyKind):BecomeModel {
 		var model = new BecomeModel();

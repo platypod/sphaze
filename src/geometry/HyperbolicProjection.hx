@@ -83,7 +83,14 @@ class HyperbolicProjection {
 	**/
 	public static function toWorld(cameraRelative:ModelPoint, height:Float):h3d.Vector {
 		var k = klein(cameraRelative);
-		return new h3d.Vector(k.u * HORIZON, height, k.v * HORIZON);
+		// Z is negated because Heaps' camera is left-handed
+		// (`s3d.camera.rightHanded == false`), so its on-screen right is the
+		// opposite of the right-handed `forward.cross(up)` — the same gotcha
+		// `game.GameLoop`'s own strafe code documents. Without this, turning
+		// and strafing both come out mirrored, which is how it was first
+		// reported. Fixed here, at the model-to-render boundary, rather than
+		// by flipping signs at each input.
+		return new h3d.Vector(k.u * HORIZON, height, -k.v * HORIZON);
 	}
 
 	/**

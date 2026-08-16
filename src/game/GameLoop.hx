@@ -7,6 +7,7 @@ import biomes.defect.DefectBiome;
 import biomes.exterior.ExteriorBiome;
 import biomes.common.space.sphere.SphereMath;
 import biomes.hub.HubBiome;
+import biomes.knot.KnotBiome;
 import biomes.maze.MazeBiome;
 import biomes.maze.MazeGenerator;
 import biomes.mobius.MobiusBiome;
@@ -142,6 +143,9 @@ class GameLoop {
 		// neither a uniform-curvature space nor a DeckGroup quotient; see
 		// DefectModel's own class doc for why it needed its own primitive.
 		biomeRegistry.register(new DefectBiome());
+		// A closed hyperbolic surface: one octagonal room, seen as many
+		// images of itself. The genus-2 group is in geometry.DeckGroups.
+		biomeRegistry.register(new KnotBiome());
 		// Registered last, from whatever's already registered, and entered
 		// first: the dev room's ring of labelled portals is derived from the
 		// registry rather than a hand-kept list, so a new biome shows up in it

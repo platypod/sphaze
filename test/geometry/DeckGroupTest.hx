@@ -1,5 +1,6 @@
 package geometry;
 
+import geometry.Curvature.CurvatureMath;
 import geometry.CurvedSpace.ModelPoint;
 import utest.Assert;
 import utest.Test;
@@ -225,6 +226,132 @@ class DeckGroupTest extends Test {
 		for (i in 0...2) {
 			assertSameIsometry(Isometry.identity(), Isometry.compose(group.generators[i * 2], group.generators[i * 2 + 1]),
 				'generator $i and its neighbour should be inverse');
+		}
+	}
+
+	// ---- the genus-2 surface group ----
+
+	/** Rounded key for a model point, for comparing two independently-generated sets of them. **/
+	function pointKey(p:ModelPoint):String {
+		var unit = CurvedSpace.normalize(Hyperbolic, p);
+		return Std.string(Math.round(unit.x * 1e4)) + "," + Std.string(Math.round(unit.y * 1e4));
+	}
+
+	/**
+		**The genus-2 group's orbit of the origin is exactly the `{8,8}`
+		tiling's own faces** — checked against `geometry.HyperbolicTiling`,
+		which is independently tested against known ring populations and
+		φ² growth.
+
+		This is the load-bearing check on the whole construction. If the
+		four generators were the wrong translations — wrong distance, wrong
+		directions, or carrying the octagon somewhere other than across its
+		own sides — the orbit would be some other discrete set and would
+		not line up with a tiling built by completely different means. And
+		if the orbit *is* the tiling's faces, the octagon tiles the plane
+		under this group, which is what makes the quotient the surface it
+		is meant to be.
+	**/
+	function testTheGenusTwoOrbitIsTheOctagonTiling():Void {
+		var group = DeckGroups.genusTwo();
+		var radius = 5.0;
+
+		var fromGroup = new Map<String, Bool>();
+		for (element in group.elementsWithin(radius)) {
+			fromGroup.set(pointKey(Isometry.positionOf(element)), true);
+		}
+
+		var tiling = new HyperbolicTiling(8, 8, 5);
+		var matched = 0;
+		for (centre in tiling.centers) {
+			if (CurvedSpace.distance(Hyperbolic, CurvedSpace.origin(), centre) > radius) {
+				continue;
+			}
+			Assert.isTrue(fromGroup.exists(pointKey(centre)), "a face of the {8,8} tiling is not in the group\'s orbit");
+			matched++;
+		}
+		Assert.isTrue(matched > 20, 'only $matched faces were inside the radius — the comparison is too small to mean anything');
+	}
+
+	/**
+		The action is **free**: as many group elements as orbit points, so
+		no non-identity element fixes an octagon. A surface group must act
+		freely — an element with a fixed point would make the quotient an
+		orbifold with a cone point rather than a smooth genus-2 surface.
+	**/
+	function testTheGenusTwoActionIsFree():Void {
+		var group = DeckGroups.genusTwo();
+		var elements = group.elementsWithin(5.0);
+
+		var orbit = new Map<String, Bool>();
+		for (element in elements) {
+			orbit.set(pointKey(Isometry.positionOf(element)), true);
+		}
+
+		var distinct = 0;
+		for (_ in orbit.keys()) {
+			distinct++;
+		}
+		Assert.equals(elements.length, distinct, "two group elements send the origin to the same place — the action is not free");
+	}
+
+	/**
+		**Gauss-Bonnet, checked numerically.** A regular hyperbolic octagon
+		with all angles `2π/8` has area `6π - 8·(2π/8) = 4π`, and the area
+		of a hyperbolic disc of radius `R` is `2π(cosh R - 1)`. So the
+		number of octagons within `R` should be about `(cosh R - 1)/2` —
+		an estimate arrived at from the *geometry*, with no reference to
+		how the group is built.
+
+		Generous bounds, since a disc's worth of octagons has a boundary
+		and this counts by centre rather than by area. It would still catch
+		a group that was too coarse or too fine by any real factor, which
+		is the failure a wrong translation distance would produce.
+	**/
+	function testTheGenusTwoDensityMatchesGaussBonnet():Void {
+		var group = DeckGroups.genusTwo();
+
+		for (radius in [4.0, 5.0, 6.0]) {
+			var count = group.elementsWithin(radius).length;
+			var predicted = (CurvatureMath.hyperbolicCos(radius) - 1) / 2;
+
+			Assert.isTrue(count > predicted * 0.45, 'only $count octagons within $radius, against a Gauss-Bonnet estimate of $predicted');
+			Assert.isTrue(count < predicted * 2.2, '$count octagons within $radius, against a Gauss-Bonnet estimate of $predicted');
+		}
+	}
+
+	/** Every generator is a translation by exactly twice the octagon's inradius — the step that carries it across one side. **/
+	function testTheGenusTwoGeneratorsStepAcrossASide():Void {
+		var group = DeckGroups.genusTwo();
+		var expected = 2 * HyperbolicTiling.inradiusOf(8, 8);
+
+		Assert.equals(8, group.generators.length, "four side-pairings and their inverses should be eight generators");
+		for (i => g in group.generators) {
+			Assert.floatEquals(expected, group.displacementOf(g), 1e-9, 'generator $i does not step across a side');
+		}
+	}
+
+	/**
+		**A generator carries the opposite side onto the side it crossed** —
+		which is what makes it an *identification* rather than merely a step
+		to a neighbour, and is the one property that distinguishes this
+		group from the tiling's full symmetry group.
+
+		Checked on side midpoints: the midpoint of the far side lands
+		exactly on the midpoint of the near one.
+	**/
+	function testEachGeneratorIdentifiesOppositeSides():Void {
+		var group = DeckGroups.genusTwo();
+		var inradius = HyperbolicTiling.inradiusOf(8, 8);
+
+		for (k in 0...4) {
+			var direction = k * Math.PI / 4;
+			var near = Isometry.positionOf(Isometry.compose(Isometry.rotation(direction), Isometry.translation(Hyperbolic, inradius)));
+			var far = Isometry.positionOf(Isometry.compose(Isometry.rotation(direction + Math.PI), Isometry.translation(Hyperbolic, inradius)));
+
+			var carried = Isometry.apply(group.generators[k * 2], far);
+			Assert.floatEquals(0, CurvedSpace.distance(Hyperbolic, near, carried), 1e-9,
+				'generator $k does not carry the opposite side midpoint onto the near one');
 		}
 	}
 

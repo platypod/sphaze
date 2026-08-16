@@ -49,6 +49,7 @@ class DebugHubOrder {
 		"defect" => {number: 5, name: "Defect"},
 		"ribbon" => {number: 6, name: "Ribbon"},
 		"sprawl" => {number: 7, name: "Sprawl"},
+		"knot" => {number: 8, name: "Knot"},
 	];
 
 	/**

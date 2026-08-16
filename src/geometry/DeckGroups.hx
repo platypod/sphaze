@@ -68,6 +68,45 @@ class DeckGroups {
 		return new DeckGroup(Flat, [glideAlongX(width), alongY(height)]);
 	}
 
+	/**
+		**The Knot** — a genus-2 surface, as H² modulo the surface group of
+		a regular hyperbolic octagon.
+
+		The construction is the `{8,8}` tiling with **opposite sides
+		identified**. Its fundamental cell is the regular octagon whose
+		interior angles are all `2π/8`, which is exactly the condition for
+		eight of them to close up around a vertex — and therefore for all
+		eight of the octagon's own vertices to become a single point of the
+		quotient. Euler then fixes the genus: one face, four edges (eight
+		sides in pairs), one vertex, so `χ = 1 - 4 + 1 = -2`, and `g = 2`.
+
+		The four generators are hyperbolic translations by twice the
+		octagon's inradius, along the directions of alternate side
+		midpoints. Each carries the octagon across one side, and — the part
+		worth checking rather than believing — carries the *opposite* side
+		onto the one it crossed, which is what makes it the identification
+		rather than merely a neighbour step. `DeckGroup` supplies the
+		inverses, giving all eight side-pairings.
+
+		**Deferred once, deliberately** (see `docs/PROJECT_LOG.md`): this is
+		real hyperbolic geometry rather than a parameter change, and it was
+		held back from the framework's first commit so it could be verified
+		on its own rather than smuggled in beside two flat groups. What
+		verifies it is not this comment but `DeckGroupTest`, which checks
+		the orbit of the origin against the independently-tested
+		`geometry.HyperbolicTiling` and the element count against
+		Gauss-Bonnet.
+		@return the genus-2 surface group.
+	**/
+	public static function genusTwo():DeckGroup {
+		var step = 2 * HyperbolicTiling.inradiusOf(8, 8);
+		return new DeckGroup(Hyperbolic, [
+			for (k in 0...4)
+				Isometry.compose(Isometry.compose(Isometry.rotation(k * Math.PI / 4), Isometry.translation(Hyperbolic, step)),
+					Isometry.rotation(-k * Math.PI / 4))
+		]);
+	}
+
 	/** Translation east by `distance`. **/
 	static function alongX(distance:Float):Isometry {
 		return Isometry.translation(Flat, distance);
